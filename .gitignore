@@ -1,1 +1,9 @@
+# Xcode per-user state. Rewritten on every open, and it conflicts on every
+# branch that has been opened on a Mac.
 /app/NinaBakeryPOC/NinaBakeryPOC.xcodeproj/project.xcworkspace/xcuserdata/tomdeleu.xcuserdatad/UserInterfaceState.xcuserstate
+xcuserdata/
+
+# The icon tooling in references/app-icon/ is Python.
+__pycache__/
+
+.DS_Store
