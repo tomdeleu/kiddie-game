@@ -13,7 +13,42 @@ below is still the record of that.
 > thing and needed two fixes on first build; expect similar here, and see
 > [First build](#first-build) for the two places most likely to want one.
 
-## The opening film
+## The opening
+
+Three layers, each uncovering the next: **title plate → film → kitchen.** The
+room is built and lit underneath all of them, so whichever way she arrives, it
+is simply there.
+
+### The title plate
+
+`Nina's Toverbakkerij`, on the cottage the film is about to push in on. It is
+the game's face and the only place its name is written down — and it is the
+only text anywhere in the game. `CONCEPT.md` §5 rules out text she has to read;
+a name on a cover is not that.
+
+It holds for **1.4 seconds minimum**, or until the kitchen is ready, whichever
+is later — and **6 seconds maximum**, ready or not. The floor is there because
+building the room on an iPad is quick enough that without one the title would
+flash past in three frames and read as a glitch. The cap is there because
+"she cannot lose" has to cover a first screen too: the readiness flag is set at
+the end of an `async` closure, and if that closure never returned she would be
+left holding a picture with no way out. An unlit kitchen she can poke is the
+better failure.
+
+A tap ends it early — and a tap anywhere, at any time, puts a sparkle under her
+finger, because a screen that eats a tap silently is where she decides the iPad
+is broken.
+
+The plate breathes, 1.0 → 1.03 over 2.6 s. A still image with nothing moving on
+it looks like an app that has hung.
+
+Provenance, the eighteen candidates and the reason the asset is 16:9 rather
+than 4:3 are in
+[`references/loading-screen/README.md`](../references/loading-screen/README.md).
+The short version: padding to 16:9 means filling the screen crops the sides,
+never the top, so no iPad aspect can crop into the title.
+
+### The film
 
 Fourteen seconds, two shots, narrated end to end:
 
@@ -68,8 +103,10 @@ line is. It was generated with Seedance 2.5 starting from the locked cottage
 plate — the provenance, the cost and why a generated asset ships here at all
 are in `references/REFERENCES.md` §3.
 
-`intro-1.mp4` and `intro-2.mp4` are optional. Delete them and the game starts
-straight in the kitchen, with no code change.
+`intro-1.mp4` and `intro-2.mp4` are optional. Delete them and the title plate
+hands straight to the kitchen, with no code change — `IntroMovie.isAvailable` is
+still the only thing that checks, and it now also decides which of the two
+greeting paths runs.
 
 ## The round
 
@@ -195,6 +232,8 @@ be retired when the wall arrives, not grown.
 | `Engine/TouchRouter.swift` | One finger, two verbs. Targets are generous spheres, not meshes. |
 | `Engine/Sparkles.swift` | Faceted bits that fly out and vanish. The whole reward vocabulary. |
 | `Engine/Halo.swift` | The glow on the prop a step is about — the game's only instruction. |
+| `Intro/LoadingScreen.swift` | The title plate, and the floor it is held for. |
+| `Intro/IntroMovie.swift` | The opening film: a queue of shots, and two ways out of it. |
 | `Audio/SoundKit.swift` | All thirteen sound effects, synthesised at launch. |
 | `Audio/VoiceBank.swift` | Nina and Otto, driven by `script-keuken.json`. |
 | `Game/CakeSpec.swift` | Six ingredients → colour, effects, and what Nina says about them. |
