@@ -1,6 +1,7 @@
 # Nina's Toverbakkerij — concept
 
-A magic-bakery game for Nina, aged 4, in Dutch, on iPad. Native SwiftUI.
+A magic-bakery game for Nina, aged 4, in Dutch, on iPad. Native SwiftUI with
+RealityKit, in a low-poly Roblox-style 3D look.
 
 Working title: **Nina's Toverbakkerij** (Nina's magic bakery). Short, Dutch, and
 a 4-year-old can say it — which matters, because she has to be able to ask for
@@ -23,8 +24,9 @@ line.
 ## 2. Why build this instead of buying Toca Boca
 
 We will not out-polish a studio, and we should not try. The one thing a
-store-bought app can never do is **be about her**: her name spoken aloud, her
-dad's voice as the narrator, her own drawings hanging on the bakery wall.
+store-bought app can never do is **be about her**: her name spoken aloud by the
+characters, her own drawings hanging on the bakery wall, a bakery that carries
+her name above the door.
 
 That is the entire competitive advantage, so the design leans on it hard rather
 than treating it as a garnish.
@@ -96,7 +98,7 @@ day". They are non-negotiable constraints on every screen.
 
 | Rule | Why |
 |---|---|
-| **Zero text, anywhere** | She cannot read. Instructions are recorded voice plus an icon. |
+| **Zero text, anywhere** | She cannot read. Instructions are spoken voice plus an icon. |
 | **Tap and drag only** | No swipe precision, no pinch, no double-tap, no long-press — her hands cannot do these reliably yet. |
 | **Huge targets, generous snapping** | Minimum ~120pt hit areas. Drop the egg *near* the bowl and it goes in the bowl. |
 | **You cannot lose** | No timers, no game over, no buzzer. A wrong drag floats gently back with "hmm, probeer die andere eens!" |
@@ -234,59 +236,95 @@ children's game.
 SwiftUI `Canvas` for immediate-mode drawing, and **SpriteKit**, Apple's 2D game
 engine with a scene graph, physics, and particle emitters.
 
-### 9.2 The decision: 2D, in SwiftUI
+### 9.2 The decision: 3D in RealityKit, Roblox-style
 
-The deciding factor is not the code, it is the **art pipeline**.
+**RealityKit renders the world; SwiftUI wraps it** via `RealityView` and owns
+the flat UI on top (the back arrow, the parent gate).
 
-Going 3D means modelling, texturing, rigging, and animating every character and
-prop. The connector's `generate_3d` turns an image into a static GLB mesh — it
-will not produce a rigged fairy that dances. That is weeks of specialist work
-for a game whose whole aesthetic is a flat storybook doll's house anyway.
+The visual target is the deliberately simple, chunky, low-poly look of Roblox —
+see [references/REFERENCES.md](references/REFERENCES.md) for the style
+specification and reference plates.
 
-Going 2D means generated images drop straight in as assets. The art we can
-actually produce is the art the game actually needs.
+That choice is what makes 3D tractable for one person, and it is worth being
+precise about why. The usual objection to 3D is the art pipeline: modelling,
+UV-unwrapping, texturing, rigging, and skinning every character is specialist
+work measured in weeks. **The Roblox aesthetic removes nearly all of it:**
 
-Interaction agrees. A 4-year-old cannot operate a 3D camera, so the camera would
-be locked to a fixed view — at which point it is a 2D game rendered expensively.
-And 2D tap targets map directly to hit tests, where 3D needs raycasting into a
-scene for no gain.
+- A character is 8–12 **primitives** — a box torso, a box head, cylinder limbs.
+  There is nothing to sculpt.
+- Joints are **rigid**. Nothing bends or deforms, so there is no skinning and no
+  weight painting — the single hardest part of 3D character work simply does not
+  exist here.
+- Materials are **flat matte colours**. No textures to author, no UV unwrapping,
+  no PBR maps.
+- The style's whole visual language is *implied* detail. A jar is a cylinder
+  with a lid on it. Getting it "right" means getting it simple.
 
-So: **SwiftUI renders everything.** Each room is a `ZStack` of layered PNGs —
-background, midground, props, characters. Drag is a `DragGesture` writing an
-offset, with a distance test against the target for the generous snapping in
-[section 5](#5-rules-for-a-four-year-old). Layout, gestures, and animation are
-all free, which is exactly the part SpriteKit would make us rebuild by hand.
+A first-pass character can be assembled procedurally in code with
+`MeshResource.generateBox` and `.generateCylinder` plus a `SimpleMaterial`,
+with no modelling software involved at all. That is a genuinely different
+proposition from generic 3D.
 
-SpriteKit still earns its place in one spot: `SKEmitterNode` for the fairy
-sparkles and the oven puff, dropped in as a small `SpriteView` overlay. Particle
-systems are the one thing SwiftUI has no good answer for.
+There is a second payoff: this is the visual language of the games she will
+grow into. It will not look like a toddler app for long.
 
-Performance is a non-issue. A few dozen image layers at 60fps is nothing for any
-iPad that runs a current iOS.
+### 9.3 RealityKit specifics
 
-### 9.3 How things move: cutout rigs, not sprite sheets
+- **Scene.** One `RealityView` per room. Entities in a parent/child hierarchy.
+  `ModelEntity(mesh:materials:)` for everything.
+- **Materials.** `SimpleMaterial(color:roughness:isMetallic:)` with roughness
+  near 1.0 and `isMetallic: false` gives the matte toy-plastic surface.
+  `UnlitMaterial` where a surface should stay perfectly flat regardless of
+  lighting.
+- **Camera.** A fixed `PerspectiveCamera` per room at a slightly elevated
+  three-quarter angle — the doll's-house framing. **She never controls the
+  camera.** A 4-year-old cannot orbit a viewport, and a camera that moves
+  unexpectedly is how you lose her.
+- **Gestures.** Entities need both a `CollisionComponent` and an
+  `InputTargetComponent` before they can be hit. Then
+  `DragGesture().targetedToEntity(...)` and
+  `SpatialTapGesture().targetedToAnyEntity()`.
+- **Animation.** `entity.move(to:relativeTo:duration:timingFunction:)` for
+  discrete moves; subscribe to `SceneEvents.Update` to drive the dance clock
+  per frame.
+- **Scene assembly.** Reality Composer Pro ships with Xcode and is the sane
+  place to lay out a room and author materials once there is more than a
+  handful of entities.
 
-This is the part worth getting right, because it is where generated art usually
-falls down.
+### 9.4 The honest cost of going 3D
 
-Frame-by-frame sprite sheets would need dozens of generated images per
-animation, and AI image generation will not hold a character consistent across
-them. The result looks like it is boiling.
+Two things genuinely get harder than they were in 2D, and they are worth
+knowing before starting:
 
-Instead, use **cutout animation**: generate each character *once*, cut it into
-parts — head, body, upper arm, forearm, legs — and animate the transforms.
-In SwiftUI that is nested views with `rotationEffect(_:anchor:)` around joint
-points, driven by springs or a `TimelineView` clock.
+1. **Drag becomes a projection problem.** A finger moves in 2D; the object moves
+   in 3D. Every drag needs the touch ray projected onto a chosen plane — the
+   table surface, the counter height. This is the main new complexity, it is
+   perhaps thirty lines, and it has to be right or the generous snapping in
+   [section 5](#5-rules-for-a-four-year-old) will feel wrong.
+2. **Lighting and framing need deliberate setup.** In 2D the image *is* the
+   look. In 3D the look emerges from lights and camera, so it has to be tuned
+   per room and kept consistent between them.
 
-This solves several problems at once:
+Expect the first room to take meaningfully longer than its 2D equivalent. Rooms
+two onward should not, because both problems are solved once and reused.
 
-- One generated image per character instead of dozens, so consistency is free.
-- The party guests can dance to whatever beat she taps, because the animation is
-  driven by a live clock rather than baked into fixed frames.
+### 9.5 How things move: rigid transform rigs
+
+The animation approach carries over from the 2D plan almost unchanged, which is
+convenient — it was always a transform-hierarchy technique.
+
+Build each character as a **tree of entities**: torso at the root, upper arm
+parented to torso, forearm parented to upper arm. Animate by rotating entities
+about their joint positions. No sculpting, no keyframed meshes.
+
+- The party guests dance to whatever beat she taps, because the rotations are
+  driven by a live clock rather than baked into fixed animation clips.
 - New dance moves are numbers in a file, not new art.
+- The same rig covers the whisk following her finger and the oven door swinging.
 
-The same technique covers the whisk following her finger and the oven door
-swinging open.
+Set each limb entity's pivot correctly when assembling it — rotating a box about
+its centre instead of its shoulder is the classic error, and it makes characters
+look like they are coming apart.
 
 ## 10. Technical notes
 
@@ -304,26 +342,35 @@ this needs.
 the iPad in **Guided Access** so she cannot leave the app by accident. Guided
 Access is doing a lot of the work that would otherwise be app-level lockdown.
 
-**Art.** This is the real bottleneck, not the code. The same Higgsfield
-connector that generates the voices also generates images, so the art and the
-audio can run through one pipeline. The hard part is not producing images, it is
-producing a hundred images that look like they belong in the same world — so
-lock the art direction with a small style reference before generating anything
-in bulk, and reuse it as a reference on every subsequent generation. Decide this
-before building room 2; retrofitting a style across finished screens is
-miserable.
+**Art.** Going 3D changes what generated images are *for*. They are no longer
+shippable assets — they are **concept references** that guide modelling. Nothing
+generated goes into the app directly. See
+[references/REFERENCES.md](references/REFERENCES.md).
 
-Two constraints that follow from [section 9](#9-rendering) and are much cheaper
-to honour up front than to fix later: every prop needs a **transparent
-background** so it can be layered and dragged, and every character needs to be
-generated in a **flat, limbs-separated pose** so it can be cut into a rig
-without inventing the hidden parts of an arm.
+Three routes to actual geometry, in order of how much they should be leaned on:
+
+1. **Primitives in code.** Boxes and cylinders with flat materials. Free,
+   instant, version-controlled as source, and genuinely sufficient for the
+   Roblox look. This should be the default for characters and most props.
+2. **Blender → USDZ** for the few props with real character — the oven, the
+   cottage shell, the cake. Worth the detour only where a box will not do.
+3. **`generate_3d`** (image → GLB) via the connector. Viable for *static props*,
+   since it produces an unrigged mesh. Not viable for characters, which need a
+   joint hierarchy. Meshes will likely need decimating to fit the low-poly look.
+
+The consistency problem does not disappear, it moves. In 2D the risk was a
+hundred images that do not match; in 3D it is a hundred models with drifting
+proportions and palette. Fix it the same way: fix a **shared palette and a
+proportion rule** (see the style spec) before building room 2, and derive
+everything from it.
 
 ## 11. Open questions
 
 - Voice audition: which preset voice sounds best speaking Dutch, and does it say
   "Nina" correctly?
-- Art direction: soft watercolour storybook, or bold flat vector shapes?
+- Which reference plate is *the* look, so it can be locked as an image reference
+  for everything after it?
+- The shared 12-colour palette and the character proportion rule.
 - Music and SFX source — CC0 library, paid pack, or GarageBand?
 - Does the fairy look like her, or is the fairy a separate character she helps?
   (Helping a character is usually the easier sell at this age — being told "this
