@@ -5,7 +5,7 @@
 
 It answers two questions the briefing cannot:
 
-1. **Does the clay look survive on the iPad?**
+1. **Does the faceted low-poly look survive on the iPad?**
 2. **Can Nina drive the controls?**
 
 The risk is lopsided. A failed visual invalidates the art direction before four
@@ -14,24 +14,34 @@ and as cheaply as possible.
 
 ---
 
-## Stage A — USDZ in Quick Look (about an hour, no app)
+## Stage A — USDZ in Quick Look (well under an hour, no app)
 
-Model one kitchen room box in Blender, bake its ambient occlusion, export USDZ,
-AirDrop to the iPad, open in Quick Look. Same renderer family, real screen, real
-size. **If clay does not survive here, no RealityKit code will rescue it.**
+Model one kitchen room box in Blender, export USDZ, AirDrop to the iPad, open in
+Quick Look. Same renderer family, real screen, real size. **If the look does not
+survive here, no RealityKit code will rescue it.**
 
-Target: [`references/plates/01-kitchen-roombox.png`](references/plates/01-kitchen-roombox.png).
+Target: [`references/plates/03-kitchen-roombox.png`](references/plates/03-kitchen-roombox.png),
+against the locked style reference
+[`references/plates/01-cottage-exterior.png`](references/plates/01-cottage-exterior.png).
+
+> **There is no bake step.** The earlier version of this brief spent most of its
+> length on UV unwrapping and baking ambient occlusion into base colour. All of
+> that is gone — see [Lighting without AO](#lighting-without-ao) below. Stage A
+> is now geometry, flat colours, one light, export.
 
 ### Geometry
 
-- Open corner room box: **two walls and a floor**, open on the two near sides.
+- Open corner room box: **two walls and a floor**, open on the two near sides,
+  on a slim square base slab.
 - Contents, minimum: work table, mixing bowl, the domed oven, two wall shelves
-  with a few jars. Skip the cake — it is not needed to judge the look.
-- **Bevel every hard edge.** This is the single most important instruction. Use a
-  Bevel modifier, small width, 2–3 segments, clamp overlap on. Shade smooth with
-  smooth-by-angle so the bevels actually catch light. An unbevelled box will read
-  as plastic no matter how it is coloured.
-- Keep it chunky. Implied detail, never literal detail.
+  with a few chunky jars. Skip the cake — it is not needed to judge the look.
+- **Shade flat. No bevel, no smoothing, no subdivision.** This is the single
+  most important instruction, and it is the exact inverse of the old brief. In
+  Blender: Object → Shade Flat, and make sure Auto Smooth / smooth-by-angle is
+  **off**. Every facet must read as its own flat plane.
+- **Keep the polygon count genuinely low.** Faceted spheres at 12–20 faces,
+  cylinders at 6–8 sides. If a curve looks smooth, it has too many faces.
+- Chunky and sparse. Fewer, bigger props. No fine detail, no labels, no trim.
 
 ### Scale and orientation
 
@@ -43,58 +53,98 @@ Target: [`references/plates/01-kitchen-roombox.png`](references/plates/01-kitche
 
 ### Materials
 
-Principled BSDF per colour:
+Principled BSDF per palette colour, and nothing else:
 
 | Setting | Value |
 |---|---|
-| Base Color | from the palette below |
+| Base Color | from [the palette](#palette) — flat, unmodified |
 | Roughness | **0.85–0.95** |
 | Metallic | 0 |
 | Specular | low |
 
-No textures, no normal maps, no transparency. One flat colour per surface.
-
-> **Do not paste the sampled hex values straight into Base Color.** They were
-> sampled from a *render*, so they already contain the lighting and AO you are
-> about to add. Start a little **lighter and flatter** than the sample, then
-> compare against the plate once lit.
+No textures, no normal maps, no AO maps, no transparency, no vertex colours.
+One flat colour per surface. A dozen materials should cover the entire room.
 
 ### Lighting
 
-One soft key light plus broad ambient fill. A large area light and a soft
-world/HDRI ambient is enough. No rim lights, no dramatic contrast.
+One soft key light plus broad ambient fill — a large area light and a soft
+world/ambient colour is enough. Enough directionality that adjacent facets come
+back visibly different; not so much that the scene gains hard shadows or dark
+corners.
 
-### The AO bake — the part that matters
-
-The pooled darkening in corners and under objects is what makes it read as clay.
-
-1. Switch to **Cycles**.
-2. UV unwrap each object.
-3. Bake **Ambient Occlusion** to a texture.
-4. **Multiply the AO into the base colour and bake the result down to a single
-   diffuse texture per object.**
-
-Step 4 is the important one. Exporting AO as a separate occlusion channel relies
-on the viewer honouring it; baking it into base colour guarantees it survives
-into USDZ and into RealityKit regardless. For a POC, certainty beats elegance.
+Add a soft contact shadow under the props and the slab. That is the only shadow
+the style wants.
 
 ### Export
 
-File → Export → Universal Scene Description (`.usdz`), with materials and
-textures included. AirDrop to the iPad, open in Quick Look.
+File → Export → Universal Scene Description (`.usdz`). Materials included;
+there are no textures to include. AirDrop to the iPad, open in Quick Look.
+
+Expect a **small** file — no textures means kilobytes, not megabytes.
 
 ### Stage A passes if…
 
 Judged **on the iPad at arm's length**, not on a desktop monitor:
 
-- Rounded edges are visible and catch light.
-- Corners and object bases show clear soft AO pooling.
-- Surfaces read as **clay** — not plastic, not cardboard, not flat cartoon.
+- Facets are clearly visible and each catches the light differently.
+- Curved-ish forms (the oven dome, the bowl, any bush) read as faceted, not
+  smooth and not sharp-edged noise.
+- **Corners stay light.** No pooling, no murk. If it looks dingy, the lighting
+  is wrong.
+- Objects sit grounded on the floor via their contact shadow.
+- The palette reads as soft pastel, not washed out and not candy-bright.
 - It still reads at the size a room will actually occupy (roughly 60% of a
   landscape iPad screen).
 
-If it fails, the fix is almost always **more bevel** or **stronger AO** before it
-is anything else. Change one at a time.
+If it fails, the usual causes in order: **smoothing left on** (facets invisible),
+**too many polygons** (curves read smooth), **lighting too flat** (facets all the
+same tone), **lighting too strong** (hard shadows appear). Change one at a time.
+
+---
+
+## Lighting without AO
+
+The old direction leaned on baked ambient occlusion for its sense of depth. This
+one deliberately does not. What replaces it, in the order the depth actually
+comes from:
+
+1. **Flat-shaded facets — the primary source, and it is free.** Hard normals mean
+   every polygon returns a different value under one directional light. This is
+   why the style change and dropping the bake fit together: smooth rounded clay
+   has almost no normal variation, so it *needed* occlusion to avoid reading
+   flat. Faceted geometry has normal variation everywhere and needs nothing.
+   Cost: zero. No UVs, no textures, no bake, no runtime overhead.
+
+2. **A real-time directional shadow.** RealityKit's `DirectionalLightComponent`
+   with `DirectionalLightComponent.Shadow` gives the cast shadow that grounds
+   objects — the job AO was mostly doing. Unlike a bake it is **dynamic**, so it
+   stays correct when Nina drags something across the table, which baked AO
+   never could.
+
+3. **Image-based lighting for the soft fill.** `ImageBasedLightComponent` with a
+   small neutral studio environment reproduces the even fill of the plates. One
+   asset, authored once, reused by every room — and it is what keeps the rooms
+   consistent with each other.
+
+4. **Contact shadow blobs under draggables.** A soft dark ellipse under each
+   movable object, scaled by proximity to the surface. Crude, cheap, dynamic,
+   and completely convincing at this scale. Already planned in `CONCEPT.md` §9.5.
+
+If, after all four, a specific corner still reads too flat, there are two
+fallbacks that do **not** reintroduce per-asset Blender bakes:
+
+- **Hand-darkened vertex colours.** Pull down the vertices where two surfaces
+  meet. No UVs, no textures, negligible file size. It is authored art, not a
+  bake, so it stays under your control.
+- **Reality Composer Pro 3's light baker.** It generates ambient occlusion,
+  indirect and beauty lightmaps for static scenes as a tool step, and RealityKit
+  can attach them. This is the escape hatch if the scene genuinely needs
+  occlusion later — it costs a tool run rather than hand-baking every asset in
+  Blender, so keeping the option open costs nothing now.
+
+**What is not available:** RealityKit exposes no screen-space AO. Do not plan
+around SSAO arriving; Apple's own answer for occlusion is baked lightmaps, which
+is precisely what this direction is avoiding.
 
 ---
 
@@ -106,20 +156,20 @@ Only once Stage A passes.
 
 - One `RealityView`, the Stage A room box loaded as USDZ.
 - Fixed isometric-ish `PerspectiveCamera`. Never moves.
+- One directional light with shadows on, plus an image-based light for fill.
 - **Two draggable objects and one bowl** to drop them into.
 - Drag via ray-to-plane projection onto the table surface.
 - Snap with a generous radius; a miss floats gently back.
 - One reward on a successful drop: squash-and-stretch plus a sparkle.
 - One reward sound.
-- A soft dark contact blob under each draggable, scaled by proximity — the fake
-  dynamic AO from `CONCEPT.md` §9.5.
+- A soft dark contact blob under each draggable, scaled by proximity.
 
 Out of scope: garden, party, persistence, cake-colour logic, voice-over, the hub,
 menus, settings.
 
 ### Stage B passes if…
 
-- The clay look survives in-engine, not just in Quick Look.
+- The faceted look survives in-engine, not just in Quick Look.
 - It holds a steady frame rate with everything on screen.
 - **Nina can pick something up and drop it in the bowl without help.**
 
@@ -154,24 +204,22 @@ and target sizes need these specific numbers.
 
 ## Palette
 
-Sampled from the locked plate, `references/plates/01-kitchen-roombox.png`.
-Remember these are *rendered* pixels — see the warning above.
+The thirteen base colours, sampled from the locked plates. Full table with roles
+in [`references/REFERENCES.md`](references/REFERENCES.md) §4.
 
-| Role | Hex | Notes |
-|---|---|---|
-| Background teal | `#87AFAB` | The ground the diorama sits on |
-| Wall cream | `#D9C6B6` | Lit wall face |
-| Wall cream, shaded | `#B4A290` | Second wall, turned away |
-| Floor terracotta | `#C8957E` | |
-| Floor terracotta, deep | `#BA7D64` | |
-| Oven pink-terracotta | `#C1866C` | |
-| Oven, shaded | `#9C563E` | |
-| Wood mid | `#95715E` | Table, shelves |
-| Wood dark | `#8F5B48` | |
-| Sage, lit | `#909888` | Jars, accents |
-| Sage, mid | `#707860` | |
-| Sage, shadowed | `#505840` | |
-| Deep AO shadow | `#4E2F25` | Where surfaces meet — bake, don't paint |
+| Role | Hex | | Role | Hex |
+|---|---|---|---|---|
+| Blush pink | `#FBD0CA` | | Cream light | `#F2E6DC` |
+| Blush pink deep | `#E3B1AE` | | Cream | `#E4DACA` |
+| Rose | `#EAB5AA` | | Butter yellow | `#DCC994` |
+| Mint light | `#D6F0DE` | | Sandy wood | `#C79C86` |
+| Mint | `#C2DECF` | | Wood brown | `#8A7A66` |
+| Sage | `#A7C0AC` | | Backdrop grey | `#CFCECF` |
+| Sage deep | `#7E9A88` | | | |
+
+> **Paste these straight into Base Color.** Unlike the old clay palette — which
+> was sampled from renders and carried baked lighting — these are base material
+> values with no shading in them. The facets and the light supply the variation.
 
 **Fix this palette and derive everything from it.** It is the main defence
 against drift as rooms are added.
@@ -183,9 +231,10 @@ against drift as rooms are added.
 Continuing locally with the Blender MCP connector, so a session there can drive
 Blender directly and work through Stage A.
 
-Everything needed is committed: this brief, the locked plate, the full style spec
-in [`references/REFERENCES.md`](references/REFERENCES.md), and the rendering
+Everything needed is committed: this brief, the locked plates, the full style
+spec in [`references/REFERENCES.md`](references/REFERENCES.md), and the rendering
 notes in `CONCEPT.md` §9.
 
-Any new imagery must pass the locked style reference
-`image_references: 9887941f-9d50-409f-ad7a-330e3b43c5d0` alongside its prompt.
+Any new imagery must pass the matching locked style reference — scenes
+`64f0893e-073a-4065-b363-f87687ced11d`, characters
+`d368acec-4085-48e4-83ff-7a57ee8ee789` — alongside its prompt.

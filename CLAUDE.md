@@ -6,8 +6,8 @@ Entry point for this repo. Read this first, then
 ## What this is
 
 **Nina's Toverbakkerij** — a magic-bakery game in **Dutch** for **Nina, aged 4**,
-on **iPad**. Native **SwiftUI + RealityKit**, in a **cosy isometric
-clay-miniature** 3D look.
+on **iPad**. Native **SwiftUI + RealityKit**, in a **faceted pastel low-poly**
+3D look.
 
 The loop: grow magic ingredients in the garden → bake a cake whose colour comes
 from what she chose → decorate it freely → throw a dance party where everyone
@@ -18,15 +18,16 @@ eats it and thanks her by name.
 ## → Start here: [`POC.md`](POC.md)
 
 **The first task is a proof of concept, not game content.** It answers the two
-questions the briefing cannot: does the clay look survive on the iPad, and can
-Nina drive the controls.
+questions the briefing cannot: does the faceted low-poly look survive on the
+iPad, and can Nina drive the controls.
 
-**Stage A** is Blender → baked AO → USDZ → Quick Look on the iPad. About an
-hour, no app code. **Stage B** is a minimal RealityKit app — one room, two
-draggables, one bowl — and only after Stage A passes.
+**Stage A** is Blender → USDZ → Quick Look on the iPad. Well under an hour, no
+app code, **and no bake step**. **Stage B** is a minimal RealityKit app — one
+room, two draggables, one bowl — and only after Stage A passes.
 
-`POC.md` has the geometry, material and AO-bake specs, the sampled palette with
-hex values, and the pass/fail criteria. Rationale is in `CONCEPT.md` §8.
+`POC.md` has the geometry and material specs, the depth-without-AO options, the
+sampled palette with hex values, and the pass/fail criteria. Rationale is in
+`CONCEPT.md` §8.
 
 Stage A is being done locally where a **Blender MCP connector** is available, so
 a session there can drive Blender directly.
@@ -38,7 +39,8 @@ a session there can drive Blender directly.
 | [`POC.md`](POC.md) | **The current task.** Step 0 proof of concept, with the Blender brief and palette. |
 | [`CONCEPT.md`](CONCEPT.md) | The design. Loop, age rules, audio, rendering, build order. |
 | [`references/REFERENCES.md`](references/REFERENCES.md) | Art direction spec and reference plate recipes. |
-| [`references/moodboard/`](references/moodboard/) | Style screenshots + provenance. |
+| [`references/plates/`](references/plates/) | **The locked style references.** Plates 01 and 02 are the look. |
+| [`references/moodboard/`](references/moodboard/) | Provenance + licences. Gathered for two retired directions — not the current look. |
 | [`references/FETCHING-ASSETS.md`](references/FETCHING-ASSETS.md) | How to get outside material onto disk here, and what fails. |
 | [`audio/voices.json`](audio/voices.json) | Voice casting. Read before generating any line. |
 
@@ -53,9 +55,11 @@ concept art, and image-to-3D for static props.
 | Images | `flux_2`, variant `pro` | 1 credit each. **Record the seed.** Always pass the locked style reference — see below. |
 | Static props → 3D | `generate_3d` | Unrigged GLB. Fine for props. Usable for a character *body* too, since the rig only splits off the legs — but the split is a Blender job. |
 
-The three prompt phrases that carry the clay look: **"soft matte clay"**,
-**"gently rounded edges"**, **"strong soft ambient occlusion"**. Drop any one and
-the result reverts to generic flat cartoon.
+The phrases that carry the look: **"flat-shaded low-poly"**, **"visible straight
+polygon edges"**, **"no smooth curved surfaces"**, **"no ambient occlusion
+pooling"**. Drop the facet phrases and flux_2 reverts to smooth clay; drop the
+last one and it pools shadow into the corners. Put the style *before* the
+subject in the prompt, and keep the prop list short.
 
 Rules that keep this from going wrong:
 
@@ -76,7 +80,7 @@ come from CC0 libraries or GarageBand — see `CONCEPT.md` §7.4.
 These were argued through and settled. Reopen only if the user asks.
 
 - **3D, not 2D.** The chunky stylisation makes it tractable: characters are
-  rounded primitives with rigid joints, so there is no sculpting, skinning, or
+  faceted primitives with rigid joints, so there is no sculpting, skinning, or
   texture authoring.
 - **RealityKit, not Unity or Godot.** The engines' strengths — physics, level
   design, animation state machines, cross-platform — do not apply to a
@@ -94,22 +98,25 @@ These were argued through and settled. Reopen only if the user asks.
   for props. 340 public-domain models, already mutually consistent. **Do not
   model or generate a prop that a kit already provides.** Model only what they
   genuinely lack (characters, the magic oven).
-  Caveat: they arrive **flat-shaded and hard-edged**, not clay. Expect to
-  re-material them and bake ambient occlusion per asset — still far cheaper than
-  modelling from scratch.
-- **Art direction: cosy isometric clay miniature.** Soft matte clay surfaces,
-  **rounded edges on everything**, warm muted palette (terracotta, cream, sage)
-  on soft teal, and **heavy ambient occlusion** — that last one is the signature,
-  not a detail. Every room is an open corner room box (two walls + floor) at a
-  fixed isometric angle. Anchor reference:
-  `references/moodboard/08-dribbble-isometric-bakery.png`. Full spec in
-  `references/REFERENCES.md`.
-  **Every image generation must pass the locked style reference**
-  `image_references: 9887941f-9d50-409f-ad7a-330e3b43c5d0`
-  (`references/plates/01-kitchen-roombox.png`) alongside the prompt. That is what
-  keeps the set from drifting.
-  **This supersedes the earlier Roblox framing** — where old text says flat,
-  bright, hard-edged or unlit, the clay spec wins.
+  Bonus: they arrive **flat-shaded and hard-edged**, which is exactly the target
+  shading model. They need a palette swap and nothing else — no softening, no UV
+  unwrapping, no AO bake.
+- **Art direction: faceted pastel low-poly.** Angular **flat-shaded** geometry
+  with **visible facets** — no bevels, no smoothing, no subdivision — in a soft
+  pastel palette (blush pink, mint, cream, butter yellow, sage), evenly lit, on a
+  plain neutral grey backdrop. **No ambient occlusion anywhere**: shading comes
+  from the facet normals, and corners stay light. Every room is an open corner
+  room box (two walls + floor) on a slim base slab, at a fixed isometric angle.
+  Full spec in `references/REFERENCES.md`.
+  **Every image generation must pass the matching locked style reference**
+  alongside the prompt — scenes `64f0893e-073a-4065-b363-f87687ced11d`
+  (`references/plates/01-cottage-exterior.png`), characters
+  `d368acec-4085-48e4-83ff-7a57ee8ee789`
+  (`references/plates/02-fairy-character.png`). Pass **one**, matched to the
+  subject; passing both bleeds the character into the scene.
+  **This supersedes both earlier framings** — the clay direction (soft, rounded,
+  occlusion-heavy, terracotta/teal) and the Roblox one before it. Where old text
+  describes either, this wins.
 - **Check licences before using any reference.** Only CC0 material ships. Two
   moodboard sources carry explicit *no-AI* terms, so they must never be used as
   image-generation references.
