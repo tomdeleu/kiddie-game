@@ -35,13 +35,13 @@ before modelling or generating anything.
 
 ## How these were captured
 
-Direct image downloads are blocked by this sandbox's network policy, and
-Firecrawl refuses binary image URLs outright (`image/jpeg` is not a supported
-content type). The route that works is:
+Full recipe, and what does *not* work, in
+[`../FETCHING-ASSETS.md`](../FETCHING-ASSETS.md).
 
-`firecrawl_scrape` with `formats: ["screenshot"]` → the screenshot is written to
-a signed `storage.googleapis.com` URL → that host *is* reachable, so `curl`
-saves it.
+Short version: direct image downloads are blocked by the sandbox network policy,
+and Firecrawl refuses binary URLs outright. `firecrawl_scrape` with
+`formats: ["screenshot"]` writes a PNG to a signed `storage.googleapis.com` URL,
+and that host *is* reachable, so `curl` can save it.
 
 Consequence: these are **page** screenshots, browser chrome and cookie banners
 included, not clean asset images. Good enough to judge a style by; not good
