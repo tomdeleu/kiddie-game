@@ -10,9 +10,16 @@ refused at the egress proxy with a 403 on CONNECT. Confirmed blocked:
 
 `wallpapers.com` · `upload.wikimedia.org` · `tr.rbxcdn.com` ·
 `images.rbxcdn.com` · `itch.io` · `i.ytimg.com` · `i.pinimg.com` ·
-`devforum.roblox.com` · `d8j0ntlcm91z4.cloudfront.net` (the Higgsfield CDN)
+`devforum.roblox.com`
 
-Confirmed reachable: **`storage.googleapis.com`**.
+Confirmed reachable: **`storage.googleapis.com`**, and — since being added to the
+environment allowlist — the Higgsfield CDNs. Downloading generated assets now
+works directly with `curl`; see [`fetch-plates.sh`](fetch-plates.sh).
+
+**Allowlist changes take effect immediately.** The gateway evaluates policy per
+request, so a session does *not* need restarting after the environment is
+edited — contrary to what environment *variables* do, which are read once at
+startup.
 
 Diagnose with:
 

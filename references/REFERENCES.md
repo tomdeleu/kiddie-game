@@ -129,13 +129,11 @@ Direct links, in case the CDN is reachable from where you are reading this:
 3. [Fairy character sheet](https://d8j0ntlcm91z4.cloudfront.net/user_39OtbtGoYAVkmrcBwNT0Vv0BbHJ/hf_20260815_074713_13e7c536-befa-462f-bf19-c632f74a8e83.png)
 4. [Party room box](https://d8j0ntlcm91z4.cloudfront.net/user_39OtbtGoYAVkmrcBwNT0Vv0BbHJ/hf_20260815_074712_6eaffc62-3809-4985-80be-67d78eaf0bf1.png)
 
-**The plates are not committed to this repo.** The Higgsfield results CDN
-(`d8j0ntlcm91z4.cloudfront.net`) is denied by the sandbox egress policy, so a
-session cannot save them. Run [`fetch-plates.sh`](fetch-plates.sh) from a machine
-that can reach it — or allowlist that host on the environment and re-run it here.
+The plates are committed under [`plates/`](plates/). Re-download or refresh them
+with [`fetch-plates.sh`](fetch-plates.sh).
 
-The seeds below matter more than the files: they regenerate the plates exactly,
-and unlike a CDN link they do not expire.
+The seeds below still matter more than the files: they regenerate the plates
+exactly, and unlike a CDN link they do not expire.
 
 ### The shared style suffix
 
@@ -169,3 +167,11 @@ that stops the set drifting.
 
 **Do not pass the moodboard screenshots as references.** Two of those sources
 carry explicit no-AI terms.
+
+### Note on the character plate
+
+`plates/03-fairy-character.png` is a **look target, not a build guide**. The
+render has smoothly merged limbs — the arms blend into the torso — which is the
+one thing the rig cannot have. When modelling her, keep the same proportions,
+palette and clay finish, but build the limbs as **separate entities meeting at
+joints** so they can rotate independently. See `CONCEPT.md` §9.7.
