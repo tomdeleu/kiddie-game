@@ -13,16 +13,21 @@ import Combine
 ///
 /// Three rules shape it, all from `CONCEPT.md` §5:
 ///
-/// - **One tap skips it.** Anywhere on the screen. A film a 4-year-old cannot
-///   get out of is a film she will learn to dread, and the second launch of the
-///   day should not cost her eight seconds.
-/// - **No player chrome.** `VideoPlayer` from AVKit puts a scrubber on screen
-///   the moment it is touched, so this drives an `AVPlayerLayer` directly.
-///   There is nothing to press, which is the point.
+/// - **It is skippable two ways.** A visible button, and a tap anywhere else on
+///   the screen. A film a 4-year-old cannot get out of is a film she will learn
+///   to dread, and the fourth launch of the day should not cost her fourteen
+///   seconds. The button exists because tap-anywhere is invisible: a grown-up
+///   handed the iPad has no way to guess it, and neither does she.
+/// - **The button carries no text**, because she cannot read one. It is the
+///   skip-to-end glyph everybody already knows from a music player, big enough
+///   to hit and dim enough not to compete with the film.
+/// - **No player chrome otherwise.** `VideoPlayer` from AVKit puts a scrubber on
+///   screen the moment it is touched, so this drives an `AVPlayerLayer`
+///   directly. The skip button is the only thing on top of the picture.
 /// - **Luna speaks over it**, in her own voice, rather than whatever the video
 ///   model would have invented. The film itself is silent.
 ///
-/// If `intro.mp4` is not bundled the whole thing is skipped and the game starts
+/// If no `intro-*.mp4` is bundled the whole thing is skipped and the game starts
 /// as it always did — the movie is a nicety, not a dependency.
 @MainActor
 struct IntroMovie: View {
@@ -42,6 +47,10 @@ struct IntroMovie: View {
     /// notification is just the cut to the next shot.
     @State private var lastItem: AVPlayerItem?
     @State private var finished = false
+    /// The skip button fades in a beat late, so the first second of the film is
+    /// the film. After that it stays put — it never fades out again, because a
+    /// control that comes and goes is one she cannot rely on.
+    @State private var showSkip = false
 
     /// Every shot, in order. `nonisolated` because it only asks the bundle a
     /// question, and it is read while a `@State` default is being set up.
@@ -75,7 +84,17 @@ struct IntroMovie: View {
         .ignoresSafeArea()
         .contentShape(Rectangle())
         .onTapGesture { finish(skipped: true) }
-        .onAppear(perform: start)
+        .overlay(alignment: .bottomTrailing) { skipButton }
+        .onAppear {
+            start()
+            // `Task { @MainActor in }` rather than `.task { }`: the latter takes
+            // a `@Sendable` closure, which does not inherit the view's
+            // main-actor isolation, and everything in here is main-actor work.
+            Task { @MainActor in
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+                withAnimation(.easeOut(duration: 0.45)) { showSkip = true }
+            }
+        }
         .onReceive(NotificationCenter.default.publisher(
             for: AVPlayerItem.didPlayToEndTimeNotification)) { note in
             // Fires at the end of every shot; only the last one ends the film.
@@ -90,6 +109,34 @@ struct IntroMovie: View {
             player?.pause()
             player = nil
         }
+    }
+
+    /// Skip. Bottom-right, deliberately away from the top-right corner, which
+    /// is where the developer panel's hidden triple-tap lives.
+    ///
+    /// 72 pt across: the age rules ask for ~120 pt game targets, and this is
+    /// not a game target — it is a control a grown-up reaches for and she can
+    /// hit by accident with no harm done, since skipping costs her nothing.
+    private var skipButton: some View {
+        Button {
+            finish(skipped: true)
+        } label: {
+            Image(systemName: "forward.end.fill")
+                .font(.system(size: 26, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: 72, height: 72)
+                .background(.black.opacity(0.35), in: Circle())
+                .overlay(Circle().strokeBorder(.white.opacity(0.55), lineWidth: 2))
+                // The film is pastel and bright; a shadow is what keeps the
+                // glyph readable over a cream wall.
+                .shadow(color: .black.opacity(0.35), radius: 8, y: 2)
+        }
+        .buttonStyle(.plain)
+        .padding(32)
+        .opacity(showSkip ? 1 : 0)
+        // Spoken, not written: the only place a word is allowed is somewhere
+        // she will never see it.
+        .accessibilityLabel("Overslaan")
     }
 
     private func start() {

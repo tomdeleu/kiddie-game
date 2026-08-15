@@ -40,10 +40,22 @@ for free and each shot stays independently re-cuttable. A third shot is
 Luna's third line is triggered by the cut itself, not by a timer, so re-cutting
 a shot to a different length cannot leave her talking about the wrong picture.
 
-**One tap anywhere skips it**, and skipping does not cost her the greeting —
-Luna says hello either way. The room is built and lit behind the film while it
-plays, so tapping through two seconds in lands in a kitchen that is already
-there.
+### Skipping
+
+Two ways, both doing the same thing:
+
+- **The skip button**, bottom-right, fading in a second after the film starts.
+  The skip-to-end glyph from every music player, no text on it, 72 pt across.
+  It exists because tap-anywhere is invisible — a grown-up handed the iPad has
+  no way to guess it, and neither does she.
+- **A tap anywhere else.** Kept, because it is what she will do.
+
+It is bottom-right on purpose: top-right is where the developer panel's hidden
+triple-tap lives.
+
+Skipping does not cost her the greeting — Luna says hello either way. The room
+is built and lit behind the film while it plays, so tapping through two seconds
+in lands in a kitchen that is already there.
 
 A tap cuts the narration off; the end of the film does not. She skipped because
 she wants to bake, so holding her at the door for the rest of a sentence would
