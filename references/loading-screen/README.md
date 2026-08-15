@@ -46,12 +46,12 @@ title is deliberately let out of the style — see below.
 | # | File | What was asked for | Ref | Job ID | Verdict |
 |---|---|---|---|---|---|
 | A | `candidates/A-cottage-plain-480.png` | Cottage, empty upper half, no title | scenes | `0a4b276c-d5cd-483c-9d15-3ea59c5e61da` | Lovely plate; title would have had to be drawn by the app |
-| B | `candidates/B-cottage-luna-480.png` | Cottage + Luna, no title | scenes | `884e5c86-f2ff-4df4-889a-5254554981cc` | Good, but the trees crowd the space a title needs |
+| B | `candidates/B-cottage-fairy-480.png` | Cottage + Nina, no title | scenes | `884e5c86-f2ff-4df4-889a-5254554981cc` | Good, but the trees crowd the space a title needs |
 | C | `candidates/C-hanging-sign-480.png` | Title on a hanging shop sign | scenes | `a3d50766-1c14-47c9-8863-8ec7ddbc4cfc` | Two signs, one reading just "Nina's"; both cover the cottage |
 | D | `candidates/D-title-first-480.png` | Title as faceted letters | scenes | `3a7cde18-7fbe-48e9-ad35-b1b1b2a56dbb` | **Spelled right first time.** Off-centre, cottage too small |
-| E | `candidates/E-luna-cake-480.png` | Luna holding a cake, no title | characters | `5c1a2512-6f1e-46c2-b5cc-1c9c5c41719e` | Charming and on-model, but she fills the frame — no room for a title |
+| E | `candidates/E-fairy-cake-480.png` | Nina holding a cake, no title | characters | `5c1a2512-6f1e-46c2-b5cc-1c9c5c41719e` | Charming and on-model, but she fills the frame — no room for a title |
 | F | `candidates/F-title-geometric-480.png` | D, recomposed | scenes | `fd2bdff1-a376-4d60-b8cd-5a7538828726` | Composition solved. Rejected on the lettering: a geometric sans reads grown-up |
-| G | `candidates/G-title-luna-480.png` | F + Luna | scenes | `0ebc2a2c-bb87-4f02-a565-bb90c6af2caa` | Smooth human-ish fairy, nothing like plate 02; trees over the title |
+| G | `candidates/G-title-fairy-480.png` | F + Nina | scenes | `0ebc2a2c-bb87-4f02-a565-bb90c6af2caa` | Smooth human-ish fairy, nothing like plate 02; trees over the title |
 | H | `candidates/H-title-cake-480.png` | F with a cake instead of the cottage | scenes | `77719f14-fba6-47f3-9e6d-9514ed2432fd` | *"Tovebakkerij"* |
 | I | `candidates/I-bounce-faceted-480.png` | Bouncy letters, still faceted | scenes | `7527810e-e3fb-4173-9a5e-764758e9a383` | Good letters, but wireframe triangulation drawn onto the cottage and the slab runs off the frame |
 | **J** | **`J-icing-final.png`** | **Puffy piped-icing letters** | scenes | `6fe0eaaf-6ba3-41f5-9e9c-8613412c5e8d` | **Chosen** |

@@ -199,7 +199,7 @@ smoke from the chimney, a little sparkle, and explicitly *nothing morphing*.
 Motion is where these models drift, so the brief is to move the camera and
 leave the world alone.
 
-It is silent on purpose. Luna speaks over it in her own voice
+It is silent on purpose. Nina speaks over it in her own voice
 (`audio/script-intro.json`), which is both consistent with every other line in
 the game and immune to a video model inventing English.
 

@@ -10,16 +10,16 @@
 
   "_timing": {
     "_comment": "One line per shot, written to the length of that shot. Measured, not guessed: Gracie delivers Dutch at roughly 15-17 characters a second, so a line's character count predicts its duration to within a few tenths. Re-cut a shot and the line to match it — the numbers below are the working budget.",
-    "shot_1": { "file": "Movies/intro-1.mp4", "video": 8.04, "voice": 6.37, "starts_at": 0.4, "tail": 1.27 },
+    "shot_1": { "file": "Movies/intro-1.mp4", "video": 8.04, "voice": 5.17, "starts_at": 0.4, "tail": 2.47 },
     "shot_2": { "file": "Movies/intro-2.mp4", "video": 6.04, "voice": 5.43, "starts_at": "the cut", "tail": 0.46 },
     "total_video": 14.08,
-    "total_voice": 11.80,
-    "_note": "The 1.27s before the cut is deliberate. She asks 'kom je mee naar binnen?' and then we cut inside — the pause is the answer. Wall-to-wall narration would be worse, not better."
+    "total_voice": 10.60,
+    "_note": "The 1.27s before the cut is deliberate. She asks 'kom je mee naar binnen?' and then we cut inside — the pause is the answer. It grew to 2.47s when the line moved to the first person and lost a word. Wall-to-wall narration would be worse, not better."
   },
 
   "characters": {
-    "luna": {
-      "name": "Luna de fee",
+    "nina": {
+      "name": "Nina",
       "voice_type": "preset",
       "voice_id": "09878754-f20b-5330-9790-58a8027ab5b2",
       "preset_name": "Gracie"
@@ -27,18 +27,18 @@
   },
 
   "_line_ids": {
-    "_comment": "One variant each on purpose: an opening should sound the same every time, the way a title card does. The film is silent, so this is all she hears. luna.intro.keuken fires on the cut between shots rather than on a timer.",
-    "luna.intro.buiten": "Over the exterior shot. Names the bakery, names Luna, and makes Nina the baker.",
-    "luna.intro.keuken": "Over the interior shot, from the cut."
+    "_comment": "One variant each on purpose: an opening should sound the same every time, the way a title card does. The film is silent, so this is all she hears. nina.intro.keuken fires on the cut between shots rather than on a timer.",
+    "nina.intro.buiten": "Over the exterior shot. Nina names her own bakery and introduces herself as the baker.",
+    "nina.intro.keuken": "Over the interior shot, from the cut."
   },
 
   "lines": [
-    { "id": "luna.intro.buiten", "character": "luna", "variants": [
-      { "index": 111, "file": "luna-intro-buiten-1.mp3", "seconds": 6.37,
-        "text": "Welkom in Nina's toverbakkerij! Hier woon ik, Luna. En jij bent de bakker. Kom je mee naar binnen?" }
+    { "id": "nina.intro.buiten", "character": "nina", "variants": [
+      { "index": 111, "file": "nina-intro-buiten-1.mp3", "seconds": 5.17,
+        "text": "Welkom in mijn toverbakkerij! Ik ben Nina, en ik ben de bakker. Kom je mee naar binnen?" }
     ]},
-    { "id": "luna.intro.keuken", "character": "luna", "variants": [
-      { "index": 112, "file": "luna-intro-keuken-1.mp3", "seconds": 5.43,
+    { "id": "nina.intro.keuken", "character": "nina", "variants": [
+      { "index": 112, "file": "nina-intro-keuken-1.mp3", "seconds": 5.43,
         "text": "Dit is de keuken. Hier bakken we de allerlekkerste tovertaarten. Zullen we beginnen?" }
     ]}
   ]

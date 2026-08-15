@@ -1,7 +1,7 @@
 import Foundation
 import AVFoundation
 
-/// Luna and Otto, speaking Dutch.
+/// Nina and Otto, speaking Dutch.
 ///
 /// The app never calls a text-to-speech API (`CONCEPT.md` §7.3): it plays
 /// bundled mp3s. What lines exist, and which files back them, comes from
@@ -10,7 +10,7 @@ import AVFoundation
 ///
 /// Two rules do most of the work in making her sound like a person:
 ///
-/// - **Never the same variant twice running.** Luna has four ways to say hello
+/// - **Never the same variant twice running.** Nina has four ways to say hello
 ///   and three ways to nudge; picking at random would still repeat, so the
 ///   previous pick is excluded outright.
 /// - **Nobody talks over anybody.** One line at a time, and an idle nudge
@@ -165,19 +165,31 @@ final class VoiceBank {
 /// Every constant here exists in `script-keuken.json`; a typo is a silent line
 /// rather than a crash, which is why they are not scattered as string literals.
 enum Line {
-    static let hallo = "luna.keuken.hallo"
-    static let doeInKom = "luna.keuken.doeInKom"
-    static let roeren = "luna.keuken.roeren"
-    static let roerenGoedZo = "luna.keuken.roerenGoedZo"
-    static let beslagKlaar = "luna.keuken.beslagKlaar"
-    static let gieten = "luna.keuken.gieten"
-    static let gegoten = "luna.keuken.gegoten"
-    static let naarOtto = "luna.keuken.naarOtto"
-    static let klopOpOtto = "luna.keuken.klopOpOtto"
-    static let oeps = "luna.oeps"
-    static let bloem = "luna.speel.bloem"
-    static let stil = "luna.stil"
-    static let klaar = "luna.klaar"
+    static let hallo = "nina.keuken.hallo"
+    static let doeInKom = "nina.keuken.doeInKom"
+    static let roeren = "nina.keuken.roeren"
+    static let roerenGoedZo = "nina.keuken.roerenGoedZo"
+    static let beslagKlaar = "nina.keuken.beslagKlaar"
+    static let gieten = "nina.keuken.gieten"
+    static let gegoten = "nina.keuken.gegoten"
+    static let naarOtto = "nina.keuken.naarOtto"
+    static let klopOpOtto = "nina.keuken.klopOpOtto"
+    static let oeps = "nina.oeps"
+    static let bloem = "nina.speel.bloem"
+    static let stil = "nina.stil"
+    static let klaar = "nina.klaar"
+
+    /// What we are doing today, said once at the top of every round.
+    static let opdracht = "nina.keuken.opdracht"
+    /// The rolling step, which comes before anything goes in the bowl.
+    static let uitrollen = "nina.keuken.uitrollen"
+    static let deegKlaar = "nina.keuken.deegKlaar"
+    /// Generic "take the glowing one", and the three places it can be.
+    static let pakGlimmend = "nina.keuken.pakGlimmend"
+    static let bronPlank = "nina.bron.plank"
+    static let bronAanrecht = "nina.bron.aanrecht"
+    static let bronMandje = "nina.bron.mandje"
+    static let opnieuw = "nina.keuken.opnieuw"
 
     static let ottoTik = "otto.tik"
     static let ottoVormErin = "otto.vormErin"
@@ -186,6 +198,6 @@ enum Line {
     static let ottoWacht = "otto.wacht"
 
     /// The opening film, one line per shot, each written to that shot's length.
-    static let introBuiten = "luna.intro.buiten"
-    static let introKeuken = "luna.intro.keuken"
+    static let introBuiten = "nina.intro.buiten"
+    static let introKeuken = "nina.intro.keuken"
 }
