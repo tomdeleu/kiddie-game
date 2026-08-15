@@ -20,9 +20,16 @@
     "otto": {
       "name": "Otto de oven",
       "role": "The kitchen oven. Has a face, is delighted every single time.",
-      "status": "uncast",
+      "status": "provisional",
+      "model": "text2speech_v2",
+      "variant": "elevenlabs",
+      "voice_type": "preset",
+      "voice_id": "d603a8cd-3fe1-55e0-9245-617a2589131e",
+      "preset_name": "Barrett",
+      "gender": "male",
       "line_estimate": 15,
-      "note": "Must be clearly distinct from Luna so Nina can tell who is talking without looking. Low and rumbly is the obvious read."
+      "lines_generated": 14,
+      "note": "Must be clearly distinct from Luna so Nina can tell who is talking without looking. Low and rumbly is the obvious read. PROVISIONAL: chosen without an ear on it - the session that generated his kitchen lines could not listen to the audition. Five candidates are in audio/auditions/ with the same line; play them and, if another one wins, put its voice_id here and in audio/script-keuken.json and regenerate Otto's 14 lines (~4 credits). Nothing else changes - the filenames are what the app looks up."
     },
     "friends": {
       "_comment": "The twelve friends whose parties fill the wall. They do not need twelve separate voices - four presets, pitch-shifted and assigned so that no two friends who appear together sound alike, is enough. Record the assignment here as it is decided. ~6-8 lines each: arrival, their wish, matched thanks, unmatched thanks, a couple of idle noises.",

@@ -1,0 +1,219 @@
+{
+  "_comment": "The kitchen's complete voice-over script. This file is BOTH the durable production record (CONCEPT.md §7.3: 'a plain-text script file of every line') AND the runtime manifest — it is bundled into the app and read by VoiceBank.swift, which maps line id -> variant files. Adding a line means adding it here and generating its mp3; no Swift change is needed. Regenerate any line with the character's voice_id below and the mp3 filename recorded on the variant.",
+  "_provider": "higgsfield",
+  "_model": "text2speech_v2",
+  "_variant": "elevenlabs",
+  "_cost_per_line_credits": 0.3,
+  "_generated": "2026-08-15",
+  "_files": "app/NinaBakeryPOC/Resources/Voice/",
+  "language": "nl",
+
+  "characters": {
+    "luna": {
+      "name": "Luna de fee",
+      "voice_type": "preset",
+      "voice_id": "09878754-f20b-5330-9790-58a8027ab5b2",
+      "preset_name": "Gracie"
+    },
+    "otto": {
+      "name": "Otto de oven",
+      "voice_type": "preset",
+      "voice_id": "d603a8cd-3fe1-55e0-9245-617a2589131e",
+      "preset_name": "Barrett",
+      "_status": "provisional — see audio/auditions/README.md"
+    }
+  },
+
+  "_line_ids": {
+    "_comment": "What the game calls, and when. Every id here is referenced from Swift; every id in Swift exists here.",
+    "luna.keuken.hallo": "On entering the kitchen.",
+    "luna.keuken.doeInKom": "Nudge: something from the basket belongs in the bowl.",
+    "luna.ingredient.*": "One reaction per ingredient, as it lands in the bowl. Names the colour it will give.",
+    "luna.keuken.roeren": "Nudge: stir.",
+    "luna.keuken.roerenGoedZo": "Halfway through stirring. Encouragement, never correction.",
+    "luna.keuken.beslagKlaar": "Stirring finished.",
+    "luna.keuken.gieten": "Nudge: pour the bowl into the tin.",
+    "luna.keuken.gegoten": "Poured.",
+    "luna.keuken.naarOtto": "Nudge: carry the tin to Otto.",
+    "luna.keuken.klopOpOtto": "Nudge: tap Otto to start baking.",
+    "luna.taart.*": "Reaction to the cake that came out, chosen by GAMEPLAY.md §5's colour rule.",
+    "luna.effect.*": "Follows the colour line when the cake sparkles, glows or is tall.",
+    "luna.oeps": "A drag that landed nowhere. Never negative — GAMEPLAY.md §7.",
+    "luna.speel.bloem": "Occasionally, when the flour sack is thumped.",
+    "luna.stil": "The 45-second idle line. Never twice in a row.",
+    "luna.klaar": "The cake is on the shelf and the round is over.",
+    "otto.tik": "Otto is tapped. Five variants because she will tap him constantly.",
+    "otto.vormErin": "The tin goes in.",
+    "otto.bakken": "While baking.",
+    "otto.klaar": "The cake is ready.",
+    "otto.wacht": "Otto is open and waiting for the tin."
+  },
+
+  "lines": [
+    { "id": "luna.keuken.hallo", "character": "luna", "variants": [
+      { "index": 1, "file": "luna-keuken-hallo-1.mp3", "text": "Hoi Nina! Kom je bakken? De kom staat al klaar." },
+      { "index": 2, "file": "luna-keuken-hallo-2.mp3", "text": "Daar ben je! Ik heb alles al klaargezet, hoor." },
+      { "index": 3, "file": "luna-keuken-hallo-3.mp3", "text": "Oeh, wat gaan we vandaag bakken, Nina?" },
+      { "index": 4, "file": "luna-keuken-hallo-4.mp3", "text": "Kom, we maken samen een toffe taart!" }
+    ]},
+
+    { "id": "luna.keuken.doeInKom", "character": "luna", "variants": [
+      { "index": 5, "file": "luna-keuken-doeInKom-1.mp3", "text": "Doe de toverdingetjes maar in de kom." },
+      { "index": 6, "file": "luna-keuken-doeInKom-2.mp3", "text": "Kijk, alles mag in de kom!" },
+      { "index": 7, "file": "luna-keuken-doeInKom-3.mp3", "text": "Pak er eentje, en laat hem in de kom vallen." }
+    ]},
+
+    { "id": "luna.ingredient.aardbei", "character": "luna", "variants": [
+      { "index": 8, "file": "luna-ingredient-aardbei-1.mp3", "text": "Een regenboogaardbei! Die maakt de taart roze." },
+      { "index": 9, "file": "luna-ingredient-aardbei-2.mp3", "text": "Mmm, aardbei. Nu wordt hij lekker roze!" }
+    ]},
+    { "id": "luna.ingredient.bosbes", "character": "luna", "variants": [
+      { "index": 10, "file": "luna-ingredient-bosbes-1.mp3", "text": "Een toverbosbes! Wat een mooi blauw." },
+      { "index": 11, "file": "luna-ingredient-bosbes-2.mp3", "text": "Bosbesjes erin. Die maken hem blauw!" }
+    ]},
+    { "id": "luna.ingredient.honing", "character": "luna", "variants": [
+      { "index": 12, "file": "luna-ingredient-honing-1.mp3", "text": "Zonnehoning! Nu gaat hij glimmen." },
+      { "index": 13, "file": "luna-ingredient-honing-2.mp3", "text": "Oeh, honing. Lekker geel en glanzend." }
+    ]},
+    { "id": "luna.ingredient.klaver", "character": "luna", "variants": [
+      { "index": 14, "file": "luna-ingredient-klaver-1.mp3", "text": "Toverklaver! Groen, net als het gras." },
+      { "index": 15, "file": "luna-ingredient-klaver-2.mp3", "text": "Klavertjes erbij. Nu wordt hij groen!" }
+    ]},
+    { "id": "luna.ingredient.wolkenroom", "character": "luna", "variants": [
+      { "index": 16, "file": "luna-ingredient-wolkenroom-1.mp3", "text": "Wolkenroom! Daar wordt hij lekker hoog van." },
+      { "index": 17, "file": "luna-ingredient-wolkenroom-2.mp3", "text": "Room van een echte wolk. Kijk maar hoe hoog hij wordt!" }
+    ]},
+    { "id": "luna.ingredient.sterrensuiker", "character": "luna", "variants": [
+      { "index": 18, "file": "luna-ingredient-sterrensuiker-1.mp3", "text": "Sterrensuiker! Nu gaat hij fonkelen." },
+      { "index": 19, "file": "luna-ingredient-sterrensuiker-2.mp3", "text": "Sterretjes erin. Die maken hem helemaal glinsterend!" }
+    ]},
+
+    { "id": "luna.keuken.roeren", "character": "luna", "variants": [
+      { "index": 20, "file": "luna-keuken-roeren-1.mp3", "text": "Nu roeren! Draai maar rondjes met je vinger." },
+      { "index": 21, "file": "luna-keuken-roeren-2.mp3", "text": "Roer maar lekker door, met de garde." },
+      { "index": 22, "file": "luna-keuken-roeren-3.mp3", "text": "Rondjes draaien, Nina. Dan mengt alles door elkaar." }
+    ]},
+    { "id": "luna.keuken.roerenGoedZo", "character": "luna", "variants": [
+      { "index": 23, "file": "luna-keuken-roerenGoedZo-1.mp3", "text": "Ja! Zo doe je dat." },
+      { "index": 24, "file": "luna-keuken-roerenGoedZo-2.mp3", "text": "Kijk eens hoe mooi het mengt." },
+      { "index": 25, "file": "luna-keuken-roerenGoedZo-3.mp3", "text": "Nog even doorroeren. Het gaat super!" }
+    ]},
+    { "id": "luna.keuken.beslagKlaar", "character": "luna", "variants": [
+      { "index": 26, "file": "luna-keuken-beslagKlaar-1.mp3", "text": "Het beslag is klaar! Wat een mooie kleur." },
+      { "index": 27, "file": "luna-keuken-beslagKlaar-2.mp3", "text": "Kijk eens, helemaal glad. Goed geroerd, Nina." },
+      { "index": 28, "file": "luna-keuken-beslagKlaar-3.mp3", "text": "Klaar met roeren. Nu mag het in de vorm!" }
+    ]},
+
+    { "id": "luna.keuken.gieten", "character": "luna", "variants": [
+      { "index": 29, "file": "luna-keuken-gieten-1.mp3", "text": "Giet het beslag maar in de vorm." },
+      { "index": 30, "file": "luna-keuken-gieten-2.mp3", "text": "Til de kom op, en kiep hem leeg in de vorm." },
+      { "index": 31, "file": "luna-keuken-gieten-3.mp3", "text": "In de bakvorm ermee!" }
+    ]},
+    { "id": "luna.keuken.gegoten", "character": "luna", "variants": [
+      { "index": 32, "file": "luna-keuken-gegoten-1.mp3", "text": "Precies goed gegoten!" },
+      { "index": 33, "file": "luna-keuken-gegoten-2.mp3", "text": "Kijk, de vorm zit lekker vol." }
+    ]},
+
+    { "id": "luna.keuken.naarOtto", "character": "luna", "variants": [
+      { "index": 34, "file": "luna-keuken-naarOtto-1.mp3", "text": "Breng de vorm maar naar Otto." },
+      { "index": 35, "file": "luna-keuken-naarOtto-2.mp3", "text": "Otto heeft honger. Zet de vorm maar in zijn buik!" },
+      { "index": 36, "file": "luna-keuken-naarOtto-3.mp3", "text": "Otto mag hem bakken. Schuif de vorm er maar in." }
+    ]},
+    { "id": "luna.keuken.klopOpOtto", "character": "luna", "variants": [
+      { "index": 37, "file": "luna-keuken-klopOpOtto-1.mp3", "text": "Tik maar op Otto, dan begint hij." },
+      { "index": 38, "file": "luna-keuken-klopOpOtto-2.mp3", "text": "Geef Otto een tikje. Hij wacht op jou!" }
+    ]},
+
+    { "id": "luna.taart.roze", "character": "luna", "variants": [
+      { "index": 39, "file": "luna-taart-roze-1.mp3", "text": "Een roze taart! Wat is die mooi geworden." },
+      { "index": 40, "file": "luna-taart-roze-2.mp3", "text": "Kijk eens, helemaal roze. Precies zoals de aardbeien." }
+    ]},
+    { "id": "luna.taart.blauw", "character": "luna", "variants": [
+      { "index": 41, "file": "luna-taart-blauw-1.mp3", "text": "Een blauwe taart! Net de lucht." },
+      { "index": 42, "file": "luna-taart-blauw-2.mp3", "text": "Zo blauw als de zee. Wauw, Nina." }
+    ]},
+    { "id": "luna.taart.geel", "character": "luna", "variants": [
+      { "index": 43, "file": "luna-taart-geel-1.mp3", "text": "Een gele taart! Net een klein zonnetje." },
+      { "index": 44, "file": "luna-taart-geel-2.mp3", "text": "Helemaal geel van de honing. Wat mooi!" }
+    ]},
+    { "id": "luna.taart.groen", "character": "luna", "variants": [
+      { "index": 45, "file": "luna-taart-groen-1.mp3", "text": "Een groene taart! Zo groen als het gras." },
+      { "index": 46, "file": "luna-taart-groen-2.mp3", "text": "Kijk, helemaal groen van de klavertjes." }
+    ]},
+    { "id": "luna.taart.wit", "character": "luna", "variants": [
+      { "index": 47, "file": "luna-taart-wit-1.mp3", "text": "Een witte wolkentaart! Zo zacht." },
+      { "index": 48, "file": "luna-taart-wit-2.mp3", "text": "Helemaal wit en hoog. Net een wolk, Nina." }
+    ]},
+    { "id": "luna.taart.room", "character": "luna", "variants": [
+      { "index": 49, "file": "luna-taart-room-1.mp3", "text": "Een lekkere roomtaart. Simpel en mooi!" },
+      { "index": 50, "file": "luna-taart-room-2.mp3", "text": "Kijk eens, een zachte gele roomtaart." }
+    ]},
+    { "id": "luna.taart.gemengd", "character": "luna", "variants": [
+      { "index": 51, "file": "luna-taart-gemengd-1.mp3", "text": "Oeh! Twee kleuren door elkaar. Wat een mooie krullen." },
+      { "index": 52, "file": "luna-taart-gemengd-2.mp3", "text": "Kijk, ze draaien om elkaar heen. Prachtig, Nina!" }
+    ]},
+    { "id": "luna.taart.regenboog", "character": "luna", "variants": [
+      { "index": 53, "file": "luna-taart-regenboog-1.mp3", "text": "Een regenboogtaart! Dat is de allermooiste die er is." },
+      { "index": 54, "file": "luna-taart-regenboog-2.mp3", "text": "Wauw! Drie kleuren! Kijk toch eens hoe hij glimt." },
+      { "index": 55, "file": "luna-taart-regenboog-3.mp3", "text": "Een echte regenboog in een taart. Hoe heb je dat gedaan, Nina!" }
+    ]},
+
+    { "id": "luna.effect.fonkelt", "character": "luna", "variants": [
+      { "index": 56, "file": "luna-effect-fonkelt-1.mp3", "text": "En hij fonkelt! Van de sterrensuiker." },
+      { "index": 57, "file": "luna-effect-fonkelt-2.mp3", "text": "Kijk, allemaal kleine sterretjes." }
+    ]},
+    { "id": "luna.effect.glimt", "character": "luna", "variants": [
+      { "index": 58, "file": "luna-effect-glimt-1.mp3", "text": "En hij gloeit een beetje. Dat doet de honing." },
+      { "index": 59, "file": "luna-effect-glimt-2.mp3", "text": "Zie je dat lichtje? Helemaal van de zonnehoning." }
+    ]},
+    { "id": "luna.effect.hoog", "character": "luna", "variants": [
+      { "index": 60, "file": "luna-effect-hoog-1.mp3", "text": "En kijk hoe hoog hij is!" },
+      { "index": 61, "file": "luna-effect-hoog-2.mp3", "text": "Zo hoog als een toren. Dat komt van de wolkenroom." }
+    ]},
+
+    { "id": "luna.oeps", "character": "luna", "variants": [
+      { "index": 62, "file": "luna-oeps-1.mp3", "text": "Oeps! Probeer die andere eens." },
+      { "index": 63, "file": "luna-oeps-2.mp3", "text": "Hihi, die wilde even niet. Probeer nog eens!" },
+      { "index": 64, "file": "luna-oeps-3.mp3", "text": "Bijna! Doe maar gewoon opnieuw." }
+    ]},
+    { "id": "luna.speel.bloem", "character": "luna", "variants": [
+      { "index": 65, "file": "luna-speel-bloem-1.mp3", "text": "Hihi, bloem op je neus!" },
+      { "index": 66, "file": "luna-speel-bloem-2.mp3", "text": "Poef! Een hele wolk van bloem." }
+    ]},
+    { "id": "luna.stil", "character": "luna", "variants": [
+      { "index": 67, "file": "luna-stil-1.mp3", "text": "Ik ben er nog, hoor. Wat zullen we doen?" },
+      { "index": 68, "file": "luna-stil-2.mp3", "text": "Zullen we verder gaan, Nina?" },
+      { "index": 69, "file": "luna-stil-3.mp3", "text": "Kijk eens, daar glimt iets!" }
+    ]},
+    { "id": "luna.klaar", "character": "luna", "variants": [
+      { "index": 70, "file": "luna-klaar-1.mp3", "text": "Wat een prachtige taart, Nina." },
+      { "index": 71, "file": "luna-klaar-2.mp3", "text": "Die is echt mooi geworden. Zullen we er nog eentje maken?" },
+      { "index": 72, "file": "luna-klaar-3.mp3", "text": "Zet hem maar op de plank, bij de andere taarten." }
+    ]},
+
+    { "id": "otto.tik", "character": "otto", "variants": [
+      { "index": 73, "file": "otto-tik-1.mp3", "text": "Hihi, dat kietelt!" },
+      { "index": 74, "file": "otto-tik-2.mp3", "text": "Hallo Nina. Ik ben Otto!" },
+      { "index": 75, "file": "otto-tik-3.mp3", "text": "Brrr. Ik ben vanbinnen al lekker warm." },
+      { "index": 76, "file": "otto-tik-4.mp3", "text": "Heb je al iets voor mij? Ik heb honger." },
+      { "index": 77, "file": "otto-tik-5.mp3", "text": "Hoehoe! Ik hou zo van taart." }
+    ]},
+    { "id": "otto.vormErin", "character": "otto", "variants": [
+      { "index": 78, "file": "otto-vormErin-1.mp3", "text": "Oeh, lekker. Dank je wel, Nina!" },
+      { "index": 79, "file": "otto-vormErin-2.mp3", "text": "Hap! Die zet ik er goed in." }
+    ]},
+    { "id": "otto.bakken", "character": "otto", "variants": [
+      { "index": 80, "file": "otto-bakken-1.mp3", "text": "Bakken maar. Rommel de bommel!" },
+      { "index": 81, "file": "otto-bakken-2.mp3", "text": "Warm, warmer, warmst. Bijna klaar!" }
+    ]},
+    { "id": "otto.klaar", "character": "otto", "variants": [
+      { "index": 82, "file": "otto-klaar-1.mp3", "text": "Ting! Je taart is klaar." },
+      { "index": 83, "file": "otto-klaar-2.mp3", "text": "Tada! Kijk eens wat een mooie taart." },
+      { "index": 84, "file": "otto-klaar-3.mp3", "text": "Klaar! En hij ruikt heerlijk, Nina." }
+    ]},
+    { "id": "otto.wacht", "character": "otto", "variants": [
+      { "index": 85, "file": "otto-wacht-1.mp3", "text": "Ik wacht hoor! Mijn buik is nog helemaal leeg." },
+      { "index": 86, "file": "otto-wacht-2.mp3", "text": "Kom maar. Ik hou de deur voor je open." }
+    ]}
+  ]
+}
