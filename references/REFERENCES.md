@@ -123,9 +123,52 @@ All plates use **`flux_2`**, variant `pro`, resolution `1k`. Recording prompt
 | 4 | Party room box | 1:1 | `884050` | `6eaffc62-3809-4985-80be-67d78eaf0bf1` |
 | 5 | Garden room box | 1:1 | — | `457fa9f0-6bf7-4299-815d-3141e42d8422` |
 
+### Gameplay plates — the scenes [`GAMEPLAY.md`](../GAMEPLAY.md) added
+
+All generated with the locked reference attached.
+
+| # | Subject | Aspect | Seed | Job ID |
+|---|---|---|---|---|
+| 6 | **The wall of twelve frames** — the hub and level select | 1:1 | `71143` | `b63007ac-96ff-46c0-9584-91ea8e2421ea` |
+| 7 | Decorating room box — turntable, trays, piping bag | 1:1 | `863778` | `fbb49dea-bbe7-491b-99f1-acf77ed12df7` |
+| 8 | The friends — cast line-up | 1:1 | `864078` | `878dabff-812b-415a-90de-c18c05762961` |
+| 9 | **Cake variants** — the colour system made visible | 1:1 | `119583` | `29dc8d73-b2f8-407b-99b5-af5f9fefd841` |
+| 10 | The wish at the door — friend holding a wish card | 1:1 | `871420` | `571d95c4-a277-40c9-aff7-7c8ba6e4dc9c` |
+| 11 | The finale — every friend, wall full and glowing | 1:1 | `645041` | `32a2d5e9-8072-47aa-81a9-62b4a43c414b` |
+
 Plate 5 was the first generated *with* the locked reference (plate 1) attached,
-and it came back matching on palette, finish, framing and lighting. That is the
-mechanism working — use it for everything from here.
+and it came back matching on palette, finish, framing and lighting. Plates 6–11
+confirm it holds across six new subjects, including two that are not room boxes
+at all. That is the mechanism working — use it for everything from here.
+
+### What plates 6–11 taught
+
+Findings that change how the next batch should be prompted, and two that change
+the design:
+
+- **Never ask for twelve characters in one image.** Plate 8 was asked for twelve
+  in two rows of six and delivered eight in two rows of four. Cast sheets need
+  splitting into two plates of six. The eight it did produce are also too
+  similar — bear, cat and dog all came back the same warm brown — so the next
+  cast pass should name a distinct palette colour per character.
+- **A literal grid comes back as a scatter, and the scatter is better.** Plate 6
+  was asked for a neat 3×4 grid and produced an irregular cluster of rounded
+  frames. It reads warmer and more hand-made than a rigid grid would, and it
+  still reads instantly as "some filled, some empty". Worth adopting in the
+  design rather than correcting.
+- **The wish card works.** Plate 10's card — a single golden honey drop, no text
+  — is legible at a glance at thumbnail size. That is the whole no-text wish
+  mechanic validated in one image, and it was the part of `GAMEPLAY.md` §4 most
+  likely to have failed.
+- **The cakes came back more saturated than the palette allows, and that is
+  right.** Plate 9's hot pink and rainbow sit outside the warm muted palette on
+  purpose: the cake is the one object in the game that should. Codify it — *the
+  room is muted, the cake is not* — rather than treating it as drift.
+- **The fairy is drifting.** Plate 3 has her humanoid; plate 10 renders her as a
+  small winged animal in an apron. She needs locking as her own image reference
+  before any further scene that includes her.
+- **Crowd scenes mush faces.** Plate 11 is a good mood and composition reference
+  and a useless character reference. Fine — that is what it is for.
 
 Direct links, in case the CDN is reachable from where you are reading this:
 
