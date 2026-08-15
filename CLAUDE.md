@@ -18,32 +18,37 @@ a frame on the bakery wall.
 a real toverbakkerij. That is the only progression — no scores, no stars, no
 timers, nothing counted anywhere. A round is ~11–12 minutes.
 
-**Status: design only.** No application code exists yet.
+**Status: one room built.** The proof of concept is answered and
+[`app/`](app/) now holds **De Keuken** — the full kitchen round, six toys, and
+86 Dutch voice lines. No other room exists.
 
-## → Start here: [`POC.md`](POC.md)
+## → Start here: [`app/README.md`](app/README.md)
 
-**The first task is a proof of concept, not game content.** It answers the two
-questions the briefing cannot: does the faceted low-poly look survive on the
-iPad, and can Nina drive the controls.
+The kitchen is playable end to end: ingredients into the bowl, stir, pour, into
+Otto, tap, cake, onto the plank, fresh basket. It has never been compiled — it
+was written in a container with no Swift toolchain — and its README names the
+two places most likely to want a fix on first build.
 
-**Stage A** is Blender → USDZ → Quick Look on the iPad. Well under an hour, no
-app code, **and no bake step**. **Stage B** is a minimal RealityKit app — one
-room, two draggables, one bowl — and only after Stage A passes.
+Two deliberate deviations from the design are recorded there: the doorway ends
+the round rather than leading to the decorating room, which does not exist yet,
+and the palette gained a blue the locked thirteen do not contain.
 
-`POC.md` has the geometry and material specs, the depth-without-AO options, the
-sampled palette with hex values, and the pass/fail criteria. Rationale is in
-`CONCEPT.md` §8.
+**Next**, per [`GAMEPLAY.md`](GAMEPLAY.md) §9: decorating, then the party, then
+the wall of twelve frames. And **test the kitchen with Nina first** — `POC.md`
+has the protocol, and what it says about the snap radius and target sizes is
+the thing worth knowing before another room is built on the same numbers.
 
-Stage A is being done locally where a **Blender MCP connector** is available, so
-a session there can drive Blender directly.
+[`POC.md`](POC.md) stays as the record of why the look is what it is, and its
+palette and pass criteria are still the standard every new room is held to.
 
 ## Where things are
 
 | Path | What |
 |---|---|
-| [`POC.md`](POC.md) | **The current task.** Step 0 proof of concept, with the Blender brief and palette. |
+| [`app/`](app/) | **The app.** De Keuken, whole: the round, the toys, Otto, Luna, the lighting panel. Written but never compiled — see its README. |
 | [`GAMEPLAY.md`](GAMEPLAY.md) | **Storyline and gameplay in detail.** The wall, the twelve friends and their wishes, the cake rules, what each room requires versus what is optional, the timing budget. |
-| [`app/`](app/) | **The Stage B POC app.** RealityKit, procedural faceted room, lighting debug panel. Written but never compiled — see its README. |
+| [`POC.md`](POC.md) | Step 0 proof of concept — answered. Kept for the palette, the geometry specs and the pass criteria. |
+| [`audio/`](audio/) | The voice script, the casting, the auditions, and the re-fetch script. |
 | [`app/LIGHTMAPS.md`](app/LIGHTMAPS.md) | How to bake AO in Reality Composer Pro 3, and how to A/B it against no-AO. |
 | [`CONCEPT.md`](CONCEPT.md) | The design. Loop, age rules, audio, rendering, build order. |
 | [`references/REFERENCES.md`](references/REFERENCES.md) | Art direction spec and reference plate recipes. |
@@ -60,7 +65,7 @@ concept art, and image-to-3D for static props.
 
 | Asset | Model | Notes |
 |---|---|---|
-| Speech | `text2speech_v2`, variant `elevenlabs` | ~0.15 credits/line. Regenerating is cheap — never settle. |
+| Speech | `text2speech_v2`, variant `elevenlabs` | **0.3 credits/line** — measured, not the 0.15 the older notes assume. The kitchen's 86 lines cost ~26. Regenerating is still cheap; never settle. |
 | Images | `flux_2`, variant `pro` | 1 credit each. **Record the seed.** Always pass the locked style reference — see below. |
 | Static props → 3D | `generate_3d` | **20 credits, and not usable for this style.** Tested on the oven: 26,780 faces at a 5° median crease against 56 faces procedurally, and decimation floors at 2,053 with irregular creases. It keeps the silhouette and destroys the facets. Evidence in `references/props/README.md`. Possibly still worth it for an organic character body. |
 
@@ -96,7 +101,10 @@ These were argued through and settled. Reopen only if the user asks.
   fixed-camera game with ten props per room. `CONCEPT.md` §9.3 has the
   comparison and the triggers for revisiting.
 - **Voice is generated, not recorded.** The fairy is **Gracie**
-  (`09878754-f20b-5330-9790-58a8027ab5b2`).
+  (`09878754-f20b-5330-9790-58a8027ab5b2`). Otto the oven is provisionally
+  **Barrett** (`d603a8cd-3fe1-55e0-9245-617a2589131e`) — picked without an ear
+  on it, with five auditions in [`audio/auditions/`](audio/auditions/) waiting
+  to be listened to. Swapping him costs ~4 credits and no code.
 - **Characters use a three-part rig**: one solid body (head, torso, arms) plus
   two legs pivoting at the hip. Squash-and-stretch on the root does most of the
   animation. Arms never articulate — realism is not the style. `CONCEPT.md` §9.7.
@@ -151,7 +159,10 @@ Every screen obeys these. Full table in `CONCEPT.md` §5.
 ## Environment gotchas
 
 - **Network is allowlisted.** Most content hosts return 403 at the egress proxy.
-  Diagnose with `curl -sS "$HTTPS_PROXY/__agentproxy/status"`.
+  Diagnose with `curl -sS "$HTTPS_PROXY/__agentproxy/status"`. The Higgsfield
+  results CDN (`d8j0ntlcm91z4.cloudfront.net`) **was** reachable on 2026-08-15,
+  which is how the 86 voice files got into the repo — check before assuming it
+  is not.
 - **Firecrawl cannot download binaries** — it retrieves web content, PDFs, and
   documents, and can *find* image URLs, but refuses images and archives. The
   screenshot workaround is in `references/FETCHING-ASSETS.md`.

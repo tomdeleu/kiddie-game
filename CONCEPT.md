@@ -208,8 +208,14 @@ A young voice makes the fairy read as a **playmate** rather than a
 grandmother-figure. Worth keeping in mind when writing her lines — she should
 sound like she is having fun alongside Nina, not instructing her.
 
-Still to cast: the oven, and the party guests. Give them clearly different
-voices from Gracie so Nina can tell who is talking without looking.
+Still to cast: the party guests. Give them clearly different voices from Gracie
+so Nina can tell who is talking without looking.
+
+**The oven is provisionally Barrett** (`d603a8cd-3fe1-55e0-9245-617a2589131e`),
+and already speaks his fourteen kitchen lines. The pick was made from the
+brief's own description rather than by ear, which is exactly what §7.1 warns
+against — five auditions are in [`audio/auditions/`](audio/auditions/) and
+confirming or replacing him is a minute of listening and four credits.
 
 All five are `voice_type: preset` and support the `elevenlabs`, `minimax`, and
 `seed_speech` engines, so a chosen voice can be re-run through a different

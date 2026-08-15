@@ -352,12 +352,19 @@ Roughly: Luna 90 lines (greetings, per-room nudges, reactions to colours and
 combinations, the finale), Otto 15, each friend 6–8 (their wish, their arrival,
 matched thanks, unmatched thanks, a couple of idle noises) for about 85.
 
-At ~0.15 credits a line that is **around 30 credits for the entire game's
-dialogue**, which means writing more variants than a recorded game could afford.
+> **The kitchen's share is done:** 72 Luna lines and 14 Otto lines, in
+> [`audio/script-keuken.json`](audio/script-keuken.json). It came to 26 credits,
+> because a line costs **0.3**, not the 0.15 assumed below. Scale the estimate
+> accordingly — the whole game's dialogue is nearer 60 credits than 30, which
+> changes nothing about the argument.
+
+At that price it is still **cheap enough to write more variants than a recorded
+game could afford**.
 Luna should have four or five ways to say everything she says often, or she will
 sound like a lift announcement by round three.
 
-Casting still needed: Otto, and enough distinct voices to cover twelve friends.
+Casting still needed: confirming Otto by ear, and enough distinct voices to
+cover twelve friends.
 They do not need twelve separate voices — four voices with different pitches,
 assigned so that no two friends who appear at the same party sound alike, is
 enough. Record the assignment in [`audio/voices.json`](audio/voices.json) as it
@@ -382,6 +389,11 @@ spine rather than a nice-to-have:
 
 1. **Kitchen + decorating**, hardcoded ingredients. Unchanged; still the best
    first target and still proves the drag-and-snap system.
+   **The kitchen is built** — see [`app/README.md`](app/README.md). The basket
+   is three random seeds until the garden fills it, the finished cake goes on a
+   plank on the back wall instead of into a frame, and the doorway ends the
+   round instead of leading anywhere. Decorating is the next thing it should
+   lead to, and `tapDoorway()` is the single function that changes.
 2. **The party**, so a round has an ending.
 3. **The wall** — twelve frames, the grey ghosts, the level select, and
    persistence. This moves *up*: it is not a reward system bolted on later, it
@@ -399,10 +411,15 @@ completed, because until the wall exists there is no reason for a second round.
 
 ## 10. Still open
 
-- **Otto's voice and the four friend voices.**
-- **Music.** Six instrument pads and a party loop, from GarageBand or a CC0
-  library — `CONCEPT.md` §7.4. The party is the payoff and it is currently
-  silent.
+- **Otto's voice — one listen away.** He is provisionally Barrett and already
+  says all fourteen of his kitchen lines, but the pick was made without an ear
+  on it. Five auditions are in [`audio/auditions/`](audio/auditions/); playing
+  them takes a minute and re-cutting him costs four credits.
+- **The four friend voices.**
+- **Music, and the sound effects.** Six instrument pads and a party loop, from
+  GarageBand or a CC0 library — `CONCEPT.md` §7.4. The party is the payoff and
+  it is currently silent. The kitchen's effects are **synthesised at launch** as
+  a stopgap; a bought or CC0 pack replaces them one file at a time.
 - **Whether the twelve friends are the right twelve.** They are cheap to change
   now and expensive once modelled.
 - **Whether replaying a filled frame should be a full party or a short clip.**

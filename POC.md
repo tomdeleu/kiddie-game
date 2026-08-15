@@ -1,5 +1,12 @@
 # Step 0 — the proof of concept
 
+> **Done, and overtaken.** Both questions below are answered, and the app in
+> [`app/`](app/) is now the kitchen rather than a proof of concept — one full
+> round, six toys, Dutch voice. Read [`app/README.md`](app/README.md) for what
+> is actually in there. This file stays as the record of *why* the look is what
+> it is, and the palette and criteria below are still the standard every new
+> room is held to.
+
 **This is the first thing to build.** Not game content. Rationale in
 [`CONCEPT.md`](CONCEPT.md) §8; this file is the working brief.
 
@@ -234,11 +241,16 @@ against drift as rooms are added.
 
 ## Handoff
 
-**Stage B now has a starting point:** [`app/`](app/) holds a RealityKit project
-that builds the room procedurally with flat-shaded primitives and puts every
-lighting control behind a debug panel, including the Reality Composer Pro 3
-lightmap comparison described above. It was written without a Mac available, so
-it has never been compiled — see [`app/README.md`](app/README.md).
+**Stage B is done, and the room after it is built.** [`app/`](app/) holds the
+RealityKit project: it builds the room procedurally with flat-shaded
+primitives, keeps every lighting control behind a debug panel — including the
+Reality Composer Pro 3 lightmap comparison described above — and now runs the
+whole kitchen round from `GAMEPLAY.md` §6.3 on top of it. See
+[`app/README.md`](app/README.md).
+
+Stage B's three pass criteria stand as written, and the third one —
+**Nina can pick something up and drop it in the bowl without help** — is now
+testable inside a round that has a reason to care about the bowl.
 
 Note the app builds the room in **code**, not Blender. For primitives this
 simple that turned out to be the faster loop, and it sidesteps the asset
