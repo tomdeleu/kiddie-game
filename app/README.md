@@ -178,7 +178,8 @@ The rolling pin can live on the floor. The exception is the patch of floor
 something and then genuinely not get it back, with no way to look round the
 table. Drops there float home. `Layout.isOutOfSight` derives the patch from the
 camera and the table rather than hardcoding it — at the committed camera it is
-about 170 × 140 mm between the table and the counter. This replaced a rule where a missed drop floated home and
+about 235 × 170 mm between the table and the counter, and it grew when the table
+did, which is the derivation working rather than a regression. This replaced a rule where a missed drop floated home and
 Nina apologised for it, which was wrong twice: it undid the one thing she can
 do with a kitchen full of objects, and it treated every stray drag as a failed
 attempt when most of them are a 4-year-old moving a rolling pin because it is
@@ -190,6 +191,64 @@ so it is a real signal rather than noise. Twice, Nina says something kind.
 The third time she says the step's own line again, at full priority, and the
 lit prop gives a squash while she does. She cannot read a reminder, so this is
 the only way one can reach her.
+
+### The size of the room
+
+The room box is **0.46 m across, not the 0.40 m `POC.md` specified**, and the
+camera sits 8% further back to suit. Both numbers moved for one reason: the
+0.40 m room had run out of floor.
+
+What that looked like. Seven props shared a 0.210 × 0.115 m table top, and
+their centres all fell inside a 0.154 × 0.076 m patch of it — the bowl and the
+whisk 1 mm apart, the tin and the cake spot 2 mm. The three toys on the back
+counter sat at 50 mm centres with 32 mm touch spheres, so **both** neighbouring
+pairs overlapped and which one a tap got was settled by the nearest-wins
+tie-break rather than by where she put her finger. The table's right edge and
+Otto's dome were 33 mm apart. Everything was reachable; nothing had any air
+around it.
+
+So the walls went out 15%, and the room spent almost all of it on separation
+rather than on new props:
+
+| | Before | After |
+|---|---|---|
+| Room box | 0.40 m | 0.46 m |
+| Table | 0.210 × 0.115 | 0.280 × 0.140 |
+| Otto | x = 0.115 | x = 0.152, and 12 mm further back |
+| Closest two props on the table | 1 mm | 12 mm |
+| Counter toys | 50 mm centres | 70 mm centres |
+
+Otto moving right is what buys the longer table, and he is now as far right as
+he goes — his dome reaches x = 0.214 against a floor edge at 0.230. Moving him
+back as well takes his footprint out of the table's depth completely, so the
+two no longer share any Z at all.
+
+The table's seven props are now in three clusters, left to right, and they are
+the round's three jobs: **roll** (dough and pin, basket above them), **mix**
+(whisk and bowl), **bake** (tin, and the cake it comes back as, on Otto's
+side). Reading the table left to right is reading the recipe.
+
+**The camera had to move, and that cost something.** At the old eye the 0.40 m
+box already filled the frame corner to corner — the slab's tips sat at ±0.97 of
+half the screen width on a 4:3 iPad — so a wider room simply ran off the sides.
+Pulling back 1.08× puts the bigger slab's tips roughly where the smaller one's
+were. That is deliberately *less* than the room's 15% growth: matching it would
+have shrunk every prop by 15% on screen, and the props are what has to stay
+thumb-sized. The residue is that the two wall-tops and the slab tips crop a few
+percent more than before, and only on the one 4:3 iPad still in the line-up —
+on a 1.43 screen everything is inside the frame.
+
+**Every touch radius was multiplied by that same 1.08**, in `registerTargets`
+and `registerToyTargets`, along with `snapRadius` and `plankSnapRadius`. Those
+are world-space spheres satisfying a rule about the screen (`CONCEPT.md` §5's
+~120 pt targets), so a camera that steps back shrinks all of them for free.
+Scaling them back is what keeps the bigger room from being a silent regression
+against the age rules: nothing on screen is harder to hit than it was. **If the
+camera moves again, they move with it.**
+
+This is the one thing here worth checking with Nina before another room is
+built on the same numbers — see `POC.md`, whose snap-radius and target-size
+criteria are exactly what this trades against.
 
 ### Where things are
 
@@ -384,6 +443,13 @@ camera. The camera never moves (`CONCEPT.md` §9.4), so that is a constant
 rather than a billboard.
 
 ## Deliberate deviations from the design
+
+**The room is 0.46 m across and the camera moved with it.** `POC.md` asks for a
+box "around 0.4 m" and signed off a framing; this is that box grown 15% and that
+eye pulled back 8%, because at 0.40 m the props had no space between them. The
+full argument, the before-and-after numbers and what the camera move cost are
+under [The size of the room](#the-size-of-the-room). It is the deviation most
+worth testing with Nina, because what it trades against is target size.
 
 **The doorway does not lead anywhere yet, and no longer ends the round either.**
 `GAMEPLAY.md` §7 says the door always works, even mid-task. Here it cannot: the

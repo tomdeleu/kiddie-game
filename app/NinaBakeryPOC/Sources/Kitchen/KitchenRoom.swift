@@ -117,8 +117,15 @@ final class KitchenRoom {
     private var alternateNudge = false
 
     /// Drop generosity. `CONCEPT.md` §5: drop the egg *near* the bowl and it
-    /// goes in the bowl. 0.06 m is about a third of the table.
-    private let snapRadius: Float = 0.062
+    /// goes in the bowl.
+    ///
+    /// Scaled 1.08 with the camera, like the touch radii — this is a tolerance
+    /// she aims by eye, so what matters is how big it is on screen. It is now
+    /// about a quarter of the longer table rather than a third of the old one,
+    /// and it is still comfortably the largest thing on the top: the nearest
+    /// two home positions to the bowl are the whisk at 70 mm and the cake spot
+    /// at 71 mm, so nothing sits inside it by accident.
+    private let snapRadius: Float = 0.067
 
     init(ticker: Ticker, touch: TouchRouter, voice: VoiceBank,
          sound: SoundKit, settings: LightingSettings) {
@@ -300,11 +307,21 @@ final class KitchenRoom {
 
     // MARK: - Targets
 
+    /// **Every radius below is 1.08× what it was**, and that number is
+    /// `CameraRig.eye`'s pull-back, not a judgement about any one prop.
+    ///
+    /// These are world-space spheres, but what they have to satisfy is a rule
+    /// about the screen — `CONCEPT.md` §5's "minimum ~120 pt hit areas". When
+    /// the camera stepped back 8% to fit the wider room, every one of them got
+    /// 8% smaller under her finger for free. Scaling them by the same factor is
+    /// what keeps that from being a silent regression: the room is bigger, the
+    /// props are the same size in metres, and nothing on screen is any harder
+    /// to hit than it was. **If the camera moves again, these move with it.**
     private func registerTargets() {
         for (index, token) in tokens.enumerated() {
             let source = Layout.Source(rawValue: index) ?? .mandje
             touch.register("token\(index)", entity: token.entity,
-                           radius: 0.030, planeY: source.planeY) { target in
+                           radius: 0.032, planeY: source.planeY) { target in
                 target.tracksEntity = true
                 target.onDragBegan = { [weak self] world in
                     self?.pickUp(token.entity, at: world)
@@ -317,7 +334,7 @@ final class KitchenRoom {
             }
         }
 
-        touch.register("bowl", entity: bowl, radius: 0.045,
+        touch.register("bowl", entity: bowl, radius: 0.048,
                        planeY: Layout.tableTopY + 0.020) { target in
             target.tracksEntity = true
             target.planeOffset = 0.020
@@ -326,7 +343,7 @@ final class KitchenRoom {
             target.onDragEnded = { [weak self] world in self?.bowlTouchEnded(world) }
         }
 
-        touch.register("tin", entity: tin?.root, radius: 0.034,
+        touch.register("tin", entity: tin?.root, radius: 0.037,
                        planeY: Layout.tableTopY) { target in
             target.tracksEntity = true
             target.onDragBegan = { [weak self] world in
@@ -337,17 +354,17 @@ final class KitchenRoom {
             target.onDragEnded = { [weak self] world in self?.dropTin(at: world) }
         }
 
-        touch.register("otto", entity: oven?.root, radius: 0.070,
+        touch.register("otto", entity: oven?.root, radius: 0.076,
                        planeY: Layout.floorY) { target in
             target.onTap = { [weak self] in self?.tapOtto() }
         }
 
-        touch.register("doorway", entity: doorway?.root, radius: 0.050,
+        touch.register("doorway", entity: doorway?.root, radius: 0.054,
                        planeY: Layout.floorY) { target in
             target.onTap = { [weak self] in self?.tapDoorway() }
         }
 
-        touch.register("cake", entity: nil, radius: 0.040,
+        touch.register("cake", entity: nil, radius: 0.043,
                        planeY: Layout.tableTopY) { target in
             target.tracksEntity = true
             target.onTap = { [weak self] in self?.tapCake() }
@@ -366,21 +383,21 @@ final class KitchenRoom {
     }
 
     private func registerToyTargets() {
-        // The sack is on the floor now, and big — a 60 mm target on a prop she
+        // The sack is on the floor now, and big — a 96 mm target on a prop she
         // has to reach down for.
-        touch.register("flour", entity: flourSack, radius: 0.045,
+        touch.register("flour", entity: flourSack, radius: 0.048,
                        planeY: Layout.floorY) { target in
             target.onTap = { [weak self] in self?.tapFlour() }
         }
-        touch.register("sink", entity: sink?.root, radius: 0.030,
+        touch.register("sink", entity: sink?.root, radius: 0.032,
                        planeY: Layout.counterTopY) { target in
             target.onTap = { [weak self] in self?.tapSink() }
         }
-        touch.register("scale", entity: scaleProp?.root, radius: 0.030,
+        touch.register("scale", entity: scaleProp?.root, radius: 0.032,
                        planeY: Layout.counterTopY) { target in
             target.onTap = { [weak self] in self?.tapScale() }
         }
-        touch.register("crate", entity: crate, radius: 0.034,
+        touch.register("crate", entity: crate, radius: 0.037,
                        planeY: Layout.floorY) { target in
             target.onTap = { [weak self] in
                 guard let self, let crate = self.crate else { return }
@@ -388,7 +405,7 @@ final class KitchenRoom {
                 self.sound.playVaried(.thud, volume: 0.5)
             }
         }
-        touch.register("rollingPin", entity: rollingPin, radius: 0.032,
+        touch.register("rollingPin", entity: rollingPin, radius: 0.035,
                        planeY: Layout.tableTopY) { target in
             target.tracksEntity = true
             target.onDragBegan = { [weak self] world in self?.rollBegan(at: world) }
@@ -413,7 +430,7 @@ final class KitchenRoom {
             for i in 0..<3 {
                 let name = "Jar\(height)_\(i)"
                 guard let jar = root.findEntity(named: name) else { continue }
-                touch.register(name, entity: jar, radius: 0.022,
+                touch.register(name, entity: jar, radius: 0.024,
                                planeY: Float(height) / 1000) { target in
                     target.onTap = { [weak self] in self?.tapJar(jar) }
                 }
@@ -1126,7 +1143,7 @@ final class KitchenRoom {
         // Otto only takes it once it has batter in it. Before that she can
         // carry the tin around all she likes and put it down anywhere.
         guard state.step == .inOven,
-              Layout.distanceXZ(tin.root.position, Layout.ovenMouth) <= 0.075 else {
+              Layout.distanceXZ(tin.root.position, Layout.ovenMouth) <= 0.081 else {
             settle(tin.root, missed: state.step == .inOven)
             return
         }
@@ -1579,7 +1596,7 @@ final class KitchenRoom {
         // to go back and forth across it, which is the motion the picture is
         // asking for. Roughly three passes.
         if state.step == .uitrollen, let dough, dough.isEnabled {
-            let over = Layout.distanceXZ(rollingPin.position, dough.position) < 0.030
+            let over = Layout.distanceXZ(rollingPin.position, dough.position) < 0.032
             if over {
                 let travel = Layout.distanceXZ(world, last)
                 state.roll = min(1, state.roll + travel / 0.11)

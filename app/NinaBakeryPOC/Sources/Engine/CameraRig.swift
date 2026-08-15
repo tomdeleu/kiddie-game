@@ -17,7 +17,23 @@ import simd
 final class CameraRig {
 
     /// Same framing the POC signed off on — a raised three-quarter doll's house.
-    static let eye = SIMD3<Float>(0.589, 0.570, 0.589)
+    ///
+    /// **Pulled back 8% when the room grew from 0.40 m to 0.46 m.** The old eye
+    /// was `(0.589, 0.570, 0.589)`, and at that distance the 0.40 m box already
+    /// filled the frame corner to corner: the slab's left and right tips sat at
+    /// ±0.97 of half the screen width on a 4:3 iPad, so a wider room simply ran
+    /// off the sides. Everything here is the old eye scaled 1.08 away from the
+    /// same target, which puts the bigger slab's tips back where the smaller
+    /// one's were.
+    ///
+    /// It is a deliberately *partial* pull-back. Matching the room's full 15%
+    /// growth would have shrunk every prop by 15% on screen, and the props are
+    /// what has to stay thumb-sized; 8% keeps them near their old size and lets
+    /// the two wall-tops and the slab tips crop a few percent more than before
+    /// on the one 4:3 iPad still in the line-up. **The touch radii in
+    /// `KitchenRoom` were widened by the same 1.08** so nothing on screen got
+    /// harder to hit — if this number moves again, they move with it.
+    static let eye = SIMD3<Float>(0.636, 0.611, 0.636)
     static let target = SIMD3<Float>(0, 0.06, 0)
     static let fovDegrees: Float = 26
 

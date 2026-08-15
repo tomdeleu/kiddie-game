@@ -8,27 +8,56 @@ import simd
 /// disagreeing about where the table top is.
 enum Layout {
 
-    /// Room box is 0.4 m across, per `POC.md`.
-    static let roomSize: Float = 0.4
+    /// Room box, **0.46 m across**. `POC.md` asks for "around 0.4 m"; this is
+    /// that number grown 15% because the 0.40 m room had run out of floor.
+    ///
+    /// The room did not get more props — it got the ones it has far enough
+    /// apart to be separate objects. At 0.40 m the table's right edge and
+    /// Otto's dome were 33 mm apart, the three counter toys sat at 48–52 mm
+    /// centres, and seven things shared a 0.210 × 0.115 m table top. Everything
+    /// was reachable and nothing had any air around it.
+    ///
+    /// **The camera moved with it** — `CameraRig.eye` is pulled back 8%,
+    /// because the old framing already had the slab's tips on the frame edge.
+    /// Growing the room without that is a room with its corners sawn off.
+    static let roomSize: Float = 0.46
     static let half: Float = roomSize / 2
-    static let wallHeight: Float = 0.22
+    /// Up from 0.22 with the floor: same walls on a wider floor read squat, and
+    /// the extra 15 mm is headroom above the top shelf's jars.
+    static let wallHeight: Float = 0.235
     static let wallThickness: Float = 0.012
     static let slabThickness: Float = 0.014
     static let floorY: Float = 0.004
 
     /// The work surface. Everything she drags lives on this plane.
+    ///
+    /// **Bigger and longer**: 0.280 × 0.140 m, up from 0.210 × 0.115. It is the
+    /// one surface with seven things on it, so it took most of what the room
+    /// gained — 70 mm of length and 25 mm of depth. It grew leftwards into the
+    /// new floor and its right edge barely moved, because that edge is what
+    /// Otto has to stand clear of.
     static let tableTopY: Float = 0.072
-    static let tableCentre = SIMD2<Float>(-0.045, 0.050)
-    static let tableSize = SIMD2<Float>(0.210, 0.115)
+    static let tableCentre = SIMD2<Float>(-0.058, 0.052)
+    static let tableSize = SIMD2<Float>(0.280, 0.140)
     static let tableThickness: Float = 0.012
 
-    /// The back counter: sink, scale, flour sack.
+    /// The back counter: sink, scale, ingredient pot.
+    ///
+    /// Longer by 30 mm and pushed 24 mm back against the new wall, which is
+    /// what takes the three toys on it from 50 mm centres to 70 mm.
     static let counterTopY: Float = 0.058
-    static let counterCentre = SIMD2<Float>(-0.085, -0.158)
-    static let counterSize = SIMD2<Float>(0.200, 0.060)
+    static let counterCentre = SIMD2<Float>(-0.092, -0.182)
+    static let counterSize = SIMD2<Float>(0.230, 0.062)
 
     /// Otto, on the right against the back wall.
-    static let ovenOrigin = SIMD3<Float>(0.115, floorY, -0.100)
+    ///
+    /// **Moved 37 mm right and 12 mm back**, which is what buys the longer
+    /// table. He is the room's right-hand bookend: his dome reaches x = 0.214
+    /// against a floor edge at 0.230, so this is as far right as he goes
+    /// without hanging off it. Moving him back as well clears his footprint out
+    /// of the table's depth entirely — the two no longer share any Z at all,
+    /// where before the table's corner and his dome were 33 mm apart.
+    static let ovenOrigin = SIMD3<Float>(0.152, floorY, -0.112)
     static let ovenDomeRadius: Float = 0.062
     static let ovenDomeHeight: Float = 0.075
     /// Mouth opening, in Otto's local space.
@@ -44,17 +73,40 @@ enum Layout {
         ovenOrigin + SIMD3<Float>(0, mouthLegHeight + 0.010, mouthFrontZ - 0.002)
     }
 
-    // Home positions on the table.
-    static let basketHome = SIMD3<Float>(-0.130, tableTopY, 0.082)
-    static let bowlHome = SIMD3<Float>(-0.050, tableTopY, 0.048)
-    static let whiskHome = SIMD3<Float>(-0.020, tableTopY, 0.014)
-    static let tinHome = SIMD3<Float>(0.022, tableTopY, 0.080)
-    /// Lies along X from here, so its left end is what has to stay on the table.
-    static let rollingPinHome = SIMD3<Float>(-0.105, tableTopY, 0.006)
-    /// The ball of dough, and where it is rolled out. Sits in the pin's path.
-    static let doughSpot = SIMD3<Float>(-0.105, tableTopY, 0.045)
+    // MARK: - Home positions on the table
+    //
+    // **Spread across the whole top, in three clusters rather than one heap.**
+    // The seven centres used to sit inside a 0.154 × 0.076 m patch of a
+    // 0.210 × 0.115 m table, with the bowl and the whisk 1 mm apart and the tin
+    // and the cake spot 2 mm; they now cover 0.222 × 0.088 of a 0.280 × 0.140
+    // table and **no two are closer than 12 mm**. That number is the whole
+    // point of the change — it is the difference between props that touch and
+    // props that stand next to each other.
+    //
+    // The clusters are the round's three jobs, left to right: **roll** (dough
+    // and pin, with the basket over them), **mix** (whisk and bowl, in the
+    // middle where the stirring happens), **bake** (tin and the cake it comes
+    // back as, on the side nearest Otto). Reading the table left to right is
+    // now reading the recipe, which the heap could not say.
+
+    static let basketHome = SIMD3<Float>(-0.170, tableTopY, 0.096)
+    static let bowlHome = SIMD3<Float>(-0.032, tableTopY, 0.062)
+    /// Beside the bowl rather than in front of it. On the old table it sat
+    /// between the bowl and the cake spot, which is the one bit of top that
+    /// needs to be clear when Otto hands a cake back.
+    static let whiskHome = SIMD3<Float>(-0.092, tableTopY, 0.026)
+    static let tinHome = SIMD3<Float>(0.052, tableTopY, 0.090)
+    /// Lies along X from here, so its left end is what has to stay on the
+    /// table: the barrel and handles run from −0.044 to +0.030 of this, which
+    /// puts its left tip 6 mm inside the new top's left edge.
+    static let rollingPinHome = SIMD3<Float>(-0.148, tableTopY, 0.008)
+    /// The ball of dough, and where it is rolled out. Sits in the pin's path,
+    /// 44 mm ahead of it — far enough to be a drag, near enough that the roll
+    /// starts almost at once, and the basket sits over the pair rather than in
+    /// among them.
+    static let doughSpot = SIMD3<Float>(-0.150, tableTopY, 0.052)
     /// Where a finished cake lands when Otto hands it over.
-    static let cakeSpot = SIMD3<Float>(0.024, tableTopY, 0.030)
+    static let cakeSpot = SIMD3<Float>(0.032, tableTopY, 0.032)
 
     /// Nina herself, behind the table between it and the counter.
     ///
@@ -62,7 +114,13 @@ enum Layout {
     /// fixed camera angle, standing behind the bowl put her body across the
     /// sightline to the sink, and a toy she is standing in front of is a toy
     /// that never gets tapped.
-    static let bakerSpot = SIMD3<Float>(-0.105, floorY, -0.062)
+    ///
+    /// **She moved 40 mm left with the table**, which is more than the table
+    /// itself moved, and the extra is spent on the same sightline: on the wider
+    /// counter the sink went left too, and at x = −0.145 she now clears all but
+    /// a sliver of it instead of covering its near half. Further left is not
+    /// better — past about −0.150 she starts crossing the lower wall shelf.
+    static let bakerSpot = SIMD3<Float>(-0.145, floorY, -0.072)
 
     /// **The five places an ingredient can come from, in order.**
     ///
@@ -88,9 +146,12 @@ enum Layout {
         /// Where its ingredient waits.
         var spot: SIMD3<Float> {
             switch self {
-            case .plankHoog: return SIMD3<Float>(-0.181, 0.164, 0.030)
-            case .plankLaag: return SIMD3<Float>(-0.181, 0.119, 0.030)
-            case .aanrecht: return SIMD3<Float>(-0.050, counterTopY + 0.011, -0.150)
+            // The two shelf spots follow the left wall out to x = −0.211, and
+            // sit at the near end of the longer plank — 38 mm clear of the
+            // nearest jar, where they used to be 25 mm from it.
+            case .plankHoog: return SIMD3<Float>(-0.211, 0.164, 0.044)
+            case .plankLaag: return SIMD3<Float>(-0.211, 0.119, 0.044)
+            case .aanrecht: return SIMD3<Float>(-0.034, counterTopY + 0.011, -0.174)
             case .mandje: return basketHome + SIMD3<Float>(0, 0.012, 0)
             case .krat: return crateSpot + SIMD3<Float>(0, 0.017, 0)
             }
@@ -120,27 +181,42 @@ enum Layout {
     static var ingredientsPerRound: Int { Source.allCases.count }
 
     // Toys on the counter. The flour sack used to be the fourth thing on this
-    // 0.20 m run and is now on the floor, which left the counter with room to
-    // breathe: sink, scale, and the ingredient pot.
-    static let sinkSpot = SIMD3<Float>(-0.150, counterTopY, -0.158)
-    static let scaleSpot = SIMD3<Float>(-0.098, counterTopY, -0.152)
+    // run and is now on the floor, which left the counter with room to breathe:
+    // sink, scale, and the ingredient pot.
+    //
+    // On the longer 0.230 m counter the three sit at 70 mm centres rather than
+    // 50, which is what finally puts daylight between them: bare worktop
+    // between them goes from 15 and 17 mm to 33 and 39.
+    //
+    // It matters for more than the look. Their touch spheres are 32 mm, so at
+    // the old spacing **both** neighbouring pairs overlapped and which toy she
+    // got was decided by the nearest-wins tie-break in `TouchRouter.hitTest`.
+    // At 70 mm centres neither pair overlaps and each tap has one answer.
+    static let sinkSpot = SIMD3<Float>(-0.174, counterTopY, -0.182)
+    static let scaleSpot = SIMD3<Float>(-0.104, counterTopY, -0.176)
 
     /// **The flour sack sits on the floor**, in the near-left foreground where
     /// the room is open. A sack of flour is a heavy thing, and a heavy thing on
     /// a worktop reads as a jar; on the ground it reads as a sack. It is also
     /// the one prop in front of the table, which gives the shot a foreground.
-    static let flourSpot = SIMD3<Float>(-0.055, floorY, 0.152)
+    static let flourSpot = SIMD3<Float>(-0.062, floorY, 0.178)
 
     /// The crate the fifth ingredient waits in, on the floor to Otto's near
     /// side. Placed off the table's right edge rather than behind it: the
     /// camera looks down the +X+Z diagonal, so floor to the *left* of the table
     /// is hidden by the table itself and floor to the right is not.
-    static let crateSpot = SIMD3<Float>(0.098, floorY, 0.042)
+    ///
+    /// It moved out with the table's right edge — 34 mm right and 16 mm
+    /// forward. It had 12 mm of floor between it and that edge and now has 24,
+    /// which is what stops it reading as something shoved under the table.
+    static let crateSpot = SIMD3<Float>(0.132, floorY, 0.058)
 
-    /// The plank on the back wall the finished cakes stand on.
+    /// The plank on the back wall the finished cakes stand on. Back against the
+    /// new wall, and 20 mm longer, which widens the four cake slots from 32.5 mm
+    /// to 37.5 — the shrunk cakes are 32 mm across, so they stopped touching.
     static let cakePlankY: Float = 0.135
-    static let cakePlankCentre = SIMD2<Float>(-0.090, -0.172)
-    static let cakePlankLength: Float = 0.130
+    static let cakePlankCentre = SIMD2<Float>(-0.095, -0.196)
+    static let cakePlankLength: Float = 0.150
     static let cakeShelfCapacity = 4
 
     /// The way out, on the left wall. Leads to the decorating room when it
@@ -153,7 +229,11 @@ enum Layout {
     /// no code ever lit — read as decoration, which is what it had become when
     /// the round stopped ending here. A leaf, two panels and a knob read as a
     /// way out from across the room.
-    static let doorwayCentre = SIMD3<Float>(-0.186, floorY, 0.120)
+    ///
+    /// The x follows the left wall out — it is the wall face plus the 2 mm
+    /// `doorFrameZ` stands proud of it, and `doorWallFace` re-derives that
+    /// from `half`, so the two cannot drift apart.
+    static let doorwayCentre = SIMD3<Float>(-0.216, floorY, 0.140)
 
     /// The hole in the wall: width, then height. **Taller than Nina**, who is
     /// 0.125 m — a door she could not walk through is a cupboard, and the one
@@ -215,7 +295,7 @@ enum Layout {
     /// Whether a point is close enough to the plank to count as putting a cake
     /// on it. Generous by design: `CONCEPT.md` §5 asks for drops that count
     /// when they land *near*, and this is the last action of the whole round.
-    static let plankSnapRadius: Float = 0.062
+    static let plankSnapRadius: Float = 0.067
 
     /// **Read `cakePlankCentre` as (x, z), the way every other centre in this
     /// file is read.** It used to build a `SIMD3(x, cakePlankY, z)` first and
@@ -259,8 +339,12 @@ enum Layout {
     /// or the camera ever move: follow the sightline from the eye to the point,
     /// see where it crosses the height of the table top, and ask whether that
     /// is over the table. At the committed camera that region is roughly
-    /// x ∈ [−0.18, −0.01], z ∈ [−0.09, 0.04] — a hand-sized patch of floor
-    /// between the table and the counter.
+    /// x ∈ [−0.215, 0.02], z ∈ [−0.11, 0.06] — the strip of floor between the
+    /// table and the counter, which is where Nina stands.
+    ///
+    /// **It grew with the table**, from a hand-sized patch to that strip, and
+    /// that is the derivation doing its job rather than a regression: a bigger
+    /// table hides more floor behind it, so more floor has to be off limits.
     @MainActor
     static func isOutOfSight(_ point: SIMD3<Float>) -> Bool {
         guard surfaceY(at: point) <= floorY + 0.001 else { return false }
@@ -297,11 +381,17 @@ enum Layout {
     /// set down without something else already being there. Stopping the clamp
     /// at the table's near edge would have made the one obvious place to put a
     /// rolling pin down the one place it could not go.
+    ///
+    /// **The bounds are the room's own furniture, not round numbers**, which is
+    /// why they moved with it: `minX` reaches the wall shelves at −0.211,
+    /// `maxX` reaches past Otto's mouth at 0.152 so the tin can be pushed all
+    /// the way in, `minZ` reaches the cake plank at −0.196, and `maxZ` is the
+    /// open floor in front of the table.
     static func clampToPlayArea(_ p: SIMD3<Float>) -> SIMD3<Float> {
-        let minX: Float = -0.180
-        let maxX: Float = 0.145
-        let minZ: Float = -0.178
-        let maxZ: Float = 0.162
+        let minX: Float = -0.215
+        let maxX: Float = 0.190
+        let minZ: Float = -0.205
+        let maxZ: Float = 0.190
         return SIMD3<Float>(min(max(p.x, minX), maxX), p.y, min(max(p.z, minZ), maxZ))
     }
 }
@@ -419,15 +509,19 @@ enum RoomBuilder {
         shelf.name = "Shelf\(Int(height * 1000))"
         let x = -Layout.half + 0.019
 
-        let plank = model(.box([0.014, 0.008, 0.150]),
+        // 0.180 long, up from 0.150, so the three jars and the ingredient
+        // standing at the near end all get the wider spacing the room gained.
+        let plank = model(.box([0.014, 0.008, 0.180]),
                           Palette.sandyWood, flat: flat, name: "ShelfPlank")
         plank.position = [x, height, -0.030]
         shelf.addChild(plank)
 
-        // Three jars, not six — the style wants fewer, bigger props.
+        // Three jars, not six — the style wants fewer, bigger props. 54 mm
+        // centres rather than 45: their touch radius is 24 mm, so at the old
+        // spacing the spheres very nearly met.
         let jarColours = [Palette.mint, Palette.creamLight, Palette.blushPinkDeep]
         for (i, colour) in jarColours.enumerated() {
-            let z = Float(-0.085) + Float(i) * 0.045
+            let z = Float(-0.102) + Float(i) * 0.054
             let jar = model(.prism(radius: 0.010, height: 0.022, sides: 8),
                             colour, flat: flat, name: "Jar\(Int(height * 1000))_\(i)")
             jar.position = [x, height + 0.004, z]
@@ -459,7 +553,7 @@ enum RoomBuilder {
         plank.position = [Layout.cakePlankCentre.x, Layout.cakePlankY, Layout.cakePlankCentre.y]
         shelf.addChild(plank)
 
-        for (i, dx) in [Float(-0.055), 0.055].enumerated() {
+        for (i, dx) in [Float(-0.064), 0.064].enumerated() {
             let bracket = model(.box([0.008, 0.020, 0.008]),
                                 Palette.blushPinkDeep, flat: flat, name: "CakePlankBracket\(i)")
             bracket.position = [Layout.cakePlankCentre.x + dx,
