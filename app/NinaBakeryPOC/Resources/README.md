@@ -2,9 +2,11 @@
 
 ## Movies — optional
 
-`Movies/intro.mp4` is the eight-second opening film. Remove it and the game
-starts straight in the kitchen; `IntroMovie.isAvailable` is the only thing that
-checks. Provenance is in `references/REFERENCES.md` §3.
+`Movies/intro-1.mp4` and `intro-2.mp4` are the opening film, one shot per file,
+played in filename order. Remove them and the game starts straight in the
+kitchen; `IntroMovie.isAvailable` is the only thing that checks. Adding
+`intro-3.mp4` adds a third shot with no code change. Provenance is in
+`references/REFERENCES.md` §3.
 
 ## Voice — required
 

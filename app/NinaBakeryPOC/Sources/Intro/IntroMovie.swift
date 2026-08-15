@@ -2,7 +2,14 @@ import SwiftUI
 import AVFoundation
 import Combine
 
-/// The opening film: a slow push-in on the bakery before the kitchen appears.
+/// The opening film: outside the bakery, then inside the kitchen, and then the
+/// game.
+///
+/// It is **one shot per file**, played back to back by an `AVQueuePlayer`.
+/// Cutting between shots is a thing a video model does badly and a queue does
+/// for free, so each shot is generated on its own and named `intro-1.mp4`,
+/// `intro-2.mp4`, … Adding a third shot is dropping in `intro-3.mp4`; the queue
+/// picks it up by name and nothing here changes.
 ///
 /// Three rules shape it, all from `CONCEPT.md` §5:
 ///
@@ -23,17 +30,37 @@ struct IntroMovie: View {
     /// Called when the film ends, or when she taps to skip it.
     var onFinish: @MainActor () -> Void
 
-    @State private var player: AVPlayer?
+    /// Called with the index of each shot as it ends, so the voice-over can be
+    /// hung off the cut rather than off a stopwatch. Re-cutting a shot to a
+    /// different length then keeps the lines in the right places by itself.
+    var onShotFinished: (@MainActor (Int) -> Void)?
+
+    @State private var items: [AVPlayerItem] = []
+    @State private var player: AVQueuePlayer?
+    /// The end of *this* item is the end of the film. Every other item's end
+    /// notification is just the cut to the next shot.
+    @State private var lastItem: AVPlayerItem?
     @State private var finished = false
 
-    /// `nonisolated` because it only asks the bundle a question, and it is
-    /// read while a `@State` default is being set up.
-    nonisolated static var url: URL? {
-        Bundle.main.url(forResource: "intro", withExtension: "mp4", subdirectory: "Movies")
-            ?? Bundle.main.url(forResource: "intro", withExtension: "mp4")
+    /// Every shot, in order. `nonisolated` because it only asks the bundle a
+    /// question, and it is read while a `@State` default is being set up.
+    ///
+    /// Sorted by filename, so the numbering is the running order. Past nine
+    /// shots that would need zero-padding, which is a problem an opening film
+    /// for a 4-year-old will never have.
+    nonisolated static var urls: [URL] {
+        let inFolder = Bundle.main.urls(forResourcesWithExtension: "mp4",
+                                        subdirectory: "Movies") ?? []
+        let inRoot = Bundle.main.urls(forResourcesWithExtension: "mp4",
+                                      subdirectory: nil) ?? []
+        var seen: Set<String> = []
+        return (inFolder + inRoot)
+            .filter { $0.lastPathComponent.hasPrefix("intro") }
+            .filter { seen.insert($0.lastPathComponent).inserted }
+            .sorted { $0.lastPathComponent < $1.lastPathComponent }
     }
 
-    nonisolated static var isAvailable: Bool { url != nil }
+    nonisolated static var isAvailable: Bool { !urls.isEmpty }
 
     var body: some View {
         ZStack {
@@ -49,7 +76,13 @@ struct IntroMovie: View {
         .onTapGesture { finish() }
         .onAppear(perform: start)
         .onReceive(NotificationCenter.default.publisher(
-            for: AVPlayerItem.didPlayToEndTimeNotification)) { _ in
+            for: AVPlayerItem.didPlayToEndTimeNotification)) { note in
+            // Fires at the end of every shot; only the last one ends the film.
+            guard let item = note.object as? AVPlayerItem else { return }
+            if let index = items.firstIndex(where: { $0 === item }) {
+                onShotFinished?(index)
+            }
+            guard item === lastItem else { return }
             finish()
         }
         .onDisappear {
@@ -59,16 +92,22 @@ struct IntroMovie: View {
     }
 
     private func start() {
-        guard let url = Self.url else {
+        let urls = Self.urls
+        guard !urls.isEmpty else {
             finish()
             return
         }
-        let player = AVPlayer(url: url)
-        // Silent by construction — the film was generated without an audio
+        let items = urls.map { AVPlayerItem(url: $0) }
+        // A queue rather than one player per shot: it preloads the next item,
+        // so the cut between outside and inside lands tight instead of on a
+        // black frame while the second file opens.
+        let player = AVQueuePlayer(items: items)
+        // Silent by construction — the shots were generated without an audio
         // track. Muted anyway, so a model that ignored that flag one day cannot
         // talk over Luna in a language Nina does not speak.
         player.isMuted = true
-        player.actionAtItemEnd = .pause
+        self.items = items
+        lastItem = items.last
         self.player = player
         player.play()
     }

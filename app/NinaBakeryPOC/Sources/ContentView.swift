@@ -28,7 +28,7 @@ struct ContentView: View {
                 roomView
                 developerLayer
                 if showIntro {
-                    IntroMovie(onFinish: finishIntro)
+                    IntroMovie(onFinish: finishIntro, onShotFinished: introShotFinished)
                         .transition(.opacity)
                 }
             }
@@ -71,6 +71,14 @@ struct ContentView: View {
             scene.update(settings: settings)
         }
         .gesture(finger)
+    }
+
+    /// The cut inside is where Luna names the kitchen. Hung off the cut rather
+    /// than off a timer, so re-cutting a shot cannot leave her talking about
+    /// the wrong picture.
+    private func introShotFinished(_ index: Int) {
+        guard index == 0 else { return }
+        scene.voice?.say(Line.introKeuken)
     }
 
     /// The film ended, or she tapped through it. Luna greets her either way —

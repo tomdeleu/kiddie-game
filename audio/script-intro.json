@@ -18,9 +18,10 @@
   },
 
   "_line_ids": {
-    "_comment": "Both play over the film, chained, starting about half a second in. One variant each on purpose: an opening should sound the same every time, the way a title card does. The film is silent, so this is all she hears.",
+    "_comment": "All three play over the film, chained, starting about half a second in — two over the exterior shot and the third over the cut inside. One variant each on purpose: an opening should sound the same every time, the way a title card does. The film is silent, so this is all she hears.",
     "luna.intro.welkom": "Over the opening shot of the bakery.",
-    "luna.intro.binnen": "As the camera reaches the door."
+    "luna.intro.binnen": "As the camera reaches the door.",
+    "luna.intro.keuken": "Over the second shot, inside the kitchen."
   },
 
   "lines": [
@@ -29,6 +30,9 @@
     ]},
     { "id": "luna.intro.binnen", "character": "luna", "variants": [
       { "index": 102, "file": "luna-intro-binnen-1.mp3", "text": "Dit is jouw bakkerij, Nina. Kom je mee naar binnen?" }
+    ]},
+    { "id": "luna.intro.keuken", "character": "luna", "variants": [
+      { "index": 103, "file": "luna-intro-keuken-1.mp3", "text": "Kijk, de keuken! Hier bakken we de allerlekkerste taarten." }
     ]}
   ]
 }

@@ -108,6 +108,7 @@ fetch "hf_20260815_122014_90bd7030-d75d-4747-ac00-cb9bafc3fa14.mp3" "luna-klaar-
 echo "Luna, opening film:"
 fetch "hf_20260815_133020_329999ed-5bb3-43ba-b3b5-cc3bdacd2f4a.mp3" "luna-intro-welkom-1.mp3"
 fetch "hf_20260815_133020_3c5df5d3-599d-4a94-bddd-f77ab13c65c9.mp3" "luna-intro-binnen-1.mp3"
+fetch "hf_20260815_134025_cef9129f-49a4-4747-8771-90ca8cd226f8.mp3" "luna-intro-keuken-1.mp3"
 
 echo "Otto:"
 fetch "hf_20260815_122030_2dec7cd2-aaf3-4f1b-8d55-611737cd89d3.mp3" "otto-tik-1.mp3"
@@ -131,4 +132,4 @@ fetch "hf_20260815_122041_9294bce9-6ec8-4038-9ec5-49ca0ac00737.mp3" "otto-wacht-
 cp script-keuken.json "$OUT/script-keuken.json"
 cp script-intro.json "$OUT/script-intro.json"
 
-echo "Done. 88 lines in $OUT"
+echo "Done. 89 lines in $OUT"

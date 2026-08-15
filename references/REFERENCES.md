@@ -162,14 +162,24 @@ come from the same recipe:
 
 ### The opening film — a generated asset that actually ships
 
-| | |
-|---|---|
-| File | `app/NinaBakeryPOC/Resources/Movies/intro.mp4` |
-| Model | `seedance_2_5`, mode `omni_reference` |
-| Start frame | plate 1, job `64f0893e-073a-4065-b363-f87687ced11d` |
-| Job ID | `faa3b33f-e50c-41bf-a108-4bb520930c00` |
-| Settings | 8 s, 720p, 16:9, `generate_audio: false` |
-| Cost | 52 credits |
+Two shots, `seedance_2_5` in `omni_reference` mode, each starting from a locked
+plate. **One shot per file**, cut by the player rather than by the model:
+`AVQueuePlayer` gives a hard cut for free, and asking a video model to cut
+between two locations is asking it to invent the second one.
+
+| # | Shot | File | Start frame | Job ID | Settings | Cost |
+|---|---|---|---|---|---|---|
+| 1 | Exterior, slow push-in | `Movies/intro-1.mp4` | plate 1 `64f0893e-…` | `faa3b33f-e50c-41bf-a108-4bb520930c00` | 8 s, 720p, 16:9 | 52 |
+| 2 | Interior, camera glide + props moving | `Movies/intro-2.mp4` | plate 3 `37de2697-…` | `a167207e-7345-4a7d-b5d0-913bf7316705` | 6 s, 720p, 16:9 | 39 |
+
+Both use `generate_audio: false`. Full prompts are on the job records; both
+carry the four style phrases from `CLAUDE.md` and, in shot 2, an explicit list
+of *what may move* — the whisk, the steam, the jars, the sparkles — against an
+explicit "the room and the props never morph or change shape".
+
+Shot 2 tripped a preset recommendation ("IN THE DARK") on first submission,
+which is exactly wrong for a bright pastel kitchen; it was declined and the
+prompt generated literally. Expect that prompt to keep suggesting it.
 
 **This is the one exception to "nothing generated goes into the app directly".**
 That rule exists because a generated *image* of a prop cannot be a prop — the
@@ -188,9 +198,11 @@ It is silent on purpose. Luna speaks over it in her own voice
 (`audio/script-intro.json`), which is both consistent with every other line in
 the game and immune to a video model inventing English.
 
-**If the facets did not survive**, the cheapest fixes in order: shorten it (a
-5 s version is 32.5 credits), cut the push-in to a slow drift, or drop back to
-the plate as a still with the same voice-over over it.
+**If the facets did not survive** in either shot, the cheapest fixes in order:
+shorten it (5 s is 32.5 credits, 6 s is 39), calm the motion — for shot 2 that
+means dropping the camera glide and keeping only the whisk and the steam — or
+drop back to the plate as a still with the same voice-over over it. Shots are
+independent files, so a re-cut is one shot's cost, not the film's.
 
 ### Gameplay plates 6–11 — composition only, WRONG STYLE
 

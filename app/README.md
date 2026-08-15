@@ -15,9 +15,22 @@ below is still the record of that.
 
 ## The opening film
 
-Eight seconds: a slow push-in on the bakery, smoke from the chimney, a little
-sparkle, and Luna saying *"Welkom in Nina's toverbakkerij! Dit is jouw
-bakkerij, Nina. Kom je mee naar binnen?"*
+Fourteen seconds, two shots:
+
+1. **Outside** (8 s) — a slow push-in on the bakery, smoke from the chimney, a
+   little sparkle. *"Welkom in Nina's toverbakkerij! Dit is jouw bakkerij,
+   Nina. Kom je mee naar binnen?"*
+2. **Inside** (6 s) — the camera glides across the kitchen while the whisk
+   turns in the bowl, steam lifts off Otto and the jars wobble.
+   *"Kijk, de keuken! Hier bakken we de allerlekkerste taarten."*
+
+One shot per file, cut by an `AVQueuePlayer`. Asking a video model to cut
+between two locations is asking it to invent the second one; a queue does it
+for free and each shot stays independently re-cuttable. A third shot is
+`intro-3.mp4` in the same folder and no code change.
+
+Luna's third line is triggered by the cut itself, not by a timer, so re-cutting
+a shot to a different length cannot leave her talking about the wrong picture.
 
 **One tap anywhere skips it**, and skipping does not cost her the greeting —
 Luna says hello either way. The room is built and lit behind the film while it
