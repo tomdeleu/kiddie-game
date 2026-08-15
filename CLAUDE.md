@@ -53,6 +53,7 @@ palette and pass criteria are still the standard every new room is held to.
 | [`CONCEPT.md`](CONCEPT.md) | The design. Loop, age rules, audio, rendering, build order. |
 | [`references/REFERENCES.md`](references/REFERENCES.md) | Art direction spec and reference plate recipes. |
 | [`references/plates/`](references/plates/) | **The locked style references.** Plates 01 and 02 are the look. |
+| [`references/loading-screen/`](references/loading-screen/) | The title plate that opens the app, its eighteen candidates, and the script that pads it to 16:9. |
 | [`references/props/`](references/props/) | Prop concept plates, and why `generate_3d` is not usable for this style. |
 | [`references/moodboard/`](references/moodboard/) | Provenance + licences. Gathered for two retired directions — not the current look. |
 | [`references/FETCHING-ASSETS.md`](references/FETCHING-ASSETS.md) | How to get outside material onto disk here, and what fails. |
@@ -84,9 +85,10 @@ Rules that keep this from going wrong:
 - **Batch** with `generate_*_batch` + `jobs_wait` + one `show_generation_by_ids`.
 - **Generated images are concept references, not shippable assets.** Going 3D
   means they guide modelling; nothing generated goes into the app directly.
-  Two exceptions, both because the asset has no second form to be modelled into:
-  the opening film (`references/REFERENCES.md` §3) and the app icon
-  (`references/app-icon/`).
+  Three exceptions, all because the asset has no second form to be modelled
+  into: the opening film (`references/REFERENCES.md` §3), the app icon
+  (`references/app-icon/`) and the loading screen
+  (`references/loading-screen/`).
 
 **Higgsfield cannot supply music or sound effects.** Its music and SFX models
 are restricted to its internal game pipeline and refuse standalone use. Those
@@ -153,7 +155,9 @@ These were argued through and settled. Reopen only if the user asks.
 
 Every screen obeys these. Full table in `CONCEPT.md` §5.
 
-- **No text anywhere.** She cannot read. Spoken voice plus an icon.
+- **No text anywhere.** She cannot read. Spoken voice plus an icon. The one
+  exception is the game's own name on the loading screen — a name on a cover is
+  not something she is asked to read.
 - **Tap and drag only.** No pinch, swipe-precision, double-tap, or long-press.
 - **She cannot lose.** No timers, no game over, no buzzer.
 - **Huge targets, generous snapping.**

@@ -181,12 +181,17 @@ Shot 2 tripped a preset recommendation ("IN THE DARK") on first submission,
 which is exactly wrong for a bright pastel kitchen; it was declined and the
 prompt generated literally. Expect that prompt to keep suggesting it.
 
-**This is the one exception to "nothing generated goes into the app directly".**
-That rule exists because a generated *image* of a prop cannot be a prop — the
-geometry has to be modelled, and the plate is the brief for modelling it. A
-film has no such second form: rendering eight seconds of establishing shot out
-of the game's own primitives would be a week of camera and animation work for
-something she sees once per launch and can skip in a second.
+**This was the first exception to "nothing generated goes into the app
+directly".** That rule exists because a generated *image* of a prop cannot be a
+prop — the geometry has to be modelled, and the plate is the brief for
+modelling it. A film has no such second form: rendering eight seconds of
+establishing shot out of the game's own primitives would be a week of camera and
+animation work for something she sees once per launch and can skip in a second.
+
+Two more assets have since been let through on the same reasoning: the app icon
+(`app-icon/README.md`) and the loading screen (`loading-screen/README.md`).
+Three is not a slippery slope — the test each one passes is that the deliverable
+*is* a picture, with no geometry waiting behind it.
 
 What keeps it honest is the start frame. It begins on the locked plate, so it
 begins exactly on-style; the prompt then asks for almost no change — a push-in,
@@ -203,6 +208,24 @@ shorten it (5 s is 32.5 credits, 6 s is 39), calm the motion — for shot 2 that
 means dropping the camera glide and keeping only the whisk and the steam — or
 drop back to the plate as a still with the same voice-over over it. Shots are
 independent files, so a re-cut is one shot's cost, not the film's.
+
+### The loading screen — the third generated asset that ships
+
+The title plate the app opens on, and the only place *Nina's Toverbakkerij* is
+written down. `flux_2` / `pro`, 4:3, 2k, against the scenes reference, job
+`6fe0eaaf-6ba3-41f5-9e9c-8613412c5e8d`; padded to 16:9 before it ships.
+
+The whole record — eighteen candidates, the prompt, and what the passes taught
+about getting a model to spell Dutch — is in
+[`loading-screen/README.md`](loading-screen/README.md). The two findings worth
+carrying anywhere else:
+
+- **`flux_2` spells Dutch about three quarters of the time**, and no prompt
+  wording moves that. Read the word before judging the picture.
+- **The lettering is where the style bends.** Keeping the title faceted made it
+  stiff, and pushing the facet wording harder put wireframe lines on the
+  cottage. A logo has no in-game geometry behind it, so it is allowed to be
+  soft; nothing else is.
 
 ### Gameplay plates 6–11 — composition only, WRONG STYLE
 
