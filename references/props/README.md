@@ -11,12 +11,35 @@ against the scene reference `../plates/01-cottage-exterior.png`. They are
 | `bowl.png` | `1c744ca8-9561-4e9c-85d9-a65a681a4ea1` | Tapered prism, ~12 sides |
 | `table.png` | `ea575cad-2979-402c-b618-c8dbd95c8a64` | Four box legs, thick slab top |
 | `jar.png` | `4bf27563-db0c-4ec6-b1f3-c2db51516f05` | 8-sided prism with a flat lid |
+| `door.png` | `48e60b5b-983a-41ed-93c3-e9d7ab81b72b` | Rose frame, panelled leaf, one round knob — seven boxes and a prism |
+| `door-wood.png` | `85ea4c38-3e24-4ad1-9574-2677572a784c` | The same door with a sandy-wood leaf, which is the colour that shipped |
 
 All `flux_2` / `pro` / `1k`, prompt and seed on the job record. The style prompt
 is in [`../REFERENCES.md`](../REFERENCES.md) §3.
 
 The useful thing about these plates is that they name their own facet counts.
 "~8 sides × 4 rings" is directly the arguments to `FacetedMesh.dome`.
+
+## The door — two plates, because the leaf colour is a room decision
+
+Four variants came back on one prompt (3:4, the two others are
+`92c33909-5382-4ba5-9b9c-44300e1bb1a9` and
+`5eac83fd-7a27-4599-b79c-cc8c864c0909`), and they disagreed on one thing only:
+whether the leaf is cream or wood. `door.png` has the cleaner construction —
+four panels ringed in rose, a knob that reads round — and `door-wood.png` has
+the right colour.
+
+The model takes the construction from one and the colour from the other,
+because a plate is rendered on a grey backdrop and the prop is not: the kitchen's
+left wall is `Palette.cream`, so a cream leaf in a rose frame reads as a picture
+frame hung on the wall rather than a hole through it. **A plate cannot answer a
+question about the room it is not standing in** — worth remembering for every
+prop after this one.
+
+The modelled door also drops to two panels from the plate's four. At 74 × 140 mm
+against this camera, four panels is the fine detail
+[`../REFERENCES.md`](../REFERENCES.md) §1 says fights the style; two is the same
+idea, bigger.
 
 ## `oven.glb` — the image-to-3D experiment, and why it failed
 

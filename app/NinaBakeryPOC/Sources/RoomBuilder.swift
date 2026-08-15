@@ -144,10 +144,37 @@ enum Layout {
     static let cakeShelfCapacity = 4
 
     /// The way out, on the left wall. Leads to the decorating room when it
-    /// exists; for now it closes the round.
+    /// exists; for now it opens, shows the light on the other side, and swings
+    /// shut again.
+    ///
+    /// **It is a door now, not an arch** (owner's call on the 2026-08-15
+    /// build: "that doesn't look like a door at all"). What it was — a pink
+    /// arched ring flat on the wall, with a butter-yellow plug filling it that
+    /// no code ever lit — read as decoration, which is what it had become when
+    /// the round stopped ending here. A leaf, two panels and a knob read as a
+    /// way out from across the room.
     static let doorwayCentre = SIMD3<Float>(-0.186, floorY, 0.120)
-    static let doorwayInner: Float = 0.035
-    static let doorwayLegHeight: Float = 0.032
+
+    /// The hole in the wall: width, then height. **Taller than Nina**, who is
+    /// 0.125 m — a door she could not walk through is a cupboard, and the one
+    /// thing this prop has to say is *there is somewhere else*.
+    static let doorOpening = SIMD2<Float>(0.074, 0.140)
+    /// Jamb and lintel width.
+    static let doorFrameWidth: Float = 0.010
+    static let doorFrameDepth: Float = 0.016
+    static let doorLeafThickness: Float = 0.007
+
+    /// **Where the wall is, in the door's own space.** The door is built in a
+    /// local frame whose +Z points out into the room, and the one number every
+    /// part of it has to agree with is the face of the wall it hangs on: a
+    /// millimetre the wrong side of this and the part is inside the wall,
+    /// which is exactly how the arch it replaced ended up with a glow nobody
+    /// could ever have seen. Derived, so moving the door along the wall or
+    /// changing the wall's thickness cannot leave it stale.
+    static var doorWallFace: Float { (-half + wallThickness) - doorwayCentre.x }
+    /// The frame's centre, and the leaf's back face — both out in the room.
+    static let doorFrameZ: Float = 0.002
+    static let doorLeafZ: Float = 0.003
 
     /// Horizontal distance. Snapping ignores height on purpose: she aims at
     /// where a thing *is on the table*, not at its centre of mass.
