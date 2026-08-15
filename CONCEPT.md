@@ -33,7 +33,13 @@ than treating it as a garnish.
 
 ## 3. The core loop
 
-Four rooms, played in order, roughly 5–8 minutes end to end.
+Four rooms, played in order, roughly 11–12 minutes end to end — longer if she
+lingers, which she will.
+
+> **The detailed design lives in [`GAMEPLAY.md`](GAMEPLAY.md):** the twelve
+> friends and their wishes, the ingredient-to-cake rules, what is required in
+> each room versus what is optional, and the timing budget. This section is the
+> summary. Where the two disagree, `GAMEPLAY.md` is newer and wins.
 
 ### 3.1 De Tuin — the garden
 
@@ -92,10 +98,16 @@ slides one box out and the next in, which is a transition she can follow. See
 [`references/REFERENCES.md`](references/REFERENCES.md) for why this framing was
 chosen.
 
-**Every cake she finishes gets framed and hung on the bakery wall.** That is the
-progression system. It needs no numbers, no stars, and no reading — she can see
-her gallery growing and point at the one she made yesterday. Tapping a frame
-replays that cake's little party animation.
+**The bakery wall holds twelve frames, and filling them all is the game.** Each
+frame starts as the grey silhouette of a friend waiting for their party; a
+finished cake turns it into a photo. It needs no numbers, no stars, and no
+reading — she can see the gaps shrinking and point at the one she made
+yesterday.
+
+The wall is also the **level select**: tapping a grey frame starts that friend's
+round, tapping a filled one replays that party. No menu, no text, nothing new to
+learn. Filling the twelfth frame triggers the finale, after which nothing locks
+and the bakery stays open. See [`GAMEPLAY.md`](GAMEPLAY.md) §2.
 
 ## 5. Rules for a four-year-old
 
@@ -311,10 +323,16 @@ Ship something playable early and grow it. Suggested order:
 1. **Kitchen + decorating**, hardcoded ingredients, no garden, no party. This is
    already a complete little toy and proves the drag-and-snap system.
 2. **The party**, so the loop has an ending and a payoff.
-3. **The wall of cakes** — persistence, and the first thing that makes her come
-   back tomorrow.
+3. **The wall of twelve frames** — persistence, level select, and the reason a
+   second round exists at all. Build it as soon as one round can be completed.
 4. **The garden**, which turns three screens into a real cycle.
-5. **Final voice-over**, once the dialogue has settled.
+5. **The twelve friends and their wishes** — content rather than engineering,
+   and it can grow while she is already playing.
+6. **The room toys**, continuously. A couple more every time a room is touched.
+7. **Final voice-over**, once the dialogue has settled.
+
+[`GAMEPLAY.md`](GAMEPLAY.md) §9 has the reasoning, and in particular why the
+wall moved up the list.
 
 Use `AVSpeechSynthesizer` with an `nl-NL` voice as the placeholder while
 building steps 1–4. It sounds robotic and she would notice, but it costs
@@ -593,11 +611,17 @@ everything from it.
 
 ## 11. Open questions
 
-- Casting the oven and the party guests.
-- Which reference plate is *the* look, so it can be locked as an image reference
-  for everything after it?
-- The shared 12-colour palette and the character proportion rule.
-- Music and SFX source — CC0 library, paid pack, or GarageBand?
-- Does the fairy look like her, or is the fairy a separate character she helps?
-  (Helping a character is usually the easier sell at this age — being told "this
-  is you" can fall flat if the drawing does not match her self-image.)
+- Casting Otto the oven, and the four voices covering the twelve friends.
+- The fairy's name — **Fien** is proposed in [`GAMEPLAY.md`](GAMEPLAY.md) §1 and
+  needs settling before any line is generated, since it appears in about forty
+  of them.
+- Music and SFX source — CC0 library, paid pack, or GarageBand? The party is the
+  payoff and it is currently silent.
+- The character proportion rule. (The palette is settled — see
+  [`POC.md`](POC.md).)
+
+**Resolved.** Nina is the baker and has no avatar; she is the hands, the bakery
+carries her name, and the friends thank her by name. The fairy is a separate
+character who lives there and helps. That avoids the "this is you" reaction
+falling flat if the model does not match her self-image, and it means there is
+no player character to model, rig or animate.
