@@ -108,21 +108,76 @@ day". They are non-negotiable constraints on every screen.
 
 ## 6. Personalization
 
+All voice-over is **generated**, not recorded — see [Audio](#7-audio). That
+changes the shape of this list but not its importance.
+
 In rough order of impact per hour of work:
 
 1. **Her name, spoken.** The fairy greets her by name on launch and thanks her
-   by name at the party. Record ~10 lines containing `«NAAM»`.
-2. **Dad's voice** as the narrator, the oven, and the guests. Silly voices beat
-   good voices at this age.
+   by name at the party. Roughly 10 lines contain `«NAAM»`.
+2. **A distinct voice per character.** The fairy, the oven, and each party guest
+   get their own voice. This is something a single person recording themselves
+   could never pull off convincingly, so generation is a genuine upgrade here
+   rather than a compromise.
 3. **Her drawings** photographed and hung in the bakery as decoration.
 4. **Family faces**, optionally, on the party guests. Nice, but do it last — it
    is fiddly and the game works fine without it.
 
-For prototyping before recording anything, `AVSpeechSynthesizer` with an
-`nl-NL` voice is good enough to test the flow. It sounds robotic and she will
-notice, so replace it with real recordings before she ever sees it.
+## 7. Audio
 
-## 7. Build order
+Voice-over is generated through the Higgsfield connector. Everything below was
+checked against the connector's actual model catalogue, not assumed.
+
+### 7.1 Speech — available
+
+Use `text2speech_v2` with the **`elevenlabs`** variant. It is the strongest
+multilingual engine on offer and the best bet for natural Dutch. `seed_audio`
+(ByteDance) is the connector default and the fallback if ElevenLabs disappoints.
+
+Two caveats worth knowing before committing:
+
+- **The preset voices are not language-tagged.** The catalogue lists them by
+  name and gender only, so Dutch quality has to be *auditioned* — generate the
+  same line across a handful of voices and listen. Do this before writing any
+  dialogue, because it determines who the characters are.
+- **Her name may be mispronounced** by a multilingual model. The fix is a
+  phonetic respelling in the prompt text rather than the correct spelling.
+  Budget one round of trial and error on this specific line; it is the most
+  important second of audio in the entire game.
+
+There *are* four native Dutch voices in the catalogue (Erik, Katrien, Lennart,
+Lore) on the `inworld_text_to_speech` model — but that model is restricted to
+Higgsfield's internal game-generation pipeline and cannot be used to generate
+standalone assets. Noting it so nobody rediscovers it and wastes an afternoon.
+
+Because generation is cheap and repeatable, dialogue stops being a fixed cost.
+New rooms can have new lines without a recording session, and lines can be
+rewritten after watching her play. Design accordingly: write more dialogue
+variants than a recorded game would, so the fairy does not repeat herself.
+
+### 7.2 Music and sound effects — NOT available
+
+This is the real gap. The connector's music model (`sonilo_music`) and sound
+effect model (`mirelo_text_to_audio`) are both **game-pipeline only** and
+explicitly refuse standalone use. So it cannot supply:
+
+- the dance party soundtrack and the six instrument pads,
+- the cake crunches, sparkle chimes, oven ping, watering can, whisk.
+
+For a game where the party is the payoff, this is not a footnote. Sources, in
+order of pragmatism:
+
+1. **Freesound.org** — filter to CC0, which needs no attribution. Covers nearly
+   all of the effects list above.
+2. **A paid kids' SFX pack** — one purchase, consistent character, saves hours
+   of auditioning individual files.
+3. **GarageBand** for the music loops and the instrument pads. There is already
+   a Mac in the picture for Xcode, and the built-in loops are royalty-free.
+   Six pads is genuinely an evening's work.
+
+Decide this before building the party room.
+
+## 8. Build order
 
 Ship something playable early and grow it. Suggested order:
 
@@ -132,7 +187,12 @@ Ship something playable early and grow it. Suggested order:
 3. **The wall of cakes** — persistence, and the first thing that makes her come
    back tomorrow.
 4. **The garden**, which turns three screens into a real cycle.
-5. **Real voice recordings**, replacing the synthesized placeholder.
+5. **Final voice-over**, once the dialogue has settled.
+
+Use `AVSpeechSynthesizer` with an `nl-NL` voice as the placeholder while
+building steps 1–4. It sounds robotic and she would notice, but it costs
+nothing and lets the script change freely. Generate the real lines only once
+the dialogue has stopped moving.
 
 Everything after that is new rooms: a dressing room for the fairy, a spell room
 where drawing a shape with her finger transforms something.
@@ -141,7 +201,7 @@ Rooms 1 and 2 share nearly all their code — drag an object onto a target, snap
 it, celebrate — so the second room costs a fraction of the first. That is the
 main architectural reason for the hub layout.
 
-## 8. Technical notes
+## 9. Technical notes
 
 **SwiftUI-first.** The whole game is drag gestures, tinting, and spring
 animations, which SwiftUI handles well. Reach for SpriteKit only where it
@@ -163,15 +223,22 @@ this needs.
 the iPad in **Guided Access** so she cannot leave the app by accident. Guided
 Access is doing a lot of the work that would otherwise be app-level lockdown.
 
-**Art.** This is the real bottleneck, not the code. Options, in order of
-pragmatism: buy a children's illustration pack with a consistent style, generate
-the assets, or draw them. Decide the art direction before building room 2 —
-retrofitting a style across finished screens is miserable.
+**Art.** This is the real bottleneck, not the code. The same Higgsfield
+connector that generates the voices also generates images, so the art and the
+audio can run through one pipeline. The hard part is not producing images, it is
+producing a hundred images that look like they belong in the same world — so
+lock the art direction with a small style reference before generating anything
+in bulk, and reuse it as a reference on every subsequent generation. Decide this
+before building room 2; retrofitting a style across finished screens is
+miserable.
 
-## 9. Open questions
+## 10. Open questions
 
 - Her actual name, for `«NAAM»` and the voice lines.
+- Voice audition: which preset voice sounds best speaking Dutch, and does it say
+  her name correctly?
 - Art direction: soft watercolour storybook, or bold flat vector shapes?
+- Music and SFX source — CC0 library, paid pack, or GarageBand?
 - Does the fairy look like her, or is the fairy a separate character she helps?
   (Helping a character is usually the easier sell at this age — being told "this
   is you" can fall flat if the drawing does not match her self-image.)
