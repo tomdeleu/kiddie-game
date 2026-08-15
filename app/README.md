@@ -620,7 +620,7 @@ whole POC lighting panel underneath.
 on-device screenshots on the owner's call.
 
 **Round one:** the cast shadows read as hard dark bands — the back wall raking
-across the left wall, the doorway arch printing itself onto the plaster. The
+across the left wall, the door printing itself onto the plaster. The
 cause was structural: everything a shadow fell on dropped to the fill's ~30%
 of lit brightness, and the room shell was casting onto itself. Fix: rebalance
 the energy (key 2200 → 1400 lx, fill 900 → 700 lx, new 1200 lx ambient dome)
@@ -643,7 +643,7 @@ Where that leaves the values:
 | IBL | off — no environment bundled, and it is not missed |
 | Contact shadows | on, opacity 0.22 (was 0.18, nudged for the weaker key), scale 1.15 |
 | Lightmap | off |
-| Static casting | **off** for architecture and wall-huggers — walls, floor, slab, doorway arch, counter, both shelves, cake plank (`Entity.excludeFromShadowCasting()`, iOS 18's `DynamicLightShadowComponent`) |
+| Static casting | **off** for architecture and wall-huggers — walls, floor, slab, the door, counter, both shelves, cake plank (`Entity.excludeFromShadowCasting()`, iOS 18's `DynamicLightShadowComponent`) |
 
 Shadowed areas sit near 60% of lit brightness instead of 30%, so a cast shadow
 reads as a soft tone shift. Loose props, Nina and Otto still cast — short
