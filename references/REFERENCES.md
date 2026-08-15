@@ -122,6 +122,21 @@ All plates use **`flux_2`**, variant `pro`, resolution `1k`. Recording prompt
 | 3 | Fairy baker character sheet | 3:4 | `409079` | `13e7c536-befa-462f-bf19-c632f74a8e83` |
 | 4 | Party room box | 1:1 | `884050` | `6eaffc62-3809-4985-80be-67d78eaf0bf1` |
 
+Direct links, in case the CDN is reachable from where you are reading this:
+
+1. [Kitchen room box](https://d8j0ntlcm91z4.cloudfront.net/user_39OtbtGoYAVkmrcBwNT0Vv0BbHJ/hf_20260815_074713_9887941f-9d50-409f-ad7a-330e3b43c5d0.png)
+2. [Cottage exterior](https://d8j0ntlcm91z4.cloudfront.net/user_39OtbtGoYAVkmrcBwNT0Vv0BbHJ/hf_20260815_074712_5bc6e6db-ffa5-4fff-b378-7661a9060e3a.png)
+3. [Fairy character sheet](https://d8j0ntlcm91z4.cloudfront.net/user_39OtbtGoYAVkmrcBwNT0Vv0BbHJ/hf_20260815_074713_13e7c536-befa-462f-bf19-c632f74a8e83.png)
+4. [Party room box](https://d8j0ntlcm91z4.cloudfront.net/user_39OtbtGoYAVkmrcBwNT0Vv0BbHJ/hf_20260815_074712_6eaffc62-3809-4985-80be-67d78eaf0bf1.png)
+
+**The plates are not committed to this repo.** The Higgsfield results CDN
+(`d8j0ntlcm91z4.cloudfront.net`) is denied by the sandbox egress policy, so a
+session cannot save them. Run [`fetch-plates.sh`](fetch-plates.sh) from a machine
+that can reach it — or allowlist that host on the environment and re-run it here.
+
+The seeds below matter more than the files: they regenerate the plates exactly,
+and unlike a CDN link they do not expire.
+
 ### The shared style suffix
 
 Reuse verbatim on any new plate so the set stays coherent:
