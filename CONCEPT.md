@@ -1,13 +1,12 @@
-# De Toverbakkerij — concept
+# Nina's Toverbakkerij — concept
 
-A magic-bakery game for a 4-year-old, in Dutch, on iPad. Native SwiftUI.
+A magic-bakery game for Nina, aged 4, in Dutch, on iPad. Native SwiftUI.
 
-Working title: **De Toverbakkerij** (the magic bakery). Short, Dutch, and a
-4-year-old can say it — which matters, because she has to be able to ask for it
-by name.
-
-Throughout this document, `«NAAM»` is a placeholder for her first name. It gets
-spoken out loud by the characters; see [Personalization](#personalization).
+Working title: **Nina's Toverbakkerij** (Nina's magic bakery). Short, Dutch, and
+a 4-year-old can say it — which matters, because she has to be able to ask for
+it by name. Putting her name in the title is also the cheapest personalization
+in the whole project: it is the first thing she sees on the home screen, every
+single time.
 
 ---
 
@@ -75,7 +74,7 @@ Six big pads along the bottom, each an instrument. Whatever she taps, the guests
 dance to — the animation speed follows the beat she is making. Then everyone
 eats the cake with enormous crunching sounds, applause, and the head fairy says:
 
-> "Dankjewel, «NAAM»! Dit was de allerlekkerste taart!"
+> "Dankjewel, Nina! Dit was de allerlekkerste taart!"
 
 Then the cake is photographed and hung on the bakery wall in a little frame.
 
@@ -114,7 +113,7 @@ changes the shape of this list but not its importance.
 In rough order of impact per hour of work:
 
 1. **Her name, spoken.** The fairy greets her by name on launch and thanks her
-   by name at the party. Roughly 10 lines contain `«NAAM»`.
+   by name at the party. Roughly 10 lines contain her name.
 2. **A distinct voice per character.** The fairy, the oven, and each party guest
    get their own voice. This is something a single person recording themselves
    could never pull off convincingly, so generation is a genuine upgrade here
@@ -140,15 +139,34 @@ Two caveats worth knowing before committing:
   name and gender only, so Dutch quality has to be *auditioned* — generate the
   same line across a handful of voices and listen. Do this before writing any
   dialogue, because it determines who the characters are.
-- **Her name may be mispronounced** by a multilingual model. The fix is a
-  phonetic respelling in the prompt text rather than the correct spelling.
-  Budget one round of trial and error on this specific line; it is the most
-  important second of audio in the entire game.
+- **Name pronunciation** is the usual risk with a multilingual model, and the
+  fix is a phonetic respelling in the prompt rather than the correct spelling.
+  "Nina" is a soft case: it is pronounced near-identically in Dutch and English
+  (*NEE-nah*), so this is unlikely to bite. Still verify it by ear — it is the
+  most important second of audio in the entire game.
 
 There *are* four native Dutch voices in the catalogue (Erik, Katrien, Lennart,
 Lore) on the `inworld_text_to_speech` model — but that model is restricted to
 Higgsfield's internal game-generation pipeline and cannot be used to generate
 standalone assets. Noting it so nobody rediscovers it and wastes an afternoon.
+
+Cost is ~0.15 credits per line, so auditioning and regenerating is effectively
+free. There is no reason to settle for a voice that is merely acceptable.
+
+**Audition shortlist** for the fairy, generated with the line
+*"Hallo Nina! Kom je mij helpen met taart bakken?"*:
+
+| Voice | Age | `voice_id` |
+|---|---|---|
+| Faye | old | `d198dc0b-c4e5-5198-aa1d-ecf5ca0927c4` |
+| Willow | middle-aged | `f878bf3f-115b-5842-8934-c789c7947733` |
+| Daisy | young | `032386ec-491b-5bdc-81ac-49e9a6a2c89d` |
+| Evie | young | `7a6845a2-5865-5669-a0ca-8fc8d8e96528` |
+| Gracie | young | `09878754-f20b-5330-9790-58a8027ab5b2` |
+
+All five are `voice_type: preset` and support the `elevenlabs`, `minimax`, and
+`seed_speech` engines, so a chosen voice can be re-run through a different
+engine if the Dutch accent disappoints.
 
 Because generation is cheap and repeatable, dialogue stops being a fixed cost.
 New rooms can have new lines without a recording session, and lines can be
@@ -303,9 +321,8 @@ without inventing the hidden parts of an arm.
 
 ## 11. Open questions
 
-- Her actual name, for `«NAAM»` and the voice lines.
 - Voice audition: which preset voice sounds best speaking Dutch, and does it say
-  her name correctly?
+  "Nina" correctly?
 - Art direction: soft watercolour storybook, or bold flat vector shapes?
 - Music and SFX source — CC0 library, paid pack, or GarageBand?
 - Does the fairy look like her, or is the fairy a separate character she helps?
