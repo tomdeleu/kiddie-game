@@ -10,6 +10,12 @@ final class LightingRig {
 
     private let keyLight = Entity()
     private let fillLight = Entity()
+    /// The ambient dome — three weak directionals spread 120° apart, standing
+    /// in for sky-and-bounce light. Their job is to keep key-shadowed areas at
+    /// roughly 60% of lit brightness instead of 30%, which is what turned the
+    /// wall shadows from soft tone shifts into hard dark bands. None of them
+    /// ever casts.
+    private let ambientLights = [Entity(), Entity(), Entity()]
     private let iblAnchor = Entity()
 
     /// Set once at load. If no environment asset is bundled the IBL toggle
@@ -30,6 +36,10 @@ final class LightingRig {
         iblAnchor.name = "IBLAnchor"
         root.addChild(keyLight)
         root.addChild(fillLight)
+        for (i, light) in ambientLights.enumerated() {
+            light.name = "AmbientDome\(i)"
+            root.addChild(light)
+        }
         root.addChild(iblAnchor)
     }
 
@@ -45,6 +55,7 @@ final class LightingRig {
     func apply(_ s: LightingSettings, to sceneRoot: Entity) {
         applyKey(s)
         applyFill(s)
+        applyAmbient(s)
         applyIBL(s, to: sceneRoot)
         applyLightmap(s, to: sceneRoot)
     }
@@ -89,6 +100,33 @@ final class LightingRig {
         // Never a shadow caster — a second shadow immediately reads as wrong.
         fillLight.components.remove(DirectionalLightComponent.Shadow.self)
         aim(fillLight, along: s.fillDirection)
+    }
+
+    /// The soft-AO stand-in. Three directions rather than one uniform ambient
+    /// term because a uniform term would flatten the facets: each facet still
+    /// sums the three from its own angle, so faces keep distinct tones while
+    /// no direction ever goes dark. Elevation 55° gives the whole thing a top
+    /// bias — under-sides sit slightly darker than tops, which is exactly the
+    /// gradient an AO render has, produced by lights instead of occlusion.
+    private func applyAmbient(_ s: LightingSettings) {
+        guard s.ambientEnabled else {
+            for light in ambientLights {
+                light.components.remove(DirectionalLightComponent.self)
+            }
+            return
+        }
+        let share = s.ambientIntensity / Float(ambientLights.count)
+        for (i, light) in ambientLights.enumerated() {
+            light.components.set(DirectionalLightComponent(
+                color: colour(kelvin: 6500),   // neutral on purpose — warmth is the key's job
+                intensity: share
+            ))
+            // 30° offset keeps all three off the key's 135° azimuth, so none
+            // of them ever doubles the key or lands exactly opposite it.
+            let azimuth = 30 + Float(i) * 120
+            aim(light, along: LightingSettings.direction(elevationDegrees: 55,
+                                                         azimuthDegrees: azimuth))
+        }
     }
 
     private func applyIBL(_ s: LightingSettings, to sceneRoot: Entity) {
@@ -176,5 +214,25 @@ extension Entity {
     func forEachModel(_ body: (ModelEntity) -> Void) {
         if let model = self as? ModelEntity { body(model) }
         for child in children { child.forEachModel(body) }
+    }
+
+    /// Keep this entity (and everything under it) out of the key light's
+    /// shadow map. It still *receives* shadows — a floor that stopped
+    /// receiving would unground every prop on it.
+    ///
+    /// This is for the big statics: a wall shadowing the other wall, or the
+    /// doorway arch printing itself across the plaster, is architecture
+    /// casting onto architecture — a hard dark band that reads as a render
+    /// error in a pastel room. Props, characters and Otto keep casting;
+    /// their shadows are the grounding this rig exists to provide.
+    ///
+    /// `DynamicLightShadowComponent` is iOS 18's per-entity shadow control.
+    /// If this initialiser does not resolve on your SDK, check its current
+    /// signature — after `DirectionalLightComponent.Shadow` it is the next
+    /// API here most likely to have moved.
+    func excludeFromShadowCasting() {
+        forEachModel { model in
+            model.components.set(DynamicLightShadowComponent(castsShadow: false))
+        }
     }
 }

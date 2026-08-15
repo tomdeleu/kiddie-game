@@ -33,6 +33,8 @@ struct DebugPanel: View {
                         Divider()
                         fillSection
                         Divider()
+                        ambientSection
+                        Divider()
                         iblSection
                         Divider()
                         contactSection
@@ -96,6 +98,16 @@ struct DebugPanel: View {
             slider("Intensity", $settings.fillIntensity, 0...3000, "%.0f lx")
             slider("Temperature", $settings.fillTemperature, 2000...10000, "%.0f K")
             Text("Stands in for bounced light. Too low and corners go dark — which is the look we are avoiding.")
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private var ambientSection: some View {
+        section("Ambient dome") {
+            Toggle("Enabled", isOn: $settings.ambientEnabled)
+            slider("Intensity", $settings.ambientIntensity, 0...3000, "%.0f lx")
+            Text("Three soft directionals standing in for sky and bounce. This slider is how dark shadows read: more dome, shallower shadows. Zero it to see the old hard-band look.")
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }

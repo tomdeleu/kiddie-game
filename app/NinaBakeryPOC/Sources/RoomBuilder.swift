@@ -195,6 +195,14 @@ enum RoomBuilder {
         leftWall.position = [-half + Layout.wallThickness / 2, Layout.wallHeight / 2, 0]
         root.addChild(leftWall)
 
+        // The shell never casts — the back wall's shadow raking across the
+        // left wall was the hardest band in the room, and architecture
+        // shadowing architecture buys no grounding. Receiving is untouched:
+        // the floor and walls still catch the shadows of props and characters.
+        for shellPiece in [slab, floor, backWall, leftWall] {
+            shellPiece.excludeFromShadowCasting()
+        }
+
         root.addChild(buildTable(flat: flat))
         root.addChild(buildCounter(flat: flat))
         root.addChild(buildShelf(flat: flat, height: 0.150))

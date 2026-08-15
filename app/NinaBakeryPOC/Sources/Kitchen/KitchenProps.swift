@@ -443,6 +443,10 @@ enum KitchenProps {
                                       Palette.rose, flat: flat, name: "DoorwayFrame")
         root.addChild(frame)
 
+        // Flat against the wall, so its cast shadow could only ever print the
+        // arch onto the plaster beside it — a hard dark echo, not grounding.
+        root.excludeFromShadowCasting()
+
         return Doorway(root: root, glow: glow)
     }
 }

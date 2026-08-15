@@ -345,7 +345,7 @@ long-standing limitation, not a setup problem.
 
 ### First build
 
-Three places are the most likely to want a fix, and all three are one line:
+Four places are the most likely to want a fix, and all four are one line:
 
 1. **`CameraRig.fovIsVertical`.** `init` sets
    `camera.camera.fieldOfViewOrientation = .vertical` so the unprojection maths
@@ -361,6 +361,11 @@ Three places are the most likely to want a fix, and all three are one line:
    memberwise initialiser carrying `@ViewBuilder` across from the stored `label`
    property. If the compiler disagrees, write the designated `init` out by hand
    in the struct body — five assignments, and every call site stays as it is.
+4. **`Entity.excludeFromShadowCasting()`** in `LightingRig.swift`. Uses iOS 18's
+   `DynamicLightShadowComponent(castsShadow:)` to keep the room shell and the
+   doorway out of the shadow map. If the initialiser has moved, that one
+   function is the only place to fix it — and if it has to come out entirely,
+   the room works, just with the wall-on-wall bands back.
 
 ### The developer panel
 
@@ -374,21 +379,37 @@ whole POC lighting panel underneath.
 
 ## Approved lighting
 
-**Settled on iPad, 2026-08-15.** The values in `LightingSettings.swift` are the
-approved ones — every slider was judged good where it started, so the committed
-defaults *are* the result.
+**Settled on iPad, 2026-08-15; revised the same day.** An on-device screenshot
+showed the cast shadows reading as hard dark bands — the back wall raking
+across the left wall, the doorway arch printing itself onto the plaster, Nina
+silhouetted behind her. The owner called it: not the game's look. The cause was
+structural, not a slider — everything a shadow fell on dropped to the fill's
+~30% of lit brightness, and the room shell was casting onto itself.
+
+The revision, on the owner's call:
 
 | | |
 |---|---|
-| Key | 2200 lx, 42° elevation, 135° azimuth, 6200 K, shadows **on** |
-| Fill | 900 lx, 7800 K, opposite the key at 18° |
+| Key | 1400 lx (was 2200), 42° elevation, 135° azimuth, 6200 K, shadows **on** |
+| Fill | 700 lx (was 900), 7800 K, opposite the key at 18° |
+| **Ambient dome** | **new** — 1200 lx across three non-casting directionals, 120° apart at 55° elevation, neutral 6500 K |
 | IBL | off — no environment bundled, and it is not missed |
-| Contact shadows | on, opacity 0.18, scale 1.15 |
+| Contact shadows | on, opacity 0.22 (was 0.18, nudged for the weaker key), scale 1.15 |
 | Lightmap | off |
+| Shell casting | **off** — walls, floor, slab and the doorway arch no longer enter the shadow map (`Entity.excludeFromShadowCasting()`, iOS 18's `DynamicLightShadowComponent`) |
 
-This answers the POC's main question in the affirmative: **the faceted direction
-holds with real-time light only, no baked AO.** The key light's cast shadow does
-the grounding that AO was there for, and it stays correct when a prop moves.
+The key's angle and temperature are untouched, so the facet read is the
+approved one; what changed is the energy balance around it. Shadowed areas now
+sit near 60% of lit brightness instead of 30%, so a cast shadow reads as a
+soft tone shift — the gradient of an occlusion render, produced entirely by
+lights. Props, characters and Otto still cast; architecture does not. In the
+panel, zeroing the **Ambient dome** slider brings the old hard-band look back
+for comparison.
+
+This still answers the POC's main question in the affirmative: **the faceted
+direction holds with real-time light only, no baked AO** — the revision doubles
+down on it by getting the soft-shadow feel from lights rather than reaching for
+a bake.
 
 Changing these is an art-direction decision, not a tweak. Lift any new setup
 with **Copy settings** before overwriting.

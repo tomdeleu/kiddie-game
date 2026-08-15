@@ -33,6 +33,8 @@ enum ContactShadows {
         let disc = ModelEntity(mesh: mesh, materials: [material])
         disc.name = markerName
         disc.scale = .init(repeating: settings.contactShadowScale)
+        // A shadow must not cast a shadow of itself.
+        disc.excludeFromShadowCasting()
         prop.addChild(disc)
         // Positioning is `update`'s job — the surface below is not known here.
         // Callers follow every `attach` with an `update`.

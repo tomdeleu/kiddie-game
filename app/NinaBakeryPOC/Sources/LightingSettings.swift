@@ -3,11 +3,16 @@ import simd
 
 /// Everything the debug panel can tweak, in one observable object.
 ///
-/// **These defaults are approved.** Signed off on iPad on 2026-08-15 against
-/// `references/plates/03-kitchen-roombox.png` — no slider needed moving from
-/// its starting value, so what is written here is what was judged good. The
-/// key light at 2200 lx / 42° / 135° / 6200 K with shadows on, over an 900 lx
-/// 7800 K fill and no IBL, is the look.
+/// **These defaults are approved.** First signed off on iPad on 2026-08-15
+/// against `references/plates/03-kitchen-roombox.png`; revised the same day on
+/// the owner's call after an on-device screenshot showed the cast shadows
+/// reading as hard dark bands on the walls. The revision keeps the key at
+/// 42° / 135° / 6200 K so the facet read is unchanged, but rebalances the
+/// energy: key 2200 → 1400 lx, fill 900 → 700 lx, plus a new 1200 lx ambient
+/// dome (three non-casting directionals in `LightingRig`). Shadowed areas now
+/// sit near 60% of lit brightness instead of 30% — the soft, occlusion-render
+/// feel, still with zero baked AO. The big statics no longer cast at all; see
+/// `Entity.excludeFromShadowCasting()`.
 ///
 /// Treat a change here as a change to the art direction, not a tweak. Use
 /// **Copy settings** in the panel to lift a new setup before overwriting one.
@@ -49,7 +54,7 @@ final class LightingSettings: ObservableObject {
 
     // MARK: Key light
     @Published var keyEnabled: Bool = true
-    @Published var keyIntensity: Float = 2200      // lux
+    @Published var keyIntensity: Float = 1400      // lux
     @Published var keyElevation: Float = 42        // degrees above horizon
     @Published var keyAzimuth: Float = 135         // degrees around Y
     @Published var keyTemperature: Float = 6200    // Kelvin
@@ -57,8 +62,16 @@ final class LightingSettings: ObservableObject {
 
     // MARK: Fill
     @Published var fillEnabled: Bool = true
-    @Published var fillIntensity: Float = 900
+    @Published var fillIntensity: Float = 700
     @Published var fillTemperature: Float = 7800   // cooler bounce
+
+    // MARK: Ambient dome
+    /// Total lux across the three dome lights — see `LightingRig.applyAmbient`.
+    /// This is the shadow-softness control in disguise: RealityKit's shadow
+    /// has no opacity, so how dark a shadow reads is the ratio of everything
+    /// else to the key. More dome, shallower shadows.
+    @Published var ambientEnabled: Bool = true
+    @Published var ambientIntensity: Float = 1200
 
     // MARK: Image-based lighting
     /// Disabled unless an environment asset is bundled — see `LightingRig`.
@@ -67,7 +80,10 @@ final class LightingSettings: ObservableObject {
 
     // MARK: Contact shadows
     @Published var contactShadowsEnabled: Bool = true
-    @Published var contactShadowOpacity: Float = 0.18
+    /// 0.18 under the original 2200 lx key; nudged up when the key dropped to
+    /// 1400, so the discs keep carrying the grounding the weaker cast shadow
+    /// gives up.
+    @Published var contactShadowOpacity: Float = 0.22
     @Published var contactShadowScale: Float = 1.15
 
     // MARK: Lightmap
@@ -97,18 +113,20 @@ final class LightingSettings: ObservableObject {
         flatShading = true
         showBackdrop = true
         keyEnabled = true
-        keyIntensity = 2200
+        keyIntensity = 1400
         keyElevation = 42
         keyAzimuth = 135
         keyTemperature = 6200
         shadowsEnabled = true
         fillEnabled = true
-        fillIntensity = 900
+        fillIntensity = 700
         fillTemperature = 7800
+        ambientEnabled = true
+        ambientIntensity = 1200
         iblEnabled = false
         iblIntensity = 0.6
         contactShadowsEnabled = true
-        contactShadowOpacity = 0.18
+        contactShadowOpacity = 0.22
         contactShadowScale = 1.15
         lightmapMode = .off
     }
@@ -126,6 +144,8 @@ final class LightingSettings: ObservableObject {
         fillEnabled    = \(fillEnabled)
         fillIntensity  = \(fmt(fillIntensity))
         fillTemperature = \(fmt(fillTemperature))
+        ambientEnabled = \(ambientEnabled)
+        ambientIntensity = \(fmt(ambientIntensity))
         iblEnabled     = \(iblEnabled)
         iblIntensity   = \(fmt(iblIntensity))
         contactShadowsEnabled = \(contactShadowsEnabled)
