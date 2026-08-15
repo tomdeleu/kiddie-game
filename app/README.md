@@ -97,7 +97,7 @@ One round is `GAMEPLAY.md` §6.3, end to end:
 | **gieten** | Drag the bowl onto the tin | It tips, pours onto the base, and goes back where it lives |
 | **inOven** | Drag the tin to Otto | It slides in, the door shuts, Otto is delighted |
 | **bakken** | Tap Otto | Four seconds of him puffing and breathing, a rising ping, and the cake comes out in her colours |
-| **klaar** | **Carry the cake up onto the plank** | It shrinks to shelf size, lands beside the others, and a fresh round begins |
+| **klaar** | **Carry the cake up onto the plank** | It rises to shelf height as it nears the wall, shrinks, lands beside the others, and a fresh round begins |
 
 At the top of every round she hears what the whole thing is for — *"meng alle
 toverdingetjes in de kom, en zet de taart daarna in de oven"* — and then the
@@ -123,9 +123,14 @@ painted, so a sparkle is never mistaken for a crumb of the thing it came off.
 Callers that pass a colour still get it: an ingredient dropping into the bowl
 throws its own colour, which is what says *that* one went in.
 
-**And nothing gets put back.** A prop she drags somewhere that is not a target
-settles onto whatever is underneath it and stays there. The rolling pin can
-live on the floor. This replaced a rule where a missed drop floated home and
+**And nothing gets put back** — with one exception. A prop she drags somewhere
+that is not a target settles onto whatever is underneath it and stays there.
+The rolling pin can live on the floor. The exception is the patch of floor
+*behind the table*: the camera never moves, so that is a place she could put
+something and then genuinely not get it back, with no way to look round the
+table. Drops there float home. `Layout.isOutOfSight` derives the patch from the
+camera and the table rather than hardcoding it — at the committed camera it is
+about 170 × 140 mm between the table and the counter. This replaced a rule where a missed drop floated home and
 Nina apologised for it, which was wrong twice: it undid the one thing she can
 do with a kitchen full of objects, and it treated every stray drag as a failed
 attempt when most of them are a 4-year-old moving a rolling pin because it is

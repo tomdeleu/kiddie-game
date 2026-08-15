@@ -774,6 +774,24 @@ final class KitchenRoom {
             return
         }
 
+        // **Out of sight is the one place a drop is not allowed to stick.**
+        // The camera is fixed, so the floor behind the table is a patch she
+        // could put something into and never get it back out of — and she has
+        // no way to look round the table. It floats back to where she picked it
+        // up, which is the one case the old float-home behaviour was right
+        // about. Everywhere else on the floor is hers.
+        guard !Layout.isOutOfSight(entity.position) else {
+            sound.play(.whoosh, volume: 0.35)
+            ticker.move(entity, to: origin, duration: 0.4, arc: 0.014, ease: Ease.out) {
+                [weak self] in
+                guard let self else { return }
+                ContactShadows.update(for: entity, surfaceY: Layout.surfaceY(at: origin),
+                                      settings: self.settings)
+            }
+            if missed { noteMiss() }
+            return
+        }
+
         let resting = SIMD3<Float>(entity.position.x,
                                    Layout.surfaceY(at: entity.position),
                                    entity.position.z)
@@ -823,7 +841,7 @@ final class KitchenRoom {
 
     private func nudgeToken(_ index: Int) {
         guard index < tokens.count else { return }
-        ticker.squash(tokens[index].entity, amount: 0.25)
+        ticker.squash(tokens[index].entity, amount: 0.18)
         sound.playVaried(.plop, volume: 0.5)
         // Tapping one whose turn it is not still does something, and what it
         // says is where to look instead.
@@ -1247,7 +1265,7 @@ final class KitchenRoom {
 
     private func tapCake() {
         guard let cake else { return }
-        ticker.squash(cake, amount: 0.20)
+        ticker.squash(cake, amount: 0.15)
         sound.play(.sparkle, volume: 0.6)
         Sparkles.burst(at: cake.position + [0, 0.04, 0], in: root, ticker: ticker, count: 6)
     }
@@ -1359,7 +1377,7 @@ final class KitchenRoom {
     /// a brief can be right about one thing and wrong about another.
     private func tapFlour() {
         guard let flourSack else { return }
-        ticker.squash(flourSack, amount: 0.24)
+        ticker.squash(flourSack, amount: 0.16)
         sound.playVaried(.poof)
         // Out of the open collar, not out of the middle of the sack.
         Sparkles.puff(at: flourSack.position + [0, 0.050, 0], in: root,

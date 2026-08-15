@@ -190,12 +190,19 @@ enum Layout {
     /// when they land *near*, and this is the last action of the whole round.
     static let plankSnapRadius: Float = 0.062
 
+    /// **Read `cakePlankCentre` as (x, z), the way every other centre in this
+    /// file is read.** It used to build a `SIMD3(x, cakePlankY, z)` first and
+    /// then compare `point.z` against that vector's `.y` — which is the plank's
+    /// *height*, 0.135, not its depth, −0.172. The snap zone landed 30 cm out,
+    /// in front of the table instead of against the back wall, so the cake rose
+    /// to shelf height when dragged towards the camera and did nothing at all
+    /// when dragged to the plank. Two spellings of `.y` in one expression, one
+    /// meaning a height and the other a depth, is the whole bug.
     static func nearPlank(_ point: SIMD3<Float>) -> Bool {
-        let centre = SIMD3<Float>(cakePlankCentre.x, cakePlankY, cakePlankCentre.y)
         // Along the plank it is a whole shelf wide; away from the wall it is
         // the snap radius, so reaching for it from the table still counts.
-        return abs(point.x - centre.x) <= cakePlankLength / 2 + plankSnapRadius
-            && abs(point.z - centre.y) <= plankSnapRadius
+        abs(point.x - cakePlankCentre.x) <= cakePlankLength / 2 + plankSnapRadius
+            && abs(point.z - cakePlankCentre.y) <= plankSnapRadius
     }
 
     /// True where `point` is over a rectangle, grown by `margin` so a prop set
@@ -209,6 +216,37 @@ enum Layout {
     /// How far above whatever it is standing on a carried prop floats. Small,
     /// but not nothing: it is what says *held* rather than *shoved*.
     static let carryLift: Float = 0.012
+
+    /// **Somewhere she could put a thing and then not get it back.**
+    ///
+    /// "It stays where you put it" is right up until she puts it where the
+    /// table is in the way. The camera never moves (`CONCEPT.md` §9.4), so
+    /// there is a fixed patch of floor behind the table that is simply not on
+    /// screen — a rolling pin left there is gone, and a 4-year-old has no
+    /// camera control to go and find it. Those drops float back instead.
+    ///
+    /// Only floor-level drops can be lost. Anything on a work surface is above
+    /// the things that would hide it.
+    ///
+    /// The patch is derived rather than typed in, so it stays true if the table
+    /// or the camera ever move: follow the sightline from the eye to the point,
+    /// see where it crosses the height of the table top, and ask whether that
+    /// is over the table. At the committed camera that region is roughly
+    /// x ∈ [−0.18, −0.01], z ∈ [−0.09, 0.04] — a hand-sized patch of floor
+    /// between the table and the counter.
+    @MainActor
+    static func isOutOfSight(_ point: SIMD3<Float>) -> Bool {
+        guard surfaceY(at: point) <= floorY + 0.001 else { return false }
+        // Inside the counter is inside a solid box, which is worse than hidden.
+        if within(point, centre: counterCentre, size: counterSize, margin: 0.004) {
+            return true
+        }
+        let eye = CameraRig.eye
+        let t = (tableTopY - eye.y) / (floorY - eye.y)
+        let crossing = SIMD3<Float>(eye.x + (point.x - eye.x) * t, tableTopY,
+                                    eye.z + (point.z - eye.z) * t)
+        return within(crossing, centre: tableCentre, size: tableSize, margin: 0.004)
+    }
 
     /// How far a carried prop may travel.
     ///
