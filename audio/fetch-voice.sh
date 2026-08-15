@@ -121,4 +121,9 @@ fetch "hf_20260815_122030_671ebe88-9f64-4662-b7d2-e490d3434a3d.mp3" "otto-klaar-
 fetch "hf_20260815_122041_22c8e1e8-b926-46b4-a6d2-4dedd781e7cb.mp3" "otto-wacht-1.mp3"
 fetch "hf_20260815_122041_9294bce9-6ec8-4038-9ec5-49ca0ac00737.mp3" "otto-wacht-2.mp3"
 
+# The script itself is bundled: VoiceBank reads it at launch to map line id ->
+# variant files. `audio/script-keuken.json` is the canonical copy; this is a
+# duplicate of it, and copying it here is what keeps the two from drifting.
+cp script-keuken.json "$OUT/script-keuken.json"
+
 echo "Done. 86 lines in $OUT"

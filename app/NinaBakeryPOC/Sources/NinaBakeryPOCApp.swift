@@ -1,13 +1,20 @@
 import SwiftUI
 
-/// Step 0 proof of concept for *Nina's Toverbakkerij*.
+/// *Nina's Toverbakkerij* — **De Keuken**.
 ///
-/// Answers one question: does the faceted pastel low-poly direction survive
-/// real-time rendering **without** baked ambient occlusion? Everything here is
-/// scaffolding for that question — there is no game in it.
+/// This began as the Step 0 proof of concept and now holds the first real room:
+/// the kitchen from `GAMEPLAY.md` §6.3, with its required action (ingredients,
+/// stir, pour, bake), its six toys, Otto, and Luna speaking Dutch. The target
+/// name is still `NinaBakeryPOC` because the Xcode project builds and runs
+/// under it, and renaming a working project buys nothing.
 ///
-/// Runs on iPad (the real verdict) and on the Mac (fast iteration for the
-/// lighting panel). See `app/README.md` for the simulator caveat.
+/// What the POC answered stays answered: the faceted pastel direction survives
+/// real-time rendering with no baked ambient occlusion, and the approved
+/// lighting is the committed default in `LightingSettings`.
+///
+/// Runs on iPad (the real verdict) and on the Mac (fast iteration). See
+/// `app/README.md` for the simulator caveat — RealityKit does not render
+/// reliably there, and nothing should be concluded from it.
 @main
 struct NinaBakeryPOCApp: App {
     var body: some Scene {

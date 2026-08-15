@@ -1,151 +1,194 @@
 import RealityKit
 import simd
 
+/// Where everything in the kitchen is.
+///
+/// One table of numbers rather than magic constants spread across the room and
+/// the game, because almost every bug in a room like this is two files
+/// disagreeing about where the table top is.
+enum Layout {
+
+    /// Room box is 0.4 m across, per `POC.md`.
+    static let roomSize: Float = 0.4
+    static let half: Float = roomSize / 2
+    static let wallHeight: Float = 0.22
+    static let wallThickness: Float = 0.012
+    static let slabThickness: Float = 0.014
+    static let floorY: Float = 0.004
+
+    /// The work surface. Everything she drags lives on this plane.
+    static let tableTopY: Float = 0.072
+    static let tableCentre = SIMD2<Float>(-0.045, 0.050)
+    static let tableSize = SIMD2<Float>(0.210, 0.115)
+    static let tableThickness: Float = 0.012
+
+    /// The back counter: sink, scale, flour sack.
+    static let counterTopY: Float = 0.058
+    static let counterCentre = SIMD2<Float>(-0.085, -0.158)
+    static let counterSize = SIMD2<Float>(0.200, 0.060)
+
+    /// Otto, on the right against the back wall.
+    static let ovenOrigin = SIMD3<Float>(0.115, floorY, -0.100)
+    static let ovenDomeRadius: Float = 0.062
+    static let ovenDomeHeight: Float = 0.075
+    /// Mouth opening, in Otto's local space.
+    static let mouthArchInner: Float = 0.024
+    static let mouthLegHeight: Float = 0.012
+    static let mouthDepth: Float = 0.034
+    static let mouthBackZ: Float = 0.042
+    static var mouthFrontZ: Float { mouthBackZ + mouthDepth }
+    /// Where the tin has to land, in world space.
+    static var ovenMouth: SIMD3<Float> {
+        ovenOrigin + SIMD3<Float>(0, mouthLegHeight + 0.010, mouthFrontZ - 0.014)
+    }
+
+    // Home positions on the table.
+    static let basketHome = SIMD3<Float>(-0.128, tableTopY, 0.078)
+    static let bowlHome = SIMD3<Float>(-0.050, tableTopY, 0.048)
+    static let whiskHome = SIMD3<Float>(-0.098, tableTopY, 0.014)
+    static let tinHome = SIMD3<Float>(0.022, tableTopY, 0.080)
+    static let rollingPinHome = SIMD3<Float>(-0.120, tableTopY, 0.016)
+    /// Where a finished cake lands when Otto hands it over.
+    static let cakeSpot = SIMD3<Float>(0.024, tableTopY, 0.030)
+
+    // Toys on the counter.
+    static let sinkSpot = SIMD3<Float>(-0.155, counterTopY, -0.158)
+    static let scaleSpot = SIMD3<Float>(-0.085, counterTopY, -0.152)
+    static let flourSpot = SIMD3<Float>(-0.020, counterTopY, -0.152)
+
+    /// The plank on the back wall the finished cakes stand on.
+    static let cakePlankY: Float = 0.135
+    static let cakePlankCentre = SIMD2<Float>(-0.090, -0.172)
+    static let cakePlankLength: Float = 0.130
+    static let cakeShelfCapacity = 4
+
+    /// The way out, on the left wall. Leads to the decorating room when it
+    /// exists; for now it closes the round.
+    static let doorwayCentre = SIMD3<Float>(-0.186, floorY, 0.120)
+    static let doorwayInner: Float = 0.035
+    static let doorwayLegHeight: Float = 0.032
+
+    /// Horizontal distance. Snapping ignores height on purpose: she aims at
+    /// where a thing *is on the table*, not at its centre of mass.
+    static func distanceXZ(_ a: SIMD3<Float>, _ b: SIMD3<Float>) -> Float {
+        simd_length(SIMD2<Float>(a.x - b.x, a.z - b.z))
+    }
+
+    /// Keep a dragged prop on the table and out of the walls.
+    static func clampToTable(_ p: SIMD3<Float>) -> SIMD3<Float> {
+        let minX = tableCentre.x - tableSize.x / 2 + 0.010
+        let maxX = tableCentre.x + tableSize.x / 2 - 0.010
+        let minZ = tableCentre.y - tableSize.y / 2 + 0.010
+        let maxZ = tableCentre.y + tableSize.y / 2 - 0.010
+        return SIMD3<Float>(min(max(p.x, minX), maxX), p.y, min(max(p.z, minZ), maxZ))
+    }
+}
+
 /// Builds the kitchen room box procedurally, matching
 /// `references/plates/03-kitchen-roombox.png`.
 ///
 /// Procedural rather than imported on purpose. The style is primitives —
 /// boxes, prisms, faceted spheres — so code is a faster loop than a modelling
-/// round-trip, and it removes the asset pipeline from the one question this
-/// POC exists to answer. `RoomSource.importedUSDZ` covers the other path, and
-/// is what the lightmap mode needs (see `LIGHTMAPS.md`).
+/// round-trip, and it removes the asset pipeline from the question the POC
+/// existed to answer.
+///
+/// This file builds only what does not move: the shell, the furniture, Otto's
+/// body. Anything she can pick up, fill, stir or eat is in `KitchenProps` and
+/// is owned by `KitchenRoom`, because those have state and this does not.
 enum RoomBuilder {
-
-    /// Room box is 0.4 m across, per `POC.md`.
-    static let roomSize: Float = 0.4
-    static let wallHeight: Float = 0.22
-    static let wallThickness: Float = 0.012
-    static let slabThickness: Float = 0.014
 
     static func build(flat: Bool) -> Entity {
         let root = Entity()
         root.name = "RoomRoot"
 
-        let half = roomSize / 2
+        let size = Layout.roomSize
+        let half = Layout.half
 
         // Base slab — the footing every room sits on, from the cottage plate.
-        let slab = model(.box([roomSize + 0.03, slabThickness, roomSize + 0.03]),
+        let slab = model(.box([size + 0.03, Layout.slabThickness, size + 0.03]),
                          Palette.cream, flat: flat, name: "Slab")
-        slab.position = [0, -slabThickness / 2, 0]
+        slab.position = [0, -Layout.slabThickness / 2, 0]
         root.addChild(slab)
 
-        // Floor.
-        let floor = model(.box([roomSize, 0.004, roomSize]),
+        let floor = model(.box([size, 0.004, size]),
                           Palette.blushPink, flat: flat, name: "Floor")
         floor.position = [0, 0.002, 0]
         root.addChild(floor)
 
         // Two walls, open on the two near sides.
-        let backWall = model(.box([roomSize, wallHeight, wallThickness]),
+        let backWall = model(.box([size, Layout.wallHeight, Layout.wallThickness]),
                              Palette.creamLight, flat: flat, name: "WallBack")
-        backWall.position = [0, wallHeight / 2, -half + wallThickness / 2]
+        backWall.position = [0, Layout.wallHeight / 2, -half + Layout.wallThickness / 2]
         root.addChild(backWall)
 
-        let leftWall = model(.box([wallThickness, wallHeight, roomSize]),
+        let leftWall = model(.box([Layout.wallThickness, Layout.wallHeight, size]),
                              Palette.cream, flat: flat, name: "WallLeft")
-        leftWall.position = [-half + wallThickness / 2, wallHeight / 2, 0]
+        leftWall.position = [-half + Layout.wallThickness / 2, Layout.wallHeight / 2, 0]
         root.addChild(leftWall)
 
-        root.addChild(buildOven(flat: flat))
         root.addChild(buildTable(flat: flat))
-        root.addChild(buildShelf(flat: flat, height: 0.15, x: -half + 0.02))
-        root.addChild(buildShelf(flat: flat, height: 0.105, x: -half + 0.02))
+        root.addChild(buildCounter(flat: flat))
+        root.addChild(buildShelf(flat: flat, height: 0.150))
+        root.addChild(buildShelf(flat: flat, height: 0.105))
+        root.addChild(buildCakePlank(flat: flat))
 
         return root
     }
 
-    // MARK: - Props
-
-    /// Faceted dome, a protruding archway and a chimney, per
-    /// `references/props/oven.png`.
-    static func buildOven(flat: Bool) -> Entity {
-        let oven = Entity()
-        oven.name = "Oven"
-        oven.position = [0.09, 0.004, -0.10]
-
-        let domeRadius: Float = 0.062
-        let dome = model(.dome(radius: domeRadius, height: 0.075, sides: 8, rings: 4),
-                         Palette.mint, flat: flat, name: "OvenDome")
-        oven.addChild(dome)
-
-        // The mouth is one continuous archway, not a ring of separate blocks:
-        // the plate shows a single moulded surround, and loose blocks read as
-        // rubble at this size.
-        //
-        // The Z numbers are the fiddly part. The dome is an ellipsoid,
-        // (x²+z²)/r² + y²/h² = 1, so it bulges furthest forward at the centre
-        // of the mouth — z = 0.062 there, but only z = 0.052 out at the legs.
-        // The arch's back plane sits behind the near one so it looks embedded;
-        // anything meant to be seen *through* the opening has to sit in front
-        // of the far one, or the mint dome shows through instead.
-        let archInner: Float = 0.024
-        let archLeg: Float = 0.012
-        let archDepth: Float = 0.034
-        let archBack: Float = 0.042
-        let archFront = archBack + archDepth          // 0.076, clear of the dome
-
-        let arch = model(.archRing(innerRadius: archInner, outerRadius: 0.034,
-                                   legHeight: archLeg, depth: archDepth, segments: 6),
-                         Palette.rose, flat: flat, name: "OvenArch")
-        arch.position = [0, 0, archBack + archDepth / 2]
-        oven.addChild(arch)
-
-        // The dark opening. Same outline as the arch but slightly oversized, so
-        // its edges are hidden behind the soffit rather than leaving a seam,
-        // and recessed into the tunnel so the mouth reads as having depth.
-        let mouthOversize: Float = 0.002
-        let mouthDepth: Float = 0.028
-        let mouth = model(.archPlug(radius: archInner + mouthOversize,
-                                    legHeight: archLeg + mouthOversize,
-                                    depth: mouthDepth, segments: 6),
-                          Palette.woodBrown, flat: flat, name: "OvenMouth")
-        // Y offset keeps the plug's arc centre on the arch's.
-        mouth.position = [0, -mouthOversize, archFront - 0.008 - mouthDepth / 2]
-        oven.addChild(mouth)
-
-        // Base low enough to bury itself in the dome — the surface is at
-        // y = 0.056 out where the chimney stands.
-        let chimney = model(.prism(radius: 0.011, height: 0.045, sides: 4),
-                            Palette.creamLight, flat: flat, name: "Chimney")
-        chimney.position = [0.028, 0.050, -0.030]
-        oven.addChild(chimney)
-
-        let chimneyCap = model(.prism(radius: 0.015, height: 0.008, sides: 4),
-                               Palette.cream, flat: flat, name: "ChimneyCap")
-        chimneyCap.position = [0.028, 0.091, -0.030]
-        oven.addChild(chimneyCap)
-
-        return oven
-    }
+    // MARK: - Furniture
 
     static func buildTable(flat: Bool) -> Entity {
         let table = Entity()
         table.name = "Table"
-        table.position = [-0.055, 0.004, 0.045]
+        table.position = [Layout.tableCentre.x, 0, Layout.tableCentre.y]
 
-        let topY: Float = 0.062
-        let top = model(.box([0.135, 0.012, 0.085]),
+        let topCentreY = Layout.tableTopY - Layout.tableThickness / 2
+        let top = model(.box([Layout.tableSize.x, Layout.tableThickness, Layout.tableSize.y]),
                         Palette.sandyWood, flat: flat, name: "TableTop")
-        top.position = [0, topY, 0]
+        top.position = [0, topCentreY, 0]
         table.addChild(top)
 
-        for (i, offset) in [SIMD2<Float>(-0.055, -0.030), [0.055, -0.030],
-                            [-0.055, 0.030], [0.055, 0.030]].enumerated() {
-            let leg = model(.box([0.012, topY, 0.012]),
+        let legHeight = topCentreY - Layout.tableThickness / 2
+        let dx = Layout.tableSize.x / 2 - 0.014
+        let dz = Layout.tableSize.y / 2 - 0.014
+        for (i, offset) in [SIMD2<Float>(-dx, -dz), [dx, -dz], [-dx, dz], [dx, dz]].enumerated() {
+            let leg = model(.box([0.012, legHeight, 0.012]),
                             Palette.sandyWood, flat: flat, name: "TableLeg\(i)")
-            leg.position = [offset.x, topY / 2, offset.y]
+            leg.position = [offset.x, legHeight / 2, offset.y]
             table.addChild(leg)
         }
         return table
     }
 
-    static func buildShelf(flat: Bool, height: Float, x: Float) -> Entity {
+    /// The run along the back wall. Solid box rather than a carcass with legs —
+    /// it is seen end-on and a carcass would be geometry nobody looks at.
+    static func buildCounter(flat: Bool) -> Entity {
+        let counter = Entity()
+        counter.name = "Counter"
+        counter.position = [Layout.counterCentre.x, 0, Layout.counterCentre.y]
+
+        let bodyHeight = Layout.counterTopY - Layout.floorY - 0.008
+        let body = model(.box([Layout.counterSize.x - 0.012, bodyHeight, Layout.counterSize.y - 0.010]),
+                         Palette.creamLight, flat: flat, name: "CounterBody")
+        body.position = [0, Layout.floorY + bodyHeight / 2, 0]
+        counter.addChild(body)
+
+        let top = model(.box([Layout.counterSize.x, 0.008, Layout.counterSize.y]),
+                        Palette.sandyWood, flat: flat, name: "CounterTop")
+        top.position = [0, Layout.counterTopY - 0.004, 0]
+        counter.addChild(top)
+
+        return counter
+    }
+
+    static func buildShelf(flat: Bool, height: Float) -> Entity {
         let shelf = Entity()
         shelf.name = "Shelf\(Int(height * 1000))"
+        let x = -Layout.half + 0.019
 
         let plank = model(.box([0.014, 0.008, 0.150]),
                           Palette.sandyWood, flat: flat, name: "ShelfPlank")
-        plank.position = [x + 0.007, height, -0.03]
+        plank.position = [x, height, -0.030]
         shelf.addChild(plank)
 
         // Three jars, not six — the style wants fewer, bigger props.
@@ -154,35 +197,40 @@ enum RoomBuilder {
             let z = Float(-0.085) + Float(i) * 0.045
             let jar = model(.prism(radius: 0.010, height: 0.022, sides: 8),
                             colour, flat: flat, name: "Jar\(Int(height * 1000))_\(i)")
-            jar.position = [x + 0.007, height + 0.004, z]
+            jar.position = [x, height + 0.004, z]
             shelf.addChild(jar)
 
             let lid = model(.prism(radius: 0.011, height: 0.005, sides: 8),
                             Palette.rose, flat: flat, name: "JarLid\(Int(height * 1000))_\(i)")
-            lid.position = [x + 0.007, height + 0.026, z]
+            lid.position = [x, height + 0.026, z]
             shelf.addChild(lid)
         }
         return shelf
     }
 
-    /// The two draggables and the bowl from `POC.md` Stage B. Kept separate
-    /// from the room so they can carry contact shadows and, later, gestures.
-    static func buildLooseProps(flat: Bool) -> [Entity] {
-        let bowl = model(.bowl(bottomRadius: 0.020, topRadius: 0.030, height: 0.024,
-                               wallThickness: 0.0028, floorThickness: 0.0035,
-                               sides: 12, rings: 3),
-                         Palette.blushPink, flat: flat, name: "Bowl")
-        bowl.position = [-0.055, 0.070, 0.045]
+    /// De taartenplank — where her finished cakes stand.
+    ///
+    /// A stand-in for the wall of twelve frames (`GAMEPLAY.md` §2), which lives
+    /// in the bakery and does not exist yet. It does the same job in miniature:
+    /// it means the second cake is not the first cake again.
+    static func buildCakePlank(flat: Bool) -> Entity {
+        let shelf = Entity()
+        shelf.name = "CakePlank"
 
-        let egg = model(.icosphere(radius: 0.011, subdivisions: 1),
-                        Palette.creamLight, flat: flat, name: "Egg")
-        egg.position = [-0.105, 0.079, 0.070]
+        let plank = model(.box([Layout.cakePlankLength, 0.008, 0.030]),
+                          Palette.rose, flat: flat, name: "CakePlankBoard")
+        plank.position = [Layout.cakePlankCentre.x, Layout.cakePlankY, Layout.cakePlankCentre.y]
+        shelf.addChild(plank)
 
-        let berry = model(.icosphere(radius: 0.010, subdivisions: 1),
-                          Palette.rose, flat: flat, name: "Berry")
-        berry.position = [-0.010, 0.078, 0.068]
-
-        return [bowl, egg, berry]
+        for (i, dx) in [Float(-0.055), 0.055].enumerated() {
+            let bracket = model(.box([0.008, 0.020, 0.008]),
+                                Palette.blushPinkDeep, flat: flat, name: "CakePlankBracket\(i)")
+            bracket.position = [Layout.cakePlankCentre.x + dx,
+                                Layout.cakePlankY - 0.014,
+                                Layout.cakePlankCentre.y - 0.008]
+            shelf.addChild(bracket)
+        }
+        return shelf
     }
 
     // MARK: - Helpers

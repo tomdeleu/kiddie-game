@@ -1,19 +1,42 @@
 import SwiftUI
 import RealityKit
 
+/// `@MainActor` on the whole view, not just `body`: the gesture closures and
+/// the helpers below all reach into `Ticker`, `TouchRouter` and `SoundKit`,
+/// which are main-actor isolated. Annotating the type is what lets those
+/// closures inherit that isolation instead of each one needing a hop.
+@MainActor
 struct ContentView: View {
     @StateObject private var settings = LightingSettings()
-    @StateObject private var scene = SceneModel()
+    @StateObject private var scene = GameScene()
+    @Environment(\.scenePhase) private var scenePhase
+
+    /// Off by default and hard to reach on purpose. Nothing in the panel is
+    /// for Nina, and a visible gear is a thing she will press.
+    @State private var showDeveloperPanel = false
+    @State private var dragging = false
 
     var body: some View {
-        ZStack(alignment: .topTrailing) {
-            backdrop
-            roomView
-            DebugPanel(settings: settings,
-                       iblAvailable: scene.rig.iblAvailable,
-                       lightmapsAvailable: scene.rig.lightmapsAvailable)
+        GeometryReader { geometry in
+            ZStack(alignment: .topTrailing) {
+                backdrop
+                roomView
+                developerLayer
+            }
+            .coordinateSpace(.named("room"))
+            .onAppear {
+                scene.cameraRig.setViewport(geometry.size)
+                keepTheScreenAwake()
+            }
+            .onChange(of: geometry.size) { _, size in
+                scene.cameraRig.setViewport(size)
+            }
         }
         .ignoresSafeArea()
+        .onChange(of: scenePhase) { _, phase in
+            // The round survives the iPad being taken away mid-stir.
+            if phase != .active { scene.kitchen?.save() }
+        }
     }
 
     private var backdrop: some View {
@@ -31,108 +54,176 @@ struct ContentView: View {
     private var roomView: some View {
         RealityView { content in
             content.add(scene.root)
-            scene.build(settings: settings)
+            scene.start(settings: settings)
             await scene.rig.loadOptionalAssets()
             scene.rig.apply(settings, to: scene.sceneRoot)
         } update: { _ in
-            scene.rebuildIfNeeded(settings: settings)
-            scene.rig.apply(settings, to: scene.sceneRoot)
-            scene.refreshContactShadows(settings: settings)
+            scene.update(settings: settings)
         }
-        // No `.id(...)` here on purpose: changing it would tear down and
-        // rebuild the whole RealityView, re-parenting an already-parented
-        // root. `rebuildIfNeeded` handles source and shading changes instead.
-        // `settings` is observed, so any change re-runs `update` above.
+        .gesture(finger)
+    }
+
+    /// One finger, one gesture. A press that barely moves is a tap; anything
+    /// else is a drag. There is no third verb anywhere in the game.
+    private var finger: some Gesture {
+        DragGesture(minimumDistance: 0, coordinateSpace: .named("room"))
+            .onChanged { value in
+                if !dragging {
+                    dragging = true
+                    scene.touch.began(at: value.startLocation)
+                }
+                scene.touch.moved(to: value.location)
+            }
+            .onEnded { value in
+                dragging = false
+                scene.touch.ended(at: value.location)
+            }
+    }
+
+    // MARK: - Developer access
+
+    private var developerLayer: some View {
+        ZStack(alignment: .topTrailing) {
+            if showDeveloperPanel {
+                VStack(alignment: .trailing, spacing: 8) {
+                    KitchenDebugStrip(scene: scene, settings: settings) {
+                        showDeveloperPanel = false
+                    }
+                    DebugPanel(settings: settings,
+                               iblAvailable: scene.rig.iblAvailable,
+                               lightmapsAvailable: scene.rig.lightmapsAvailable)
+                }
+            } else {
+                developerHotspot
+            }
+        }
+    }
+
+    /// Three taps in the top-right corner. `CONCEPT.md` §5 asks for a parent
+    /// gate she will not find; this is that, and it costs no on-screen pixels.
+    private var developerHotspot: some View {
+        Color.black.opacity(0.001)
+            .frame(width: 64, height: 64)
+            .contentShape(Rectangle())
+            .onTapGesture(count: 3) { showDeveloperPanel = true }
+    }
+
+    private func keepTheScreenAwake() {
+        #if os(iOS)
+        UIApplication.shared.isIdleTimerDisabled = true
+        #endif
     }
 }
 
-/// Holds the entity graph across SwiftUI updates.
-///
-/// Kept out of the view so a slider drag does not rebuild meshes — only the
-/// flat/smooth toggle and the room source do, and those are tracked explicitly.
+/// Everything the scene owns, kept out of the view so a slider drag does not
+/// rebuild the room.
 @MainActor
-final class SceneModel: ObservableObject {
+final class GameScene: ObservableObject {
+
     let root = Entity()
     let sceneRoot = Entity()
+    let cameraRig = CameraRig()
+    let ticker = Ticker()
     let rig = LightingRig()
+    let sound = SoundKit()
 
-    private var looseProps: [Entity] = []
+    private(set) var touch: TouchRouter!
+    private(set) var voice: VoiceBank!
+    private(set) var kitchen: KitchenRoom?
+
     private var builtFlat: Bool?
-    private var builtSource: LightingSettings.RoomSource?
+    private var started = false
 
     init() {
         root.addChild(sceneRoot)
         rig.install(in: root)
-        installCamera()
+        root.addChild(cameraRig.camera)
+        touch = TouchRouter(camera: cameraRig)
+        voice = VoiceBank(ticker: ticker)
     }
 
-    /// Fixed isometric three-quarter angle. Never moved by the player — see
-    /// `CONCEPT.md` §9.4. Here it is also never moved by the developer, so a
-    /// lighting change is judged from the framing the game will actually use.
-    private func installCamera() {
-        let camera = PerspectiveCamera()
-        camera.camera.fieldOfViewInDegrees = 26
-        // Classic isometric-ish: equal on two axes, raised, looking at centre.
-        let distance: Float = 0.95
-        let position = SIMD3<Float>(distance * 0.62, distance * 0.60, distance * 0.62)
-        camera.look(at: [0, 0.06, 0], from: position, relativeTo: nil)
-        root.addChild(camera)
-    }
+    func start(settings: LightingSettings) {
+        guard !started else { return }
+        started = true
 
-    func build(settings: LightingSettings) {
-        rebuild(settings: settings)
-    }
+        sound.prepare()
+        voice.load()
+        ticker.start()
 
-    func rebuildIfNeeded(settings: LightingSettings) {
-        guard builtFlat != settings.flatShading || builtSource != settings.roomSource else {
-            return
-        }
-        rebuild(settings: settings)
-    }
-
-    private func rebuild(settings: LightingSettings) {
-        sceneRoot.children.removeAll()
-        looseProps.removeAll()
-
-        switch settings.roomSource {
-        case .procedural:
-            sceneRoot.addChild(RoomBuilder.build(flat: settings.flatShading))
-            for prop in RoomBuilder.buildLooseProps(flat: settings.flatShading) {
-                sceneRoot.addChild(prop)
-                looseProps.append(prop)
-            }
-        case .importedUSDZ:
-            if let room = try? Entity.load(named: "KitchenRoom") {
-                sceneRoot.addChild(room)
-            } else {
-                // No USDZ bundled yet — fall back rather than showing nothing,
-                // and say so in the entity name for the debugger.
-                let placeholder = RoomBuilder.build(flat: settings.flatShading)
-                placeholder.name = "RoomRoot (USDZ missing — procedural fallback)"
-                sceneRoot.addChild(placeholder)
-            }
-        }
-
+        let room = KitchenRoom(ticker: ticker, touch: touch, voice: voice,
+                               sound: sound, settings: settings)
+        kitchen = room
+        sceneRoot.addChild(room.root)
+        room.build(flat: settings.flatShading)
         builtFlat = settings.flatShading
-        builtSource = settings.roomSource
-        refreshContactShadows(settings: settings)
+
+        // A beat before she is greeted, so the room is on screen first.
+        ticker.after(0.9) { [weak room] in room?.greet() }
     }
 
-    func refreshContactShadows(settings: LightingSettings) {
-        for prop in looseProps {
-            ContactShadows.attach(to: prop, radius: radius(for: prop), settings: settings)
-            // The two known surfaces in this scene: table top and floor.
-            let surfaceY: Float = prop.position.y > 0.05 ? 0.070 : 0.004
-            ContactShadows.update(for: prop, surfaceY: surfaceY, settings: settings)
+    /// Called on every SwiftUI update. Only the flat/smooth toggle rebuilds
+    /// anything; the rest is lights and shadows, which are cheap.
+    func update(settings: LightingSettings) {
+        if let builtFlat, builtFlat != settings.flatShading {
+            kitchen?.build(flat: settings.flatShading)
+            self.builtFlat = settings.flatShading
         }
+        rig.apply(settings, to: sceneRoot)
+        kitchen?.refreshContactShadows(settings: settings)
     }
+}
 
-    private func radius(for prop: Entity) -> Float {
-        switch prop.name {
-        case "Bowl": return 0.030
-        case "Egg": return 0.012
-        case "Berry": return 0.011
-        default: return 0.015
+/// The game half of the debug overlay. The lighting half is `DebugPanel`,
+/// unchanged from the POC.
+@MainActor
+struct KitchenDebugStrip: View {
+    @ObservedObject var scene: GameScene
+    @ObservedObject var settings: LightingSettings
+    var onClose: () -> Void
+
+    @State private var muted = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("KITCHEN")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Button("Hide") { onClose() }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+            }
+
+            if let kitchen = scene.kitchen {
+                Text("Step: \(kitchen.state.step.rawValue)")
+                Text("Bowl: \(kitchen.state.inBowl.map(\.rawValue).joined(separator: ", "))")
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text("Stir: \(Int(kitchen.state.stir * 100))%  ·  Shelf: \(kitchen.state.shelf.count)")
+                    .foregroundStyle(.secondary)
+            }
+
+            // Which line just played. During a session with Nina this is the
+            // difference between "she ignored it" and "she never heard it".
+            Text(scene.voice?.lastSpoken ?? "")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            HStack {
+                Button("New round") { scene.kitchen?.resetRound() }
+                Toggle("Mute", isOn: $muted)
+                    .onChange(of: muted) { _, value in scene.sound.enabled = !value }
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
         }
+        .padding(12)
+        .frame(width: 290, alignment: .leading)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14))
+        .font(.caption)
+        .padding(.horizontal, 16)
+        .padding(.top, 16)
     }
 }
