@@ -847,6 +847,7 @@ enum KitchenProps {
         // as a stick standing in a hole. The room has one camera angle
         // (`CONCEPT.md` §9.4), so which edge the hinge is on is a fixed
         // decision with a right answer rather than a preference.
+        //
         // The pivot is on the leaf's **back** face, not through its middle: a
         // leaf turning about its own centre line swings its back corner
         // sideways into the jamb, which is 10 mm wide and the nearest thing to
@@ -883,6 +884,18 @@ enum KitchenProps {
         knob.orientation = simd_quatf(angle: .pi / 2, axis: [1, 0, 0])
         knob.position = [open.x / 2 - 0.013, 0, leafThickness / 2]
         leaf.addChild(knob)
+
+        // Architecture against the wall, so its cast shadow could only ever
+        // print the door onto the plaster beside it — a hard dark echo, not
+        // grounding. Kept from the shadow pass, and it has to stay last: it
+        // walks the children that exist when it is called, so a part added
+        // after this line would quietly start casting.
+        //
+        // **The one part with a case for casting is the leaf**, which is the
+        // only piece that leaves the wall — but it leaves it towards the wall's
+        // own plaster, so what it would print is the same stain the rule
+        // exists to stop. Worth an eye on device, not a change made blind.
+        root.excludeFromShadowCasting()
 
         return Doorway(root: root, hinge: hinge, glow: glow)
     }

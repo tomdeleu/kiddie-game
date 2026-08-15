@@ -348,6 +348,14 @@ enum RoomBuilder {
         leftWall.position = [-half + Layout.wallThickness / 2, Layout.wallHeight / 2, 0]
         root.addChild(leftWall)
 
+        // The shell never casts — the back wall's shadow raking across the
+        // left wall was the hardest band in the room, and architecture
+        // shadowing architecture buys no grounding. Receiving is untouched:
+        // the floor and walls still catch the shadows of props and characters.
+        for shellPiece in [slab, floor, backWall, leftWall] {
+            shellPiece.excludeFromShadowCasting()
+        }
+
         root.addChild(buildTable(flat: flat))
         root.addChild(buildCounter(flat: flat))
         root.addChild(buildShelf(flat: flat, height: 0.150))
@@ -400,6 +408,9 @@ enum RoomBuilder {
         top.position = [0, Layout.counterTopY - 0.004, 0]
         counter.addChild(top)
 
+        // Hugs the back wall and meets the floor along its whole footprint —
+        // contact grounds it, and its cast could only smear the walls.
+        counter.excludeFromShadowCasting()
         return counter
     }
 
@@ -427,6 +438,10 @@ enum RoomBuilder {
             lid.position = [x, height + 0.026, z]
             shelf.addChild(lid)
         }
+        // Wall-mounted, centimetres from the plaster: the shadow a shelf and
+        // its jars cast onto the wall behind them reads as a stain, and the
+        // jars are grounded by standing on the plank, not by a cast.
+        shelf.excludeFromShadowCasting()
         return shelf
     }
 
@@ -452,6 +467,8 @@ enum RoomBuilder {
                                 Layout.cakePlankCentre.y - 0.008]
             shelf.addChild(bracket)
         }
+        // Wall-mounted like the ingredient shelves, and for the same reason.
+        shelf.excludeFromShadowCasting()
         return shelf
     }
 
