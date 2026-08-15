@@ -82,7 +82,8 @@ Two ways, both doing the same thing:
 - **The skip button**, bottom-right, fading in a second after the film starts.
   The skip-to-end glyph from every music player, no text on it, 72 pt across.
   It exists because tap-anywhere is invisible — a grown-up handed the iPad has
-  no way to guess it, and neither does she.
+  no way to guess it, and neither does she. It is a
+  [`FacetButton`](#the-button), the game's one control.
 - **A tap anywhere else.** Kept, because it is what she will do.
 
 It is bottom-right on purpose: top-right is where the developer panel's hidden
@@ -243,8 +244,43 @@ be retired when the wall arrives, not grown.
 | `RoomBuilder.swift` | The shell and the furniture, plus `Layout` — every position in the room, in one table. |
 | `FacetedMesh.swift` | **The core of the look.** Flat-shaded primitive builders, plus the smooth variant for A/B. |
 | `Palette.swift` | The locked colours, the two added ones, and the glow material. |
+| `UI/FacetButton.swift` | **The button.** One faceted octagon, every control in the game. |
 | `LightingRig.swift`, `LightingSettings.swift`, `DebugPanel.swift`, `ContactShadows.swift` | The POC's lighting work, unchanged. |
 | `ContentView.swift` | Scene assembly, the gesture, and the hidden developer panel. |
+
+### The button
+
+Every control she touches outside the room is one object: an octagonal cap with
+a chamfered cream rim, a flat deep-pastel face and one big white glyph. It comes
+from `references/buttons/G-faceon-mint.png` — that folder's README has the nine
+candidates and the measurements — and it is drawn, not shipped as an image.
+
+Three things it settles for everything that comes after the kitchen:
+
+- **The rim does the shading.** Eight chamfer facets, each taking its tone from
+  its own angle to one 45° key light. It is the room's shading model done in 2D,
+  because the SwiftUI overlay has no renderer to do it. No gradients — a
+  gradient is a smooth curved surface with extra steps.
+- **The face is always a deep palette colour**, and the glyph is always white,
+  at 42% of the button's width. White on base mint is a contrast ratio of 1.43;
+  the four tones run 1.80 to 2.46. She is four, and a glyph she has to hunt for
+  is a button that does not work.
+- **Pressing sinks it.** The cap scales down, drops 2 pt, and the whole chamfer
+  ring inverts — which is what a cap going down into its socket actually does.
+  Small on purpose: the target must not move out from under her finger
+  mid-press.
+
+Two sizes: 120 pt for a target in the room, 72 pt for chrome at the edge of the
+screen. Two buttons wear it so far, both chrome and both 72 pt: **skip** in sage
+at bottom-right, **restart** in rose at bottom-left. Same object, same size,
+different colour — the family is what makes them read as the same kind of thing,
+and the colour is what lets her tell them apart without reading. The developer
+panel keeps its plain iOS controls — nothing in there is for Nina, and it is
+deliberately not pretty.
+
+The design is verified but **not compiled**, like everything else here.
+`references/buttons/render-facetbutton.py` re-draws `FacetPlate` from the same
+constants so the sheet in that folder shows what the code will produce.
 
 ### Why the touch handling is hand-rolled
 
@@ -299,7 +335,7 @@ long-standing limitation, not a setup problem.
 
 ### First build
 
-Two places are the most likely to want a fix, and both are one line:
+Three places are the most likely to want a fix, and all three are one line:
 
 1. **`CameraRig.fovIsVertical`.** `init` sets
    `camera.camera.fieldOfViewOrientation = .vertical` so the unprojection maths
@@ -311,6 +347,10 @@ Two places are the most likely to want a fix, and both are one line:
    `PhysicallyBasedMaterial`. Only three things glow (a honey cake, Otto's door
    while baking, the doorway), so if the API has moved, that one function is the
    only place to fix it.
+3. **`FacetButton`'s convenience `init`.** It leans on the synthesised
+   memberwise initialiser carrying `@ViewBuilder` across from the stored `label`
+   property. If the compiler disagrees, write the designated `init` out by hand
+   in the struct body — five assignments, and every call site stays as it is.
 
 ### The developer panel
 

@@ -150,8 +150,8 @@ struct ContentView: View {
     ///
     /// Bottom-left, out of the way of both the skip button (bottom-right) and
     /// the developer corner (top-right). No text on it — the going-round arrow
-    /// everyone knows, the same size and weight as the skip button so the two
-    /// read as the same kind of thing.
+    /// everyone knows, on the same `FacetButton` at the same 72 pt as skip, so
+    /// the two read as the same kind of thing.
     ///
     /// **She can press it, and that is fine.** `GAMEPLAY.md` §7 says she cannot
     /// lose: restarting keeps every cake already on the plank and costs her
@@ -163,20 +163,18 @@ struct ContentView: View {
         VStack {
             Spacer()
             HStack {
-                Button {
+                FacetButton(symbol: "arrow.counterclockwise",
+                            accessibilityLabel: "Opnieuw beginnen",
+                            // Rose against skip's sage. Same object, same size,
+                            // different colour: the family is what makes them
+                            // read as the same kind of thing, and the colour is
+                            // what lets her tell them apart across the screen
+                            // without reading anything.
+                            tone: .rose,
+                            diameter: FacetSize.chrome) {
                     scene.kitchen?.restartRound()
-                } label: {
-                    Image(systemName: "arrow.counterclockwise")
-                        .font(.system(size: 24, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .frame(width: 72, height: 72)
-                        .background(.black.opacity(0.28), in: Circle())
-                        .overlay(Circle().strokeBorder(.white.opacity(0.5), lineWidth: 2))
-                        .shadow(color: .black.opacity(0.3), radius: 8, y: 2)
                 }
-                .buttonStyle(.plain)
                 .padding(32)
-                .accessibilityLabel("Opnieuw beginnen")
                 Spacer()
             }
         }

@@ -53,6 +53,21 @@ enum Palette {
                            opacity: 1)
     }
 
+    /// A palette colour taken lighter or darker. `1.0` is the base colour.
+    ///
+    /// **Only for the 2D UI.** In the room the renderer shades every facet from
+    /// its own normal, which is the whole point of the style and the reason the
+    /// palette has no `lit` or `shaded` entries. The overlay has no renderer,
+    /// so `FacetButton` computes the same variation itself — from a light
+    /// direction, not by eye — and this is what it multiplies with.
+    static func shade(_ colour: UIColorLike, _ factor: Double) -> UIColorLike {
+        let c = components(colour)
+        return UIColorLike(red: min(1, c.0 * factor),
+                           green: min(1, c.1 * factor),
+                           blue: min(1, c.2 * factor),
+                           opacity: 1)
+    }
+
     private static func components(_ colour: UIColorLike) -> (Double, Double, Double) {
         #if os(macOS)
         let srgb = colour.usingColorSpace(.sRGB) ?? colour

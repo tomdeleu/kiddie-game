@@ -265,6 +265,22 @@ and about flux's behaviour rather than about surface:
   room palette on purpose. That rule carries over to the pastel direction intact:
   *the room is quiet, the cake is not.*
 
+### The UI — one button, in [`buttons/`](buttons/)
+
+Every control Nina touches outside the room is the same faceted octagon, chosen
+from nine candidates and measured into SwiftUI. That folder's README carries the
+plate, the job IDs and the numbers; three of its findings generalise and belong
+here:
+
+- **Ask for UI face-on**, not at the room's isometric angle. A control drawn
+  like a prop looks like a prop she can pick up.
+- **One object per plate.** A row of buttons lost every glyph and drifted every
+  colour, exactly as the twelve-friends cast sheet did. That is now two data
+  points for the same rule.
+- **flux cannot assemble a compound glyph.** Two triangles and a bar came back
+  five different wrong ways across nine plates. Prompt the shape of the control,
+  never the symbol on it.
+
 ### The locked style references — USE THESE
 
 Pass the matching reference as an `image_references` input on **every**
