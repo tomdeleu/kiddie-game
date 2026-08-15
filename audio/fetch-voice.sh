@@ -105,10 +105,12 @@ fetch "hf_20260815_122014_7eec1365-d1b7-4afd-83ad-ae1a533b5d4b.mp3" "luna-klaar-
 fetch "hf_20260815_122014_b08247dc-4e8d-4560-ac76-af7c54399a96.mp3" "luna-klaar-2.mp3"
 fetch "hf_20260815_122014_90bd7030-d75d-4747-ac00-cb9bafc3fa14.mp3" "luna-klaar-3.mp3"
 
+# One line per shot, each written to that shot's measured length — see the
+# _timing block in script-intro.json. An earlier set of three shorter lines
+# (welkom / binnen / a briefer keuken) was replaced by these and is not fetched.
 echo "Luna, opening film:"
-fetch "hf_20260815_133020_329999ed-5bb3-43ba-b3b5-cc3bdacd2f4a.mp3" "luna-intro-welkom-1.mp3"
-fetch "hf_20260815_133020_3c5df5d3-599d-4a94-bddd-f77ab13c65c9.mp3" "luna-intro-binnen-1.mp3"
-fetch "hf_20260815_134025_cef9129f-49a4-4747-8771-90ca8cd226f8.mp3" "luna-intro-keuken-1.mp3"
+fetch "hf_20260815_140133_f3a10d7f-6834-46e7-8e95-2d7ffef62ef5.mp3" "luna-intro-buiten-1.mp3"
+fetch "hf_20260815_140133_5d4aec7b-5d5d-436f-8c4e-863fa14be2c6.mp3" "luna-intro-keuken-1.mp3"
 
 echo "Otto:"
 fetch "hf_20260815_122030_2dec7cd2-aaf3-4f1b-8d55-611737cd89d3.mp3" "otto-tik-1.mp3"
@@ -132,4 +134,4 @@ fetch "hf_20260815_122041_9294bce9-6ec8-4038-9ec5-49ca0ac00737.mp3" "otto-wacht-
 cp script-keuken.json "$OUT/script-keuken.json"
 cp script-intro.json "$OUT/script-intro.json"
 
-echo "Done. 89 lines in $OUT"
+echo "Done. 88 lines in $OUT"

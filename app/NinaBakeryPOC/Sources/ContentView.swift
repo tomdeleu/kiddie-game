@@ -83,11 +83,17 @@ struct ContentView: View {
 
     /// The film ended, or she tapped through it. Luna greets her either way —
     /// skipping the film must not cost her the hello.
-    private func finishIntro() {
+    ///
+    /// The two cases differ in one thing, and it matters: **a tap cuts Luna
+    /// off, the end of the film does not.** She skipped because she wants to
+    /// bake, so holding her at the door for the rest of a sentence would be
+    /// exactly backwards; but letting the last line finish over the first
+    /// second of the kitchen is how a film ends, not a bug.
+    private func finishIntro(skipped: Bool) {
         guard showIntro else { return }
-        scene.voice?.stop()
+        if skipped { scene.voice?.stop() }
         withAnimation(.easeInOut(duration: 0.45)) { showIntro = false }
-        scene.ticker.after(0.5) { scene.kitchen?.greet() }
+        scene.greetWhenQuiet()
     }
 
     /// One finger, one gesture. A press that barely moves is a tap; anything
@@ -192,10 +198,26 @@ final class GameScene: ObservableObject {
         }
     }
 
-    /// Luna's two lines over the opening film.
+    /// Luna's narration over the opening film's first shot. The second shot's
+    /// line is fired by the cut — see `ContentView.introShotFinished`.
     func sayIntroLines() {
-        ticker.after(0.6) { [weak self] in
-            self?.voice.say([Line.introWelkom, Line.introBinnen], gap: 0.4)
+        ticker.after(0.4) { [weak self] in
+            self?.voice.say(Line.introBuiten)
+        }
+    }
+
+    /// Greet her once Luna has finished the film's narration, rather than a
+    /// fixed beat later. The lines are written to fit the shots, but a re-cut
+    /// line should not end up talking over its own greeting.
+    func greetWhenQuiet(after delay: Float = 0.35, timeout: Float = 6) {
+        var waited: Float = 0
+        ticker.add { [weak self] dt in
+            guard let self else { return false }
+            waited += dt
+            guard waited > delay else { return true }
+            guard !self.voice.isSpeaking || waited > timeout else { return true }
+            self.kitchen?.greet()
+            return false
         }
     }
 

@@ -185,9 +185,7 @@ enum Line {
     static let ottoKlaar = "otto.klaar"
     static let ottoWacht = "otto.wacht"
 
-    /// The opening film. Chained, over silent video — two lines over the
-    /// exterior shot and one over the cut inside.
-    static let introWelkom = "luna.intro.welkom"
-    static let introBinnen = "luna.intro.binnen"
+    /// The opening film, one line per shot, each written to that shot's length.
+    static let introBuiten = "luna.intro.buiten"
     static let introKeuken = "luna.intro.keuken"
 }

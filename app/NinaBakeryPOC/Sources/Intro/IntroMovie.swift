@@ -27,8 +27,9 @@ import Combine
 @MainActor
 struct IntroMovie: View {
 
-    /// Called when the film ends, or when she taps to skip it.
-    var onFinish: @MainActor () -> Void
+    /// Called when the film ends, or when she taps to skip it. The flag says
+    /// which — the caller cuts the narration short only on a tap.
+    var onFinish: @MainActor (_ skipped: Bool) -> Void
 
     /// Called with the index of each shot as it ends, so the voice-over can be
     /// hung off the cut rather than off a stopwatch. Re-cutting a shot to a
@@ -73,7 +74,7 @@ struct IntroMovie: View {
         }
         .ignoresSafeArea()
         .contentShape(Rectangle())
-        .onTapGesture { finish() }
+        .onTapGesture { finish(skipped: true) }
         .onAppear(perform: start)
         .onReceive(NotificationCenter.default.publisher(
             for: AVPlayerItem.didPlayToEndTimeNotification)) { note in
@@ -83,7 +84,7 @@ struct IntroMovie: View {
                 onShotFinished?(index)
             }
             guard item === lastItem else { return }
-            finish()
+            finish(skipped: false)
         }
         .onDisappear {
             player?.pause()
@@ -94,7 +95,7 @@ struct IntroMovie: View {
     private func start() {
         let urls = Self.urls
         guard !urls.isEmpty else {
-            finish()
+            finish(skipped: false)
             return
         }
         let items = urls.map { AVPlayerItem(url: $0) }
@@ -112,11 +113,11 @@ struct IntroMovie: View {
         player.play()
     }
 
-    private func finish() {
+    private func finish(skipped: Bool) {
         guard !finished else { return }
         finished = true
         player?.pause()
-        onFinish()
+        onFinish(skipped)
     }
 }
 

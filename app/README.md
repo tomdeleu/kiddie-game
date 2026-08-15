@@ -15,14 +15,22 @@ below is still the record of that.
 
 ## The opening film
 
-Fourteen seconds, two shots:
+Fourteen seconds, two shots, narrated end to end:
 
-1. **Outside** (8 s) — a slow push-in on the bakery, smoke from the chimney, a
-   little sparkle. *"Welkom in Nina's toverbakkerij! Dit is jouw bakkerij,
-   Nina. Kom je mee naar binnen?"*
-2. **Inside** (6 s) — the camera glides across the kitchen while the whisk
-   turns in the bowl, steam lifts off Otto and the jars wobble.
-   *"Kijk, de keuken! Hier bakken we de allerlekkerste taarten."*
+| | Shot | Voice |
+|---|---|---|
+| 1 | **Outside**, 8.04 s — a slow push-in on the bakery, smoke from the chimney, a little sparkle | 6.37 s: *"Welkom in Nina's toverbakkerij! Hier woon ik, Luna. En jij bent de bakker. Kom je mee naar binnen?"* |
+| 2 | **Inside**, 6.04 s — the camera glides across the kitchen while the whisk turns in the bowl, steam lifts off Otto and the jars wobble | 5.43 s: *"Dit is de keuken. Hier bakken we de allerlekkerste tovertaarten. Zullen we beginnen?"* |
+
+11.8 seconds of narration under 14.08 seconds of film. The gaps are where they
+should be: a beat to start, **1.27 s before the cut** — she asks *"kom je mee
+naar binnen?"* and the cut inside is the answer — and half a second at the end.
+Wall-to-wall narration would be worse, not better.
+
+The lines are written to the shots by measurement rather than by guess: Gracie
+reads Dutch at 15–17 characters a second, so a line's length is predictable to
+a few tenths. `script-intro.json` carries the numbers, so re-cutting a shot
+tells you exactly how much line it can hold.
 
 One shot per file, cut by an `AVQueuePlayer`. Asking a video model to cut
 between two locations is asking it to invent the second one; a queue does it
@@ -36,6 +44,12 @@ a shot to a different length cannot leave her talking about the wrong picture.
 Luna says hello either way. The room is built and lit behind the film while it
 plays, so tapping through two seconds in lands in a kitchen that is already
 there.
+
+A tap cuts the narration off; the end of the film does not. She skipped because
+she wants to bake, so holding her at the door for the rest of a sentence would
+be backwards — but letting the last line finish over the first second of the
+kitchen is how a film ends. The greeting waits for Luna to stop talking either
+way, rather than for a fixed number of seconds.
 
 The film is silent; the voice is Luna's own, for the same reason every other
 line is. It was generated with Seedance 2.5 starting from the locked cottage
