@@ -108,10 +108,16 @@ order: the wall shelf, the back counter, the basket on the table. One basket on
 one table made the room a work surface; three places make her look up, along,
 and down.
 
-The order never has to be guessed. **The one she needs glows** — a slow
-breathing ring under it — the others do not travel until their turn, and Nina
-names the place as each one lights up. Out-of-turn taps still answer, with a
-wobble and a nudge towards whatever is glowing. Nothing is ever disabled.
+The order never has to be guessed. **The one she needs glows** — the object
+itself lit from within, breathing slowly, with two or three sparkles lifting
+off it — the others do not travel until their turn, and Nina names the place as
+each one lights up. Out-of-turn taps still answer, with a wobble and a nudge
+towards whatever is glowing. Nothing is ever disabled.
+
+The first version of that cue was a glowing ring drawn on the table around the
+prop, and it was wrong: rendered as a preview it read as a screen-space UI
+element dropped into the room. `references/cues/` has the four alternatives it
+was judged against and why this one won.
 
 ### Nina
 
@@ -188,6 +194,7 @@ be retired when the wall arrives, not grown.
 | `Engine/Ticker.swift` | The one clock. Every animation is an interruptible closure ticked from here. |
 | `Engine/TouchRouter.swift` | One finger, two verbs. Targets are generous spheres, not meshes. |
 | `Engine/Sparkles.swift` | Faceted bits that fly out and vanish. The whole reward vocabulary. |
+| `Engine/Halo.swift` | The glow on the prop a step is about — the game's only instruction. |
 | `Audio/SoundKit.swift` | All thirteen sound effects, synthesised at launch. |
 | `Audio/VoiceBank.swift` | Nina and Otto, driven by `script-keuken.json`. |
 | `Game/CakeSpec.swift` | Six ingredients → colour, effects, and what Nina says about them. |
