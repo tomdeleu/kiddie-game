@@ -64,8 +64,19 @@ These were argued through and settled. Reopen only if the user asks.
 - **Voice is generated, not recorded.** The fairy is **Gracie**
   (`09878754-f20b-5330-9790-58a8027ab5b2`).
 - **Dutch only.**
-- **Kenney's CC0 kits first**, before modelling or generating any prop.
-  340 public-domain low-poly models, already mutually consistent.
+- **Use Kenney's CC0 kits.** Not a suggestion — the
+  [Food Kit](https://kenney.nl/assets/food-kit) and
+  [Furniture Kit](https://kenney.nl/assets/furniture-kit) are the default source
+  for props. 340 public-domain low-poly models in the right style, already
+  mutually consistent. **Do not model or generate a prop that a kit already
+  provides.** Model only what they genuinely lack (characters, the magic oven).
+- **Art direction: the diorama rule.** Every room is a small, bright diorama on
+  its own floating base — not a walled interior. Fixed three-quarter camera,
+  smooth matte plastic, cheerful saturated colour. See
+  `references/moodboard/README.md`.
+- **Check licences before using any reference.** Only CC0 material ships. Two
+  moodboard sources carry explicit *no-AI* terms, so they must never be used as
+  image-generation references.
 
 ## Non-negotiable: she is four
 

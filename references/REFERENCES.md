@@ -50,9 +50,20 @@ what a model is checked against.
 - Gentle contact shadows so objects sit on surfaces rather than float.
 - No harsh shadows, no dramatic or moody lighting, no colour grading.
 
+### Composition — the diorama rule
+
+**Every room is a small, bright diorama sitting on its own floating base.** Not a
+walled interior, not a cutaway room: a self-contained little island of scenery
+with clean air around it.
+
+This was the specific thing that landed when reviewing references, and it is
+more useful than "low poly" because it decides framing, lighting and geometry
+all at once. It also happens to suit the game — see
+[`moodboard/README.md`](moodboard/README.md) for why.
+
 ### Camera
 
-- Fixed, slightly elevated **three-quarter angle** — doll's-house framing.
+- Fixed, slightly elevated **three-quarter angle** on the diorama.
 - One camera position per room, never moved by the player.
 
 ### Characters

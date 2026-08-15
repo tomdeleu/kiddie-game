@@ -1,48 +1,64 @@
-# Moodboard — provenance
+# Moodboard — provenance and licence
 
-Page screenshots captured via the Firecrawl connector for **style reference
-only**. These are third-party copyrighted screenshots and asset previews. They
-are here to look at while modelling. **Do not ship any of them in the app**, and
-do not redistribute them.
+Page screenshots captured via the Firecrawl connector. Full method and the
+things that do not work: [`../FETCHING-ASSETS.md`](../FETCHING-ASSETS.md).
 
-The Kenney entries are the exception, and the important one — see below.
+**Read the licence column before using anything.** Only the Kenney kits are
+free to put in the game.
 
-| File | Source | What it shows |
-|---|---|---|
-| `01-devforum-stylized-lowpoly.png` | [devforum thread 3780170](https://devforum.roblox.com/t/stylized-low-poly/3780170) | Roblox "stylized low poly" — smooth plastic with light textures. Urban/textured variant, *not* our pastel direction. Useful as a counter-example. |
-| `02-devforum-lowpoly-art-design.png` | [devforum thread 1103992](https://devforum.roblox.com/t/low-poly-art-design/1103992) | Community discussion of low-poly workflow and Blender alternatives. |
-| `03-devforum-lowpoly-with-blocks.png` | [devforum thread 278566](https://devforum.roblox.com/t/how-to-create-a-low-poly-lookvibe-using-roblox-studio-blocks/278566) | Achieving the low-poly look from primitives only — closest to our procedural approach. |
-| `04-kenney-food-kit.png` | [kenney.nl/assets/food-kit](https://kenney.nl/assets/food-kit) | **CC0 asset pack, 200 models.** Cakes, pies, pots, pans, kitchen items. |
-| `05-kenney-furniture-kit.png` | [kenney.nl/assets/furniture-kit](https://kenney.nl/assets/furniture-kit) | **CC0 asset pack, 140 models.** Tables, shelves, chairs, cabinets. |
+| File | Source | Licence | Use |
+|---|---|---|---|
+| `03-devforum-lowpoly-with-blocks.png` | [devforum 278566](https://devforum.roblox.com/t/how-to-create-a-low-poly-lookvibe-using-roblox-studio-blocks/278566) | © respective posters | **Reference only.** The agreed direction — see below. |
+| `04-kenney-food-kit.png` | [kenney.nl](https://kenney.nl/assets/food-kit) | **CC0** | **Use directly.** 200 models. |
+| `05-kenney-furniture-kit.png` | [kenney.nl](https://kenney.nl/assets/furniture-kit) | **CC0** | **Use directly.** 140 models. |
+| `06-unity-cute-bakery-building.png` | [Unity Asset Store](https://assetstore.unity.com/packages/3d/environments/low-poly-cute-bakery-building-229785) | Unity EULA | **Reference only** — free, but the EULA ties it to Unity projects, and we are on RealityKit. |
+| `07-cgtrader-floating-island-house.png` | [CGTrader](https://www.cgtrader.com/free-3d-models/exterior/other/stylized-low-poly-floating-island-with-small-house) | Royalty-free, **no AI** | Model is free to download and use. Do **not** feed it to an image generator. |
+| `08-dribbble-isometric-bakery.png` | [Dribbble — Naomi](https://dribbble.com/shots/21332763-3D-Cute-Isometric-Bakery-made-in-Blender) | © the artist | **Reference only.** |
 
-## The Kenney kits are not just references
+Do not ship or redistribute anything not marked CC0.
 
-**Kenney's kits are Creative Commons CC0** — public domain, no attribution
-required, commercial use fine. They are low-poly with flat matte colours, which
-is exactly the target look, and they ship in formats that convert to USDZ.
+## The agreed direction
 
-That makes them *actual game assets*, not mood. Between the Food Kit and the
-Furniture Kit there are 340 models covering most of what a bakery and a party
-room need, in a single consistent style — which also solves the drift problem,
-because one artist made all of them.
+Two files were dropped after review: an urban, textured, dimly-lit Roblox thread
+(wrong register entirely), and a night-time ArtStation floating island — lovely,
+but dark, and tagged `#NoAI` by its author.
 
-This is the single biggest de-risking available to this project. Start here
-before modelling or generating anything.
+What survived has a consistent shape, and it is more specific than "low poly":
+
+> **A small, bright diorama sitting on its own floating base**, built from simple
+> primitives, in smooth matte plastic and cheerful saturated colour, viewed from
+> a fixed three-quarter angle.
+
+That is the look to hold every asset against.
+
+### Why this matters beyond mood
+
+The diorama-on-a-plinth framing is not just a style, it is a **structure that
+suits the game**:
+
+- Each room becomes a self-contained object rather than a walled interior, so
+  there are no walls to clip the camera or hide props behind.
+- The fixed three-quarter angle is already the plan — the reference and the
+  interaction model agree.
+- Moving between rooms can be a plinth sliding out and the next sliding in,
+  which is legible to a 4-year-old in a way a cut or fade is not.
+- Each plinth can be modelled and lit independently without matching a
+  neighbouring room's geometry.
+
+Worth carrying into `CONCEPT.md` §4 when the hub is built: the bakery is a
+cluster of little floating dioramas, not a cutaway house.
+
+## The Kenney kits are not references — they are the assets
+
+**CC0**: public domain, no attribution required, commercial use fine. Low-poly,
+flat matte colours, and one artist made all of them, so they are already
+mutually consistent — which solves the drift problem for free.
+
+340 models between the two kits, covering most of what a bakery and a party room
+need.
 
 - Food Kit — https://kenney.nl/assets/food-kit
 - Furniture Kit — https://kenney.nl/assets/furniture-kit
-- Everything, one download — https://kenney.nl/assets
+- Everything at once — https://kenney.nl/assets
 
-## How these were captured
-
-Full recipe, and what does *not* work, in
-[`../FETCHING-ASSETS.md`](../FETCHING-ASSETS.md).
-
-Short version: direct image downloads are blocked by the sandbox network policy,
-and Firecrawl refuses binary URLs outright. `firecrawl_scrape` with
-`formats: ["screenshot"]` writes a PNG to a signed `storage.googleapis.com` URL,
-and that host *is* reachable, so `curl` can save it.
-
-Consequence: these are **page** screenshots, browser chrome and cookie banners
-included, not clean asset images. Good enough to judge a style by; not good
-enough to trace.
+Reach for a kit model before modelling or generating anything.
