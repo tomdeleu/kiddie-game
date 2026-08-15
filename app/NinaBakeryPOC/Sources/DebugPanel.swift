@@ -60,6 +60,10 @@ struct DebugPanel: View {
                 ForEach(LightingSettings.RoomSource.allCases) { Text($0.rawValue).tag($0) }
             }
             .pickerStyle(.segmented)
+            .disabled(true)
+            Text("The kitchen is always procedural — the props hang off `Layout`, not off a scene file. The USDZ path stays for the lightmap comparison below, which is the only thing that needs UVs.")
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
 
             Toggle("Flat shading", isOn: $settings.flatShading)
             Text(settings.flatShading

@@ -451,7 +451,7 @@ final class KitchenRoom {
         var next = world + carryOffset
         // Lifted a little, so it reads as held rather than shoved.
         next.y = Layout.tableTopY + 0.012
-        carried.position = Layout.clampToTable(next)
+        carried.position = Layout.clampToPlayArea(next)
         ContactShadows.update(for: carried, surfaceY: Layout.tableTopY, settings: settings)
     }
 

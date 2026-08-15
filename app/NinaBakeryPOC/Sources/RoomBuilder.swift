@@ -37,17 +37,20 @@ enum Layout {
     static let mouthDepth: Float = 0.034
     static let mouthBackZ: Float = 0.042
     static var mouthFrontZ: Float { mouthBackZ + mouthDepth }
-    /// Where the tin has to land, in world space.
+    /// Where the tin has to land, in world space: at the lip of the mouth, not
+    /// inside it. The dark plug behind is solid, so a target set any deeper
+    /// would make the tin vanish on arrival instead of sliding in.
     static var ovenMouth: SIMD3<Float> {
-        ovenOrigin + SIMD3<Float>(0, mouthLegHeight + 0.010, mouthFrontZ - 0.014)
+        ovenOrigin + SIMD3<Float>(0, mouthLegHeight + 0.010, mouthFrontZ - 0.002)
     }
 
     // Home positions on the table.
     static let basketHome = SIMD3<Float>(-0.128, tableTopY, 0.078)
     static let bowlHome = SIMD3<Float>(-0.050, tableTopY, 0.048)
-    static let whiskHome = SIMD3<Float>(-0.098, tableTopY, 0.014)
+    static let whiskHome = SIMD3<Float>(-0.020, tableTopY, 0.014)
     static let tinHome = SIMD3<Float>(0.022, tableTopY, 0.080)
-    static let rollingPinHome = SIMD3<Float>(-0.120, tableTopY, 0.016)
+    /// Lies along X from here, so its left end is what has to stay on the table.
+    static let rollingPinHome = SIMD3<Float>(-0.105, tableTopY, 0.002)
     /// Where a finished cake lands when Otto hands it over.
     static let cakeSpot = SIMD3<Float>(0.024, tableTopY, 0.030)
 
@@ -74,12 +77,18 @@ enum Layout {
         simd_length(SIMD2<Float>(a.x - b.x, a.z - b.z))
     }
 
-    /// Keep a dragged prop on the table and out of the walls.
-    static func clampToTable(_ p: SIMD3<Float>) -> SIMD3<Float> {
-        let minX = tableCentre.x - tableSize.x / 2 + 0.010
-        let maxX = tableCentre.x + tableSize.x / 2 - 0.010
-        let minZ = tableCentre.y - tableSize.y / 2 + 0.010
-        let maxZ = tableCentre.y + tableSize.y / 2 - 0.010
+    /// How far a carried prop may travel.
+    ///
+    /// **Not the table.** The tin has to reach Otto's mouth, which is off the
+    /// table's far corner — clamping to the table top exactly is what made the
+    /// oven unreachable by about four millimetres. So this is the table plus
+    /// the corner in front of Otto, and a prop released anywhere in it that is
+    /// not near something simply floats home.
+    static func clampToPlayArea(_ p: SIMD3<Float>) -> SIMD3<Float> {
+        let minX: Float = tableCentre.x - tableSize.x / 2 + 0.010
+        let maxX: Float = 0.145
+        let minZ: Float = -0.055
+        let maxZ: Float = tableCentre.y + tableSize.y / 2 - 0.010
         return SIMD3<Float>(min(max(p.x, minX), maxX), p.y, min(max(p.z, minZ), maxZ))
     }
 }
