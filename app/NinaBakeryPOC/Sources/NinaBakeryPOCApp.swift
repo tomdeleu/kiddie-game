@@ -4,7 +4,7 @@ import SwiftUI
 ///
 /// This began as the Step 0 proof of concept and now holds the first real room:
 /// the kitchen from `GAMEPLAY.md` §6.3, with its required action (ingredients,
-/// stir, pour, bake), its six toys, Otto, and Luna speaking Dutch. The target
+/// stir, pour, bake), its six toys, Otto, and Nina speaking Dutch. The target
 /// name is still `NinaBakeryPOC` because the Xcode project builds and runs
 /// under it, and renaming a working project buys nothing. What Nina sees under
 /// the icon is `CFBundleDisplayName`, which is *Nina's Toverbakkerij*.

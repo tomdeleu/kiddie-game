@@ -47,8 +47,8 @@ enum Ingredient: String, Codable, CaseIterable {
         }
     }
 
-    /// Luna's reaction as it lands in the bowl.
-    var lineID: String { "luna.ingredient.\(rawValue)" }
+    /// Nina's reaction as it lands in the bowl.
+    var lineID: String { "nina.ingredient.\(rawValue)" }
 
     /// The colour of the token she drags. Reads as the fruit, not as the cake.
     var tokenColour: UIColorLike {
@@ -88,7 +88,7 @@ enum CakeColour: String, Codable, CaseIterable {
         }
     }
 
-    var lineID: String { "luna.taart.\(rawValue)" }
+    var lineID: String { "nina.taart.\(rawValue)" }
 }
 
 enum CakeEffect: String, Codable {
@@ -96,7 +96,7 @@ enum CakeEffect: String, Codable {
     case glimt     // sun honey: a soft glow
     case hoog      // cloud cream: a tall cake
 
-    var lineID: String { "luna.effect.\(rawValue)" }
+    var lineID: String { "nina.effect.\(rawValue)" }
 }
 
 /// A finished cake. Everything downstream — decorating, the party, the frame on
@@ -173,15 +173,15 @@ struct CakeSpec: Codable, Equatable {
         return Palette.cream
     }
 
-    /// What Luna says when it comes out of the oven: the colour, then at most
+    /// What Nina says when it comes out of the oven: the colour, then at most
     /// one effect. Two would be a monologue, and she is four.
     var reactionLines: [String] {
         var ids: [String] = []
         switch kind {
-        case .room: ids.append("luna.taart.room")
+        case .room: ids.append("nina.taart.room")
         case .effen: ids.append(colours[0].lineID)
-        case .gemengd: ids.append("luna.taart.gemengd")
-        case .regenboog: ids.append("luna.taart.regenboog")
+        case .gemengd: ids.append("nina.taart.gemengd")
+        case .regenboog: ids.append("nina.taart.regenboog")
         }
         // Height is the most visible, sparkle the most exciting; glow reads
         // last, so it only gets a line when it is the only thing to say.

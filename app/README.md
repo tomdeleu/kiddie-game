@@ -19,11 +19,11 @@ Fourteen seconds, two shots, narrated end to end:
 
 | | Shot | Voice |
 |---|---|---|
-| 1 | **Outside**, 8.04 s — a slow push-in on the bakery, smoke from the chimney, a little sparkle | 6.37 s: *"Welkom in Nina's toverbakkerij! Hier woon ik, Luna. En jij bent de bakker. Kom je mee naar binnen?"* |
+| 1 | **Outside**, 8.04 s — a slow push-in on the bakery, smoke from the chimney, a little sparkle | 5.17 s: *"Welkom in mijn toverbakkerij! Ik ben Nina, en ik ben de bakker. Kom je mee naar binnen?"* |
 | 2 | **Inside**, 6.04 s — the camera glides across the kitchen while the whisk turns in the bowl, steam lifts off Otto and the jars wobble | 5.43 s: *"Dit is de keuken. Hier bakken we de allerlekkerste tovertaarten. Zullen we beginnen?"* |
 
-11.8 seconds of narration under 14.08 seconds of film. The gaps are where they
-should be: a beat to start, **1.27 s before the cut** — she asks *"kom je mee
+10.6 seconds of narration under 14.08 seconds of film. The gaps are where they
+should be: a beat to start, **2.47 s before the cut** — she asks *"kom je mee
 naar binnen?"* and the cut inside is the answer — and half a second at the end.
 Wall-to-wall narration would be worse, not better.
 
@@ -37,7 +37,7 @@ between two locations is asking it to invent the second one; a queue does it
 for free and each shot stays independently re-cuttable. A third shot is
 `intro-3.mp4` in the same folder and no code change.
 
-Luna's third line is triggered by the cut itself, not by a timer, so re-cutting
+Nina's third line is triggered by the cut itself, not by a timer, so re-cutting
 a shot to a different length cannot leave her talking about the wrong picture.
 
 ### Skipping
@@ -53,23 +53,23 @@ Two ways, both doing the same thing:
 It is bottom-right on purpose: top-right is where the developer panel's hidden
 triple-tap lives.
 
-Skipping does not cost her the greeting — Luna says hello either way. The room
+Skipping does not cost her the greeting — Nina says hello either way. The room
 is built and lit behind the film while it plays, so tapping through two seconds
 in lands in a kitchen that is already there.
 
 A tap cuts the narration off; the end of the film does not. She skipped because
 she wants to bake, so holding her at the door for the rest of a sentence would
 be backwards — but letting the last line finish over the first second of the
-kitchen is how a film ends. The greeting waits for Luna to stop talking either
+kitchen is how a film ends. The greeting waits for Nina to stop talking either
 way, rather than for a fixed number of seconds.
 
-The film is silent; the voice is Luna's own, for the same reason every other
+The film is silent; the voice is Nina's own, for the same reason every other
 line is. It was generated with Seedance 2.5 starting from the locked cottage
 plate — the provenance, the cost and why a generated asset ships here at all
 are in `references/REFERENCES.md` §3.
 
-`intro.mp4` is optional. Delete it and the game starts straight in the kitchen,
-with no code change.
+`intro-1.mp4` and `intro-2.mp4` are optional. Delete them and the game starts
+straight in the kitchen, with no code change.
 
 ## The round
 
@@ -77,21 +77,76 @@ One round is `GAMEPLAY.md` §6.3, end to end:
 
 | Step | What she does | What answers |
 |---|---|---|
-| **vullen** | Drag three ingredients from the basket into the bowl | A plop, a ring of sparkles, the batter rising and changing colour, and Luna naming what that ingredient will do |
+| **uitrollen** | Roll the ball of dough flat with the rolling pin | It spreads under the pin, puffs flour, and hops into the tin as a base |
+| **vullen** | Fetch three ingredients — **shelf, then counter, then basket** — into the bowl | A plop, a ring of sparkles, the batter rising and changing colour, and Nina naming what that ingredient will do |
 | **roeren** | Stir with a finger | The whisk follows her hand, the batter turns and comes up to colour |
-| **gieten** | Drag the bowl onto the tin | It tips, pours, and goes back where it lives |
+| **gieten** | Drag the bowl onto the tin | It tips, pours onto the base, and goes back where it lives |
 | **inOven** | Drag the tin to Otto | It slides in, the door shuts, Otto is delighted |
 | **bakken** | Tap Otto | Four seconds of him puffing and breathing, a rising ping, and the cake comes out in her colours |
-| **klaar** | Tap the doorway | The cake goes up on the plank and a fresh basket arrives |
+| **klaar** | Tap the doorway | The cake goes up on the plank and a fresh round begins |
 
-Three turns finishes the stirring — **or twice as much scrubbing**. A
-4-year-old who cannot yet draw a circle still has to be able to make batter, so
-raw travel counts at half rate. It is the one mechanic in the room that had to
-bend to her hands rather than the other way round.
+At the top of every round she hears what the whole thing is for — *"meng alle
+toverdingetjes in de kom, en zet de taart daarna in de oven"* — and then the
+first step. Coming back to a half-finished round skips all that and just says
+where she was.
+
+Rolling and stirring are the two mechanics that had to bend to her hands.
+**Rolling** only counts while the pin is actually over the dough, so waving it
+around does nothing and going back and forth does everything — about three
+passes. **Three turns finishes the stirring — or twice as much scrubbing.** A 4-year-old who
+cannot yet draw a circle still has to be able to make batter, so raw travel
+counts at half rate.
 
 **She cannot fail.** No drop is rejected: a miss floats home with a soft sound
-and Luna says something kind. Nothing is disabled, greyed out or refused, and
+and Nina says something kind. Nothing is disabled, greyed out or refused, and
 every tap does something — including a tap on nothing, which sparkles.
+
+### Where things are, and in what order
+
+The three ingredients live in **three different places**, collected in a fixed
+order: the wall shelf, the back counter, the basket on the table. One basket on
+one table made the room a work surface; three places make her look up, along,
+and down.
+
+The order never has to be guessed. **The one she needs glows** — the object
+itself lit from within, breathing slowly, with two or three sparkles lifting
+off it — the others do not travel until their turn, and Nina names the place as
+each one lights up. Out-of-turn taps still answer, with a wobble and a nudge
+towards whatever is glowing. Nothing is ever disabled.
+
+The first version of that cue was a glowing ring drawn on the table around the
+prop, and it was wrong: rendered as a preview it read as a screen-space UI
+element dropped into the room. `references/cues/` has the four alternatives it
+was judged against and why this one won.
+
+### Nina
+
+She stands behind the table and works. Built from
+`references/plates/02-fairy-character.png` — mint hat with a knob, apron, pink
+pocket, faceted wings — on `CONCEPT.md` §9.7's three-part rig: one solid body,
+two legs pivoting at the hip, squash and stretch on the root.
+
+She bobs, leans towards whatever the current step is about, shifts her weight,
+flutters her wings, and hops when something goes right. Her arms never
+articulate and nothing bends — a baker who stirs with her shoulders needs
+inverse kinematics; a baker who leans her whole body over the bowl needs one
+rotation and a sine wave, and at this scale reads better.
+
+**The voice is hers.** Until 2026-08-15 the speaker was a separate fairy called
+Luna and Nina had no avatar at all; the owner reversed both. Ten lines that
+named Nina in the second person were regenerated in the first, every id and
+filename moved from `luna.*` to `nina.*`, and what that leaves open on the wall
+of frames is recorded in `GAMEPLAY.md` §1.
+
+### Starting over
+
+A **restart button**, bottom-left, same size and weight as the intro's skip
+button and with no text on it either. It throws away the cake she is holding,
+keeps every cake already on the plank, and Nina says so out loud.
+
+She can press it, and that is fine: nothing finished is ever lost. If she turns
+out to press it constantly, the fix is to move it behind the parent gate — not
+to add a confirmation, which is unreadable to her by definition.
 
 ### The toys
 
@@ -102,7 +157,7 @@ every single time he is poked.
 
 ### Idle
 
-After ~25 s of nothing, the thing she needs shimmers. After ~45 s Luna says one
+After ~25 s of nothing, the thing she needs shimmers. After ~45 s Nina says one
 short line — alternating with "I'm still here" so she never says the same thing
 twice running. Then it goes quiet for a minute.
 
@@ -111,7 +166,7 @@ twice running. Then it goes quiet for a minute.
 **The doorway is not yet a door.** `GAMEPLAY.md` §7 says the door always works,
 even mid-task. Here it cannot: the decorating room does not exist, so there is
 nowhere to go. What it does instead is honest rather than fake — mid-round it
-whooshes and Luna says what is happening now; once the cake is out it ends the
+whooshes and Nina says what is happening now; once the cake is out it ends the
 round, puts the cake on the plank and brings a fresh basket. **When the
 decorating room lands, `tapDoorway()` is the one function to change.**
 
@@ -139,9 +194,10 @@ be retired when the wall arrives, not grown.
 | `Engine/Ticker.swift` | The one clock. Every animation is an interruptible closure ticked from here. |
 | `Engine/TouchRouter.swift` | One finger, two verbs. Targets are generous spheres, not meshes. |
 | `Engine/Sparkles.swift` | Faceted bits that fly out and vanish. The whole reward vocabulary. |
+| `Engine/Halo.swift` | The glow on the prop a step is about — the game's only instruction. |
 | `Audio/SoundKit.swift` | All thirteen sound effects, synthesised at launch. |
-| `Audio/VoiceBank.swift` | Luna and Otto, driven by `script-keuken.json`. |
-| `Game/CakeSpec.swift` | Six ingredients → colour, effects, and what Luna says about them. |
+| `Audio/VoiceBank.swift` | Nina and Otto, driven by `script-keuken.json`. |
+| `Game/CakeSpec.swift` | Six ingredients → colour, effects, and what Nina says about them. |
 | `Game/RoundState.swift` | The round, and the JSON it is saved to. |
 | `Kitchen/KitchenProps.swift` | Otto, the bowl, the batter, the tin, the cake, the toys. |
 | `Kitchen/KitchenRoom.swift` | The room: assembly, the state machine, the toys, the nudges. |
@@ -251,7 +307,7 @@ with **Copy settings** before overwriting.
 ## Audio
 
 **Voice is real.** 86 Dutch lines, generated with `text2speech_v2` /
-`elevenlabs` and bundled as mp3s — the app never calls an API. Luna is Gracie;
+`elevenlabs` and bundled as mp3s — the app never calls an API. Nina is Gracie;
 Otto is provisionally Barrett, and `audio/auditions/README.md` explains how to
 swap him for four credits and no code.
 

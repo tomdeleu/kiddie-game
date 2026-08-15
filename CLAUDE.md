@@ -19,13 +19,13 @@ a real toverbakkerij. That is the only progression — no scores, no stars, no
 timers, nothing counted anywhere. A round is ~11–12 minutes.
 
 **Status: one room built.** The proof of concept is answered and
-[`app/`](app/) now holds **De Keuken** — the full kitchen round, six toys, and
-86 Dutch voice lines. No other room exists.
+[`app/`](app/) now holds **De Keuken** — the full kitchen round, six toys, Nina
+herself behind the table, and 96 Dutch voice lines. No other room exists.
 
 ## → Start here: [`app/README.md`](app/README.md)
 
-The kitchen is playable end to end: ingredients into the bowl, stir, pour, into
-Otto, tap, cake, onto the plank, fresh basket. It has never been compiled — it
+The kitchen is playable end to end: roll the base, fetch three ingredients from
+three places, stir, pour, into Otto, tap, cake, onto the plank, fresh round. It has never been compiled — it
 was written in a container with no Swift toolchain — and its README names the
 two places most likely to want a fix on first build.
 
@@ -45,7 +45,7 @@ palette and pass criteria are still the standard every new room is held to.
 
 | Path | What |
 |---|---|
-| [`app/`](app/) | **The app.** De Keuken, whole: the round, the toys, Otto, Luna, the lighting panel. Written but never compiled — see its README. |
+| [`app/`](app/) | **The app.** De Keuken, whole: the round, the toys, Nina, Otto, the lighting panel. Written but never compiled — see its README. |
 | [`GAMEPLAY.md`](GAMEPLAY.md) | **Storyline and gameplay in detail.** The wall, the twelve friends and their wishes, the cake rules, what each room requires versus what is optional, the timing budget. |
 | [`POC.md`](POC.md) | Step 0 proof of concept — answered. Kept for the palette, the geometry specs and the pass criteria. |
 | [`audio/`](audio/) | The voice script, the casting, the auditions, and the re-fetch script. |
@@ -103,7 +103,7 @@ These were argued through and settled. Reopen only if the user asks.
   design, animation state machines, cross-platform — do not apply to a
   fixed-camera game with ten props per room. `CONCEPT.md` §9.3 has the
   comparison and the triggers for revisiting.
-- **Voice is generated, not recorded.** The fairy is **Gracie**
+- **Voice is generated, not recorded.** Nina is **Gracie**
   (`09878754-f20b-5330-9790-58a8027ab5b2`). Otto the oven is provisionally
   **Barrett** (`d603a8cd-3fe1-55e0-9245-617a2589131e`) — picked without an ear
   on it, with five auditions in [`audio/auditions/`](audio/auditions/) waiting
@@ -112,8 +112,12 @@ These were argued through and settled. Reopen only if the user asks.
   two legs pivoting at the hip. Squash-and-stretch on the root does most of the
   animation. Arms never articulate — realism is not the style. `CONCEPT.md` §9.7.
 - **Dutch only.**
-- **Nina is the baker and has no avatar.** She is the hands. The fairy is a
-  separate character who lives in the bakery and helps.
+- **Nina is the baker, she is on screen, and she is the one talking.** She is
+  the fairy in `references/plates/02-fairy-character.png`, standing behind the
+  table and working while the round runs. **This reversed an earlier decision**
+  — she used to have no avatar and a separate fairy called Luna did the
+  talking — on the owner's call, 2026-08-15. Luna is gone; `GAMEPLAY.md` §1 has
+  what that leaves open on the wall of frames.
 - **The spine is the wall of twelve frames**, which doubles as a textless level
   select. Not chapters, not endless orders. `GAMEPLAY.md` §2.
 - **Nothing unlocks.** Every seed, sticker and friend is available from the
