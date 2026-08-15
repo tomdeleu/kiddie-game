@@ -16,19 +16,32 @@ struct ContentView: View {
     @State private var showDeveloperPanel = false
     @State private var dragging = false
 
-    /// The opening film, if one is bundled. It runs over the room, which is
-    /// already built and lit behind it — so when she skips two seconds in, the
-    /// kitchen is simply there rather than loading.
-    @State private var showIntro = IntroMovie.isAvailable
+    /// **Title plate, then film, then the game.** Each layer uncovers the next,
+    /// and the room is built and lit under all of them — so whichever way she
+    /// gets through, the kitchen is simply there rather than loading.
+    ///
+    /// The film is skipped entirely when no `intro-*.mp4` is bundled, which is
+    /// the one thing that changes the order.
+    private enum Opening { case loading, film, playing }
+    @State private var opening: Opening = .loading
+
+    /// Set from the `RealityView` make closure, once the room exists and the
+    /// lights are on it. This is what the loading screen waits for.
+    @State private var sceneReady = false
 
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .topTrailing) {
                 backdrop
                 roomView
+                restartButton
                 developerLayer
-                if showIntro {
+                if opening == .film {
                     IntroMovie(onFinish: finishIntro, onShotFinished: introShotFinished)
+                        .transition(.opacity)
+                }
+                if opening == .loading {
+                    LoadingScreen(ready: sceneReady, onFinish: finishLoading)
                         .transition(.opacity)
                 }
             }
@@ -63,17 +76,37 @@ struct ContentView: View {
     private var roomView: some View {
         RealityView { content in
             content.add(scene.root)
-            scene.start(settings: settings, greeting: !showIntro)
+            // `greeting: false` unconditionally — nobody greets a covered
+            // room. Whoever takes the last cover off is the one who starts
+            // Nina talking: `finishLoading` when there is no film,
+            // `finishIntro` when there is.
+            scene.start(settings: settings, greeting: false)
             await scene.rig.loadOptionalAssets()
             scene.rig.apply(settings, to: scene.sceneRoot)
-            if showIntro { scene.sayIntroLines() }
+            sceneReady = true
         } update: { _ in
             scene.update(settings: settings)
         }
         .gesture(finger)
     }
 
-    /// The cut inside is where Luna names the kitchen. Hung off the cut rather
+    /// The title plate is done. Either the film follows, or the kitchen does.
+    private func finishLoading() {
+        guard opening == .loading else { return }
+        let film = IntroMovie.isAvailable
+        withAnimation(.easeInOut(duration: 0.5)) {
+            opening = film ? .film : .playing
+        }
+        if film {
+            scene.sayIntroLines()
+        } else {
+            // The beat that `GameScene.start` used to schedule, now that the
+            // room appears here rather than at launch.
+            scene.greetWhenQuiet(after: 0.9)
+        }
+    }
+
+    /// The cut inside is where Nina names the kitchen. Hung off the cut rather
     /// than off a timer, so re-cutting a shot cannot leave her talking about
     /// the wrong picture.
     private func introShotFinished(_ index: Int) {
@@ -81,18 +114,18 @@ struct ContentView: View {
         scene.voice?.say(Line.introKeuken)
     }
 
-    /// The film ended, or she tapped through it. Luna greets her either way —
+    /// The film ended, or she tapped through it. Nina greets her either way —
     /// skipping the film must not cost her the hello.
     ///
-    /// The two cases differ in one thing, and it matters: **a tap cuts Luna
+    /// The two cases differ in one thing, and it matters: **a tap cuts Nina
     /// off, the end of the film does not.** She skipped because she wants to
     /// bake, so holding her at the door for the rest of a sentence would be
     /// exactly backwards; but letting the last line finish over the first
     /// second of the kitchen is how a film ends, not a bug.
     private func finishIntro(skipped: Bool) {
-        guard showIntro else { return }
+        guard opening == .film else { return }
         if skipped { scene.voice?.stop() }
-        withAnimation(.easeInOut(duration: 0.45)) { showIntro = false }
+        withAnimation(.easeInOut(duration: 0.45)) { opening = .playing }
         scene.greetWhenQuiet()
     }
 
@@ -111,6 +144,40 @@ struct ContentView: View {
                 dragging = false
                 scene.touch.ended(at: value.location)
             }
+    }
+
+    /// Start this cake again.
+    ///
+    /// Bottom-left, out of the way of both the skip button (bottom-right) and
+    /// the developer corner (top-right). No text on it — the going-round arrow
+    /// everyone knows, on the same `FacetButton` at the same 72 pt as skip, so
+    /// the two read as the same kind of thing.
+    ///
+    /// **She can press it, and that is fine.** `GAMEPLAY.md` §7 says she cannot
+    /// lose: restarting keeps every cake already on the plank and costs her
+    /// only the one she is holding, and Nina says out loud what just happened
+    /// so it is never a mystery. If she turns out to press it constantly, the
+    /// fix is to move it behind the parent gate, not to add a confirmation —
+    /// a "are you sure?" is unreadable to her by definition.
+    private var restartButton: some View {
+        VStack {
+            Spacer()
+            HStack {
+                FacetButton(symbol: "arrow.counterclockwise",
+                            accessibilityLabel: "Opnieuw beginnen",
+                            // Rose against skip's sage. Same object, same size,
+                            // different colour: the family is what makes them
+                            // read as the same kind of thing, and the colour is
+                            // what lets her tell them apart across the screen
+                            // without reading anything.
+                            tone: .rose,
+                            diameter: FacetSize.chrome) {
+                    scene.kitchen?.restartRound()
+                }
+                .padding(32)
+                Spacer()
+            }
+        }
     }
 
     // MARK: - Developer access
@@ -175,8 +242,11 @@ final class GameScene: ObservableObject {
         voice = VoiceBank(ticker: ticker)
     }
 
-    /// `greeting` is false when the opening film is about to cover the room:
-    /// Luna talks over the film instead, and greets her when it ends.
+    /// `greeting` is false whenever anything is about to cover the room — which
+    /// since the title plate landed is *always*, because the room is now built
+    /// underneath at least one cover. `ContentView` has Nina greet her as the
+    /// last one lifts. The parameter stays because "build the room and say
+    /// hello" is still what this method means when nothing is in the way.
     func start(settings: LightingSettings, greeting: Bool = true) {
         guard !started else { return }
         started = true
@@ -198,7 +268,7 @@ final class GameScene: ObservableObject {
         }
     }
 
-    /// Luna's narration over the opening film's first shot. The second shot's
+    /// Nina's narration over the opening film's first shot. The second shot's
     /// line is fired by the cut — see `ContentView.introShotFinished`.
     func sayIntroLines() {
         ticker.after(0.4) { [weak self] in
@@ -206,7 +276,7 @@ final class GameScene: ObservableObject {
         }
     }
 
-    /// Greet her once Luna has finished the film's narration, rather than a
+    /// Greet her once Nina has finished the film's narration, rather than a
     /// fixed beat later. The lines are written to fit the shots, but a re-cut
     /// line should not end up talking over its own greeting.
     func greetWhenQuiet(after delay: Float = 0.35, timeout: Float = 6) {

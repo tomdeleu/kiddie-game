@@ -24,7 +24,7 @@ import Combine
 /// - **No player chrome otherwise.** `VideoPlayer` from AVKit puts a scrubber on
 ///   screen the moment it is touched, so this drives an `AVPlayerLayer`
 ///   directly. The skip button is the only thing on top of the picture.
-/// - **Luna speaks over it**, in her own voice, rather than whatever the video
+/// - **Nina speaks over it**, in her own voice, rather than whatever the video
 ///   model would have invented. The film itself is silent.
 ///
 /// If no `intro-*.mp4` is bundled the whole thing is skipped and the game starts
@@ -149,7 +149,7 @@ struct IntroMovie: View {
         let player = AVQueuePlayer(items: items)
         // Silent by construction — the shots were generated without an audio
         // track. Muted anyway, so a model that ignored that flag one day cannot
-        // talk over Luna in a language Nina does not speak.
+        // talk over Nina in a language she does not speak.
         player.isMuted = true
         self.items = items
         lastItem = items.last
