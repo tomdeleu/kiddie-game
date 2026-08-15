@@ -53,6 +53,7 @@ palette and pass criteria are still the standard every new room is held to.
 | [`CONCEPT.md`](CONCEPT.md) | The design. Loop, age rules, audio, rendering, build order. |
 | [`references/REFERENCES.md`](references/REFERENCES.md) | Art direction spec and reference plate recipes. |
 | [`references/plates/`](references/plates/) | **The locked style references.** Plates 01 and 02 are the look. |
+| [`references/buttons/`](references/buttons/) | **The button.** Every UI control is one faceted octagon — the plate it came from, the nine candidates, and the measurements the SwiftUI implementation is built on. |
 | [`references/props/`](references/props/) | Prop concept plates, and why `generate_3d` is not usable for this style. |
 | [`references/moodboard/`](references/moodboard/) | Provenance + licences. Gathered for two retired directions — not the current look. |
 | [`references/FETCHING-ASSETS.md`](references/FETCHING-ASSETS.md) | How to get outside material onto disk here, and what fails. |
