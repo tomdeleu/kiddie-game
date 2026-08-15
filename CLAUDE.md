@@ -37,9 +37,12 @@ a session there can drive Blender directly.
 | Path | What |
 |---|---|
 | [`POC.md`](POC.md) | **The current task.** Step 0 proof of concept, with the Blender brief and palette. |
+| [`app/`](app/) | **The Stage B POC app.** RealityKit, procedural faceted room, lighting debug panel. Written but never compiled — see its README. |
+| [`app/LIGHTMAPS.md`](app/LIGHTMAPS.md) | How to bake AO in Reality Composer Pro 3, and how to A/B it against no-AO. |
 | [`CONCEPT.md`](CONCEPT.md) | The design. Loop, age rules, audio, rendering, build order. |
 | [`references/REFERENCES.md`](references/REFERENCES.md) | Art direction spec and reference plate recipes. |
 | [`references/plates/`](references/plates/) | **The locked style references.** Plates 01 and 02 are the look. |
+| [`references/props/`](references/props/) | Prop concept plates, and why `generate_3d` is not usable for this style. |
 | [`references/moodboard/`](references/moodboard/) | Provenance + licences. Gathered for two retired directions — not the current look. |
 | [`references/FETCHING-ASSETS.md`](references/FETCHING-ASSETS.md) | How to get outside material onto disk here, and what fails. |
 | [`audio/voices.json`](audio/voices.json) | Voice casting. Read before generating any line. |
@@ -53,7 +56,7 @@ concept art, and image-to-3D for static props.
 |---|---|---|
 | Speech | `text2speech_v2`, variant `elevenlabs` | ~0.15 credits/line. Regenerating is cheap — never settle. |
 | Images | `flux_2`, variant `pro` | 1 credit each. **Record the seed.** Always pass the locked style reference — see below. |
-| Static props → 3D | `generate_3d` | Unrigged GLB. Fine for props. Usable for a character *body* too, since the rig only splits off the legs — but the split is a Blender job. |
+| Static props → 3D | `generate_3d` | **20 credits, and not usable for this style.** Tested on the oven: 26,780 faces at a 5° median crease against 56 faces procedurally, and decimation floors at 2,053 with irregular creases. It keeps the silhouette and destroys the facets. Evidence in `references/props/README.md`. Possibly still worth it for an organic character body. |
 
 The phrases that carry the look: **"flat-shaded low-poly"**, **"visible straight
 polygon edges"**, **"no smooth curved surfaces"**, **"no ambient occlusion

@@ -228,6 +228,17 @@ against drift as rooms are added.
 
 ## Handoff
 
+**Stage B now has a starting point:** [`app/`](app/) holds a RealityKit project
+that builds the room procedurally with flat-shaded primitives and puts every
+lighting control behind a debug panel, including the Reality Composer Pro 3
+lightmap comparison described above. It was written without a Mac available, so
+it has never been compiled — see [`app/README.md`](app/README.md).
+
+Note the app builds the room in **code**, not Blender. For primitives this
+simple that turned out to be the faster loop, and it sidesteps the asset
+pipeline entirely for the one question Stage A asks. Blender is still needed for
+the USDZ room the lightmap comparison requires, since lightmaps need UVs.
+
 Continuing locally with the Blender MCP connector, so a session there can drive
 Blender directly and work through Stage A.
 
