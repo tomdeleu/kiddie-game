@@ -201,13 +201,76 @@ Rooms 1 and 2 share nearly all their code — drag an object onto a target, snap
 it, celebrate — so the second room costs a fraction of the first. That is the
 main architectural reason for the hub layout.
 
-## 9. Technical notes
+## 9. Rendering
 
-**SwiftUI-first.** The whole game is drag gestures, tinting, and spring
-animations, which SwiftUI handles well. Reach for SpriteKit only where it
-genuinely wins: `SKEmitterNode` for the fairy sparkles and the oven puff. A
-small `SpriteView` embedded in the SwiftUI hierarchy is enough — there is no
-need to build the game in SpriteKit.
+### 9.1 What Apple offers
+
+**3D.** Yes, there is a 3D engine — **RealityKit** is Apple's current one,
+actively developed, with a SwiftUI `RealityView`, an entity-component
+architecture, PBR materials, and a USDZ asset pipeline. **SceneKit**, the older
+high-level 3D API, was deprecated by Apple in 2025 and should not be chosen for
+anything new. Below both sits Metal, which is not a sensible place to write a
+children's game.
+
+**2D.** SwiftUI itself (layered views, shapes, images, spring animations),
+SwiftUI `Canvas` for immediate-mode drawing, and **SpriteKit**, Apple's 2D game
+engine with a scene graph, physics, and particle emitters.
+
+### 9.2 The decision: 2D, in SwiftUI
+
+The deciding factor is not the code, it is the **art pipeline**.
+
+Going 3D means modelling, texturing, rigging, and animating every character and
+prop. The connector's `generate_3d` turns an image into a static GLB mesh — it
+will not produce a rigged fairy that dances. That is weeks of specialist work
+for a game whose whole aesthetic is a flat storybook doll's house anyway.
+
+Going 2D means generated images drop straight in as assets. The art we can
+actually produce is the art the game actually needs.
+
+Interaction agrees. A 4-year-old cannot operate a 3D camera, so the camera would
+be locked to a fixed view — at which point it is a 2D game rendered expensively.
+And 2D tap targets map directly to hit tests, where 3D needs raycasting into a
+scene for no gain.
+
+So: **SwiftUI renders everything.** Each room is a `ZStack` of layered PNGs —
+background, midground, props, characters. Drag is a `DragGesture` writing an
+offset, with a distance test against the target for the generous snapping in
+[section 5](#5-rules-for-a-four-year-old). Layout, gestures, and animation are
+all free, which is exactly the part SpriteKit would make us rebuild by hand.
+
+SpriteKit still earns its place in one spot: `SKEmitterNode` for the fairy
+sparkles and the oven puff, dropped in as a small `SpriteView` overlay. Particle
+systems are the one thing SwiftUI has no good answer for.
+
+Performance is a non-issue. A few dozen image layers at 60fps is nothing for any
+iPad that runs a current iOS.
+
+### 9.3 How things move: cutout rigs, not sprite sheets
+
+This is the part worth getting right, because it is where generated art usually
+falls down.
+
+Frame-by-frame sprite sheets would need dozens of generated images per
+animation, and AI image generation will not hold a character consistent across
+them. The result looks like it is boiling.
+
+Instead, use **cutout animation**: generate each character *once*, cut it into
+parts — head, body, upper arm, forearm, legs — and animate the transforms.
+In SwiftUI that is nested views with `rotationEffect(_:anchor:)` around joint
+points, driven by springs or a `TimelineView` clock.
+
+This solves several problems at once:
+
+- One generated image per character instead of dozens, so consistency is free.
+- The party guests can dance to whatever beat she taps, because the animation is
+  driven by a live clock rather than baked into fixed frames.
+- New dance moves are numbers in a file, not new art.
+
+The same technique covers the whisk following her finger and the oven door
+swinging open.
+
+## 10. Technical notes
 
 **Audio.** Overlapping sounds are guaranteed (she will hammer the music pads),
 so pool `AVAudioPlayer` instances rather than creating one per hit. Set the
@@ -232,7 +295,13 @@ in bulk, and reuse it as a reference on every subsequent generation. Decide this
 before building room 2; retrofitting a style across finished screens is
 miserable.
 
-## 10. Open questions
+Two constraints that follow from [section 9](#9-rendering) and are much cheaper
+to honour up front than to fix later: every prop needs a **transparent
+background** so it can be layered and dragged, and every character needs to be
+generated in a **flat, limbs-separated pose** so it can be cut into a rig
+without inventing the hidden parts of an arm.
+
+## 11. Open questions
 
 - Her actual name, for `«NAAM»` and the voice lines.
 - Voice audition: which preset voice sounds best speaking Dutch, and does it say
