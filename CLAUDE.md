@@ -15,16 +15,27 @@ eats it and thanks her by name.
 
 **Status: design only.** No application code exists yet.
 
-**Next step is a proof of concept, not game content** — see `CONCEPT.md` §8
-Step 0. It answers two open questions: does the clay look survive on the device,
-and can Nina drive the controls. Visually finished, functionally trivial: one
-kitchen room box, two draggables, one bowl. Start with the USDZ-in-Quick-Look
-check, which needs no app at all.
+## → Start here: [`POC.md`](POC.md)
+
+**The first task is a proof of concept, not game content.** It answers the two
+questions the briefing cannot: does the clay look survive on the iPad, and can
+Nina drive the controls.
+
+**Stage A** is Blender → baked AO → USDZ → Quick Look on the iPad. About an
+hour, no app code. **Stage B** is a minimal RealityKit app — one room, two
+draggables, one bowl — and only after Stage A passes.
+
+`POC.md` has the geometry, material and AO-bake specs, the sampled palette with
+hex values, and the pass/fail criteria. Rationale is in `CONCEPT.md` §8.
+
+Stage A is being done locally where a **Blender MCP connector** is available, so
+a session there can drive Blender directly.
 
 ## Where things are
 
 | Path | What |
 |---|---|
+| [`POC.md`](POC.md) | **The current task.** Step 0 proof of concept, with the Blender brief and palette. |
 | [`CONCEPT.md`](CONCEPT.md) | The design. Loop, age rules, audio, rendering, build order. |
 | [`references/REFERENCES.md`](references/REFERENCES.md) | Art direction spec and reference plate recipes. |
 | [`references/moodboard/`](references/moodboard/) | Style screenshots + provenance. |
