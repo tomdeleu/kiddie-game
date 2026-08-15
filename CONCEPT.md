@@ -155,7 +155,24 @@ standalone assets. Noting it so nobody rediscovers it and wastes an afternoon.
 Cost is ~0.15 credits per line, so auditioning and regenerating is effectively
 free. There is no reason to settle for a voice that is merely acceptable.
 
-**Audition shortlist** for the fairy, generated with the line
+### 7.2 The fairy's voice — DECIDED
+
+**Gracie.** Young female preset, `elevenlabs` engine.
+
+```
+model      text2speech_v2
+variant    elevenlabs
+voice_type preset
+voice_id   09878754-f20b-5330-9790-58a8027ab5b2
+```
+
+Also recorded in [`audio/voices.json`](audio/voices.json), which is the file to
+read when generating lines.
+
+Every line the fairy speaks — now and in any room added later — uses this ID, so
+she does not change voice mid-project.
+
+**Audition shortlist** it was chosen from, all generated with the line
 *"Hallo Nina! Kom je mij helpen met taart bakken?"*:
 
 | Voice | Age | `voice_id` | Audition |
@@ -164,10 +181,17 @@ free. There is no reason to settle for a voice that is merely acceptable.
 | Willow | middle-aged | `f878bf3f-115b-5842-8934-c789c7947733` | [listen](https://d8j0ntlcm91z4.cloudfront.net/user_39OtbtGoYAVkmrcBwNT0Vv0BbHJ/hf_20260815_070820_6fe61e50-a43a-42cf-a442-e381467025aa.mp3) |
 | Daisy | young | `032386ec-491b-5bdc-81ac-49e9a6a2c89d` | [listen](https://d8j0ntlcm91z4.cloudfront.net/user_39OtbtGoYAVkmrcBwNT0Vv0BbHJ/hf_20260815_070820_4cf05532-23b6-404b-a216-9681ba6303e4.mp3) |
 | Evie | young | `7a6845a2-5865-5669-a0ca-8fc8d8e96528` | [listen](https://d8j0ntlcm91z4.cloudfront.net/user_39OtbtGoYAVkmrcBwNT0Vv0BbHJ/hf_20260815_070820_721bb993-b1b7-4746-a691-d5ae3e00d225.mp3) |
-| Gracie | young | `09878754-f20b-5330-9790-58a8027ab5b2` | [listen](https://d8j0ntlcm91z4.cloudfront.net/user_39OtbtGoYAVkmrcBwNT0Vv0BbHJ/hf_20260815_070820_00ad6499-b5a2-4038-ab6a-277b1a4e8197.mp3) |
+| **Gracie** ✅ | young | `09878754-f20b-5330-9790-58a8027ab5b2` | [listen](https://d8j0ntlcm91z4.cloudfront.net/user_39OtbtGoYAVkmrcBwNT0Vv0BbHJ/hf_20260815_070820_00ad6499-b5a2-4038-ab6a-277b1a4e8197.mp3) |
 
 Those audition URLs are Higgsfield CDN links and may expire; the `voice_id`
 column is the durable record.
+
+A young voice makes the fairy read as a **playmate** rather than a
+grandmother-figure. Worth keeping in mind when writing her lines — she should
+sound like she is having fun alongside Nina, not instructing her.
+
+Still to cast: the oven, and the party guests. Give them clearly different
+voices from Gracie so Nina can tell who is talking without looking.
 
 All five are `voice_type: preset` and support the `elevenlabs`, `minimax`, and
 `seed_speech` engines, so a chosen voice can be re-run through a different
@@ -206,7 +230,7 @@ New rooms can have new lines without a recording session, and lines can be
 rewritten after watching her play. Design accordingly: write more dialogue
 variants than a recorded game would, so the fairy does not repeat herself.
 
-### 7.2 Music and sound effects — NOT available
+### 7.4 Music and sound effects — NOT available
 
 This is the real gap. The connector's music model (`sonilo_music`) and sound
 effect model (`mirelo_text_to_audio`) are both **game-pipeline only** and
@@ -449,8 +473,7 @@ everything from it.
 
 ## 11. Open questions
 
-- Voice audition: which preset voice sounds best speaking Dutch, and does it say
-  "Nina" correctly?
+- Casting the oven and the party guests.
 - Which reference plate is *the* look, so it can be locked as an image reference
   for everything after it?
 - The shared 12-colour palette and the character proportion rule.

@@ -1,0 +1,27 @@
+{
+  "_comment": "Casting for Nina's Toverbakkerij. Generated via the Higgsfield connector at asset-production time; the shipped app plays bundled MP3s and never calls the API. Always regenerate a character's lines with its recorded voice_id so the voice stays consistent across rooms added later.",
+  "_provider": "higgsfield",
+  "language": "nl",
+  "characters": {
+    "fairy": {
+      "name": "De toverfee",
+      "status": "decided",
+      "model": "text2speech_v2",
+      "variant": "elevenlabs",
+      "voice_type": "preset",
+      "voice_id": "09878754-f20b-5330-9790-58a8027ab5b2",
+      "preset_name": "Gracie",
+      "age": "young",
+      "gender": "female",
+      "note": "Young voice, so she reads as a playmate rather than a grandmother-figure. Write her lines as someone having fun alongside Nina, not instructing her."
+    },
+    "oven": {
+      "status": "uncast",
+      "note": "Must be clearly distinct from the fairy so Nina can tell who is talking without looking."
+    },
+    "party_guests": {
+      "status": "uncast",
+      "note": "Several distinct voices. Silly beats good at this age."
+    }
+  }
+}
