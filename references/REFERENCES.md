@@ -117,10 +117,15 @@ All plates use **`flux_2`**, variant `pro`, resolution `1k`. Recording prompt
 
 | # | Subject | Aspect | Seed | Job ID |
 |---|---|---|---|---|
-| 1 | Bakery kitchen room box | 1:1 | `822183` | `9887941f-9d50-409f-ad7a-330e3b43c5d0` |
+| 1 | **Bakery kitchen room box — THE LOOK** | 1:1 | `822183` | `9887941f-9d50-409f-ad7a-330e3b43c5d0` |
 | 2 | Bakery cottage exterior | 1:1 | `270825` | `5bc6e6db-ffa5-4fff-b378-7661a9060e3a` |
 | 3 | Fairy baker character sheet | 3:4 | `409079` | `13e7c536-befa-462f-bf19-c632f74a8e83` |
 | 4 | Party room box | 1:1 | `884050` | `6eaffc62-3809-4985-80be-67d78eaf0bf1` |
+| 5 | Garden room box | 1:1 | — | `457fa9f0-6bf7-4299-815d-3141e42d8422` |
+
+Plate 5 was the first generated *with* the locked reference (plate 1) attached,
+and it came back matching on palette, finish, framing and lighting. That is the
+mechanism working — use it for everything from here.
 
 Direct links, in case the CDN is reachable from where you are reading this:
 
@@ -158,20 +163,29 @@ The phrases doing the real work are **"soft matte clay"**, **"gently rounded
 edges"** and **"strong soft ambient occlusion"**. Drop any of the three and the
 result reverts to generic flat cartoon.
 
-### Locking the style once a plate is approved
+### The locked style reference — USE THIS
 
-`flux_2` accepts `image_references`. Once one plate is agreed as *the* look, pass
-its job ID as a reference on every subsequent generation rather than relying on
-prompt wording. That is a much stronger consistency guarantee, and it is the step
-that stops the set drifting.
+**`plates/01-kitchen-roombox.png` is the agreed look.** Pass its job ID as an
+`image_references` input on **every** subsequent image generation, in addition to
+the prompt:
+
+```
+model  flux_2   variant pro
+medias [{ role: "image_references",
+          value: "9887941f-9d50-409f-ad7a-330e3b43c5d0" }]
+```
+
+Matching prompt wording is a weak guarantee; an image reference is a strong one,
+and it is what stops the set drifting as rooms are added. Prompt *and* reference
+together, never the reference alone — the prompt still carries the subject.
 
 **Do not pass the moodboard screenshots as references.** Two of those sources
 carry explicit no-AI terms.
 
 ### Note on the character plate
 
-`plates/03-fairy-character.png` is a **look target, not a build guide**. The
-render has smoothly merged limbs — the arms blend into the torso — which is the
-one thing the rig cannot have. When modelling her, keep the same proportions,
-palette and clay finish, but build the limbs as **separate entities meeting at
-joints** so they can rotate independently. See `CONCEPT.md` §9.7.
+`plates/03-fairy-character.png` is the character target, and its merged arms are
+**fine** — the rig only splits out the legs. Model her as two pieces: one solid
+body (head, torso, arms) and two separate legs pivoting at the hip, which the
+apron conveniently hides. Movement is squash-and-stretch plus alternating legs,
+not anatomy. See `CONCEPT.md` §9.7.

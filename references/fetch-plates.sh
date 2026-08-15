@@ -28,6 +28,8 @@ fetch "hf_20260815_074712_5bc6e6db-ffa5-4fff-b378-7661a9060e3a.png" "02-cottage-
 fetch "hf_20260815_074713_13e7c536-befa-462f-bf19-c632f74a8e83.png" "03-fairy-character.png"
 fetch "hf_20260815_074712_6eaffc62-3809-4985-80be-67d78eaf0bf1.png" "04-party-roombox.png"
 
+fetch "hf_20260815_080831_457fa9f0-6bf7-4299-815d-3141e42d8422.png" "05-garden-roombox.png"
+
 # The chosen fairy voice (Gracie), audition line
 fetch "hf_20260815_070820_00ad6499-b5a2-4038-ab6a-277b1a4e8197.mp3" "voice-gracie-audition.mp3"
 

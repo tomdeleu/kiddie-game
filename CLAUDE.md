@@ -34,8 +34,8 @@ concept art, and image-to-3D for static props.
 | Asset | Model | Notes |
 |---|---|---|
 | Speech | `text2speech_v2`, variant `elevenlabs` | ~0.15 credits/line. Regenerating is cheap — never settle. |
-| Images | `flux_2`, variant `pro` | 1 credit each. **Record the seed**; it makes a plate reproducible. |
-| Static props → 3D | `generate_3d` | Unrigged GLB. Props only — never characters, which need a joint hierarchy. |
+| Images | `flux_2`, variant `pro` | 1 credit each. **Record the seed.** Always pass the locked style reference — see below. |
+| Static props → 3D | `generate_3d` | Unrigged GLB. Fine for props. Usable for a character *body* too, since the rig only splits off the legs — but the split is a Blender job. |
 
 The three prompt phrases that carry the clay look: **"soft matte clay"**,
 **"gently rounded edges"**, **"strong soft ambient occlusion"**. Drop any one and
@@ -68,6 +68,9 @@ These were argued through and settled. Reopen only if the user asks.
   comparison and the triggers for revisiting.
 - **Voice is generated, not recorded.** The fairy is **Gracie**
   (`09878754-f20b-5330-9790-58a8027ab5b2`).
+- **Characters use a three-part rig**: one solid body (head, torso, arms) plus
+  two legs pivoting at the hip. Squash-and-stretch on the root does most of the
+  animation. Arms never articulate — realism is not the style. `CONCEPT.md` §9.7.
 - **Dutch only.**
 - **Use Kenney's CC0 kits.** Not a suggestion — the
   [Food Kit](https://kenney.nl/assets/food-kit) and
@@ -85,6 +88,10 @@ These were argued through and settled. Reopen only if the user asks.
   fixed isometric angle. Anchor reference:
   `references/moodboard/08-dribbble-isometric-bakery.png`. Full spec in
   `references/REFERENCES.md`.
+  **Every image generation must pass the locked style reference**
+  `image_references: 9887941f-9d50-409f-ad7a-330e3b43c5d0`
+  (`references/plates/01-kitchen-roombox.png`) alongside the prompt. That is what
+  keeps the set from drifting.
   **This supersedes the earlier Roblox framing** — where old text says flat,
   bright, hard-edged or unlit, the clay spec wins.
 - **Check licences before using any reference.** Only CC0 material ships. Two

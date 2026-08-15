@@ -468,23 +468,37 @@ knowing before starting:
 Expect the first room to take meaningfully longer than its 2D equivalent. Rooms
 two onward should not, because both problems are solved once and reused.
 
-### 9.7 How things move: rigid transform rigs
+### 9.7 How things move: the three-part rig
 
-The animation approach carries over from the 2D plan almost unchanged, which is
-convenient — it was always a transform-hierarchy technique.
+Movement is deliberately **not** anatomical. Realism is not the style, so the rig
+is cut down to the smallest thing that still reads as alive:
 
-Build each character as a **tree of entities**: torso at the root, upper arm
-parented to torso, forearm parented to upper arm. Animate by rotating entities
-about their joint positions. No sculpting, no keyframed meshes.
+| Part | Contents | Motion |
+|---|---|---|
+| **Root** | everything | squash and stretch, bob, lean, hop |
+| **Body** | head, torso, arms — one solid piece | inherits the root; optional slight tilt |
+| **Legs** | two separate entities | rotate at the hip, alternating |
 
-- The party guests dance to whatever beat she taps, because the rotations are
-  driven by a live clock rather than baked into fixed animation clips.
+Three moving parts, not ten. Arms never articulate, and nothing bends.
+
+**Squash and stretch on the root does most of the work.** A clay character that
+compresses on the beat and stretches coming off it reads as dancing far more
+convincingly at this scale than articulated limbs would — and it is a single
+non-uniform scale on one entity. This is the animation to build first; the legs
+are a refinement on top.
+
+The character plate makes this cheap: **the apron covers the hips**, so the seam
+where the legs meet the body is hidden and the two parts never need to match
+cleanly.
+
+- Party guests dance to whatever beat she taps, because the scale and rotation
+  are driven by a live clock rather than baked into fixed clips.
 - New dance moves are numbers in a file, not new art.
-- The same rig covers the whisk following her finger and the oven door swinging.
+- The same approach covers the whisk following her finger and the oven door
+  swinging.
 
-Set each limb entity's pivot correctly when assembling it — rotating a box about
-its centre instead of its shoulder is the classic error, and it makes characters
-look like they are coming apart.
+Set each leg's pivot **at the hip, not at its centre** — rotating about the
+centre is the classic error and makes the legs look detached.
 
 ## 10. Technical notes
 
