@@ -94,27 +94,72 @@ enum KitchenProps {
         handle.position = [0, Layout.mouthLegHeight + 0.026, 0.004]
         doorPivot.addChild(handle)
 
+        // The chimney, per the plate: a square shaft, a wider lighter cap, and
+        // a real opening in the top — a rim of four walls around a dark flue,
+        // recessed so the hole reads as a hole from the fixed camera. Built
+        // from boxes rather than 4-sided prisms because a 4-sided prism puts
+        // its vertices on the axes, which stands the shaft on a diamond edge;
+        // the plate's chimney is square to the room.
+        //
         // Base low enough to bury itself in the dome — the surface is at
-        // y = 0.056 out where the chimney stands.
-        let chimney = RoomBuilder.model(.prism(radius: 0.011, height: 0.045, sides: 4),
-                                        Palette.creamLight, flat: flat, name: "Chimney")
-        chimney.position = [0.028, 0.050, -0.030]
-        body.addChild(chimney)
+        // y = 0.056 out where the chimney stands. Boxes are centred, so each
+        // y here is the part's centre.
+        let chimneyX: Float = 0.028
+        let chimneyZ: Float = -0.030
 
-        let chimneyCap = RoomBuilder.model(.prism(radius: 0.015, height: 0.008, sides: 4),
-                                           Palette.cream, flat: flat, name: "ChimneyCap")
-        chimneyCap.position = [0.028, 0.091, -0.030]
-        body.addChild(chimneyCap)
+        let shaft = RoomBuilder.model(.box([0.022, 0.048, 0.022]),
+                                      Palette.cream, flat: flat, name: "Chimney")
+        shaft.position = [chimneyX, 0.048 + 0.024, chimneyZ]
+        body.addChild(shaft)
+
+        let capSlab = RoomBuilder.model(.box([0.034, 0.006, 0.034]),
+                                        Palette.creamLight, flat: flat, name: "ChimneyCap")
+        capSlab.position = [chimneyX, 0.096 + 0.003, chimneyZ]
+        body.addChild(capSlab)
+
+        // The rim: four walls, outer 0.030, 0.007 thick, leaving a 0.016
+        // square opening.
+        let rimTopY: Float = 0.110
+        let rimWallY: Float = 0.102 + 0.004
+        for (i, spec) in [
+            (SIMD3<Float>(0.030, 0.008, 0.007), SIMD3<Float>(chimneyX, rimWallY, chimneyZ - 0.0115)),
+            (SIMD3<Float>(0.030, 0.008, 0.007), SIMD3<Float>(chimneyX, rimWallY, chimneyZ + 0.0115)),
+            (SIMD3<Float>(0.007, 0.008, 0.016), SIMD3<Float>(chimneyX - 0.0115, rimWallY, chimneyZ)),
+            (SIMD3<Float>(0.007, 0.008, 0.016), SIMD3<Float>(chimneyX + 0.0115, rimWallY, chimneyZ)),
+        ].enumerated() {
+            let wall = RoomBuilder.model(.box(spec.0), Palette.creamLight,
+                                         flat: flat, name: "ChimneyRim\(i)")
+            wall.position = spec.1
+            body.addChild(wall)
+        }
+
+        // The flue. Slightly wider than the opening so its sides hide inside
+        // the rim walls (same trick as the mouth plug), top 0.003 below the
+        // rim so the recess is visible from the camera's angle.
+        let flue = RoomBuilder.model(.box([0.017, 0.014, 0.017]),
+                                     Palette.woodBrown, flat: flat, name: "ChimneyFlue")
+        flue.position = [chimneyX, rimTopY - 0.003 - 0.007, chimneyZ]
+        body.addChild(flue)
 
         // The face. Two eyes and two cheeks is the whole character — he has no
         // mouth, because the arch already is one.
+        //
+        // Each eye is a light eyeball with a small brown pupil in front — a
+        // single dark ball read as a hole in the dome, not an eye. The pupil
+        // is a child of the eyeball, so the blink (which scales the entities
+        // in `eyes`) squeezes both together.
         var eyes: [ModelEntity] = []
         for (i, dx) in [Float(-0.018), 0.018].enumerated() {
-            let eye = RoomBuilder.model(.icosphere(radius: 0.0055, subdivisions: 1),
-                                        Palette.woodBrown, flat: flat, name: "OttoEye\(i)")
+            let eye = RoomBuilder.model(.icosphere(radius: 0.008, subdivisions: 1),
+                                        Palette.creamLight, flat: flat, name: "OttoEye\(i)")
             eye.position = [dx, 0.052, 0.042]
             body.addChild(eye)
             eyes.append(eye)
+
+            let pupil = RoomBuilder.model(.icosphere(radius: 0.004, subdivisions: 1),
+                                          Palette.woodBrown, flat: flat, name: "OttoPupil\(i)")
+            pupil.position = [0, 0, 0.0055]
+            eye.addChild(pupil)
         }
         for (i, dx) in [Float(-0.034), 0.034].enumerated() {
             let cheek = RoomBuilder.model(.icosphere(radius: 0.007, subdivisions: 0),
@@ -126,7 +171,7 @@ enum KitchenProps {
 
         return Oven(root: root, dome: dome, doorPivot: doorPivot, door: door,
                     eyes: eyes,
-                    chimneyTop: Layout.ovenOrigin + SIMD3<Float>(0.028, 0.105, -0.030))
+                    chimneyTop: Layout.ovenOrigin + SIMD3<Float>(0.028, 0.112, -0.030))
     }
 
     // MARK: - The bake
