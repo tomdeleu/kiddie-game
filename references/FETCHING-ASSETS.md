@@ -101,8 +101,10 @@ host rather than route around it. It is changed on the environment itself:
    *only* the listed domains are allowed and npm, PyPI and
    `raw.githubusercontent.com` all stop working.
 
-A leading `*.` matches every subdomain. Changes apply to sessions started
-**afterwards** — a running session keeps the policy it booted with.
+A leading `*.` matches every subdomain. **Changes apply immediately** — the
+gateway evaluates policy per request, so the running session picks them up
+without restarting. (Environment *variables* behave differently: those are read
+once at startup and do need a fresh session.)
 
 For this project:
 
