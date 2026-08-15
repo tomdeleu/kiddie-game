@@ -105,6 +105,10 @@ fetch "hf_20260815_122014_7eec1365-d1b7-4afd-83ad-ae1a533b5d4b.mp3" "luna-klaar-
 fetch "hf_20260815_122014_b08247dc-4e8d-4560-ac76-af7c54399a96.mp3" "luna-klaar-2.mp3"
 fetch "hf_20260815_122014_90bd7030-d75d-4747-ac00-cb9bafc3fa14.mp3" "luna-klaar-3.mp3"
 
+echo "Luna, opening film:"
+fetch "hf_20260815_133020_329999ed-5bb3-43ba-b3b5-cc3bdacd2f4a.mp3" "luna-intro-welkom-1.mp3"
+fetch "hf_20260815_133020_3c5df5d3-599d-4a94-bddd-f77ab13c65c9.mp3" "luna-intro-binnen-1.mp3"
+
 echo "Otto:"
 fetch "hf_20260815_122030_2dec7cd2-aaf3-4f1b-8d55-611737cd89d3.mp3" "otto-tik-1.mp3"
 fetch "hf_20260815_122030_56f580f6-2d4c-4108-aeaa-e8aa0f13617e.mp3" "otto-tik-2.mp3"
@@ -121,9 +125,10 @@ fetch "hf_20260815_122030_671ebe88-9f64-4662-b7d2-e490d3434a3d.mp3" "otto-klaar-
 fetch "hf_20260815_122041_22c8e1e8-b926-46b4-a6d2-4dedd781e7cb.mp3" "otto-wacht-1.mp3"
 fetch "hf_20260815_122041_9294bce9-6ec8-4038-9ec5-49ca0ac00737.mp3" "otto-wacht-2.mp3"
 
-# The script itself is bundled: VoiceBank reads it at launch to map line id ->
-# variant files. `audio/script-keuken.json` is the canonical copy; this is a
-# duplicate of it, and copying it here is what keeps the two from drifting.
+# The scripts themselves are bundled: VoiceBank reads every script-*.json at
+# launch to map line id -> variant files. The copies in `audio/` are canonical;
+# copying them here is what keeps the two from drifting.
 cp script-keuken.json "$OUT/script-keuken.json"
+cp script-intro.json "$OUT/script-intro.json"
 
-echo "Done. 86 lines in $OUT"
+echo "Done. 88 lines in $OUT"

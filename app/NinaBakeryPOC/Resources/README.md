@@ -1,5 +1,11 @@
 # Resources
 
+## Movies — optional
+
+`Movies/intro.mp4` is the eight-second opening film. Remove it and the game
+starts straight in the kitchen; `IntroMovie.isAvailable` is the only thing that
+checks. Provenance is in `references/REFERENCES.md` §3.
+
 ## Voice — required
 
 `Voice/` holds the kitchen's 86 Dutch voice lines plus `script-keuken.json`,

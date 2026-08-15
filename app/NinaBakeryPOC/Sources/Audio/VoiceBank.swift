@@ -57,18 +57,40 @@ final class VoiceBank {
 
     // MARK: - Loading
 
+    /// Load every bundled `script-*.json`.
+    ///
+    /// Plural on purpose: the kitchen has one, the opening film has one, and
+    /// each room added later brings its own. Merging them here means a new
+    /// scene is a new file rather than an edit to a file the whole game shares.
     func load() {
-        guard let url = Self.resourceURL(named: "script-keuken", extension: "json"),
-              let data = try? Data(contentsOf: url),
-              let script = try? JSONDecoder().decode(Script.self, from: data) else {
+        var seen: Set<String> = []
+        var loaded = 0
+
+        for url in Self.scriptURLs() where seen.insert(url.lastPathComponent).inserted {
+            guard let data = try? Data(contentsOf: url),
+                  let script = try? JSONDecoder().decode(Script.self, from: data) else {
+                print("[VoiceBank] could not read \(url.lastPathComponent)")
+                continue
+            }
+            for line in script.lines {
+                lines[line.id] = line.variants
+            }
+            loaded += 1
+        }
+
+        if loaded == 0 {
             // Not fatal. The room is playable in silence, and saying so beats
             // a crash on a device with a half-populated bundle.
-            print("[VoiceBank] script-keuken.json missing — the kitchen will be mute.")
-            return
+            print("[VoiceBank] no script-*.json found — the game will be mute.")
         }
-        for line in script.lines {
-            lines[line.id] = line.variants
-        }
+    }
+
+    private static func scriptURLs() -> [URL] {
+        let inFolder = Bundle.main.urls(forResourcesWithExtension: "json",
+                                        subdirectory: "Voice") ?? []
+        let inRoot = Bundle.main.urls(forResourcesWithExtension: "json",
+                                      subdirectory: nil) ?? []
+        return (inFolder + inRoot).filter { $0.lastPathComponent.hasPrefix("script-") }
     }
 
     /// Bundle lookup that works whether Xcode flattened `Resources/Voice` into
@@ -162,4 +184,8 @@ enum Line {
     static let ottoBakken = "otto.bakken"
     static let ottoKlaar = "otto.klaar"
     static let ottoWacht = "otto.wacht"
+
+    /// The opening film. Chained, over a silent video.
+    static let introWelkom = "luna.intro.welkom"
+    static let introBinnen = "luna.intro.binnen"
 }

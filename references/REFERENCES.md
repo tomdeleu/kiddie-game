@@ -160,6 +160,38 @@ come from the same recipe:
   prompt's did; that attempt pulled the fairy character in and returned
   cat-eared hybrids. Its exact prompt is on its job record.
 
+### The opening film — a generated asset that actually ships
+
+| | |
+|---|---|
+| File | `app/NinaBakeryPOC/Resources/Movies/intro.mp4` |
+| Model | `seedance_2_5`, mode `omni_reference` |
+| Start frame | plate 1, job `64f0893e-073a-4065-b363-f87687ced11d` |
+| Job ID | `faa3b33f-e50c-41bf-a108-4bb520930c00` |
+| Settings | 8 s, 720p, 16:9, `generate_audio: false` |
+| Cost | 52 credits |
+
+**This is the one exception to "nothing generated goes into the app directly".**
+That rule exists because a generated *image* of a prop cannot be a prop — the
+geometry has to be modelled, and the plate is the brief for modelling it. A
+film has no such second form: rendering eight seconds of establishing shot out
+of the game's own primitives would be a week of camera and animation work for
+something she sees once per launch and can skip in a second.
+
+What keeps it honest is the start frame. It begins on the locked plate, so it
+begins exactly on-style; the prompt then asks for almost no change — a push-in,
+smoke from the chimney, a little sparkle, and explicitly *nothing morphing*.
+Motion is where these models drift, so the brief is to move the camera and
+leave the world alone.
+
+It is silent on purpose. Luna speaks over it in her own voice
+(`audio/script-intro.json`), which is both consistent with every other line in
+the game and immune to a video model inventing English.
+
+**If the facets did not survive**, the cheapest fixes in order: shorten it (a
+5 s version is 32.5 credits), cut the push-in to a slow drift, or drop back to
+the plate as a still with the same voice-over over it.
+
 ### Gameplay plates 6–11 — composition only, WRONG STYLE
 
 Six scenes staging what [`GAMEPLAY.md`](../GAMEPLAY.md) added. They were

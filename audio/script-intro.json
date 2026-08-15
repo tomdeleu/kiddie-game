@@ -1,0 +1,34 @@
+{
+  "_comment": "The opening film's voice-over. Separate from script-keuken.json because it belongs to no room — VoiceBank loads every bundled script-*.json, so a new room or scene is a new file here rather than an edit to an existing one. Same format, same rules.",
+  "_provider": "higgsfield",
+  "_model": "text2speech_v2",
+  "_variant": "elevenlabs",
+  "_cost_per_line_credits": 0.3,
+  "_generated": "2026-08-15",
+  "_files": "app/NinaBakeryPOC/Resources/Voice/",
+  "language": "nl",
+
+  "characters": {
+    "luna": {
+      "name": "Luna de fee",
+      "voice_type": "preset",
+      "voice_id": "09878754-f20b-5330-9790-58a8027ab5b2",
+      "preset_name": "Gracie"
+    }
+  },
+
+  "_line_ids": {
+    "_comment": "Both play over the film, chained, starting about half a second in. One variant each on purpose: an opening should sound the same every time, the way a title card does. The film is silent, so this is all she hears.",
+    "luna.intro.welkom": "Over the opening shot of the bakery.",
+    "luna.intro.binnen": "As the camera reaches the door."
+  },
+
+  "lines": [
+    { "id": "luna.intro.welkom", "character": "luna", "variants": [
+      { "index": 101, "file": "luna-intro-welkom-1.mp3", "text": "Welkom in Nina's toverbakkerij!" }
+    ]},
+    { "id": "luna.intro.binnen", "character": "luna", "variants": [
+      { "index": 102, "file": "luna-intro-binnen-1.mp3", "text": "Dit is jouw bakkerij, Nina. Kom je mee naar binnen?" }
+    ]}
+  ]
+}

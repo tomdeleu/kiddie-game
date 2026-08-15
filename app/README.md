@@ -13,6 +13,25 @@ below is still the record of that.
 > thing and needed two fixes on first build; expect similar here, and see
 > [First build](#first-build) for the two places most likely to want one.
 
+## The opening film
+
+Eight seconds: a slow push-in on the bakery, smoke from the chimney, a little
+sparkle, and Luna saying *"Welkom in Nina's toverbakkerij! Dit is jouw
+bakkerij, Nina. Kom je mee naar binnen?"*
+
+**One tap anywhere skips it**, and skipping does not cost her the greeting —
+Luna says hello either way. The room is built and lit behind the film while it
+plays, so tapping through two seconds in lands in a kitchen that is already
+there.
+
+The film is silent; the voice is Luna's own, for the same reason every other
+line is. It was generated with Seedance 2.5 starting from the locked cottage
+plate — the provenance, the cost and why a generated asset ships here at all
+are in `references/REFERENCES.md` §3.
+
+`intro.mp4` is optional. Delete it and the game starts straight in the kitchen,
+with no code change.
+
 ## The round
 
 One round is `GAMEPLAY.md` §6.3, end to end:

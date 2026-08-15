@@ -16,12 +16,21 @@ struct ContentView: View {
     @State private var showDeveloperPanel = false
     @State private var dragging = false
 
+    /// The opening film, if one is bundled. It runs over the room, which is
+    /// already built and lit behind it — so when she skips two seconds in, the
+    /// kitchen is simply there rather than loading.
+    @State private var showIntro = IntroMovie.isAvailable
+
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .topTrailing) {
                 backdrop
                 roomView
                 developerLayer
+                if showIntro {
+                    IntroMovie(onFinish: finishIntro)
+                        .transition(.opacity)
+                }
             }
             .coordinateSpace(.named("room"))
             .onAppear {
@@ -54,13 +63,23 @@ struct ContentView: View {
     private var roomView: some View {
         RealityView { content in
             content.add(scene.root)
-            scene.start(settings: settings)
+            scene.start(settings: settings, greeting: !showIntro)
             await scene.rig.loadOptionalAssets()
             scene.rig.apply(settings, to: scene.sceneRoot)
+            if showIntro { scene.sayIntroLines() }
         } update: { _ in
             scene.update(settings: settings)
         }
         .gesture(finger)
+    }
+
+    /// The film ended, or she tapped through it. Luna greets her either way —
+    /// skipping the film must not cost her the hello.
+    private func finishIntro() {
+        guard showIntro else { return }
+        scene.voice?.stop()
+        withAnimation(.easeInOut(duration: 0.45)) { showIntro = false }
+        scene.ticker.after(0.5) { scene.kitchen?.greet() }
     }
 
     /// One finger, one gesture. A press that barely moves is a tap; anything
@@ -142,7 +161,9 @@ final class GameScene: ObservableObject {
         voice = VoiceBank(ticker: ticker)
     }
 
-    func start(settings: LightingSettings) {
+    /// `greeting` is false when the opening film is about to cover the room:
+    /// Luna talks over the film instead, and greets her when it ends.
+    func start(settings: LightingSettings, greeting: Bool = true) {
         guard !started else { return }
         started = true
 
@@ -158,7 +179,16 @@ final class GameScene: ObservableObject {
         builtFlat = settings.flatShading
 
         // A beat before she is greeted, so the room is on screen first.
-        ticker.after(0.9) { [weak room] in room?.greet() }
+        if greeting {
+            ticker.after(0.9) { [weak room] in room?.greet() }
+        }
+    }
+
+    /// Luna's two lines over the opening film.
+    func sayIntroLines() {
+        ticker.after(0.6) { [weak self] in
+            self?.voice.say([Line.introWelkom, Line.introBinnen], gap: 0.4)
+        }
     }
 
     /// Called on every SwiftUI update. Only the flat/smooth toggle rebuilds
