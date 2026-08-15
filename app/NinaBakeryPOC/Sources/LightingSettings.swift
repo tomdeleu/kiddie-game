@@ -4,15 +4,22 @@ import simd
 /// Everything the debug panel can tweak, in one observable object.
 ///
 /// **These defaults are approved.** First signed off on iPad on 2026-08-15
-/// against `references/plates/03-kitchen-roombox.png`; revised the same day on
-/// the owner's call after an on-device screenshot showed the cast shadows
-/// reading as hard dark bands on the walls. The revision keeps the key at
-/// 42° / 135° / 6200 K so the facet read is unchanged, but rebalances the
-/// energy: key 2200 → 1400 lx, fill 900 → 700 lx, plus a new 1200 lx ambient
-/// dome (three non-casting directionals in `LightingRig`). Shadowed areas now
-/// sit near 60% of lit brightness instead of 30% — the soft, occlusion-render
-/// feel, still with zero baked AO. The big statics no longer cast at all; see
-/// `Entity.excludeFromShadowCasting()`.
+/// against `references/plates/03-kitchen-roombox.png`; revised twice the same
+/// day on the owner's call, both times from on-device screenshots.
+///
+/// Round one — the cast shadows read as hard dark bands. Energy rebalance:
+/// key 2200 → 1400 lx, fill 900 → 700 lx, plus a new 1200 lx ambient dome
+/// (three non-casting directionals in `LightingRig`), lifting shadowed areas
+/// from ~30% of lit brightness to ~60%. The room shell stopped casting.
+///
+/// Round two — softer, but the table, counter, shelves and Nina still smeared
+/// their silhouettes across the left wall (azimuth 135° throws every shadow
+/// that way). Key elevation 42° → 62°: at 62° a shadow's reach is roughly a
+/// third of the caster's height, so shadows pool *under* things instead of
+/// climbing walls — which is the ambient-occlusion read, from lights alone.
+/// The wall-hugging furniture (counter, shelves, cake plank) stopped casting
+/// with the shell; see `Entity.excludeFromShadowCasting()`. Azimuth and
+/// temperature are untouched.
 ///
 /// Treat a change here as a change to the art direction, not a tweak. Use
 /// **Copy settings** in the panel to lift a new setup before overwriting one.
@@ -55,7 +62,7 @@ final class LightingSettings: ObservableObject {
     // MARK: Key light
     @Published var keyEnabled: Bool = true
     @Published var keyIntensity: Float = 1400      // lux
-    @Published var keyElevation: Float = 42        // degrees above horizon
+    @Published var keyElevation: Float = 62        // degrees above horizon
     @Published var keyAzimuth: Float = 135         // degrees around Y
     @Published var keyTemperature: Float = 6200    // Kelvin
     @Published var shadowsEnabled: Bool = true
@@ -114,7 +121,7 @@ final class LightingSettings: ObservableObject {
         showBackdrop = true
         keyEnabled = true
         keyIntensity = 1400
-        keyElevation = 42
+        keyElevation = 62
         keyAzimuth = 135
         keyTemperature = 6200
         shadowsEnabled = true

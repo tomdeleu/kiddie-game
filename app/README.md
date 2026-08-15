@@ -379,32 +379,40 @@ whole POC lighting panel underneath.
 
 ## Approved lighting
 
-**Settled on iPad, 2026-08-15; revised the same day.** An on-device screenshot
-showed the cast shadows reading as hard dark bands — the back wall raking
-across the left wall, the doorway arch printing itself onto the plaster, Nina
-silhouetted behind her. The owner called it: not the game's look. The cause was
-structural, not a slider — everything a shadow fell on dropped to the fill's
-~30% of lit brightness, and the room shell was casting onto itself.
+**Settled on iPad, 2026-08-15; revised twice the same day**, both times from
+on-device screenshots on the owner's call.
 
-The revision, on the owner's call:
+**Round one:** the cast shadows read as hard dark bands — the back wall raking
+across the left wall, the doorway arch printing itself onto the plaster. The
+cause was structural: everything a shadow fell on dropped to the fill's ~30%
+of lit brightness, and the room shell was casting onto itself. Fix: rebalance
+the energy (key 2200 → 1400 lx, fill 900 → 700 lx, new 1200 lx ambient dome)
+and stop the shell casting.
+
+**Round two:** softer, but the walls still collected smudges — the table,
+counter, shelves and Nina throwing their silhouettes onto the left wall, which
+is where a 135° azimuth sends every shadow. Fix: key elevation 42° → 62°, so a
+shadow reaches about a third of its caster's height and pools *under* the
+furniture instead of climbing the plaster — the occlusion-render read, from
+lights alone — and the wall-hugging furniture stopped casting like the shell.
+
+Where that leaves the values:
 
 | | |
 |---|---|
-| Key | 1400 lx (was 2200), 42° elevation, 135° azimuth, 6200 K, shadows **on** |
+| Key | 1400 lx (was 2200), 62° elevation (was 42°), 135° azimuth, 6200 K, shadows **on** |
 | Fill | 700 lx (was 900), 7800 K, opposite the key at 18° |
 | **Ambient dome** | **new** — 1200 lx across three non-casting directionals, 120° apart at 55° elevation, neutral 6500 K |
 | IBL | off — no environment bundled, and it is not missed |
 | Contact shadows | on, opacity 0.22 (was 0.18, nudged for the weaker key), scale 1.15 |
 | Lightmap | off |
-| Shell casting | **off** — walls, floor, slab and the doorway arch no longer enter the shadow map (`Entity.excludeFromShadowCasting()`, iOS 18's `DynamicLightShadowComponent`) |
+| Static casting | **off** for architecture and wall-huggers — walls, floor, slab, doorway arch, counter, both shelves, cake plank (`Entity.excludeFromShadowCasting()`, iOS 18's `DynamicLightShadowComponent`) |
 
-The key's angle and temperature are untouched, so the facet read is the
-approved one; what changed is the energy balance around it. Shadowed areas now
-sit near 60% of lit brightness instead of 30%, so a cast shadow reads as a
-soft tone shift — the gradient of an occlusion render, produced entirely by
-lights. Props, characters and Otto still cast; architecture does not. In the
-panel, zeroing the **Ambient dome** slider brings the old hard-band look back
-for comparison.
+Shadowed areas sit near 60% of lit brightness instead of 30%, so a cast shadow
+reads as a soft tone shift. Loose props, Nina and Otto still cast — short
+pools at their feet now, which is the grounding this was always for. In the
+panel, zeroing the **Ambient dome** slider and dropping elevation back to 42°
+brings the old look back for comparison.
 
 This still answers the POC's main question in the affirmative: **the faceted
 direction holds with real-time light only, no baked AO** — the revision doubles
