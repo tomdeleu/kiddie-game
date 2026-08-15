@@ -6,8 +6,8 @@ Entry point for this repo. Read this first, then
 ## What this is
 
 **Nina's Toverbakkerij** — a magic-bakery game in **Dutch** for **Nina, aged 4**,
-on **iPad**. Native **SwiftUI + RealityKit**, in a low-poly **Roblox-style** 3D
-look.
+on **iPad**. Native **SwiftUI + RealityKit**, in a **cosy isometric
+clay-miniature** 3D look.
 
 The loop: grow magic ingredients in the garden → bake a cake whose colour comes
 from what she chose → decorate it freely → throw a dance party where everyone
@@ -37,6 +37,10 @@ concept art, and image-to-3D for static props.
 | Images | `flux_2`, variant `pro` | 1 credit each. **Record the seed**; it makes a plate reproducible. |
 | Static props → 3D | `generate_3d` | Unrigged GLB. Props only — never characters, which need a joint hierarchy. |
 
+The three prompt phrases that carry the clay look: **"soft matte clay"**,
+**"gently rounded edges"**, **"strong soft ambient occlusion"**. Drop any one and
+the result reverts to generic flat cartoon.
+
 Rules that keep this from going wrong:
 
 - **Preflight cost** with `get_cost: true` before any batch. These are the
@@ -55,8 +59,9 @@ come from CC0 libraries or GarageBand — see `CONCEPT.md` §7.4.
 
 These were argued through and settled. Reopen only if the user asks.
 
-- **3D, not 2D.** The Roblox style makes it tractable: characters are primitives
-  with rigid joints, so there is no sculpting, skinning, or texture authoring.
+- **3D, not 2D.** The chunky stylisation makes it tractable: characters are
+  rounded primitives with rigid joints, so there is no sculpting, skinning, or
+  texture authoring.
 - **RealityKit, not Unity or Godot.** The engines' strengths — physics, level
   design, animation state machines, cross-platform — do not apply to a
   fixed-camera game with ten props per room. `CONCEPT.md` §9.3 has the
@@ -67,13 +72,21 @@ These were argued through and settled. Reopen only if the user asks.
 - **Use Kenney's CC0 kits.** Not a suggestion — the
   [Food Kit](https://kenney.nl/assets/food-kit) and
   [Furniture Kit](https://kenney.nl/assets/furniture-kit) are the default source
-  for props. 340 public-domain low-poly models in the right style, already
-  mutually consistent. **Do not model or generate a prop that a kit already
-  provides.** Model only what they genuinely lack (characters, the magic oven).
-- **Art direction: the diorama rule.** Every room is a small, bright diorama on
-  its own floating base — not a walled interior. Fixed three-quarter camera,
-  smooth matte plastic, cheerful saturated colour. See
-  `references/moodboard/README.md`.
+  for props. 340 public-domain models, already mutually consistent. **Do not
+  model or generate a prop that a kit already provides.** Model only what they
+  genuinely lack (characters, the magic oven).
+  Caveat: they arrive **flat-shaded and hard-edged**, not clay. Expect to
+  re-material them and bake ambient occlusion per asset — still far cheaper than
+  modelling from scratch.
+- **Art direction: cosy isometric clay miniature.** Soft matte clay surfaces,
+  **rounded edges on everything**, warm muted palette (terracotta, cream, sage)
+  on soft teal, and **heavy ambient occlusion** — that last one is the signature,
+  not a detail. Every room is an open corner room box (two walls + floor) at a
+  fixed isometric angle. Anchor reference:
+  `references/moodboard/08-dribbble-isometric-bakery.png`. Full spec in
+  `references/REFERENCES.md`.
+  **This supersedes the earlier Roblox framing** — where old text says flat,
+  bright, hard-edged or unlit, the clay spec wins.
 - **Check licences before using any reference.** Only CC0 material ships. Two
   moodboard sources carry explicit *no-AI* terms, so they must never be used as
   image-generation references.

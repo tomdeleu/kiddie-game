@@ -1,155 +1,156 @@
-# Art direction reference — Roblox-style low poly
+# Art direction reference — cosy isometric clay miniature
 
 Style references for *Nina's Toverbakkerij*. See
 [../CONCEPT.md](../CONCEPT.md) section 9 for how this drives the rendering.
 
-> **Screenshots** are in [`moodboard/`](moodboard/), captured via Firecrawl —
-> see that folder's README for provenance and the capture method. They are page
-> screenshots with browser chrome, not clean plates, because direct image
-> downloads are blocked by the sandbox network policy.
+> **The anchor reference is `moodboard/08-dribbble-isometric-bakery.png`.**
+> Everything else in [`moodboard/`](moodboard/) is secondary — check that folder's
+> README for provenance and licence before using any of it.
 >
-> **The most useful thing in there is not a screenshot**: Kenney's Food Kit and
-> Furniture Kit are **CC0 low-poly 3D asset packs**, 340 models between them, in
-> exactly this style and free to use. Read
-> [`moodboard/README.md`](moodboard/README.md) before modelling anything.
+> Kenney's Food Kit and Furniture Kit are still the **geometry** source (CC0, 340
+> models). They do not arrive in this style — they are flat-shaded and
+> hard-edged — so they need re-materialing and relighting. Still far cheaper
+> than modelling from scratch.
 
 ---
 
 ## 1. The written style spec
 
-This is the part that matters. It is what gets pasted into an image prompt, and
-what a model is checked against.
+**The style is a cosy isometric clay miniature.** The anchor reference is
+`moodboard/08-dribbble-isometric-bakery.png` — that is the target.
+
+This is a deliberate move away from the earlier Roblox framing. Roblox is flat,
+bright and hard-edged; this is soft, warm and shaded. Where the two conflict,
+this wins.
 
 ### Geometry
 
-- **Very low polygon count.** Chunky, simple, readable silhouettes.
-- Everything is built from **primitives**: boxes, cylinders, spheres. A jar is a
-  cylinder with a lid. A tree is a cylinder plus a couple of cones.
-- Slight rounding on edges is fine; sharp bevelling and chamfering is not.
-- **Implied detail, never literal detail.** If a shape needs more than three
-  primitives to read, simplify what it is rather than adding geometry.
+- **Rounded edges on everything.** This is not optional decoration — soft edges
+  are what catch the light and make a surface read as clay rather than plastic.
+  A sharp-edged box will look wrong no matter how it is coloured.
+- Built from simple, chunky, readable shapes: rounded boxes, cylinders, spheres.
+- Moderate detail density. Higher than pure primitives, far below realism: a jar
+  is a rounded cylinder with a lid, but a shelf may hold six of them.
+- **Implied detail, never literal detail.**
 
 ### Materials
 
-- **Flat matte.** One solid colour per surface.
-- **No textures at all** — no wood grain, no fabric weave, no surface noise.
-- No specular highlights, no metal, no glass, no transparency.
-- In RealityKit terms: `SimpleMaterial` with roughness ≈ 1.0 and
-  `isMetallic: false`; `UnlitMaterial` where a surface must stay perfectly flat.
+- **Soft matte clay** — like smooth polymer modelling clay.
+- One solid colour per surface. **No textures**: no wood grain, no fabric weave,
+  no surface noise.
+- No metal, no glass, no transparency, no visible specular hotspots.
+- Not *unlit*, though. See lighting — the material must respond to light or the
+  whole effect collapses.
+
+### Lighting — the signature
+
+This is what makes the reference look like clay, and it is the part most easily
+got wrong.
+
+- **Ambient occlusion is the defining feature.** Soft darkening pooling in every
+  corner, under every object, wherever two surfaces meet. Without it the scene
+  reads as flat cartoon; with it, it reads as a physical object you could pick
+  up.
+- **Soft diffuse shadows with no hard edges.** One gentle key light plus a broad
+  ambient fill.
+- No dramatic contrast, no colour grading, no rim lights.
+- Objects must feel **grounded** — a contact shadow under everything.
 
 ### Palette
 
-- Bright **pastels**: pink, mint green, cream, sky blue, soft yellow.
-- High value, low-to-mid saturation. Nothing muddy, nothing neon.
+- **Warm and muted**, not bright and saturated: terracotta, salmon pink, cream,
+  sage green, warm brown.
+- Backgrounds are plain, soft, and cool — a flat soft teal sets off the warm
+  scene without competing.
 - **Fix a single shared palette of roughly 12 colours and derive every asset
-  from it.** This is the main defence against drift across rooms.
+  from it.** The main defence against drift between rooms.
 
-### Lighting
+### Composition — the room-box rule
 
-- Soft, even ambient fill plus **one** soft directional light.
-- Gentle contact shadows so objects sit on surfaces rather than float.
-- No harsh shadows, no dramatic or moody lighting, no colour grading.
+**Every room is an open corner room box**: two walls and a floor, open on the
+two near sides, seen from a fixed isometric three-quarter angle.
 
-### Composition — the diorama rule
+Not a walled interior — the camera is never inside the room. Not a floating
+island either; that was an earlier read, and the room box is what the anchor
+reference actually does.
 
-**Every room is a small, bright diorama sitting on its own floating base.** Not a
-walled interior, not a cutaway room: a self-contained little island of scenery
-with clean air around it.
+This suits the game as well as the eye:
 
-This was the specific thing that landed when reviewing references, and it is
-more useful than "low poly" because it decides framing, lighting and geometry
-all at once. It also happens to suit the game — see
-[`moodboard/README.md`](moodboard/README.md) for why.
+- No wall ever comes between the camera and a prop.
+- The two open sides give a natural place for the back arrow and the music pads.
+- Each room can be modelled and lit independently, then slid in and out as a
+  single object when moving between rooms — a transition a 4-year-old can read.
 
 ### Camera
 
-- Fixed, slightly elevated **three-quarter angle** on the diorama.
-- One camera position per room, never moved by the player.
+- Fixed isometric three-quarter angle on the room box.
+- One camera position per room, **never** moved by the player.
+- In-game framing is landscape; the square plates here show the style, not the
+  final crop.
 
 ### Characters
 
-- Box torso, box or rounded head, cylinder arms and legs.
+- Rounded box torso, rounded head, soft cylindrical arms and legs.
 - **Rigid joints.** Nothing bends or deforms.
-- Faces are simple dot eyes and a small mouth. Expression changes by swapping
-  the mouth, not by deforming the face.
-- **Fix one proportion rule** (e.g. head ≈ ⅓ of total height) and hold it across
-  every character.
-
----
+- Simple dot eyes and a small mouth. Expression changes by swapping the mouth.
+- **Fix one proportion rule** (e.g. head ≈ ⅓ of total height) and hold it.
 
 ## 2. Real-world references
 
-The canonical examples of this look, worth opening on a machine that can
-actually load them:
+- **The anchor**: [3D Cute Isometric Bakery — Naomi, on Dribbble](https://dribbble.com/shots/21332763-3D-Cute-Isometric-Bakery-made-in-Blender).
+  Reference only; © the artist.
+- Search terms that find more of it: *isometric room box*, *cosy 3D miniature*,
+  *clay render*, *Blender isometric diorama*, *cute 3D room*.
 
-- **Adopt Me!** — the closest match to this brief. Pastel, cute, houses and
-  pets, kid audience.
-- **Brookhaven RP** — modular buildings, flat colours, simple interiors.
-- **Tower of Hell** — the most stripped-back version of the style.
-
-Background reading:
-
-- [Why the low-poly graphics style is so common — Roblox Developer Forum](https://devforum.roblox.com/t/why-the-low-poly-graphics-style-is-so-common/511551)
-- [How to optimise Roblox art for better performance (low-poly tips)](https://www.vasundhara.io/blogs/how-to-optimize-roblox-art-for-better-performance-low-poly-tips)
-- [Stylized low poly — Roblox Developer Forum](https://devforum.roblox.com/t/stylized-low-poly/3780170)
-- [Low-poly Roblox models on CGTrader](https://www.cgtrader.com/low-poly-3d-models/roblox)
-- [Low-poly Roblox game assets on itch.io](https://itch.io/game-assets/tag-low-poly/tag-roblox)
-
-One useful thing from that reading: in Roblox, low-poly is not only an
-aesthetic, it is a **performance requirement**, which is why the whole ecosystem
-converged on flat colours and modular construction. The style is the product of
-the same constraint we have — one person, limited asset budget.
+The earlier Roblox references are retired. They remain in git history if the
+direction ever needs revisiting, but they describe a flatter, harder-edged,
+brighter look than the one now agreed.
 
 ---
 
 ## 3. Generated reference plates
 
-Four plates generated for this briefing. All use **`flux_2`**, variant `pro`,
-resolution `1k`. Recording prompt *and seed* makes each plate exactly
-reproducible, which a saved PNG would not be.
+All plates use **`flux_2`**, variant `pro`, resolution `1k`. Recording prompt
+*and seed* makes each exactly reproducible, which a saved PNG would not be.
+
+### Current set — clay direction
 
 | # | Subject | Aspect | Seed | Job ID |
 |---|---|---|---|---|
-| 1 | Bakery cottage exterior (hub) | 16:9 | `7626` | `64f0893e-073a-4065-b363-f87687ced11d` |
-| 2 | Kitchen interior | 16:9 | `45937` | `639262f9-2bad-44fa-9c82-5a0db2c4e3a8` |
-| 3 | Fairy baker character sheet | 3:4 | `895433` | `d368acec-4085-48e4-83ff-7a57ee8ee789` |
-| 4 | Party scene with guests | 16:9 | `572557` | `672ab16f-c1f3-435a-95da-4d9f1b11fec8` |
+| 1 | Bakery kitchen room box | 1:1 | `822183` | `9887941f-9d50-409f-ad7a-330e3b43c5d0` |
+| 2 | Bakery cottage exterior | 1:1 | `270825` | `5bc6e6db-ffa5-4fff-b378-7661a9060e3a` |
+| 3 | Fairy baker character sheet | 3:4 | `409079` | `13e7c536-befa-462f-bf19-c632f74a8e83` |
+| 4 | Party room box | 1:1 | `884050` | `6eaffc62-3809-4985-80be-67d78eaf0bf1` |
 
 ### The shared style suffix
 
-Every plate ends with the same block. Reuse it verbatim on any new plate so the
-set stays coherent:
+Reuse verbatim on any new plate so the set stays coherent:
 
 ```
-Low-poly 3D video game screenshot in the simple blocky style of Roblox.
-[SUBJECT]
-Chunky simple geometry, flat matte solid colours with no surface texture or
-detail, bright pastel palette of pink, mint green and cream. Soft even ambient
-lighting with gentle soft shadows. Simple rounded box shapes, very low polygon
-count, clean and uncluttered composition. Children's game aesthetic, no
-photorealism, no fine detail, no text.
+Isometric 3D render of [SUBJECT], built as an open corner room box: two walls
+and a floor, open on the two near sides, seen from a fixed isometric
+three-quarter angle. Everything modelled in soft matte clay, like smooth
+polymer modelling clay, with gently rounded edges on every surface. Strong soft
+ambient occlusion pooling in the corners and under every object, soft diffuse
+shadows, no hard shadow edges. Warm muted palette: terracotta, salmon pink,
+cream, sage green and warm brown, against a plain soft teal background. Cosy
+miniature diorama, cute, clean and uncluttered, no photorealism, no text.
 ```
 
-### Per-plate subject lines
+For a character, swap the room-box clause for: *full body, standing in a neutral
+straight pose with arms held away from the body and limbs clearly separated,
+plain soft teal background*.
 
-1. *A cute magic bakery cottage seen from a fixed three-quarter doll's-house
-   angle, with a small garden of simple round trees and flowers in front.*
-2. *Interior of a cosy magic bakery kitchen viewed from a fixed three-quarter
-   angle: a simple wooden table with a big mixing bowl, a large rounded oven,
-   and shelves holding chunky jars.*
-3. *A cute little fairy baker character, full body, standing in a neutral
-   straight pose with arms held away from the body and limbs clearly separated.
-   Built from simple primitive shapes: a box torso, cylindrical arms and legs, a
-   chunky rounded head, small simple wings, a tiny apron. Simple dot eyes and a
-   small smile. Plain flat neutral grey background, even soft lighting, no
-   shadows on the background.*
-4. *A cheerful party scene: a table with a decorated pastel birthday cake in the
-   centre, and three simple blocky cartoon animal characters standing around it,
-   with simple triangular bunting strung overhead.*
+The phrases doing the real work are **"soft matte clay"**, **"gently rounded
+edges"** and **"strong soft ambient occlusion"**. Drop any of the three and the
+result reverts to generic flat cartoon.
 
 ### Locking the style once a plate is approved
 
-`flux_2` accepts `image_references`. Once one plate is agreed as *the* look,
-pass its job ID as a reference on every subsequent generation instead of relying
-on the prompt alone. That is a much stronger consistency guarantee than matching
-wording, and it is the step that stops the set drifting.
+`flux_2` accepts `image_references`. Once one plate is agreed as *the* look, pass
+its job ID as a reference on every subsequent generation rather than relying on
+prompt wording. That is a much stronger consistency guarantee, and it is the step
+that stops the set drifting.
+
+**Do not pass the moodboard screenshots as references.** Two of those sources
+carry explicit no-AI terms.

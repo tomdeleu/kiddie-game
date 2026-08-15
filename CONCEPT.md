@@ -1,7 +1,7 @@
 # Nina's Toverbakkerij — concept
 
 A magic-bakery game for Nina, aged 4, in Dutch, on iPad. Native SwiftUI with
-RealityKit, in a low-poly Roblox-style 3D look.
+RealityKit, in a cosy isometric clay-miniature 3D look.
 
 Working title: **Nina's Toverbakkerij** (Nina's magic bakery). Short, Dutch, and
 a 4-year-old can say it — which matters, because she has to be able to ask for
@@ -82,9 +82,15 @@ Then the cake is photographed and hung on the bakery wall in a little frame.
 
 ## 4. The hub and the collection
 
-The home screen is the bakery seen in cutaway, doll's-house style: garden,
-kitchen, party room. Tap a room to enter, tap the big arrow to come home. That
-is the whole navigation model and the only thing she has to learn.
+The home screen is the bakery cottage as a single clay miniature, with the
+garden beside it. Tap it to go in, tap the big arrow to come home. That is the
+whole navigation model and the only thing she has to learn.
+
+Inside, each room is an **open corner room box** — two walls and a floor, seen
+from a fixed isometric angle, open on the two near sides. Moving between rooms
+slides one box out and the next in, which is a transition she can follow. See
+[`references/REFERENCES.md`](references/REFERENCES.md) for why this framing was
+chosen.
 
 **Every cake she finishes gets framed and hung on the bakery wall.** That is the
 progression system. It needs no numbers, no stars, and no reading — she can see
@@ -291,27 +297,29 @@ children's game.
 SwiftUI `Canvas` for immediate-mode drawing, and **SpriteKit**, Apple's 2D game
 engine with a scene graph, physics, and particle emitters.
 
-### 9.2 The decision: 3D in RealityKit, Roblox-style
+### 9.2 The decision: 3D in RealityKit
 
 **RealityKit renders the world; SwiftUI wraps it** via `RealityView` and owns
 the flat UI on top (the back arrow, the parent gate).
 
-The visual target is the deliberately simple, chunky, low-poly look of Roblox —
-see [references/REFERENCES.md](references/REFERENCES.md) for the style
-specification and reference plates.
+The visual target is a **cosy isometric clay miniature** — soft matte surfaces,
+rounded edges, warm muted colour, and heavy ambient occlusion. See
+[references/REFERENCES.md](references/REFERENCES.md) for the full specification
+and §9.5 below for what it costs to render.
 
-That choice is what makes 3D tractable for one person, and it is worth being
-precise about why. The usual objection to 3D is the art pipeline: modelling,
-UV-unwrapping, texturing, rigging, and skinning every character is specialist
-work measured in weeks. **The Roblox aesthetic removes nearly all of it:**
+A simple, chunky aesthetic is what makes 3D tractable for one person, and it is
+worth being precise about why. The usual objection to 3D is the art pipeline:
+modelling, UV-unwrapping, texturing, rigging, and skinning every character is
+specialist work measured in weeks. **Chunky stylisation removes most of it:**
 
 - A character is 8–12 **primitives** — a box torso, a box head, cylinder limbs.
   There is nothing to sculpt.
 - Joints are **rigid**. Nothing bends or deforms, so there is no skinning and no
   weight painting — the single hardest part of 3D character work simply does not
   exist here.
-- Materials are **flat matte colours**. No textures to author, no UV unwrapping,
-  no PBR maps.
+- Materials are **single matte colours**. No textures to author, no UV
+  unwrapping, no PBR maps. (Baked ambient-occlusion maps are the one exception —
+  see §9.5.)
 - The style's whole visual language is *implied* detail. A jar is a cylinder
   with a lid on it. Getting it "right" means getting it simple.
 
@@ -320,8 +328,9 @@ A first-pass character can be assembled procedurally in code with
 with no modelling software involved at all. That is a genuinely different
 proposition from generic 3D.
 
-There is a second payoff: this is the visual language of the games she will
-grow into. It will not look like a toddler app for long.
+What the clay direction *does* add back is lighting work — see §9.5. That is a
+real cost, but it is tuning rather than specialist asset labour, and it is paid
+once rather than per asset.
 
 ### 9.3 Why not Unity or Godot
 
@@ -391,7 +400,58 @@ somewhere other than an iPad. Neither is true today.
   place to lay out a room and author materials once there is more than a
   handful of entities.
 
-### 9.5 The honest cost of going 3D
+### 9.5 Achieving the clay look in RealityKit
+
+The art direction is a **cosy isometric clay miniature**
+([`references/REFERENCES.md`](references/REFERENCES.md)), not the flat Roblox
+look this section originally assumed. That changes the rendering requirements
+materially, and one of the changes is a genuine risk.
+
+**Materials must respond to light.** `UnlitMaterial` and flat colour are now
+wrong — they were right for the Roblox look and produce cardboard here. Use
+`SimpleMaterial` with roughness near 1.0 and `isMetallic: false`, or
+`PhysicallyBasedMaterial` for finer control.
+
+**Geometry needs rounded edges.** Soft edges are what catch the light and read as
+clay. Conveniently, RealityKit builds them natively:
+`MeshResource.generateBox(size:cornerRadius:)`. Use a non-zero corner radius
+everywhere; a sharp box will look wrong regardless of colour.
+
+**Lighting is one soft key plus broad ambient fill.** An `ImageBasedLight` with a
+soft neutral environment does most of the work; add a single directional light
+for gentle grounding shadows. No rim lights, no dramatic contrast.
+
+#### The hard part: ambient occlusion
+
+The soft darkening pooling in corners and under objects is *the* reason the
+reference reads as clay rather than cartoon. It is also the thing real-time
+rendering on an iPad gives least willingly — RealityKit does not expose
+production-quality screen-space AO.
+
+Two routes, and they should be combined:
+
+1. **Bake AO into the models.** Blender bakes an AO map per asset; RealityKit
+   just displays it. Excellent quality, effectively free at runtime, and correct
+   for everything static — walls, shelves, the oven.
+2. **Fake contact for dynamic objects.** Baked AO cannot know that Nina just
+   dragged an egg next to the bowl. Give every draggable a soft dark blob
+   underneath, scaled by proximity to the surface. Crude, and completely
+   convincing in a stylised scene.
+
+**Prototype this before committing.** Build one room, bake its AO, put it on the
+iPad and look at it. If the clay quality does not survive contact with the
+device, that is worth knowing in week one rather than after four rooms are
+modelled.
+
+#### Consequence for the Kenney kits
+
+They remain the right starting geometry — 340 CC0 models is still the cheapest
+art in the project. But they are **flat-shaded and hard-edged**, so they arrive
+in the old style, not this one. Expect to re-material them, and to bake AO
+per asset. That is a real cost, and it is still far below modelling from
+scratch.
+
+### 9.6 The honest cost of going 3D
 
 Two things genuinely get harder than they were in 2D, and they are worth
 knowing before starting:
@@ -408,7 +468,7 @@ knowing before starting:
 Expect the first room to take meaningfully longer than its 2D equivalent. Rooms
 two onward should not, because both problems are solved once and reused.
 
-### 9.6 How things move: rigid transform rigs
+### 9.7 How things move: rigid transform rigs
 
 The animation approach carries over from the 2D plan almost unchanged, which is
 convenient — it was always a transform-hierarchy technique.
