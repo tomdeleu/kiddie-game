@@ -69,16 +69,23 @@ enum KitchenProps {
         root.addChild(arch)
 
         // The dark opening. Slightly oversized so its edges hide behind the
-        // soffit rather than leaving a seam, and recessed well behind the arch
-        // face so the mouth is a lined tunnel with a dark back wall, not a
-        // painted-on disc — the door now stands open most of the round, so
-        // this cavity is what gives Otto his depth. The recess stays inside
-        // the arch's own depth (0.034) so the tunnel walls are always the
-        // arch's inner surface, never a gap. It is solid: the tin slides in
-        // and is swallowed by the dark, which is also how a real oven works.
+        // soffit rather than leaving a seam, and recessed just enough to read
+        // as set back rather than painted on.
+        //
+        // **The recess cannot be deep, and this is the reason.** The arch is
+        // not a tunnel through the dome — it is a ring stuck on the front of
+        // an ellipsoid that bulges *into* it. The dome reaches z = 0.062 at
+        // the base of the mouth, while the arch face is at 0.076, so anything
+        // set back more than 0.014 sits behind the dome shell and you see
+        // mint through the opening instead of dark. That is exactly what a
+        // 0.022 recess did on the 2026-08-15 build. 0.008 keeps the plug
+        // clear of the bulge with 0.006 to spare, and the hole reads as a
+        // flat dark surface a little way back — which is all it needs to be.
+        // It is solid: the tin slides in and is swallowed by the dark, which
+        // is also how a real oven works.
         let oversize: Float = 0.002
         let plugDepth: Float = 0.028
-        let plugRecess: Float = 0.022
+        let plugRecess: Float = 0.008
         let mouth = RoomBuilder.model(.archPlug(radius: Layout.mouthArchInner + oversize,
                                                 legHeight: Layout.mouthLegHeight + oversize,
                                                 depth: plugDepth, segments: 6),
@@ -155,8 +162,8 @@ enum KitchenProps {
         flue.position = [chimneyX, rimTopY - 0.003 - 0.007, chimneyZ]
         body.addChild(flue)
 
-        // The face. Two eyes and two cheeks is the whole character — he has no
-        // mouth, because the arch already is one.
+        // The face. Two eyes is the whole character — he has no mouth,
+        // because the arch already is one.
         //
         // Each eye is a light eyeball with a small brown pupil in front — a
         // single dark ball read as a hole in the dome, not an eye. The pupil
@@ -178,17 +185,15 @@ enum KitchenProps {
             eye.addChild(pupil)
             pupils.append(pupil)
         }
-        // The cheeks stand clearly proud of the dome, on the same forward
-        // plane as the eyes. They used to sit at z = 0.030, mostly inside the
-        // faceted surface with one tip poking through a chord — which read as
-        // debris, not blush ("what is this?", 2026-08-15 build).
-        for (i, dx) in [Float(-0.034), 0.034].enumerated() {
-            let cheek = RoomBuilder.model(.icosphere(radius: 0.008, subdivisions: 0),
-                                          Palette.rose, flat: flat, name: "OttoCheek\(i)")
-            cheek.position = [dx, 0.040, 0.042]
-            cheek.scale = [1, 0.7, 0.5]
-            body.addChild(cheek)
-        }
+        // **No cheeks.** There were two rose blobs out at x = ±0.034 meant to
+        // read as blush. Out there the dome is turning away hard, so a blob
+        // small enough not to be a lump is mostly buried, and the faceted
+        // surface then exposes a different sliver of it from every angle. On
+        // screen it read as debris stuck to the oven, twice over, and moving
+        // it forward only made the floating more obvious (owner: "anomalies",
+        // 2026-08-15). Blush on a faceted dome wants to be a facet painted a
+        // different colour, not a ball — worth doing when the mesh builder can
+        // colour faces individually. Until then Otto is eyes and a mouth.
 
         return Oven(root: root, dome: dome, doorPivot: doorPivot, door: door,
                     eyes: eyes, pupils: pupils, pupilRest: pupilRest,
