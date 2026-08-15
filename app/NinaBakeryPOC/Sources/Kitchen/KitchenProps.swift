@@ -21,6 +21,11 @@ enum KitchenProps {
         let doorPivot: Entity
         let door: ModelEntity
         let eyes: [ModelEntity]
+        let pupils: [ModelEntity]
+        /// Where a pupil sits when Otto looks straight ahead, in eye-local
+        /// space. Every eye animation tweens back to this, so overlapping
+        /// glances can never leave a pupil stranded off-centre.
+        let pupilRest: SIMD3<Float>
         let chimneyTop: SIMD3<Float>
     }
 
@@ -64,16 +69,28 @@ enum KitchenProps {
         root.addChild(arch)
 
         // The dark opening. Slightly oversized so its edges hide behind the
-        // soffit rather than leaving a seam, and recessed so the mouth reads as
-        // having depth. It is solid: the tin slides in and is hidden by the
-        // door, which is also how a real oven works.
+        // soffit rather than leaving a seam, and recessed just enough to read
+        // as set back rather than painted on.
+        //
+        // **The recess cannot be deep, and this is the reason.** The arch is
+        // not a tunnel through the dome — it is a ring stuck on the front of
+        // an ellipsoid that bulges *into* it. The dome reaches z = 0.062 at
+        // the base of the mouth, while the arch face is at 0.076, so anything
+        // set back more than 0.014 sits behind the dome shell and you see
+        // mint through the opening instead of dark. That is exactly what a
+        // 0.022 recess did on the 2026-08-15 build. 0.008 keeps the plug
+        // clear of the bulge with 0.006 to spare, and the hole reads as a
+        // flat dark surface a little way back — which is all it needs to be.
+        // It is solid: the tin slides in and is swallowed by the dark, which
+        // is also how a real oven works.
         let oversize: Float = 0.002
         let plugDepth: Float = 0.028
+        let plugRecess: Float = 0.008
         let mouth = RoomBuilder.model(.archPlug(radius: Layout.mouthArchInner + oversize,
                                                 legHeight: Layout.mouthLegHeight + oversize,
                                                 depth: plugDepth, segments: 6),
-                                      Palette.woodBrown, flat: flat, name: "OvenMouth")
-        mouth.position = [0, -oversize, archFront - 0.008 - plugDepth / 2]
+                                      Palette.ovenInside, flat: flat, name: "OvenMouth")
+        mouth.position = [0, -oversize, archFront - plugRecess - plugDepth / 2]
         root.addChild(mouth)
 
         // The door. Hinged at the bottom edge so it drops forward — which is
@@ -94,39 +111,93 @@ enum KitchenProps {
         handle.position = [0, Layout.mouthLegHeight + 0.026, 0.004]
         doorPivot.addChild(handle)
 
-        // Base low enough to bury itself in the dome — the surface is at
-        // y = 0.056 out where the chimney stands.
-        let chimney = RoomBuilder.model(.prism(radius: 0.011, height: 0.045, sides: 4),
-                                        Palette.creamLight, flat: flat, name: "Chimney")
-        chimney.position = [0.028, 0.050, -0.030]
-        body.addChild(chimney)
+        // The chimney, per the plate: a square shaft, a wider lighter cap, and
+        // a real opening in the top — a rim of four walls around a dark flue,
+        // recessed so the hole reads as a hole from the fixed camera. Built
+        // from boxes rather than 4-sided prisms because a 4-sided prism puts
+        // its vertices on the axes, which stands the shaft on a diamond edge;
+        // the plate's chimney is square to the room.
+        //
+        // The shaft runs all the way to the floor. The ideal dome surface out
+        // where the chimney stands is at y = 0.056, but the dome is faceted —
+        // its real surface chords *inside* the ideal ellipsoid — so a shaft
+        // that merely dips below 0.056 can still hang in the air over a chord,
+        // which is exactly what the 2026-08-15 build showed. Grounded, it can
+        // never float, whatever the facets do. Boxes are centred, so each y
+        // here is the part's centre.
+        let chimneyX: Float = 0.028
+        let chimneyZ: Float = -0.030
 
-        let chimneyCap = RoomBuilder.model(.prism(radius: 0.015, height: 0.008, sides: 4),
-                                           Palette.cream, flat: flat, name: "ChimneyCap")
-        chimneyCap.position = [0.028, 0.091, -0.030]
-        body.addChild(chimneyCap)
+        let shaft = RoomBuilder.model(.box([0.022, 0.096, 0.022]),
+                                      Palette.cream, flat: flat, name: "Chimney")
+        shaft.position = [chimneyX, 0.048, chimneyZ]
+        body.addChild(shaft)
 
-        // The face. Two eyes and two cheeks is the whole character — he has no
-        // mouth, because the arch already is one.
+        let capSlab = RoomBuilder.model(.box([0.034, 0.006, 0.034]),
+                                        Palette.creamLight, flat: flat, name: "ChimneyCap")
+        capSlab.position = [chimneyX, 0.096 + 0.003, chimneyZ]
+        body.addChild(capSlab)
+
+        // The rim: four walls, outer 0.030, 0.007 thick, leaving a 0.016
+        // square opening.
+        let rimTopY: Float = 0.110
+        let rimWallY: Float = 0.102 + 0.004
+        for (i, spec) in [
+            (SIMD3<Float>(0.030, 0.008, 0.007), SIMD3<Float>(chimneyX, rimWallY, chimneyZ - 0.0115)),
+            (SIMD3<Float>(0.030, 0.008, 0.007), SIMD3<Float>(chimneyX, rimWallY, chimneyZ + 0.0115)),
+            (SIMD3<Float>(0.007, 0.008, 0.016), SIMD3<Float>(chimneyX - 0.0115, rimWallY, chimneyZ)),
+            (SIMD3<Float>(0.007, 0.008, 0.016), SIMD3<Float>(chimneyX + 0.0115, rimWallY, chimneyZ)),
+        ].enumerated() {
+            let wall = RoomBuilder.model(.box(spec.0), Palette.creamLight,
+                                         flat: flat, name: "ChimneyRim\(i)")
+            wall.position = spec.1
+            body.addChild(wall)
+        }
+
+        // The flue. Slightly wider than the opening so its sides hide inside
+        // the rim walls (same trick as the mouth plug), top 0.003 below the
+        // rim so the recess is visible from the camera's angle.
+        let flue = RoomBuilder.model(.box([0.017, 0.014, 0.017]),
+                                     Palette.woodBrown, flat: flat, name: "ChimneyFlue")
+        flue.position = [chimneyX, rimTopY - 0.003 - 0.007, chimneyZ]
+        body.addChild(flue)
+
+        // The face. Two eyes is the whole character — he has no mouth,
+        // because the arch already is one.
+        //
+        // Each eye is a light eyeball with a small brown pupil in front — a
+        // single dark ball read as a hole in the dome, not an eye. The pupil
+        // is a child of the eyeball, so the blink (which scales the entities
+        // in `eyes`) squeezes both together.
+        let pupilRest = SIMD3<Float>(0, 0, 0.0055)
         var eyes: [ModelEntity] = []
+        var pupils: [ModelEntity] = []
         for (i, dx) in [Float(-0.018), 0.018].enumerated() {
-            let eye = RoomBuilder.model(.icosphere(radius: 0.0055, subdivisions: 1),
-                                        Palette.woodBrown, flat: flat, name: "OttoEye\(i)")
+            let eye = RoomBuilder.model(.icosphere(radius: 0.008, subdivisions: 1),
+                                        Palette.creamLight, flat: flat, name: "OttoEye\(i)")
             eye.position = [dx, 0.052, 0.042]
             body.addChild(eye)
             eyes.append(eye)
+
+            let pupil = RoomBuilder.model(.icosphere(radius: 0.004, subdivisions: 1),
+                                          Palette.woodBrown, flat: flat, name: "OttoPupil\(i)")
+            pupil.position = pupilRest
+            eye.addChild(pupil)
+            pupils.append(pupil)
         }
-        for (i, dx) in [Float(-0.034), 0.034].enumerated() {
-            let cheek = RoomBuilder.model(.icosphere(radius: 0.007, subdivisions: 0),
-                                          Palette.rose, flat: flat, name: "OttoCheek\(i)")
-            cheek.position = [dx, 0.042, 0.030]
-            cheek.scale = [1, 0.7, 0.4]
-            body.addChild(cheek)
-        }
+        // **No cheeks.** There were two rose blobs out at x = ±0.034 meant to
+        // read as blush. Out there the dome is turning away hard, so a blob
+        // small enough not to be a lump is mostly buried, and the faceted
+        // surface then exposes a different sliver of it from every angle. On
+        // screen it read as debris stuck to the oven, twice over, and moving
+        // it forward only made the floating more obvious (owner: "anomalies",
+        // 2026-08-15). Blush on a faceted dome wants to be a facet painted a
+        // different colour, not a ball — worth doing when the mesh builder can
+        // colour faces individually. Until then Otto is eyes and a mouth.
 
         return Oven(root: root, dome: dome, doorPivot: doorPivot, door: door,
-                    eyes: eyes,
-                    chimneyTop: Layout.ovenOrigin + SIMD3<Float>(0.028, 0.105, -0.030))
+                    eyes: eyes, pupils: pupils, pupilRest: pupilRest,
+                    chimneyTop: Layout.ovenOrigin + SIMD3<Float>(0.028, 0.112, -0.030))
     }
 
     // MARK: - The bake
