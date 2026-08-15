@@ -391,6 +391,35 @@ enum FacetedMesh {
         return (p, idx)
     }
 
+    /// A flat ring lying in the XZ plane, facing up.
+    ///
+    /// Single-sided on purpose — it is a decal on a floor or a tabletop and is
+    /// only ever seen from above, so the underside would be geometry nobody can
+    /// reach. That also means **winding still matters**: back faces are culled,
+    /// so a reversed ring is an invisible ring rather than a dark one.
+    ///
+    /// `Halo` stacks a dozen of these at graded opacities to get a soft edge
+    /// without a texture. One band on its own is a hard-edged hoop.
+    static func annulus(innerRadius: Float, outerRadius: Float,
+                        segments: Int = 24) -> Geometry {
+        precondition(segments >= 3 && outerRadius > innerRadius && innerRadius >= 0)
+        var p: [SIMD3<Float>] = []
+        for s in 0..<segments {
+            let a = Float(s) / Float(segments) * 2 * Float.pi
+            p.append([cos(a) * innerRadius, 0, sin(a) * innerRadius])
+            p.append([cos(a) * outerRadius, 0, sin(a) * outerRadius])
+        }
+        var idx: [UInt32] = []
+        for s in 0..<segments {
+            let i = UInt32(s * 2), o = i + 1
+            let n = UInt32(((s + 1) % segments) * 2), no = n + 1
+            // Same handedness as a prism's top cap, which is the +Y face.
+            idx.append(contentsOf: [i, no, o])
+            idx.append(contentsOf: [i, n, no])
+        }
+        return (p, idx)
+    }
+
     /// A flat convex outline given thickness along Z, centred on Z.
     ///
     /// The outline must be **counter-clockwise seen from +Z** and convex, since

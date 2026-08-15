@@ -163,15 +163,35 @@ prop, and it was wrong: rendered as a preview it read as a screen-space UI
 element dropped into the room. `references/cues/` has the four alternatives it
 was judged against and why this one won.
 
-**The glow itself had to be rebuilt to be visible at all.** It moved
-`emissiveIntensity` between 0.25 and 1.1 and left the base colour alone, which
-on paper is a glow and on the iPad was nothing: every surface in this game is a
-pale pastel under a 2200 lx key, already returning most of the light it can, so
-an emissive term below 1 moves it a few percent — and moves it towards white,
-in a room where everything is nearly white. It now runs emissive 1.2 → 5.0,
-brightens the base colour up to 40% towards white with it, and breathes down to
-nearly nothing at the bottom of the pulse so the eye catches the *change*. The
-hue still never moves: colour means what the cake will be.
+**The cue is a ring of light on the surface, and it took three goes.** It was a
+hard-edged ring on the table, rejected from the previews in `references/cues/`
+as reading like screen-space UI; then the object itself lit from within, which
+failed twice on the iPad — first invisible, then, turned up far enough to see,
+recolouring a whole prop to say one thing. Pale pastels under a 2200 lx key are
+already returning most of the light they can, so an emissive term below 1 moves
+them a few percent, towards white, in a room where everything is nearly white.
+
+It is now a **soft** ring on the surface *around* the prop, picked from
+`references/cues/floor/` and built to the sampled colours of that plate: a
+`#F6D861` gold washing out to `#FFF6D8` at the core, with the interior left
+clear. The object keeps its own colour entirely. Softness is the whole reason
+this version survives where the first ring did not — a hard edge is what UI has
+and light does not.
+
+It is eighteen concentric bands of geometry at graded opacities on a Gaussian
+profile, not a texture. A radial-gradient texture needs `TextureResource`, a
+hand-built `CGImage`, UVs `FacetedMesh` does not produce, and an assumption
+about `UnlitMaterial` honouring a base-colour alpha channel — four things that
+can fail on a first build, into a bright yellow square. The bands need none of
+it, and at these sizes each one is about a screen point wide.
+
+The ring is a **sibling** of the prop, not a child, placed each frame at the
+prop's XZ on whatever surface is beneath it. That is what keeps it on the table
+while the prop is lifted off it — most of what makes a held thing look held —
+and what lets it climb onto the plank with the cake.
+
+Three cues in, the lesson is that this decision cannot be made from a render:
+all three looked fine as plates. **Judge the next one on the device.**
 
 ### Height
 
@@ -359,7 +379,7 @@ be retired when the wall arrives, not grown.
 | `Engine/Ticker.swift` | The one clock. Every animation is an interruptible closure ticked from here. |
 | `Engine/TouchRouter.swift` | One finger, two verbs. Targets are generous spheres, not meshes, and their drag plane travels with the prop. |
 | `Engine/Sparkles.swift` | Faceted yellow stars that fly out and vanish. The whole reward vocabulary. |
-| `Engine/Halo.swift` | The glow on the prop a step is about — the game's only instruction. |
+| `Engine/Halo.swift` | The ring of light on the surface under the prop a step is about — the game's only instruction. |
 | `Audio/SoundKit.swift` | All thirteen sound effects, synthesised at launch. |
 | `Audio/VoiceBank.swift` | Nina and Otto, driven by `script-keuken.json`. |
 | `Game/CakeSpec.swift` | Six ingredients → colour, effects, and what Nina says about them. |
@@ -436,9 +456,11 @@ Two places are the most likely to want a fix, and both are one line:
 2. **`Palette.glowMaterial`.** Uses `emissiveColor` / `emissiveIntensity` on
    `PhysicallyBasedMaterial`, and `waterMaterial` / `fadingMaterial` use
    `.blending = .transparent`. Everything that glows, runs or fades goes
-   through those three functions, so if either API has moved, they are the only
-   place to fix it. If the halo looks too strong on device, its range is the
-   `1.2 + 3.8 * t` in `Halo.attach` and nothing else.
+   through those two functions, so if either API has moved, they are the only
+   place to fix it. The halo no longer uses either — it is `UnlitMaterial` with
+   transparent blending, the same as sparkles and contact shadows. If it looks
+   too strong or too tight on device, `Halo.spread`, `Halo.sigma` and the `0.92`
+   in `Halo.profile` are the three numbers that shape it.
 
 ### The developer panel
 

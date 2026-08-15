@@ -64,9 +64,10 @@ final class KitchenRoom {
     private var ingredientPot: ModelEntity?
     /// The glow on whatever she needs next: the job driving it, the prop it is
     /// on, and that prop's own materials so they can be put back exactly.
-    private var haloJob: Int?
-    private weak var haloed: Entity?
-    private var haloedMaterials: [[RealityKit.Material]] = []
+    /// The lit ring on the surface, and the job driving it. One handle instead
+    /// of a job plus an entity plus a snapshot of its materials: the halo does
+    /// not touch the prop any more, so there is nothing to put back.
+    private var halo: Halo.Handle?
 
     // Interaction. Carrying is four numbers rather than one because a carried
     // prop now has a height of its own — see `carry(to:)`.
@@ -446,28 +447,28 @@ final class KitchenRoom {
         refreshHalo()
     }
 
-    /// Put the currently lit prop back to its own colours.
+    /// Take the ring away.
     ///
     /// Called before lighting anything else, and directly by `bake()` — once
-    /// she has tapped Otto the cue has done its job, and two things writing to
-    /// the same material every frame is a fight nobody wins.
+    /// she has tapped Otto the cue has done its job. Nothing needs restoring:
+    /// the halo is a separate entity on the surface and never touched the
+    /// prop's own materials.
     private func clearHalo() {
-        ticker.cancel(haloJob)
-        haloJob = nil
-        if let haloed {
-            Halo.remove(from: haloed, restoring: haloedMaterials)
-        }
-        haloed = nil
-        haloedMaterials = []
+        Halo.remove(halo, ticker: ticker)
+        halo = nil
     }
 
     /// Light up whatever she needs next, and nothing else.
     private func refreshHalo() {
         clearHalo()
         guard let target = haloTarget(), target.isEnabled else { return }
-        haloed = target
-        haloedMaterials = Halo.materials(of: target)
-        haloJob = Halo.attach(to: target, radius: haloRadius(for: target), ticker: ticker)
+        halo = Halo.attach(to: target, radius: haloRadius(for: target), ticker: ticker,
+                           surfaceY: { [weak self, weak target] point in
+            guard let self, let target else { return Layout.surfaceY(at: point) }
+            // Through `surfaceUnder`, so the ring climbs onto the plank with
+            // the cake at the end of the round instead of staying on the table.
+            return self.surfaceUnder(point, for: target)
+        })
     }
 
     /// The one prop the current step is about.
