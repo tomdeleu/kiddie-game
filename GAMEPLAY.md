@@ -18,7 +18,7 @@ the entire design is twelve, and she experiences it as a wall with gaps in it.
 
 Nina has a bakery. Her name is above the door.
 
-It is not a *magic* bakery yet. The fairy who lives there — **Fien** — explains
+It is not a *magic* bakery yet. The fairy who lives there — **Luna** — explains
 it on the first launch: a bakery becomes a real toverbakkerij when **twelve
 friends have had their party there**, and every party hangs in a frame on the
 wall. Right now the wall is twelve empty frames, and in each empty frame is the
@@ -31,12 +31,17 @@ need a plot; she needs to know what she is doing and to see that she is getting
 somewhere. The story's job is to make the wall mean something, and then get out
 of the way.
 
-> **Fien is a proposal, not a decision.** She needs a name Nina can say and ask
-> for. Fien is one syllable, unambiguously Dutch, and does not collide with any
-> guest name below. Swap it freely — but swap it now, before any line is
-> generated, because it appears in perhaps forty of them.
+> **Luna — DECIDED.** She needed a name Nina can say and ask for, that survives
+> every language the way *Nina* does. Luna is LOO-nah in Dutch, English, Spanish,
+> Italian and German alike, with no vowel that shifts; it is clearly distinct
+> from *Nina* in sound, which matters because the two names sit next to each
+> other in most of the dialogue; and it collides with no friend below.
+>
+> It also means *moon*, so the magic association arrives free. Use it lightly —
+> a crescent on her wand, a moon motif on the gold frame — and nowhere near the
+> story, which stays about the wall.
 
-**Nina is the baker.** She has no avatar; she is the hands. Fien is her friend
+**Nina is the baker.** She has no avatar; she is the hands. Luna is her friend
 who lives in the bakery and helps. Nothing on screen can look "not like her",
 and there is no character to rig, animate, or dress. This closes the open
 question in `CONCEPT.md` §11.
@@ -58,7 +63,7 @@ Each frame is in one of two states:
 new interface to learn. She points at a grey ghost and that friend's day begins.
 She can do them in any order she likes.
 
-The bottom-right frame is **larger and gold**. It is Fien's, and it stays grey
+The bottom-right frame is **larger and gold**. It is Luna's, and it stays grey
 until the other eleven are in colour. It is the only thing in the game that
 waits, and it is worth the exception: it gives the wall a shape and gives the
 last cake a weight the other eleven cannot have.
@@ -76,7 +81,7 @@ to say how.
 ### When the twelfth frame fills
 
 Every friend she has met arrives at once. The wall glows, the sign lights fully,
-confetti, and the longest piece of music in the game. Fien says the line the
+confetti, and the longest piece of music in the game. Luna says the line the
 whole thing has been building to, using her name.
 
 **Then nothing locks.** The bakery stays open forever:
@@ -127,7 +132,7 @@ what makes rooms three and four cost a fraction of room one to build.
 
 Before the garden, the friend of the day appears at the bakery door holding a
 **wish card**: a single picture — a pink cloud, a glitter star, three candles.
-They say what they love. Fien repeats it once in her own words.
+They say what they love. Luna repeats it once in her own words.
 
 The wish card then pins itself to the top corner of the screen and stays there
 for the whole round. **Tapping it replays the line.** It is the only persistent
@@ -155,10 +160,10 @@ is a hard question for a 4-year-old to answer from nothing.
 | 9 | **Roos de egel** | hartjes | ≥ 3 hearts placed |
 | 10 | **Tobi de hond** | sterretjes | ≥ 3 stars placed |
 | 11 | **Nel de slak** | twee kleuren door elkaar | ≥ 2 different colours |
-| 12 | **Fien de fee** | *"maak maar wat jíj het mooiste vindt"* | Always |
+| 12 | **Luna de fee** | *"maak maar wat jíj het mooiste vindt"* | Always |
 
 Nel's wish is the shell on her back, and it is the one that teaches the mixing
-system by accident. Fien asking for nothing is the point of Fien: she is the
+system by accident. Luna asking for nothing is the point of Luna: she is the
 only one who trusts Nina completely, and hers is the last cake.
 
 Eleven of the twelve are animals. Animals are cheaper than people in this style
@@ -192,7 +197,7 @@ Colour resolves by how many *different* colours went in:
 | Three different | **Rainbow** |
 
 Three different colours giving a rainbow cake is the best-kept secret in the
-game and she will find it within a week. Fien reacts to it every single time.
+game and she will find it within a week. Luna reacts to it every single time.
 
 Effects stack on top of colour and on each other: sparkle from star sugar, glow
 from honey, height from cloud cream. A tall glowing sparkling rainbow cake is
@@ -218,7 +223,7 @@ trivial — most are one tap, one animation, one sound — so the depth is cheap
 
 **Required:** tap a grey frame.
 
-**Toys:** the shop bell above the door (ding, and Fien pops in); the cat asleep
+**Toys:** the shop bell above the door (ding, and Luna pops in); the cat asleep
 on the counter (stretches, then resettles); the little radio (plays a loop,
 tap again to stop); the window, which shows the actual time of day; **her own
 drawings** pinned beside the wall of frames, which wobble and rustle when
@@ -321,11 +326,11 @@ moment in the game. `CONCEPT.md` §5 asks for a clear ending; this is it.
 |---|---|
 | **Nothing is driven by a clock** | Growth, baking and the party all advance on her actions. The word "wait" does not appear in the design. |
 | **The door always works** | Even mid-task. She can leave the kitchen with an unbaked cake; the cake waits for her. |
-| **Idle is nudged, never forced** | After ~25 s of nothing, the object she needs sparkles. After ~45 s, Fien says one short line. Then it goes quiet again for a minute. It never repeats twice in a row and never nags. |
+| **Idle is nudged, never forced** | After ~25 s of nothing, the object she needs sparkles. After ~45 s, Luna says one short line. Then it goes quiet again for a minute. It never repeats twice in a row and never nags. |
 | **Every tap does something** | If it is on screen, it responds. A dead tap reads as a broken iPad. |
 | **A wrong drag is not wrong** | It floats gently back with a soft sound. No buzzer, no red, no "nee". |
 | **Interruptions are free** | The round saves after every step. Closing the app in the middle of stirring resumes in the kitchen, mid-stir, with the same batter. |
-| **Hints shimmer, never block** | The only guidance is a slight shimmer on a relevant object, plus Fien's voice. Nothing is ever disabled. |
+| **Hints shimmer, never block** | The only guidance is a slight shimmer on a relevant object, plus Luna's voice. Nothing is ever disabled. |
 
 ## 8. What this costs to build
 
@@ -343,13 +348,13 @@ The gameplay above is mostly reuse. What it genuinely adds over `CONCEPT.md`:
 
 ### Voice lines
 
-Roughly: Fien 90 lines (greetings, per-room nudges, reactions to colours and
+Roughly: Luna 90 lines (greetings, per-room nudges, reactions to colours and
 combinations, the finale), Otto 15, each friend 6–8 (their wish, their arrival,
 matched thanks, unmatched thanks, a couple of idle noises) for about 85.
 
 At ~0.15 credits a line that is **around 30 credits for the entire game's
 dialogue**, which means writing more variants than a recorded game could afford.
-Fien should have four or five ways to say everything she says often, or she will
+Luna should have four or five ways to say everything she says often, or she will
 sound like a lift announcement by round three.
 
 Casting still needed: Otto, and enough distinct voices to cover twelve friends.
@@ -394,7 +399,6 @@ completed, because until the wall exists there is no reason for a second round.
 
 ## 10. Still open
 
-- **Fien's name.** Decide before generating a single line.
 - **Otto's voice and the four friend voices.**
 - **Music.** Six instrument pads and a party loop, from GarageBand or a CC0
   library — `CONCEPT.md` §7.4. The party is the payoff and it is currently

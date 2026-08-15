@@ -612,15 +612,16 @@ everything from it.
 ## 11. Open questions
 
 - Casting Otto the oven, and the four voices covering the twelve friends.
-- The fairy's name — **Fien** is proposed in [`GAMEPLAY.md`](GAMEPLAY.md) §1 and
-  needs settling before any line is generated, since it appears in about forty
-  of them.
 - Music and SFX source — CC0 library, paid pack, or GarageBand? The party is the
   payoff and it is currently silent.
 - The character proportion rule. (The palette is settled — see
   [`POC.md`](POC.md).)
 
-**Resolved.** Nina is the baker and has no avatar; she is the hands, the bakery
+**Resolved.** The fairy is called **Luna** — LOO-nah in every language that
+matters, no vowel that shifts across them, clearly distinct from *Nina* in
+sound, and it means moon, which hands the character a magic motif for nothing.
+
+Nina is the baker and has no avatar; she is the hands, the bakery
 carries her name, and the friends thank her by name. The fairy is a separate
 character who lives there and helps. That avoids the "this is you" reaction
 falling flat if the model does not match her self-image, and it means there is

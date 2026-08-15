@@ -3,10 +3,10 @@
   "_provider": "higgsfield",
   "language": "nl",
   "characters": {
-    "fien": {
-      "name": "Fien de fee",
+    "luna": {
+      "name": "Luna de fee",
       "role": "The fairy who lives in the bakery. Nina's friend and helper, not her avatar.",
-      "status": "voice decided, name proposed",
+      "status": "decided",
       "model": "text2speech_v2",
       "variant": "elevenlabs",
       "voice_type": "preset",
@@ -15,14 +15,14 @@
       "age": "young",
       "gender": "female",
       "line_estimate": 90,
-      "note": "Young voice, so she reads as a playmate rather than a grandmother-figure. Write her lines as someone having fun alongside Nina, not instructing her. She speaks the most by far, so write four or five variants of anything she says often. NAME NOT YET SETTLED - 'Fien' is a proposal and appears in ~40 lines, so decide before generating any of them."
+      "note": "Young voice, so she reads as a playmate rather than a grandmother-figure. Write her lines as someone having fun alongside Nina, not instructing her. She speaks the most by far, so write four or five variants of anything she says often. The name Luna was chosen to survive every language unchanged (LOO-nah) and to sound clearly distinct from Nina, since the two names sit side by side in most lines - verify both by ear on the first generated line."
     },
     "otto": {
       "name": "Otto de oven",
       "role": "The kitchen oven. Has a face, is delighted every single time.",
       "status": "uncast",
       "line_estimate": 15,
-      "note": "Must be clearly distinct from Fien so Nina can tell who is talking without looking. Low and rumbly is the obvious read."
+      "note": "Must be clearly distinct from Luna so Nina can tell who is talking without looking. Low and rumbly is the obvious read."
     },
     "friends": {
       "_comment": "The twelve friends whose parties fill the wall. They do not need twelve separate voices - four presets, pitch-shifted and assigned so that no two friends who appear together sound alike, is enough. Record the assignment here as it is decided. ~6-8 lines each: arrival, their wish, matched thanks, unmatched thanks, a couple of idle noises.",
@@ -39,7 +39,7 @@
         { "id": "roos", "name": "Roos de egel", "wish": "hartjes", "voice_slot": null },
         { "id": "tobi", "name": "Tobi de hond", "wish": "sterretjes", "voice_slot": null },
         { "id": "nel", "name": "Nel de slak", "wish": "twee kleuren door elkaar", "voice_slot": null },
-        { "id": "fien", "name": "Fien de fee", "wish": "geen - vrije keuze, de laatste taart", "voice_slot": "fien" }
+        { "id": "luna", "name": "Luna de fee", "wish": "geen - vrije keuze, de laatste taart", "voice_slot": "luna" }
       ]
     }
   }
