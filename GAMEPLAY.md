@@ -362,7 +362,7 @@ moment in the game. `CONCEPT.md` §5 asks for a clear ending; this is it.
 | **Every tap does something** | If it is on screen, it responds. A dead tap reads as a broken iPad. |
 | **A wrong drag is not wrong** | It floats gently back with a soft sound. No buzzer, no red, no "nee". |
 | **Interruptions are free** | The round saves after every step. Closing the app in the middle of stirring resumes in the kitchen, mid-stir, with the same batter. |
-| **Hints shimmer, never block** | The object she needs **glows from the moment a step begins** — "which one do I pick up" is not a question she should have to be idle long enough to ask. The 25-second shimmer sits on top of that for when she stops entirely. Nothing is ever disabled. |
+| **Hints shimmer, never block** | The object she needs **glows from the moment a step begins** — lit from within, with a few sparkles lifting off it — "which one do I pick up" is not a question she should have to be idle long enough to ask. The 25-second shimmer sits on top of that for when she stops entirely. Nothing is ever disabled. |
 
 ## 8. What this costs to build
 

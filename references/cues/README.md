@@ -43,7 +43,26 @@ costs the most: it contradicts the lighting the POC settled on. `POC.md` and
 a beam is dramatic lighting, and the render darkens the whole room to sell it.
 It would fight `LightingSettings`' approved values every frame.
 
-**The recommendation is 2 + 3**: an emissive rim on the object so the *object*
-is what is marked, plus two or three slow sparkles lifting off it so the eye
-catches it from across the room. Both are geometry, both are in style, and both
-reuse code that already exists.
+## Decided: 2 + 3
+
+**The object glows from within, and two or three sparkles lift off it.** Picked
+by the owner from these previews; built in `Engine/Halo.swift`.
+
+What the engine actually does, which differs from picture 2 in one way worth
+knowing: there is no bloom in this renderer, so the glow is
+`emissiveIntensity` on the prop's own material rather than light spilling onto
+the wall behind it. Two consequences, both good:
+
+- **The hue never changes** — only the emissive term moves, so the prop stays
+  its own colour. A cue that recoloured things would teach that colour means
+  something, and in this game colour means what the cake is going to be.
+- **No new geometry.** An outline would need an inverted hull and back-face
+  culling; this needs a material swap and the sparkle burst that already exists.
+
+The intensity is stepped into twelve levels rather than moved every frame, so a
+material is rebuilt a few times a second instead of sixty.
+
+Two props are deliberately left out of it: **Otto**, where only the first four
+surfaces light so a ten-part oven does not become a lamp, and **the doorway**,
+which has its own pulse in the same visual language and would otherwise have
+two jobs writing to one material.

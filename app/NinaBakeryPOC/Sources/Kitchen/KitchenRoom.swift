@@ -60,9 +60,11 @@ final class KitchenRoom {
     private var dough: ModelEntity?
     private var tinBase: ModelEntity?
     private var ingredientPot: ModelEntity?
-    /// The glowing ring on whatever she needs next, and what it is on.
+    /// The glow on whatever she needs next: the job driving it, the prop it is
+    /// on, and that prop's own materials so they can be put back exactly.
     private var haloJob: Int?
     private weak var haloed: Entity?
+    private var haloedMaterials: [[RealityKit.Material]] = []
 
     // Interaction.
     private var carried: Entity?
@@ -374,17 +376,28 @@ final class KitchenRoom {
         refreshHalo()
     }
 
-    /// Light up whatever she needs next, and nothing else.
-    private func refreshHalo() {
+    /// Put the currently lit prop back to its own colours.
+    ///
+    /// Called before lighting anything else, and directly by `bake()` — once
+    /// she has tapped Otto the cue has done its job, and two things writing to
+    /// the same material every frame is a fight nobody wins.
+    private func clearHalo() {
         ticker.cancel(haloJob)
         haloJob = nil
-        if let haloed { Halo.remove(from: haloed) }
+        if let haloed {
+            Halo.remove(from: haloed, restoring: haloedMaterials)
+        }
         haloed = nil
+        haloedMaterials = []
+    }
 
+    /// Light up whatever she needs next, and nothing else.
+    private func refreshHalo() {
+        clearHalo()
         guard let target = haloTarget(), target.isEnabled else { return }
         haloed = target
-        haloJob = Halo.attach(to: target, radius: haloRadius(for: target),
-                              ticker: ticker, yOffset: haloOffset(for: target))
+        haloedMaterials = Halo.materials(of: target)
+        haloJob = Halo.attach(to: target, radius: haloRadius(for: target), ticker: ticker)
     }
 
     /// The one prop the current step is about.
@@ -397,26 +410,22 @@ final class KitchenRoom {
         case .gieten: return bowl
         case .inOven: return tin?.root
         case .bakken: return oven?.root
-        case .klaar: return doorway?.root
+        // The doorway has its own pulse — `setDoorwayInviting` — in the same
+        // visual language. Lighting it twice would just be two jobs writing to
+        // one material.
+        case .klaar: return nil
         }
     }
 
+    /// Roughly how big the prop is — it sets how high and wide the sparkles
+    /// lift off it, and nothing else.
     private func haloRadius(for entity: Entity) -> Float {
-        if entity === rollingPin { return 0.030 }
-        if entity === bowl { return 0.038 }
-        if entity === tin?.root { return 0.028 }
-        if entity === oven?.root { return 0.070 }
-        if entity === doorway?.root { return 0.045 }
-        return 0.018
-    }
-
-    /// Where each prop meets the thing it is standing on, in its own space.
-    private func haloOffset(for entity: Entity) -> Float {
-        // The pin's origin is on its axis, and a token is an icosphere centred
-        // on its own middle. Everything else is built standing on its origin.
-        if entity === rollingPin { return -0.008 }
-        if tokens.contains(where: { $0.entity === entity }) { return -0.0095 }
-        return 0.0008
+        if entity === rollingPin { return 0.026 }
+        if entity === bowl { return 0.034 }
+        if entity === tin?.root { return 0.024 }
+        if entity === oven?.root { return 0.080 }
+        if entity === doorway?.root { return 0.055 }
+        return 0.014
     }
 
     // MARK: - Step presentation
@@ -899,6 +908,7 @@ final class KitchenRoom {
     }
 
     private func bake(oven: KitchenProps.Oven) {
+        clearHalo()
         let spec = state.bowlSpec
         let dome = oven.dome
         let door = oven.door
@@ -1183,7 +1193,8 @@ final class KitchenRoom {
         state.step = .vullen
         save()
 
-        Halo.remove(from: dough)
+        // The glow was on the pin, not on the dough — `refreshHalo` moves it on
+        // when the step changes, and there is nothing on the dough to undo.
         ContactShadows.removeFrom(dough)
         sound.play(.sparkle, volume: 0.8)
         baker?.set(.cheering)
@@ -1379,9 +1390,7 @@ final class KitchenRoom {
         doorGlowJob = nil
         ticker.cancel(idleJob)
         idleJob = nil
-        ticker.cancel(haloJob)
-        haloJob = nil
-        haloed = nil
+        clearHalo()
         baker?.stop()
         baker = nil
         stopHint()
