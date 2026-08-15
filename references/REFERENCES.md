@@ -3,13 +3,15 @@
 Style references for *Nina's Toverbakkerij*. See
 [../CONCEPT.md](../CONCEPT.md) section 9 for how this drives the rendering.
 
-> **Note on the images.** The session that produced this briefing could not
-> download image files — the sandbox network policy blocks every image host and
-> CDN (403 at the egress proxy). So there are no screenshots committed here.
-> Instead this file carries the two things that are actually reusable: a written
-> style specification precise enough to model and generate against, and fully
-> reproducible generation recipes for the reference plates. Save the plates into
-> this folder locally if you want them at hand.
+> **Screenshots** are in [`moodboard/`](moodboard/), captured via Firecrawl —
+> see that folder's README for provenance and the capture method. They are page
+> screenshots with browser chrome, not clean plates, because direct image
+> downloads are blocked by the sandbox network policy.
+>
+> **The most useful thing in there is not a screenshot**: Kenney's Food Kit and
+> Furniture Kit are **CC0 low-poly 3D asset packs**, 340 models between them, in
+> exactly this style and free to use. Read
+> [`moodboard/README.md`](moodboard/README.md) before modelling anything.
 
 ---
 

@@ -158,17 +158,48 @@ free. There is no reason to settle for a voice that is merely acceptable.
 **Audition shortlist** for the fairy, generated with the line
 *"Hallo Nina! Kom je mij helpen met taart bakken?"*:
 
-| Voice | Age | `voice_id` |
-|---|---|---|
-| Faye | old | `d198dc0b-c4e5-5198-aa1d-ecf5ca0927c4` |
-| Willow | middle-aged | `f878bf3f-115b-5842-8934-c789c7947733` |
-| Daisy | young | `032386ec-491b-5bdc-81ac-49e9a6a2c89d` |
-| Evie | young | `7a6845a2-5865-5669-a0ca-8fc8d8e96528` |
-| Gracie | young | `09878754-f20b-5330-9790-58a8027ab5b2` |
+| Voice | Age | `voice_id` | Audition |
+|---|---|---|---|
+| Faye | old | `d198dc0b-c4e5-5198-aa1d-ecf5ca0927c4` | [listen](https://d8j0ntlcm91z4.cloudfront.net/user_39OtbtGoYAVkmrcBwNT0Vv0BbHJ/hf_20260815_070820_30813a6f-3050-412f-8b42-9c3435afae7b.mp3) |
+| Willow | middle-aged | `f878bf3f-115b-5842-8934-c789c7947733` | [listen](https://d8j0ntlcm91z4.cloudfront.net/user_39OtbtGoYAVkmrcBwNT0Vv0BbHJ/hf_20260815_070820_6fe61e50-a43a-42cf-a442-e381467025aa.mp3) |
+| Daisy | young | `032386ec-491b-5bdc-81ac-49e9a6a2c89d` | [listen](https://d8j0ntlcm91z4.cloudfront.net/user_39OtbtGoYAVkmrcBwNT0Vv0BbHJ/hf_20260815_070820_4cf05532-23b6-404b-a216-9681ba6303e4.mp3) |
+| Evie | young | `7a6845a2-5865-5669-a0ca-8fc8d8e96528` | [listen](https://d8j0ntlcm91z4.cloudfront.net/user_39OtbtGoYAVkmrcBwNT0Vv0BbHJ/hf_20260815_070820_721bb993-b1b7-4746-a691-d5ae3e00d225.mp3) |
+| Gracie | young | `09878754-f20b-5330-9790-58a8027ab5b2` | [listen](https://d8j0ntlcm91z4.cloudfront.net/user_39OtbtGoYAVkmrcBwNT0Vv0BbHJ/hf_20260815_070820_00ad6499-b5a2-4038-ab6a-277b1a4e8197.mp3) |
+
+Those audition URLs are Higgsfield CDN links and may expire; the `voice_id`
+column is the durable record.
 
 All five are `voice_type: preset` and support the `elevenlabs`, `minimax`, and
 `seed_speech` engines, so a chosen voice can be re-run through a different
 engine if the Dutch accent disappoints.
+
+### 7.3 What the voice IDs are for
+
+A `voice_id` is a handle into Higgsfield's voice catalogue. It selects *who
+speaks* when generating a line, paired with `voice_type` (`preset` for a
+built-in voice, `element` for a custom one).
+
+The important thing is **when** it gets used: at *asset production* time, never
+at runtime.
+
+1. Pick a voice by ear from the audition.
+2. Generate every line in the script with that `voice_id`.
+3. Download the resulting MP3s and add them to the Xcode project as bundled
+   resources.
+4. The app plays local files with `AVAudioPlayer`.
+
+**The shipped app never calls the API.** No network, no API key on the iPad, no
+per-launch cost, and it works on a plane. Text-to-speech is a build step, like
+compiling — not a dependency.
+
+That is also why the IDs are worth writing down. Six months from now, adding a
+new room means generating new lines with the *same* `voice_id` so they match the
+ones already in the game. Lose the ID and the fairy changes voice mid-project.
+
+Keep a `voices.json` in the repo mapping character → engine + `voice_id`, and a
+plain-text script file of every line. Together those regenerate the entire
+voice-over from scratch at any time, which is a much better guarantee than a
+folder of MP3s nobody knows how to reproduce.
 
 Because generation is cheap and repeatable, dialogue stops being a fixed cost.
 New rooms can have new lines without a recording session, and lines can be
@@ -268,7 +299,52 @@ proposition from generic 3D.
 There is a second payoff: this is the visual language of the games she will
 grow into. It will not look like a toddler app for long.
 
-### 9.3 RealityKit specifics
+### 9.3 Why not Unity or Godot
+
+Both are real options and the question deserves a straight answer rather than a
+reflexive "stay native".
+
+| | **RealityKit** | **Unity** | **Godot** |
+|---|---|---|---|
+| Language | Swift | C# | GDScript / C# |
+| It is a… | 3D framework | full game engine | full game engine |
+| Visual editor | Reality Composer Pro | mature | good |
+| Asset ecosystem | none | **huge** (Asset Store) | small |
+| Animation tooling | build it yourself | state machines, timeline | AnimationPlayer, tree |
+| Physics | basic | mature | mature |
+| iOS export | it *is* iOS | solid, well-trodden | works, fiddlier |
+| App size added | ~0 | tens of MB | ~15–30 MB |
+| Cost | free | free under $200k revenue | free, MIT |
+| SwiftUI interop | native | awkward | awkward |
+
+**Unity's real advantage is not code, it is the Asset Store.** Stylized
+low-poly packs (the Synty POLYGON series and similar) would supply hundreds of
+matching props for the price of a takeaway. Since art is this project's genuine
+bottleneck, that is a serious argument — and the only one that would justify
+switching.
+
+It is weaker than it first appears, though, because **Kenney's CC0 kits are
+engine-agnostic** (see [section 10](#10-technical-notes)). The asset advantage
+turns out not to be Unity-exclusive, which removes most of its edge here.
+
+**Godot** is the weakest fit. Its advantages over Unity are licensing and
+openness — but Unity is already free at this scale, so the comparison that
+matters is against RealityKit, and there Godot adds an export toolchain and a
+second language while giving up native integration. It would be the right call
+for a cross-platform indie game. This is not that.
+
+**Recommendation: stay with RealityKit.** The engines' strengths are physics,
+level design, animation state machines, and cross-platform export. This game
+needs none of them: a fixed camera, roughly ten props per room, rigid transform
+animation, no physics, one target device. What it *does* need is tight SwiftUI
+integration for the flat UI, and that is precisely where an embedded engine is
+worst.
+
+**Switch to Unity if** either of these becomes true: the art bottleneck starts
+killing the project despite the CC0 kits, or the game should eventually run
+somewhere other than an iPad. Neither is true today.
+
+### 9.4 RealityKit specifics
 
 - **Scene.** One `RealityView` per room. Entities in a parent/child hierarchy.
   `ModelEntity(mesh:materials:)` for everything.
@@ -291,7 +367,7 @@ grow into. It will not look like a toddler app for long.
   place to lay out a room and author materials once there is more than a
   handful of entities.
 
-### 9.4 The honest cost of going 3D
+### 9.5 The honest cost of going 3D
 
 Two things genuinely get harder than they were in 2D, and they are worth
 knowing before starting:
@@ -308,7 +384,7 @@ knowing before starting:
 Expect the first room to take meaningfully longer than its 2D equivalent. Rooms
 two onward should not, because both problems are solved once and reused.
 
-### 9.5 How things move: rigid transform rigs
+### 9.6 How things move: rigid transform rigs
 
 The animation approach carries over from the 2D plan almost unchanged, which is
 convenient — it was always a transform-hierarchy technique.
@@ -347,14 +423,21 @@ shippable assets — they are **concept references** that guide modelling. Nothi
 generated goes into the app directly. See
 [references/REFERENCES.md](references/REFERENCES.md).
 
-Three routes to actual geometry, in order of how much they should be leaned on:
+Four routes to actual geometry, in order of how much they should be leaned on:
 
-1. **Primitives in code.** Boxes and cylinders with flat materials. Free,
-   instant, version-controlled as source, and genuinely sufficient for the
-   Roblox look. This should be the default for characters and most props.
-2. **Blender → USDZ** for the few props with real character — the oven, the
-   cottage shell, the cake. Worth the detour only where a box will not do.
-3. **`generate_3d`** (image → GLB) via the connector. Viable for *static props*,
+1. **Kenney's CC0 kits.** The [Food Kit](https://kenney.nl/assets/food-kit)
+   (200 models) and [Furniture Kit](https://kenney.nl/assets/furniture-kit)
+   (140 models) are public-domain low-poly models in exactly this style,
+   covering most of what a bakery and a party room need — and being one
+   artist's work, they are already mutually consistent. **Start here.** This is
+   the single biggest de-risking available to the project.
+2. **Primitives in code.** Boxes and cylinders with flat materials. Free,
+   instant, version-controlled as source. The right choice for characters,
+   which the kits do not cover.
+3. **Blender → USDZ** for the few props with real character that no kit
+   supplies — the magic oven, the cottage shell. Worth the detour only where a
+   box will not do.
+4. **`generate_3d`** (image → GLB) via the connector. Viable for *static props*,
    since it produces an unrigged mesh. Not viable for characters, which need a
    joint hierarchy. Meshes will likely need decimating to fit the low-poly look.
 
