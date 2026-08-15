@@ -9,9 +9,14 @@ Entry point for this repo. Read this first, then
 on **iPad**. Native **SwiftUI + RealityKit**, in a **faceted pastel low-poly**
 3D look.
 
-The loop: grow magic ingredients in the garden → bake a cake whose colour comes
-from what she chose → decorate it freely → throw a dance party where everyone
-eats it and thanks her by name.
+The loop: a friend turns up with a wish → grow magic ingredients in the garden →
+bake a cake whose colour comes from what she chose → decorate it freely → throw
+a dance party where everyone eats it and thanks her by name → hang the photo in
+a frame on the bakery wall.
+
+**The wall of twelve frames is the game.** Fill them all and the bakery becomes
+a real toverbakkerij. That is the only progression — no scores, no stars, no
+timers, nothing counted anywhere. A round is ~11–12 minutes.
 
 **Status: design only.** No application code exists yet.
 
@@ -37,6 +42,7 @@ a session there can drive Blender directly.
 | Path | What |
 |---|---|
 | [`POC.md`](POC.md) | **The current task.** Step 0 proof of concept, with the Blender brief and palette. |
+| [`GAMEPLAY.md`](GAMEPLAY.md) | **Storyline and gameplay in detail.** The wall, the twelve friends and their wishes, the cake rules, what each room requires versus what is optional, the timing budget. |
 | [`app/`](app/) | **The Stage B POC app.** RealityKit, procedural faceted room, lighting debug panel. Written but never compiled — see its README. |
 | [`app/LIGHTMAPS.md`](app/LIGHTMAPS.md) | How to bake AO in Reality Composer Pro 3, and how to A/B it against no-AO. |
 | [`CONCEPT.md`](CONCEPT.md) | The design. Loop, age rules, audio, rendering, build order. |
@@ -95,6 +101,14 @@ These were argued through and settled. Reopen only if the user asks.
   two legs pivoting at the hip. Squash-and-stretch on the root does most of the
   animation. Arms never articulate — realism is not the style. `CONCEPT.md` §9.7.
 - **Dutch only.**
+- **Nina is the baker and has no avatar.** She is the hands. The fairy is a
+  separate character who lives in the bakery and helps.
+- **The spine is the wall of twelve frames**, which doubles as a textless level
+  select. Not chapters, not endless orders. `GAMEPLAY.md` §2.
+- **Nothing unlocks.** Every seed, sticker and friend is available from the
+  first round. Variety comes from her choices and from who is at the door.
+- **Every wish can be ignored** with no penalty and no difference in the
+  celebration. It answers "what shall I make today?", it is not a test.
 - **Use Kenney's CC0 kits.** Not a suggestion — the
   [Food Kit](https://kenney.nl/assets/food-kit) and
   [Furniture Kit](https://kenney.nl/assets/furniture-kit) are the default source
@@ -141,5 +155,5 @@ Every screen obeys these. Full table in `CONCEPT.md` §5.
 - **Firecrawl cannot download binaries** — it retrieves web content, PDFs, and
   documents, and can *find* image URLs, but refuses images and archives. The
   screenshot workaround is in `references/FETCHING-ASSETS.md`.
-- **Work on branch `claude/kids-game-ipad-idea-o42q3m`.** Commit and push there;
+- **Commit and push to the branch this session was given**, whatever it is —
   the container is ephemeral, so unpushed work is lost.

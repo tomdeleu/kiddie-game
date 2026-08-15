@@ -160,6 +160,44 @@ come from the same recipe:
   prompt's did; that attempt pulled the fairy character in and returned
   cat-eared hybrids. Its exact prompt is on its job record.
 
+### Gameplay plates 6–11 — composition only, WRONG STYLE
+
+Six scenes staging what [`GAMEPLAY.md`](../GAMEPLAY.md) added. They were
+generated against the **retired clay reference** in a parallel session, before
+the switch to faceted pastel low-poly landed. So:
+
+**Read them for staging, never for style.** What goes where in the frame, how
+the wall of frames reads, how a wish card scans — all valid. Soft edges, pooled
+AO, terracotta palette — all wrong now. Regenerating them against the current
+locked references is a later job, and cheap.
+
+| # | Subject | File | Aspect | Seed | Job ID |
+|---|---|---|---|---|---|
+| 6 | **The wall of twelve frames** — hub and level select | `plates/06-wall-of-frames.png` | 1:1 | `71143` | `b63007ac-96ff-46c0-9584-91ea8e2421ea` |
+| 7 | Decorating room box — turntable, trays, piping bag | `plates/07-decorating-roombox.png` | 1:1 | `863778` | `fbb49dea-bbe7-491b-99f1-acf77ed12df7` |
+| 8 | The friends — cast line-up | `plates/08-twelve-friends.png` | 1:1 | `864078` | `878dabff-812b-415a-90de-c18c05762961` |
+| 9 | **Cake variants** — the colour system made visible | `plates/09-cake-variants.png` | 1:1 | `119583` | `29dc8d73-b2f8-407b-99b5-af5f9fefd841` |
+| 10 | The wish at the door — friend holding a wish card | `plates/10-wish-at-the-door.png` | 1:1 | `871420` | `571d95c4-a277-40c9-aff7-7c8ba6e4dc9c` |
+| 11 | The finale — every friend, wall full and glowing | `plates/11-finale.png` | 1:1 | `645041` | `32a2d5e9-8072-47aa-81a9-62b4a43c414b` |
+
+Four findings that survive the style change, because they are about composition
+and about flux's behaviour rather than about surface:
+
+- **Never ask for twelve characters in one image.** Plate 8 was asked for twelve
+  in two rows of six and delivered eight in two rows of four. Cast sheets need
+  splitting into two plates of six, and the next pass should name a distinct
+  palette colour per character — bear, cat and dog all came back the same brown.
+- **A literal grid comes back as a scatter, and the scatter is better.** Plate 6
+  was asked for a neat 3×4 grid and produced an irregular cluster of frames. It
+  reads warmer and more hand-made, and still reads instantly as "some filled,
+  some empty". Worth adopting in the design rather than correcting.
+- **The wish card works.** Plate 10's card — one golden honey drop, no text — is
+  legible at thumbnail size. That is the no-text wish mechanic validated, and it
+  was the part of `GAMEPLAY.md` §4 most likely to have failed.
+- **The cake should out-saturate its room.** Plate 9's cakes sit well outside the
+  room palette on purpose. That rule carries over to the pastel direction intact:
+  *the room is quiet, the cake is not.*
+
 ### The locked style references — USE THESE
 
 Pass the matching reference as an `image_references` input on **every**

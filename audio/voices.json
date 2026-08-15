@@ -1,10 +1,11 @@
 {
-  "_comment": "Casting for Nina's Toverbakkerij. Generated via the Higgsfield connector at asset-production time; the shipped app plays bundled MP3s and never calls the API. Always regenerate a character's lines with its recorded voice_id so the voice stays consistent across rooms added later.",
+  "_comment": "Casting for Nina's Toverbakkerij. Generated via the Higgsfield connector at asset-production time; the shipped app plays bundled MP3s and never calls the API. Always regenerate a character's lines with its recorded voice_id so the voice stays consistent across rooms added later. Cast list follows GAMEPLAY.md.",
   "_provider": "higgsfield",
   "language": "nl",
   "characters": {
-    "fairy": {
-      "name": "De toverfee",
+    "luna": {
+      "name": "Luna de fee",
+      "role": "The fairy who lives in the bakery. Nina's friend and helper, not her avatar.",
       "status": "decided",
       "model": "text2speech_v2",
       "variant": "elevenlabs",
@@ -13,15 +14,33 @@
       "preset_name": "Gracie",
       "age": "young",
       "gender": "female",
-      "note": "Young voice, so she reads as a playmate rather than a grandmother-figure. Write her lines as someone having fun alongside Nina, not instructing her."
+      "line_estimate": 90,
+      "note": "Young voice, so she reads as a playmate rather than a grandmother-figure. Write her lines as someone having fun alongside Nina, not instructing her. She speaks the most by far, so write four or five variants of anything she says often. The name Luna was chosen to survive every language unchanged (LOO-nah) and to sound clearly distinct from Nina, since the two names sit side by side in most lines - verify both by ear on the first generated line."
     },
-    "oven": {
+    "otto": {
+      "name": "Otto de oven",
+      "role": "The kitchen oven. Has a face, is delighted every single time.",
       "status": "uncast",
-      "note": "Must be clearly distinct from the fairy so Nina can tell who is talking without looking."
+      "line_estimate": 15,
+      "note": "Must be clearly distinct from Luna so Nina can tell who is talking without looking. Low and rumbly is the obvious read."
     },
-    "party_guests": {
+    "friends": {
+      "_comment": "The twelve friends whose parties fill the wall. They do not need twelve separate voices - four presets, pitch-shifted and assigned so that no two friends who appear together sound alike, is enough. Record the assignment here as it is decided. ~6-8 lines each: arrival, their wish, matched thanks, unmatched thanks, a couple of idle noises.",
       "status": "uncast",
-      "note": "Several distinct voices. Silly beats good at this age."
+      "cast": [
+        { "id": "pip", "name": "Pip de muis", "wish": "heel veel sprinkles", "voice_slot": null },
+        { "id": "bella", "name": "Bella de vlinder", "wish": "roze", "voice_slot": null },
+        { "id": "bas", "name": "Bas de beer", "wish": "geel, als honing", "voice_slot": null },
+        { "id": "kiki", "name": "Kiki de kat", "wish": "glitter", "voice_slot": null },
+        { "id": "bram", "name": "Bram de kikker", "wish": "groen", "voice_slot": null },
+        { "id": "bo", "name": "Bo de vogel", "wish": "blauw", "voice_slot": null },
+        { "id": "wolkje", "name": "Wolkje het schaap", "wish": "hoog en wolkig", "voice_slot": null },
+        { "id": "mo", "name": "Mo de mol", "wish": "kaarsjes", "voice_slot": null },
+        { "id": "roos", "name": "Roos de egel", "wish": "hartjes", "voice_slot": null },
+        { "id": "tobi", "name": "Tobi de hond", "wish": "sterretjes", "voice_slot": null },
+        { "id": "nel", "name": "Nel de slak", "wish": "twee kleuren door elkaar", "voice_slot": null },
+        { "id": "luna", "name": "Luna de fee", "wish": "geen - vrije keuze, de laatste taart", "voice_slot": "luna" }
+      ]
     }
   }
 }
