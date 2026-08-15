@@ -75,7 +75,22 @@ final class Ticker {
         }
         ticking = false
 
-        entries = survivors + pending.filter { !cancelled.contains($0.id) }
+        // **`survivors` is filtered too, and that is load-bearing.**
+        //
+        // A job cancelled from inside this very loop — which is the normal case,
+        // because a finished animation's `done` closure is what cancels things —
+        // is only skipped by the `cancelled` check above if it had not already
+        // run this frame. Jobs run in creation order, so a long-lived job like a
+        // halo is always earlier in the array than the short move that ends it:
+        // the halo ran, returned true, and landed in `survivors` a few
+        // microseconds before `clearHalo` asked for it to go away.
+        //
+        // Without this filter that cancellation is simply lost — `cancelled` is
+        // emptied at the end of the frame and the job runs forever. It is how
+        // the halo stayed lit on ingredients that were already in the bowl, and
+        // it would have leaked one more job per ingredient, per round, for as
+        // long as the app was open.
+        entries = (survivors + pending).filter { !cancelled.contains($0.id) }
         pending.removeAll()
         cancelled.removeAll()
     }
@@ -130,6 +145,52 @@ final class Ticker {
         }
     }
 
+    // MARK: - Rest poses
+
+    /// Where a prop goes back to when a wobble finishes.
+    ///
+    /// It exists because every reaction in the game is "nudge this prop away
+    /// from where it is and let it spring back", and *where it is* is the wrong
+    /// reference point the moment she taps twice in a row. Captured once, held
+    /// until the prop has settled, then forgotten — so a prop the game itself
+    /// rescales later (a cake shrinking onto the plank) picks up its new rest
+    /// pose the next time it is touched.
+    private final class Pose {
+        weak var entity: Entity?
+        let scale: SIMD3<Float>
+        let orientation: simd_quatf
+        var squashJob: Int?
+        var wiggleJob: Int?
+        init(_ entity: Entity) {
+            self.entity = entity
+            scale = entity.scale
+            orientation = entity.orientation
+        }
+    }
+
+    private var poses: [ObjectIdentifier: Pose] = [:]
+
+    private func pose(for entity: Entity) -> Pose {
+        let key = ObjectIdentifier(entity)
+        if let existing = poses[key], existing.entity === entity { return existing }
+        // A stale key means the old entity was deallocated and a new one landed
+        // on its address; either way the entry is worthless. Sweep the rest of
+        // the table while we are here, since it is only ever a handful of props.
+        poses = poses.filter { $0.value.entity != nil }
+        let fresh = Pose(entity)
+        poses[key] = fresh
+        return fresh
+    }
+
+    /// A wobble ended. Drop the pose once nothing is still using it, so the
+    /// next touch re-reads the prop rather than trusting a stale snapshot.
+    private func finish(_ pose: Pose, scale: Bool) {
+        if scale { pose.squashJob = nil } else { pose.wiggleJob = nil }
+        guard pose.squashJob == nil, pose.wiggleJob == nil,
+              let entity = pose.entity else { return }
+        poses.removeValue(forKey: ObjectIdentifier(entity))
+    }
+
     // MARK: - Ready-made moves
 
     /// Straight move with a little arc, so a token dropped in the bowl travels
@@ -150,28 +211,53 @@ final class Ticker {
 
     /// The workhorse reaction: compress, overshoot, settle. One non-uniform
     /// scale on one entity — `CONCEPT.md` §9.7's whole animation budget.
+    ///
+    /// **Re-tapping does not compound.** It used to capture `entity.scale` at
+    /// the moment of the call, so tapping a prop again while it was still
+    /// wobbling took the *deformed* scale as the new rest pose and multiplied
+    /// the next wobble on top of it. Ten taps on the cake and it was a
+    /// pancake, which is what `Pose` exists to stop: the rest pose is captured
+    /// once, reused by every wobble until the prop settles, and the running
+    /// job is cancelled rather than stacked.
     @discardableResult
     func squash(_ entity: Entity, amount: Float = 0.22, duration: Float = 0.45) -> Int {
-        let base = entity.scale
-        return tween(duration, ease: { $0 }, step: { [weak entity] t in
+        let pose = pose(for: entity)
+        cancel(pose.squashJob)
+        let base = pose.scale
+        let job = tween(duration, ease: { $0 }, step: { [weak entity] t in
             guard let entity else { return }
             // Damped wobble: down hard, up, settle.
             let wobble = sin(t * .pi * 2.4) * (1 - t) * amount
             entity.scale = SIMD3<Float>(base.x * (1 - wobble * 0.6),
                                         base.y * (1 + wobble),
                                         base.z * (1 - wobble * 0.6))
-        }, done: { [weak entity] in entity?.scale = base })
+        }, done: { [weak self, weak entity] in
+            entity?.scale = base
+            self?.finish(pose, scale: true)
+        })
+        pose.squashJob = job
+        return job
     }
 
     /// A quick side-to-side waggle. Every toy in the room uses it.
+    ///
+    /// Same anti-compounding rule as `squash`: repeated taps rock the prop from
+    /// its rest orientation every time rather than winding it further round.
     @discardableResult
     func wiggle(_ entity: Entity, angle: Float = 0.16, duration: Float = 0.5) -> Int {
-        let base = entity.orientation
-        return tween(duration, ease: { $0 }, step: { [weak entity] t in
+        let pose = pose(for: entity)
+        cancel(pose.wiggleJob)
+        let base = pose.orientation
+        let job = tween(duration, ease: { $0 }, step: { [weak entity] t in
             guard let entity else { return }
             let a = sin(t * .pi * 3) * (1 - t) * angle
             entity.orientation = base * simd_quatf(angle: a, axis: SIMD3<Float>(0, 0, 1))
-        }, done: { [weak entity] in entity?.orientation = base })
+        }, done: { [weak self, weak entity] in
+            entity?.orientation = base
+            self?.finish(pose, scale: false)
+        })
+        pose.wiggleJob = job
+        return job
     }
 
     /// A slow breathing pulse — the 25-second hint from `GAMEPLAY.md` §7.

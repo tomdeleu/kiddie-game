@@ -5,8 +5,17 @@ import simd
 ///
 /// **Not a particle system.** `ParticleEmitterComponent` would do this, but its
 /// output is soft round billboards — which is the one thing this art direction
-/// does not have. Twelve 20-face icospheres thrown by the same clock as
+/// does not have. Twelve flat-shaded stars thrown by the same clock as
 /// everything else stay inside the style, and cost nothing at this scale.
+///
+/// **They are stars, and they are yellow.** They used to be 20-face icospheres
+/// in `creamLight`, which at sparkle size is a grey dot: a cream ball a couple
+/// of millimetres across, unlit, against a room that is mostly cream, reads as
+/// dust. A star has a silhouette that survives being three pixels wide, and
+/// warm yellow is the one hue in the palette that nothing in the room is
+/// painted — so a sparkle is never mistaken for a crumb of the thing it came
+/// off. Callers that pass a colour still get it: an ingredient dropping into
+/// the bowl throws its own colour, which is what says *that* one went in.
 ///
 /// This is the game's whole reward vocabulary. `CONCEPT.md` §5: rewards are
 /// animation and sound, because points are meaningless to a pre-reader.
@@ -17,13 +26,18 @@ enum Sparkles {
     static func burst(at position: SIMD3<Float>,
                       in parent: Entity,
                       ticker: Ticker,
-                      colour: UIColorLike = Palette.creamLight,
+                      colour: UIColorLike = Palette.butterYellow,
                       count: Int = 12,
                       size: Float = 0.0026,
                       speed: Float = 0.09,
                       gravity: Float = 0.18,
                       life: Float = 0.75) {
-        let geometry = FacetedMesh.icosphere(radius: size, subdivisions: 0)
+        // A five-point star, thin enough to catch the light edge-on as it
+        // tumbles. `size` is its outer radius, so every existing call site
+        // keeps the scale it was tuned to.
+        let geometry = FacetedMesh.star(points: 5, outerRadius: size * 1.6,
+                                        innerRadius: size * 0.62,
+                                        thickness: size * 0.5)
         let mesh = FacetedMesh.flatShaded(positions: geometry.positions,
                                           indices: geometry.indices)
         var material = UnlitMaterial(color: colour)
@@ -72,7 +86,10 @@ enum Sparkles {
         }
     }
 
-    /// Slower, bigger, hangs in the air. Flour, steam, the poof from a sack.
+    /// Slower, bigger, hangs in the air. Flour off a sack, steam off a chimney.
+    ///
+    /// Cream rather than yellow, because this one is not a reward — it is the
+    /// stuff itself, and flour is the colour of flour.
     static func puff(at position: SIMD3<Float>,
                      in parent: Entity,
                      ticker: Ticker,

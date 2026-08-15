@@ -54,31 +54,54 @@ struct LoadingScreen: View {
     @State private var sparkles: [Sparkle] = []
 
     var body: some View {
-        ZStack {
-            // Behind the plate, and the same colour as the launch screen, so
-            // the hand-off from the static launch image is one continuous field
-            // of mint rather than a flash.
-            Color("LaunchBackground")
+        // **`GeometryReader` + explicit frame + `clipped()` is the whole cover
+        // recipe, and all three parts are load-bearing.** `scaledToFill()` on
+        // its own is *not* CSS `object-fit: cover`: it scales the image to fill
+        // the proposal and then reports the *overflowed* size as its own layout
+        // size, so the `ZStack` grows to the image instead of the image being
+        // cropped to the screen. The plate then came out too big — and
+        // off-centre with it, because the `ZStack` it sits in over in
+        // `ContentView` is `alignment: .topTrailing` for the developer corner's
+        // sake, so an oversized child gets pinned to a corner rather than
+        // centred. Measuring the screen and handing that size to the image pins
+        // it; the clip throws the overflow away; and `GeometryReader` is greedy,
+        // so this fills the screen regardless of what alignment it is placed in.
+        GeometryReader { geometry in
+            ZStack {
+                // Behind the plate, and the same colour as the launch screen,
+                // so the hand-off from the static launch image is one
+                // continuous field of mint rather than a flash.
+                Color("LaunchBackground")
 
-            Image("LoadingScreen")
-                .resizable()
-                .scaledToFill()
-                .scaleEffect(scale)
+                Image("LoadingScreen")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: geometry.size.width, height: geometry.size.height)
+                    // After the frame, never before: `scaleEffect` is a drawing
+                    // transform that does not touch layout, so the breath
+                    // enlarges the picture without unpinning it. The outer clip
+                    // catches what it pushes over the edge.
+                    .scaleEffect(scale)
 
-            ForEach(sparkles) { sparkle in
-                SparkleBurst(colour: sparkle.colour)
-                    .position(sparkle.at)
-                    .allowsHitTesting(false)
+                ForEach(sparkles) { sparkle in
+                    SparkleBurst(colour: sparkle.colour)
+                        .position(sparkle.at)
+                        .allowsHitTesting(false)
+                }
             }
+            .frame(width: geometry.size.width, height: geometry.size.height)
+            .clipped()
+            .contentShape(Rectangle())
+            .gesture(
+                // `DragGesture(minimumDistance: 0)` rather than `onTapGesture`,
+                // because only this one reports *where* she touched. Attached
+                // inside the reader so its coordinates and the sparkles'
+                // `position` share one space.
+                DragGesture(minimumDistance: 0)
+                    .onEnded { value in touched(at: value.location) }
+            )
         }
         .ignoresSafeArea()
-        .contentShape(Rectangle())
-        .gesture(
-            // `DragGesture(minimumDistance: 0)` rather than `onTapGesture`,
-            // because only this one reports *where* she touched.
-            DragGesture(minimumDistance: 0)
-                .onEnded { value in touched(at: value.location) }
-        )
         .onAppear {
             // A slow breath. The plate is a still image, and a still image with
             // nothing moving on it looks like an app that has hung.

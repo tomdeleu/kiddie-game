@@ -24,6 +24,10 @@ enum Palette {
     /// Reference-plate backdrop only. Never on an in-game surface.
     static let backdropGrey  = hex(0xCFCECF)
 
+    /// Not a palette colour — the end point `Halo` mixes a prop's own tint
+    /// towards while it breathes. Nothing is ever painted this.
+    static let white         = hex(0xFFFFFF)
+
     // MARK: - Added for the kitchen
 
     /// **Two colours the locked thirteen do not contain.**
@@ -41,13 +45,25 @@ enum Palette {
     static let berryBlue     = hex(0xC2D2E8)
     static let berryBlueDeep = hex(0x9BB2D2)
 
-    /// A third addition: the inside of Otto's mouth. The locked thirteen
-    /// bottom out at `woodBrown`, which under the room's even lighting reads
-    /// as a wooden surface, not a cavity — and with the oven door standing
-    /// open all round, the mouth has to read as depth ("needs depth and thus
-    /// more shadow", owner's note on the 2026-08-15 build). The no-AO rule
-    /// bans shadow pooled onto *surfaces*; a mouth interior is the one place
-    /// where dark is the subject. Same hue as `woodBrown`, taken darker.
+    /// **A third derived colour**, for the same reason and by the same method.
+    ///
+    /// `references/ingredients/honing.png` puts a pool of honey inside a cream
+    /// pot, and `butterYellow` beside `creamLight` is not enough separation to
+    /// read as a liquid — the pot swallows it. This is `butterYellow` carried
+    /// two steps towards `sandyWood`: the same hue family and the same
+    /// desaturation as the locked thirteen, one value darker than any of them.
+    /// It appears on exactly one surface in the game, the honey in the pot.
+    static let honeyAmber    = hex(0xD2A868)
+
+    /// **A fourth**, and the only dark one: the inside of Otto's mouth.
+    ///
+    /// The locked thirteen bottom out at `woodBrown`, which under the room's
+    /// even lighting reads as a wooden surface, not a cavity — and with the
+    /// oven door standing open all round, the mouth has to read as depth
+    /// ("needs depth and thus more shadow", owner's note on the 2026-08-15
+    /// build). The no-AO rule bans shadow pooled onto *surfaces*; a mouth
+    /// interior is the one place where dark is the subject. Same hue as
+    /// `woodBrown`, taken darker. One surface, the oven's mouth plug.
     static let ovenInside    = hex(0x554C3F)
 
     /// Blend two palette colours. Used for one thing: batter coming up to
@@ -140,6 +156,23 @@ extension Palette {
         m.specular = .init(floatLiteral: 0.1)
         m.emissiveColor = .init(color: colour)
         m.emissiveIntensity = intensity
+        return m
+    }
+
+    /// Water, and only water.
+    ///
+    /// `references/REFERENCES.md` asks for no transparency anywhere, and this
+    /// is the one surface that overrules it: an opaque pastel blue prism is
+    /// what the tap used to be, and it read as a painted stick. Everything else
+    /// about it stays on style — it is still lit, still faceted, still matte.
+    static func waterMaterial(_ colour: UIColorLike,
+                              opacity: Float = 0.82) -> RealityKit.Material {
+        var m = PhysicallyBasedMaterial()
+        m.baseColor = .init(tint: colour)
+        m.roughness = .init(floatLiteral: 0.55)
+        m.metallic = .init(floatLiteral: 0.0)
+        m.specular = .init(floatLiteral: 0.25)
+        m.blending = .transparent(opacity: .init(floatLiteral: opacity))
         return m
     }
 }

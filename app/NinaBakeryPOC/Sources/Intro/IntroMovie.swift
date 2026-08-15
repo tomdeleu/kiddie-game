@@ -190,7 +190,7 @@ final class MoviePlayerHostView: NSView {
         wantsLayer = true
         layer = CALayer()
         playerLayer.player = player
-        playerLayer.videoGravity = .resizeAspect
+        playerLayer.videoGravity = .resizeAspectFill
         layer?.addSublayer(playerLayer)
     }
 
@@ -217,10 +217,13 @@ final class MoviePlayerHostView: UIView {
     init(player: AVPlayer) {
         super.init(frame: .zero)
         playerLayer.player = player
-        // Aspect fit, not fill: the film is 16:9 and the iPad is not, and
-        // cropping the cottage out of its own establishing shot would be a
-        // strange way to open.
-        playerLayer.videoGravity = .resizeAspect
+        // **Fill, not fit.** The film is 16:9 and the iPad is 4:3, so fitting
+        // it left two black bars across a third of the screen and the opening
+        // read as a video embedded in an app rather than as the app starting.
+        // Filling crops the sides instead; the shots are a centred push-in and
+        // a centred glide, so what is lost is wall, and what is kept is the
+        // whole subject. This is `object-fit: cover`.
+        playerLayer.videoGravity = .resizeAspectFill
         backgroundColor = .black
     }
 

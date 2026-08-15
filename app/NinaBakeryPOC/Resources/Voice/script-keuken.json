@@ -4,7 +4,7 @@
   "_model": "text2speech_v2",
   "_variant": "elevenlabs",
   "_cost_per_line_credits": 0.3,
-  "_generated": "2026-08-15",
+  "_generated": "2026-08-15 — kitchen, then five sources and the plank step",
   "_files": "app/NinaBakeryPOC/Resources/Voice/",
   "language": "nl",
 
@@ -41,7 +41,11 @@
     "nina.oeps": "A drag that landed nowhere. Never negative — GAMEPLAY.md §7.",
     "nina.speel.bloem": "Occasionally, when the flour sack is thumped.",
     "nina.stil": "The 45-second idle line. Never twice in a row.",
-    "nina.klaar": "The cake is on the shelf and the round is over.",
+    "nina.klaar": "The cake is on the plank and the round is over.",
+    "nina.keuken.opDePlank": "The round's last step: carry the finished cake up onto the taartenplank. Replaced tapping the doorway.",
+    "nina.bron.plankHoog": "Source 0, the upper wall shelf — the highest reach in the room.",
+    "nina.bron.plankLaag": "Source 1, the lower wall shelf.",
+    "nina.bron.krat": "Source 4, the crate on the floor — the lowest reach. Replaced nina.bron.plank, which could not say which of two shelves it meant.",
     "otto.tik": "Otto is tapped. Five variants because she will tap him constantly.",
     "otto.vormErin": "The tin goes in.",
     "otto.bakken": "While baking.",
@@ -203,14 +207,28 @@
     { "id": "nina.keuken.pakGlimmend", "character": "nina", "variants": [
       { "index": 404, "file": "nina-keuken-pakGlimmend-1.mp3", "text": "Pak maar wat er glimt!" }
     ]},
-    { "id": "nina.bron.plank", "character": "nina", "variants": [
-      { "index": 405, "file": "nina-bron-plank-1.mp3", "text": "Van de plank, die daar!" }
+    { "id": "nina.bron.plankHoog", "character": "nina", "variants": [
+      { "index": 409, "file": "nina-bron-plankHoog-1.mp3", "text": "Die ligt hoog! Op de bovenste plank." },
+      { "index": 410, "file": "nina-bron-plankHoog-2.mp3", "text": "Kijk eens omhoog, helemaal op de bovenste plank!" }
+    ]},
+    { "id": "nina.bron.plankLaag", "character": "nina", "variants": [
+      { "index": 411, "file": "nina-bron-plankLaag-1.mp3", "text": "En nu eentje van de onderste plank." },
+      { "index": 412, "file": "nina-bron-plankLaag-2.mp3", "text": "Daar, op de plank eronder!" }
     ]},
     { "id": "nina.bron.aanrecht", "character": "nina", "variants": [
       { "index": 406, "file": "nina-bron-aanrecht-1.mp3", "text": "En nu eentje van het aanrecht." }
     ]},
     { "id": "nina.bron.mandje", "character": "nina", "variants": [
-      { "index": 407, "file": "nina-bron-mandje-1.mp3", "text": "De laatste ligt in het mandje!" }
+      { "index": 413, "file": "nina-bron-mandje-1.mp3", "text": "Deze ligt in het mandje op tafel." },
+      { "index": 414, "file": "nina-bron-mandje-2.mp3", "text": "Uit het mandje, die daar!" }
+    ]},
+    { "id": "nina.bron.krat", "character": "nina", "variants": [
+      { "index": 415, "file": "nina-bron-krat-1.mp3", "text": "Bukken! Er ligt er eentje in de kist op de grond." },
+      { "index": 416, "file": "nina-bron-krat-2.mp3", "text": "Kijk eens naar beneden, in de kist!" }
+    ]},
+    { "id": "nina.keuken.opDePlank", "character": "nina", "variants": [
+      { "index": 417, "file": "nina-keuken-opDePlank-1.mp3", "text": "Zet de taart maar op de plank, bij de andere taarten!" },
+      { "index": 418, "file": "nina-keuken-opDePlank-2.mp3", "text": "Sleep hem maar omhoog, naar de taartenplank." }
     ]},
     { "id": "nina.keuken.opnieuw", "character": "nina", "variants": [
       { "index": 408, "file": "nina-keuken-opnieuw-1.mp3", "text": "Nieuwe taart! We beginnen gewoon opnieuw." }
