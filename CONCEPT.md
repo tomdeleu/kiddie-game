@@ -260,6 +260,52 @@ Decide this before building the party room.
 
 ## 8. Build order
 
+### Step 0 — the proof of concept
+
+**Before any game content, prove the two things that are still unknown.**
+Everything else in this document is understood work; these two are claims.
+
+1. **Does the clay look survive on the device?**
+2. **Can Nina actually drive the controls?**
+
+The risk is lopsided. A failed visual invalidates the art direction and weeks of
+asset work, so it must be answered while changing course is still cheap. Awkward
+controls are tuning.
+
+So the POC is **visually finished and functionally trivial**: one kitchen room
+box with correct materials, lighting and baked AO; two draggable objects; one
+bowl to drop them in; one reward animation. No garden, no party, no persistence,
+no cake-colour logic, no voice-over.
+
+**Step 0a costs an hour and needs no app.** Model the room box in Blender, bake
+its ambient occlusion, export **USDZ**, and open it in **Quick Look** on the
+iPad. Same renderer family, real screen, real size. If clay does not survive
+there, no amount of RealityKit code will rescue it — and an hour was spent
+rather than a weekend. Only build the app POC once this passes.
+
+**Step 0b is the app.** One `RealityView`, a fixed camera, and the drag
+projection from [§9.6](#96-the-honest-cost-of-going-3d).
+
+#### It is not finished when it works for you
+
+Your drag is precise and you know what the app expects. Hers is not and she does
+not. The test is Nina's hands, on her iPad, without help.
+
+Three cheap things that make the test worth running:
+
+- **Log every drag path and release point.** That turns "she struggled" into
+  "she releases 40pt short and low", which is a fix rather than a mystery.
+- **Include one reward sound.** Not for polish — with no audio reward the
+  engagement signal is misleading, and repeat attempts are the main measurement.
+- **Watch for palm contact.** She will rest her whole hand on the screen. Far
+  better to learn that now than in room three.
+
+What the POC is allowed to conclude: the art direction holds or it does not; the
+snap radius and target sizes need specific numbers. Nothing about whether the
+game is fun — there is no game in it yet.
+
+### Then the game
+
 Ship something playable early and grow it. Suggested order:
 
 1. **Kitchen + decorating**, hardcoded ingredients, no garden, no party. This is

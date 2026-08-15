@@ -13,8 +13,13 @@ The loop: grow magic ingredients in the garden → bake a cake whose colour come
 from what she chose → decorate it freely → throw a dance party where everyone
 eats it and thanks her by name.
 
-**Status: design only.** No application code exists yet. First build target is
-the kitchen room.
+**Status: design only.** No application code exists yet.
+
+**Next step is a proof of concept, not game content** — see `CONCEPT.md` §8
+Step 0. It answers two open questions: does the clay look survive on the device,
+and can Nina drive the controls. Visually finished, functionally trivial: one
+kitchen room box, two draggables, one bowl. Start with the USDZ-in-Quick-Look
+check, which needs no app at all.
 
 ## Where things are
 
