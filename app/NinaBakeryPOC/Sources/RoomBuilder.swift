@@ -45,19 +45,72 @@ enum Layout {
     }
 
     // Home positions on the table.
-    static let basketHome = SIMD3<Float>(-0.128, tableTopY, 0.078)
+    static let basketHome = SIMD3<Float>(-0.130, tableTopY, 0.082)
     static let bowlHome = SIMD3<Float>(-0.050, tableTopY, 0.048)
     static let whiskHome = SIMD3<Float>(-0.020, tableTopY, 0.014)
     static let tinHome = SIMD3<Float>(0.022, tableTopY, 0.080)
     /// Lies along X from here, so its left end is what has to stay on the table.
-    static let rollingPinHome = SIMD3<Float>(-0.105, tableTopY, 0.002)
+    static let rollingPinHome = SIMD3<Float>(-0.105, tableTopY, 0.006)
+    /// The ball of dough, and where it is rolled out. Sits in the pin's path.
+    static let doughSpot = SIMD3<Float>(-0.105, tableTopY, 0.045)
     /// Where a finished cake lands when Otto hands it over.
     static let cakeSpot = SIMD3<Float>(0.024, tableTopY, 0.030)
 
-    // Toys on the counter.
-    static let sinkSpot = SIMD3<Float>(-0.155, counterTopY, -0.158)
-    static let scaleSpot = SIMD3<Float>(-0.085, counterTopY, -0.152)
-    static let flourSpot = SIMD3<Float>(-0.020, counterTopY, -0.152)
+    /// Nina herself, behind the table between it and the counter.
+    ///
+    /// Placed left of the bowl rather than squarely behind it: at the room's
+    /// fixed camera angle, standing behind the bowl put her body across the
+    /// sightline to the sink, and a toy she is standing in front of is a toy
+    /// that never gets tapped.
+    static let bakerSpot = SIMD3<Float>(-0.105, floorY, -0.062)
+
+    /// **The three places an ingredient can come from, in order.**
+    ///
+    /// `GAMEPLAY.md` had all three in one basket on the table. Spreading them
+    /// across the room is what makes it a kitchen rather than a work surface —
+    /// she has to look up at the shelf, along the counter, and only then down
+    /// at the table. The order is fixed and the halo says which is next, so
+    /// three places never becomes three decisions.
+    enum Source: Int, CaseIterable {
+        case plank = 0      // the wall shelf, up on the left
+        case aanrecht = 1   // the back counter
+        case mandje = 2     // the basket on the table
+
+        /// Where its ingredient waits.
+        var spot: SIMD3<Float> {
+            switch self {
+            case .plank: return SIMD3<Float>(-0.181, 0.164, 0.030)
+            case .aanrecht: return SIMD3<Float>(-0.050, counterTopY + 0.011, -0.150)
+            case .mandje: return basketHome + SIMD3<Float>(0, 0.012, 0)
+            }
+        }
+
+        /// The plane a drag off this source is projected onto — the surface it
+        /// is standing on, so the grab does not jump under her finger.
+        var planeY: Float {
+            switch self {
+            case .plank: return 0.164
+            case .aanrecht: return counterTopY + 0.011
+            case .mandje: return tableTopY + 0.012
+            }
+        }
+
+        /// What Nina says as this one lights up.
+        var lineID: String {
+            switch self {
+            case .plank: return "nina.bron.plank"
+            case .aanrecht: return "nina.bron.aanrecht"
+            case .mandje: return "nina.bron.mandje"
+            }
+        }
+    }
+
+    // Toys on the counter, re-spaced when the ingredient pot moved in beside
+    // them. Four things on a 0.20 m run: sink, scale, pot, flour sack, each
+    // clear of the next by at least a centimetre.
+    static let sinkSpot = SIMD3<Float>(-0.150, counterTopY, -0.158)
+    static let scaleSpot = SIMD3<Float>(-0.098, counterTopY, -0.152)
+    static let flourSpot = SIMD3<Float>(-0.008, counterTopY, -0.152)
 
     /// The plank on the back wall the finished cakes stand on.
     static let cakePlankY: Float = 0.135
@@ -79,15 +132,22 @@ enum Layout {
 
     /// How far a carried prop may travel.
     ///
-    /// **Not the table.** The tin has to reach Otto's mouth, which is off the
-    /// table's far corner — clamping to the table top exactly is what made the
-    /// oven unreachable by about four millimetres. So this is the table plus
-    /// the corner in front of Otto, and a prop released anywhere in it that is
-    /// not near something simply floats home.
+    /// **The whole working half of the room, not the table.** Two things pushed
+    /// it out from the table's own footprint, and both were bugs first:
+    ///
+    /// - the tin has to reach Otto's mouth, off the table's far corner —
+    ///   clamping to the table left it four millimetres short and the round
+    ///   could not be finished;
+    /// - ingredients now start on the wall shelf and the back counter, and a
+    ///   clamp that began at the table's edge yanked them four centimetres
+    ///   sideways the instant she picked one up.
+    ///
+    /// A prop released anywhere in here that is not near something simply
+    /// floats home, so being generous costs nothing.
     static func clampToPlayArea(_ p: SIMD3<Float>) -> SIMD3<Float> {
-        let minX: Float = tableCentre.x - tableSize.x / 2 + 0.010
+        let minX: Float = -0.180
         let maxX: Float = 0.145
-        let minZ: Float = -0.055
+        let minZ: Float = -0.170
         let maxZ: Float = tableCentre.y + tableSize.y / 2 - 0.010
         return SIMD3<Float>(min(max(p.x, minX), maxX), p.y, min(max(p.z, minZ), maxZ))
     }
