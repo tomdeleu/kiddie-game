@@ -131,11 +131,37 @@ enum KitchenProps {
 
     // MARK: - The bake
 
+    /// The basket now holds one ingredient rather than three, so it shrank —
+    /// the other two live on the shelf and the counter.
     static func basket(flat: Bool) -> ModelEntity {
-        RoomBuilder.model(.bowl(bottomRadius: 0.022, topRadius: 0.030, height: 0.016,
+        RoomBuilder.model(.bowl(bottomRadius: 0.016, topRadius: 0.022, height: 0.014,
                                 wallThickness: 0.003, floorThickness: 0.003,
                                 sides: 8, rings: 2),
                           Palette.sandyWood, flat: flat, name: "Basket")
+    }
+
+    /// A little open pot for the ingredient waiting on the counter, so it reads
+    /// as stored rather than dropped there.
+    static func ingredientPot(flat: Bool) -> ModelEntity {
+        RoomBuilder.model(.bowl(bottomRadius: 0.011, topRadius: 0.014, height: 0.012,
+                                wallThickness: 0.0025, floorThickness: 0.0025,
+                                sides: 8, rings: 2),
+                          Palette.mint, flat: flat, name: "IngredientPot")
+    }
+
+    // MARK: - The dough
+
+    /// The ball of dough, before the rolling pin gets to it.
+    static func doughBall(flat: Bool) -> ModelEntity {
+        RoomBuilder.model(.icosphere(radius: 0.014, subdivisions: 1),
+                          Palette.cream, flat: flat, name: "Dough")
+    }
+
+    /// The rolled-out base that goes in the tin. Same colour, different shape —
+    /// she should recognise it as the thing she just flattened.
+    static func doughBase(flat: Bool) -> ModelEntity {
+        RoomBuilder.model(.prism(radius: 0.018, height: 0.004, sides: 12),
+                          Palette.cream, flat: flat, name: "DoughBase")
     }
 
     /// One draggable ingredient. Berries are round; honey and star sugar are

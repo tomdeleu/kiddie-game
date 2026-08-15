@@ -41,10 +41,27 @@ of the way.
 > a crescent on her wand, a moon motif on the gold frame — and nowhere near the
 > story, which stays about the wall.
 
-**Nina is the baker.** She has no avatar; she is the hands. Luna is her friend
-who lives in the bakery and helps. Nothing on screen can look "not like her",
-and there is no character to rig, animate, or dress. This closes the open
-question in `CONCEPT.md` §11.
+**Nina is the baker, and she is on screen.**
+
+> **REVERSED, 2026-08-15, by the owner.** This section used to read: *"She has
+> no avatar; she is the hands. Luna is her friend who lives in the bakery and
+> helps."* Both halves are now gone. **Nina is the character in
+> `references/plates/02-fairy-character.png`** — the little fairy baker in the
+> mint hat and apron — she stands behind the table and works while the round
+> runs, and **the voice is hers**. Luna does not exist.
+>
+> What the old decision was protecting against: "nothing on screen can look
+> 'not like her'". That risk is real and now accepted. What it buys is a
+> kitchen with somebody in it, which is worth more than a kitchen that is
+> technically un-wrong.
+>
+> The rig is unchanged and still cheap — `CONCEPT.md` §9.7's three parts, built
+> in `app/.../BakerCharacter.swift`. Nothing was modelled or sculpted.
+>
+> **What this leaves open:** the twelfth frame on the wall was Luna's, and the
+> twelfth friend was Luna. That slot now has nobody in it. It needs either a
+> new twelfth friend or a reason for the gold frame to be Nina's own — free to
+> decide now, expensive once the wall is built.
 
 ## 2. The wall is the game
 
@@ -251,7 +268,22 @@ slightly. It never blocks anything and there is no penalty for ignoring it.
 
 ### 6.3 De Keuken — the kitchen
 
-**Required:** ingredients into the bowl, stir, pour, bake.
+**Required:** roll the base, three ingredients into the bowl, stir, pour, bake.
+
+> **Built, and wider than this section describes.** Two changes, both made
+> while watching how thin the required action looked in the room:
+>
+> - **The rolling pin earns its place.** The round opens with a ball of dough
+>   on the table: roll it flat with the pin — about three passes — and it drops
+>   into the tin as a base. It was a toy before, in a room whose one verb was
+>   already drag-onto-something.
+> - **The three ingredients come from three places, in a fixed order:** the
+>   wall shelf, then the back counter, then the basket on the table. One basket
+>   made the room a work surface; three places make her look up, along, and
+>   down, and it is the difference between a kitchen and a table.
+>
+> The order is never a puzzle. The one she needs **glows**, the others do not
+> travel until their turn, and Nina names the place out loud as each lights up.
 
 Drag each ingredient from the basket into the mixing bowl — generous snapping,
 anywhere near it counts. Then **stir with a finger**: the whisk follows her
@@ -330,7 +362,7 @@ moment in the game. `CONCEPT.md` §5 asks for a clear ending; this is it.
 | **Every tap does something** | If it is on screen, it responds. A dead tap reads as a broken iPad. |
 | **A wrong drag is not wrong** | It floats gently back with a soft sound. No buzzer, no red, no "nee". |
 | **Interruptions are free** | The round saves after every step. Closing the app in the middle of stirring resumes in the kitchen, mid-stir, with the same batter. |
-| **Hints shimmer, never block** | The only guidance is a slight shimmer on a relevant object, plus Luna's voice. Nothing is ever disabled. |
+| **Hints shimmer, never block** | The object she needs **glows from the moment a step begins** — "which one do I pick up" is not a question she should have to be idle long enough to ask. The 25-second shimmer sits on top of that for when she stops entirely. Nothing is ever disabled. |
 
 ## 8. What this costs to build
 

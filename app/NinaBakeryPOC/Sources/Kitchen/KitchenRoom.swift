@@ -4,10 +4,17 @@ import simd
 
 /// De Keuken — the first room, whole.
 ///
-/// The required action is `GAMEPLAY.md` §6.3: ingredients into the bowl, stir,
-/// pour, bake. Around it sit six toys that gate nothing, a fairy who reacts to
-/// what actually happened, and an oven with a face. The shape every room shares
-/// is one required action, four to six toys, and a door that always works.
+/// The required action is `GAMEPLAY.md` §6.3: roll the base, three ingredients
+/// into the bowl, stir, pour, bake. Around it sit six toys that gate nothing,
+/// Nina working behind the table, and an oven with a face. The shape every room
+/// shares is one required action, four to six toys, and a door that always
+/// works.
+///
+/// Two things here are not in that section as written, and both are recorded
+/// there as later changes: the rolling pin is a **required step** rather than a
+/// toy, and the three ingredients come from **three places in a fixed order**
+/// rather than from one basket. The halo is what makes an order free of
+/// puzzles — the one she needs glows, and nothing else does.
 ///
 /// Three rules from `GAMEPLAY.md` §7 are load-bearing here and are worth
 /// naming, because each one is a place where the obvious implementation is the
@@ -17,7 +24,7 @@ import simd
 ///   timer. Baking is the single exception and it is four seconds of Otto being
 ///   pleased, not a wait.
 /// - **She cannot fail.** There is no rejected drop: a miss floats home and
-///   Luna says something kind. Nothing is ever disabled, greyed, or refused.
+///   Nina says something kind. Nothing is ever disabled, greyed, or refused.
 /// - **Every tap does something.** Including a tap on nothing, which sparkles.
 @MainActor
 final class KitchenRoom {
@@ -49,6 +56,13 @@ final class KitchenRoom {
     private var rollingPin: Entity?
     private var doorway: KitchenProps.Doorway?
     private var flourPatches: [Entity] = []
+    private var baker: BakerCharacter?
+    private var dough: ModelEntity?
+    private var tinBase: ModelEntity?
+    private var ingredientPot: ModelEntity?
+    /// The glowing ring on whatever she needs next, and what it is on.
+    private var haloJob: Int?
+    private weak var haloed: Entity?
 
     // Interaction.
     private var carried: Entity?
@@ -62,6 +76,7 @@ final class KitchenRoom {
     private var bakeJobs: [Int] = []
     private var lastSavedStir: Float = 0
     private var lastBatterMix: Float = -1
+    private var rollTickAccumulator: Float = 0
     private var rollLastPoint: SIMD3<Float>?
 
     // The idle nudge.
@@ -106,6 +121,7 @@ final class KitchenRoom {
         root.addChild(RoomBuilder.build(flat: flat))
 
         buildOven()
+        buildBaker()
         buildTableProps()
         buildToys()
         buildDoorway()
@@ -114,6 +130,13 @@ final class KitchenRoom {
         registerTargets()
         applyStep(animated: false)
         startIdleWatch()
+    }
+
+    private func buildBaker() {
+        baker?.stop()
+        let nina = BakerCharacter(ticker: ticker, flat: flat)
+        root.addChild(nina.root)
+        baker = nina
     }
 
     private func buildOven() {
@@ -128,21 +151,36 @@ final class KitchenRoom {
         root.addChild(basketNode)
         basket = basketNode
 
-        // Three slots, offset so the tokens do not stack into one blob.
-        let slots: [SIMD3<Float>] = [
-            Layout.basketHome + [-0.010, 0.011, 0.004],
-            Layout.basketHome + [0.010, 0.011, -0.006],
-            Layout.basketHome + [0.001, 0.011, 0.012],
-        ]
+        let pot = KitchenProps.ingredientPot(flat: flat)
+        pot.position = SIMD3<Float>(Layout.Source.aanrecht.spot.x,
+                                    Layout.counterTopY,
+                                    Layout.Source.aanrecht.spot.z)
+        root.addChild(pot)
+        ingredientPot = pot
+
+        // **One ingredient per source, in order.** Token *i* stands where
+        // source *i* is — shelf, then counter, then basket — and the ones she
+        // has already used are simply not built.
         for (i, ingredient) in state.basket.enumerated() {
+            guard let source = Layout.Source(rawValue: i) else { continue }
             let token = KitchenProps.token(ingredient, flat: flat)
-            let home = slots[min(i, slots.count - 1)]
+            let home = source.spot
             token.position = home
             token.name = "Token\(i)_\(ingredient.rawValue)"
+            token.isEnabled = i >= state.nextIndex
             root.addChild(token)
             tokens.append((ingredient, token, home))
-            ContactShadows.attach(to: token, radius: 0.011, settings: settings)
+            if source == .mandje {
+                ContactShadows.attach(to: token, radius: 0.011, settings: settings)
+            }
         }
+
+        // The dough she rolls out before any of that.
+        let ball = KitchenProps.doughBall(flat: flat)
+        ball.position = Layout.doughSpot + [0, 0.012, 0]
+        root.addChild(ball)
+        dough = ball
+        ContactShadows.attach(to: ball, radius: 0.014, settings: settings)
 
         let bowlNode = KitchenProps.mixingBowl(flat: flat)
         bowlNode.position = Layout.bowlHome
@@ -217,8 +255,9 @@ final class KitchenRoom {
 
     private func registerTargets() {
         for (index, token) in tokens.enumerated() {
+            let source = Layout.Source(rawValue: index) ?? .mandje
             touch.register("token\(index)", entity: token.entity,
-                           radius: 0.030, planeY: Layout.tableTopY) { target in
+                           radius: 0.030, planeY: source.planeY) { target in
                 target.onDragBegan = { [weak self] world in self?.pickUp(token.entity, at: world) }
                 target.onDragMoved = { [weak self] world in self?.carry(to: world) }
                 target.onDragEnded = { [weak self] world in
@@ -320,13 +359,64 @@ final class KitchenRoom {
     /// already passed go quiet, and those are the ones that have nothing left
     /// to do.
     private func refreshInteractivity() {
+        // Only the ingredient whose turn it is can be dragged. The others are
+        // still there, still tappable, still answer with a wobble — they just
+        // do not travel out of turn, which is what makes "in a specific order"
+        // a rule she can feel rather than one she can break.
         for index in tokens.indices {
-            touch.target(named: "token\(index)")?.enabled = state.step == .vullen
+            touch.target(named: "token\(index)")?.enabled =
+                state.step == .vullen && index == state.nextIndex
         }
         touch.target(named: "bowl")?.enabled = state.step == .roeren || state.step == .gieten
         touch.target(named: "tin")?.enabled = state.step == .inOven
         touch.target(named: "cake")?.entity = cake
         touch.target(named: "cake")?.enabled = cake != nil
+        refreshHalo()
+    }
+
+    /// Light up whatever she needs next, and nothing else.
+    private func refreshHalo() {
+        ticker.cancel(haloJob)
+        haloJob = nil
+        if let haloed { Halo.remove(from: haloed) }
+        haloed = nil
+
+        guard let target = haloTarget(), target.isEnabled else { return }
+        haloed = target
+        haloJob = Halo.attach(to: target, radius: haloRadius(for: target),
+                              ticker: ticker, yOffset: haloOffset(for: target))
+    }
+
+    /// The one prop the current step is about.
+    private func haloTarget() -> Entity? {
+        switch state.step {
+        case .uitrollen: return rollingPin
+        case .vullen: return tokens.indices.contains(state.nextIndex)
+            ? tokens[state.nextIndex].entity : nil
+        case .roeren: return bowl
+        case .gieten: return bowl
+        case .inOven: return tin?.root
+        case .bakken: return oven?.root
+        case .klaar: return doorway?.root
+        }
+    }
+
+    private func haloRadius(for entity: Entity) -> Float {
+        if entity === rollingPin { return 0.030 }
+        if entity === bowl { return 0.038 }
+        if entity === tin?.root { return 0.028 }
+        if entity === oven?.root { return 0.070 }
+        if entity === doorway?.root { return 0.045 }
+        return 0.018
+    }
+
+    /// Where each prop meets the thing it is standing on, in its own space.
+    private func haloOffset(for entity: Entity) -> Float {
+        // The pin's origin is on its axis, and a token is an icosphere centred
+        // on its own middle. Everything else is built standing on its origin.
+        if entity === rollingPin { return -0.008 }
+        if tokens.contains(where: { $0.entity === entity }) { return -0.0095 }
+        return 0.0008
     }
 
     // MARK: - Step presentation
@@ -349,6 +439,12 @@ final class KitchenRoom {
             whisk.position = whiskTarget
             whisk.orientation = whiskTilt
         }
+
+        // The dough is only out while she is rolling it; after that it is the
+        // base sitting in the tin.
+        dough?.isEnabled = state.step == .uitrollen
+        if let dough, state.step == .uitrollen { shapeDough(dough, roll: state.roll) }
+        refreshTinBase()
 
         tin.batter.isEnabled = state.step == .inOven || state.step == .bakken
         tin.batter.model?.materials = [Palette.material(state.bowlSpec.batterColour)]
@@ -374,6 +470,41 @@ final class KitchenRoom {
         setDoorwayInviting(state.step == .klaar)
         refreshBowlBatter(animated: false)
         refreshInteractivity()
+        bakerAttends()
+    }
+
+    /// Nina leans towards whatever the step is about. It costs one call per
+    /// step change and it is most of what makes her look like she is baking
+    /// rather than standing near a table.
+    private func bakerAttends() {
+        guard let baker else { return }
+        if let focus = haloTarget()?.position(relativeTo: nil) {
+            baker.set(.busy(focus))
+        } else {
+            baker.set(.idle)
+        }
+    }
+
+    /// The base in the tin: absent until she has rolled it, then always there.
+    private func refreshTinBase() {
+        let wanted = state.step != .uitrollen
+        if wanted, tinBase == nil, let tin {
+            let base = KitchenProps.doughBase(flat: flat)
+            base.position = [0, 0.003, 0]
+            tin.root.addChild(base)
+            tinBase = base
+        } else if !wanted {
+            tinBase?.removeFromParent()
+            tinBase = nil
+        }
+    }
+
+    /// The dough, part way through being flattened. One call, so the shape is
+    /// the same whether it is being rolled or restored from a save.
+    private func shapeDough(_ dough: Entity, roll: Float) {
+        let t = max(0, min(1, roll))
+        dough.scale = SIMD3<Float>(1 + 0.9 * t, 1 - 0.72 * t, 1 + 0.9 * t)
+        dough.position = Layout.doughSpot + [0, 0.012 * (1 - 0.6 * t), 0]
     }
 
     private func setDoor(open: Bool, animated: Bool, oven: KitchenProps.Oven) {
@@ -455,7 +586,7 @@ final class KitchenRoom {
         ContactShadows.update(for: carried, surfaceY: Layout.tableTopY, settings: settings)
     }
 
-    /// A drag that landed nowhere. It floats home, and Luna is nice about it.
+    /// A drag that landed nowhere. It floats home, and Nina is nice about it.
     private func floatHome(_ entity: Entity, to home: SIMD3<Float>, speak: Bool = true) {
         carried = nil
         ticker.move(entity, to: home, duration: 0.45, arc: 0.012, ease: Ease.out) { [weak self] in
@@ -472,7 +603,10 @@ final class KitchenRoom {
         guard index < tokens.count else { return }
         ticker.squash(tokens[index].entity, amount: 0.25)
         sound.playVaried(.plop, volume: 0.5)
-        voice.say(Line.doeInKom, priority: .low)
+        // Tapping one whose turn it is not still does something, and what it
+        // says is where to look instead.
+        voice.say(index == state.nextIndex ? Line.doeInKom : Line.pakGlimmend,
+                  priority: .low)
     }
 
     private func dropToken(index: Int, at world: SIMD3<Float>) {
@@ -496,16 +630,23 @@ final class KitchenRoom {
             Sparkles.ring(at: into, in: self.root, ticker: self.ticker,
                           colour: token.ingredient.tokenColour, radius: 0.045)
 
+            // The basket is never mutated — `inBowl.count` is how far she has
+            // got, and it is what moves the halo to the next shelf.
             self.state.inBowl.append(token.ingredient)
-            if let first = self.state.basket.firstIndex(of: token.ingredient) {
-                self.state.basket.remove(at: first)
-            }
             self.refreshBowlBatter(animated: true)
             self.voice.say(token.ingredient.lineID)
+            self.baker?.set(.cheering)
             self.save()
+            self.refreshInteractivity()
 
-            if self.state.basket.isEmpty {
+            if self.state.allCollected {
                 self.ticker.after(1.1) { [weak self] in self?.beginStirring() }
+            } else {
+                // Point at the next place before she has to go looking.
+                self.ticker.after(1.8) { [weak self] in
+                    guard let self, self.state.step == .vullen else { return }
+                    self.sayNextSource()
+                }
             }
         }
     }
@@ -635,6 +776,7 @@ final class KitchenRoom {
             ticker.squash(bowl, amount: 0.16)
         }
         sound.play(.sparkle)
+        baker?.set(.cheering)
         applyStep(animated: true)
         voice.say(Line.beslagKlaar)
         ticker.after(2.6) { [weak self] in
@@ -818,6 +960,7 @@ final class KitchenRoom {
             [weak self] in
             guard let self else { return }
             self.sound.play(.reward)
+            self.baker?.set(.cheering)
             Sparkles.burst(at: Layout.cakeSpot + [0, 0.03, 0], in: self.root,
                            ticker: self.ticker, colour: Palette.creamLight, count: 18)
             ContactShadows.attach(to: node, radius: 0.026, settings: self.settings)
@@ -825,7 +968,7 @@ final class KitchenRoom {
             if spec.sparkles { self.startCakeSparkle(node) }
             self.setDoorwayInviting(true)
             self.refreshInteractivity()
-            // Otto first, then Luna on the colour and at most one effect.
+            // Otto first, then Nina on the colour and at most one effect.
             self.voice.say([Line.ottoKlaar] + spec.reactionLines)
         }
     }
@@ -899,7 +1042,27 @@ final class KitchenRoom {
         state = RoundState.fresh(keeping: shelf)
         RoundStore.save(state)
         build(flat: flat)
-        ticker.after(0.8) { [weak self] in self?.voice.say(Line.hallo) }
+        ticker.after(0.8) { [weak self] in
+            self?.voice.say([Line.opdracht, Line.uitrollen], gap: 0.35)
+        }
+    }
+
+    /// The restart button. Throws this round away and starts a fresh one,
+    /// keeping the cakes already on the plank — nothing she has finished is
+    /// ever lost, so pressing it can never be a disaster.
+    func restartRound() {
+        let shelf = state.shelf
+        sound.play(.whoosh, volume: 0.6)
+        Sparkles.burst(at: Layout.bowlHome + [0, 0.04, 0], in: root, ticker: ticker,
+                       colour: Palette.mintLight, count: 10)
+        state = RoundState.fresh(keeping: shelf)
+        RoundStore.save(state)
+        build(flat: flat)
+        voice.say(Line.opnieuw)
+        ticker.after(2.0) { [weak self] in
+            guard let self, self.state.step == .uitrollen else { return }
+            self.voice.say(Line.uitrollen, priority: .low)
+        }
     }
 
     // MARK: - Toys
@@ -988,8 +1151,66 @@ final class KitchenRoom {
             * simd_quatf(angle: dz / 0.008, axis: [1, 0, 0])
         if abs(dz) > 0.004 {
             sound.play(.roll, volume: 0.35, rate: Float.random(in: 0.9...1.2))
-            rollLastPoint = world
         }
+
+        // **The rolling step.** Travel only counts while the pin is actually
+        // over the dough, so waving it around the table does nothing — she has
+        // to go back and forth across it, which is the motion the picture is
+        // asking for. Roughly three passes.
+        if state.step == .uitrollen, let dough, dough.isEnabled {
+            let over = Layout.distanceXZ(rollingPin.position, dough.position) < 0.030
+            if over {
+                let travel = Layout.distanceXZ(world, last)
+                state.roll = min(1, state.roll + travel / 0.11)
+                shapeDough(dough, roll: state.roll)
+                rollTickAccumulator += travel
+                if rollTickAccumulator > 0.02 {
+                    rollTickAccumulator = 0
+                    sound.play(.stirTick, volume: 0.3, rate: Float.random(in: 0.8...1.0))
+                    Sparkles.burst(at: dough.position + [0, 0.006, 0], in: root,
+                                   ticker: ticker, colour: Palette.creamLight,
+                                   count: 3, size: 0.0018, speed: 0.04, life: 0.5)
+                }
+                if state.roll >= 1 { finishRolling() }
+            }
+        }
+        rollLastPoint = world
+    }
+
+    /// The base is flat. It hops into the tin, and the ingredients begin.
+    private func finishRolling() {
+        guard state.step == .uitrollen, let dough, let tin else { return }
+        state.step = .vullen
+        save()
+
+        Halo.remove(from: dough)
+        ContactShadows.removeFrom(dough)
+        sound.play(.sparkle, volume: 0.8)
+        baker?.set(.cheering)
+
+        let into = tin.root.position + [0, 0.006, 0]
+        ticker.move(dough, to: into, duration: 0.55, arc: 0.035, ease: Ease.inOut) {
+            [weak self] in
+            guard let self else { return }
+            self.dough?.isEnabled = false
+            self.sound.play(.thud, volume: 0.5)
+            Sparkles.ring(at: into, in: self.root, ticker: self.ticker,
+                          colour: Palette.cream, radius: 0.035)
+            self.refreshTinBase()
+            self.applyStep(animated: true)
+            self.voice.say(Line.deegKlaar)
+            // And then straight into where the first ingredient lives.
+            self.ticker.after(2.2) { [weak self] in
+                guard let self, self.state.step == .vullen, self.state.inBowl.isEmpty else { return }
+                self.sayNextSource()
+            }
+        }
+    }
+
+    /// Names the place the next ingredient is waiting, once, as its halo lights.
+    private func sayNextSource() {
+        guard let source = state.nextSource else { return }
+        voice.say(source.lineID, priority: .low)
     }
 
     /// A tap on nothing. It still does something, because a dead tap reads as a
@@ -1013,7 +1234,7 @@ final class KitchenRoom {
 
     // MARK: - The idle nudge
 
-    /// After ~25 s of nothing the thing she needs shimmers; after ~45 s Luna
+    /// After ~25 s of nothing the thing she needs shimmers; after ~45 s Nina
     /// says one short line; then it goes quiet for a minute. It never nags, and
     /// it never blocks anything (`GAMEPLAY.md` §7).
     private func startIdleWatch() {
@@ -1027,7 +1248,7 @@ final class KitchenRoom {
             } else if self.nudgeStage == 1 && self.idleTime > 45 {
                 self.nudgeStage = 2
                 // Alternating means the second time she goes quiet in the same
-                // step she does not hear the same instruction again — Luna just
+                // step she does not hear the same instruction again — she just
                 // says she is still there. It never repeats twice in a row.
                 self.voice.say(self.alternateNudge ? Line.stil
                                                    : self.nudgeLine(for: self.state.step),
@@ -1065,7 +1286,9 @@ final class KitchenRoom {
 
     private func hintTarget(for step: KitchenStep) -> Entity? {
         switch step {
-        case .vullen: return tokens.first(where: { $0.entity.isEnabled })?.entity
+        case .uitrollen: return rollingPin
+        case .vullen: return tokens.indices.contains(state.nextIndex)
+            ? tokens[state.nextIndex].entity : nil
         case .roeren: return whisk
         case .gieten: return bowl
         case .inOven: return tin?.root
@@ -1076,7 +1299,8 @@ final class KitchenRoom {
 
     private func nudgeLine(for step: KitchenStep) -> String {
         switch step {
-        case .vullen: return Line.doeInKom
+        case .uitrollen: return Line.uitrollen
+        case .vullen: return state.nextSource?.lineID ?? Line.doeInKom
         case .roeren: return Line.roeren
         case .gieten: return Line.gieten
         case .inOven: return Line.naarOtto
@@ -1109,17 +1333,26 @@ final class KitchenRoom {
 
     // MARK: - Housekeeping
 
+    /// What she hears when the room appears.
+    ///
+    /// At the very top of a round that is: hello, then **what we are doing
+    /// today** — "meng alle toverdingetjes in de kom, en zet de taart daarna in
+    /// de oven" — and then the first step. Coming back to a round already in
+    /// progress skips all that and just says where she was.
     func greet() {
-        voice.say(state.step == .vullen && state.inBowl.isEmpty
-                  ? Line.hallo
-                  : nudgeLine(for: state.step))
+        guard state.step == .uitrollen, state.roll == 0 else {
+            voice.say(nudgeLine(for: state.step))
+            return
+        }
+        voice.say([Line.hallo, Line.opdracht, Line.uitrollen], gap: 0.35)
     }
 
     func save() {
         RoundStore.save(state)
     }
 
-    /// Debug panel: throw the round away, keep her shelf of cakes.
+    /// Debug panel. The player-facing version is `restartRound`, which also
+    /// says so out loud.
     func resetRound() {
         state = RoundStore.reset(keepingShelf: state.shelf)
         build(flat: flat)
@@ -1146,9 +1379,19 @@ final class KitchenRoom {
         doorGlowJob = nil
         ticker.cancel(idleJob)
         idleJob = nil
+        ticker.cancel(haloJob)
+        haloJob = nil
+        haloed = nil
+        baker?.stop()
+        baker = nil
         stopHint()
         carried = nil
         stirLastAngle = nil
         stirLastPoint = nil
+        rollLastPoint = nil
+        rollTickAccumulator = 0
+        dough = nil
+        tinBase = nil
+        ingredientPot = nil
     }
 }

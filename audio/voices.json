@@ -3,9 +3,9 @@
   "_provider": "higgsfield",
   "language": "nl",
   "characters": {
-    "luna": {
-      "name": "Luna de fee",
-      "role": "The fairy who lives in the bakery. Nina's friend and helper, not her avatar.",
+    "nina": {
+      "name": "Nina",
+      "role": "The baker, on screen and speaking. She stands behind the table and works while the round runs; the voice is hers.",
       "status": "decided",
       "model": "text2speech_v2",
       "variant": "elevenlabs",
@@ -15,7 +15,8 @@
       "age": "young",
       "gender": "female",
       "line_estimate": 90,
-      "note": "Young voice, so she reads as a playmate rather than a grandmother-figure. Write her lines as someone having fun alongside Nina, not instructing her. She speaks the most by far, so write four or five variants of anything she says often. The name Luna was chosen to survive every language unchanged (LOO-nah) and to sound clearly distinct from Nina, since the two names sit side by side in most lines - verify both by ear on the first generated line."
+      "note": "Same voice as before: Gracie was cast young so she reads as a playmate, which is exactly right now that she IS the playmate. Write her lines in the first person - 'ik', 'we' - never as someone instructing a child from outside. She talks to the player the way a 4-year-old narrates her own game.",
+      "_recast": "2026-08-15. These lines used to belong to Luna, a separate fairy helper, and the change was the owner's call. Ten lines named 'Nina' in the second person and were regenerated in the first; the other 64 needed no change because they never named anybody. Every id and filename moved from luna.* to nina.*. What is now unowned is the twelfth friend on the wall, who was Luna - see GAMEPLAY.md."
     },
     "otto": {
       "name": "Otto de oven",
@@ -46,7 +47,8 @@
         { "id": "roos", "name": "Roos de egel", "wish": "hartjes", "voice_slot": null },
         { "id": "tobi", "name": "Tobi de hond", "wish": "sterretjes", "voice_slot": null },
         { "id": "nel", "name": "Nel de slak", "wish": "twee kleuren door elkaar", "voice_slot": null },
-        { "id": "luna", "name": "Luna de fee", "wish": "geen - vrije keuze, de laatste taart", "voice_slot": "luna" }
+        { "id": "luna", "name": "Luna de fee", "wish": "geen - vrije keuze, de laatste taart", "voice_slot": null,
+          "_open": "UNOWNED. Luna was the fairy helper and the twelfth friend at once; the helper role is now Nina's, so the last frame on the wall has no character behind it. It needs either a new twelfth friend or a reason for the gold frame to be Nina's own. Decide before the wall is built - it is free to change now and expensive once modelled." }
       ]
     }
   }

@@ -8,7 +8,8 @@ import Foundation
 /// moment. Everything the kitchen draws is rebuilt from this struct, which is
 /// what makes that a save rather than a restore mechanism.
 enum KitchenStep: String, Codable {
-    case vullen    // ingredients from the basket into the bowl
+    case uitrollen // roll the dough out into a base for the tin
+    case vullen    // three ingredients, from three places, in order
     case roeren    // stirring
     case gieten    // pour the bowl into the tin
     case inOven    // carry the tin to Otto
@@ -18,13 +19,16 @@ enum KitchenStep: String, Codable {
 
 struct RoundState: Codable {
     var version = 1
-    /// What is still in the basket, waiting to go in the bowl.
+    /// The round's three ingredients, in the order she collects them. Fixed for
+    /// the whole round; see `nextIndex`.
     var basket: [Ingredient] = []
     /// What has gone into the bowl. This is the cake being made.
     var inBowl: [Ingredient] = []
     /// 0…1. Three full turns, or twice that in scrubbing.
     var stir: Float = 0
-    var step: KitchenStep = .vullen
+    /// 0…1. How flat the dough is. Advances on travel of the pin across it.
+    var roll: Float = 0
+    var step: KitchenStep = .uitrollen
     /// Cakes already baked, oldest first — they stand on the plank on the back
     /// wall. A stand-in for the wall of twelve frames until the bakery exists.
     var shelf: [CakeSpec] = []
@@ -32,6 +36,19 @@ struct RoundState: Codable {
     var cake: CakeSpec?
 
     var bowlSpec: CakeSpec { CakeSpec(ingredients: inBowl) }
+
+    /// The three ingredients in collection order. **Never mutated during a
+    /// round** — `inBowl.count` is how far she has got, and index *i* of the
+    /// basket is always the ingredient waiting at source *i*. Consuming by
+    /// removal made the two lists disagree about which shelf a token came from.
+    var nextIndex: Int { inBowl.count }
+    var allCollected: Bool { inBowl.count >= basket.count }
+
+    /// Which of the three places the next ingredient is waiting in.
+    var nextSource: Layout.Source? {
+        guard !allCollected else { return nil }
+        return Layout.Source(rawValue: min(nextIndex, Layout.Source.allCases.count - 1))
+    }
 
     /// A fresh basket of three.
     ///
