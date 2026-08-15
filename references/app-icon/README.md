@@ -1,13 +1,15 @@
-# App icon — candidates, not yet chosen
+# App icon — H, the cake
+
+**Chosen: H.** It ships as
+`app/NinaBakeryPOC/Resources/Assets.xcassets/AppIcon.appiconset/icon-1024.png`,
+with `icon-1024-dark.png` beside it for dark appearance. The app's display name
+is *Nina's Toverbakkerij*, set as `INFOPLIST_KEY_CFBundleDisplayName` in both
+build configurations.
 
 Nine `flux_2` / `pro` candidates at 1:1, 1024×1024, generated against the locked
-style references. **Nothing here is wired into the app yet** — there is no
-`Assets.xcassets` in `app/NinaBakeryPOC` at all, so adding an icon means adding
-an asset catalog first. That waits on a decision.
-
-Full-size finalists sit in this folder; every other candidate is kept at 320 px
-in [`candidates/`](candidates/), which is enough to judge and keeps the repo
-light. The job IDs regenerate any of them at full size.
+style references. Full-size finalists sit in this folder; every other candidate
+is kept at 320 px in [`candidates/`](candidates/), which is enough to judge and
+keeps the repo light. The job IDs regenerate any of them at full size.
 
 ## The candidates
 
@@ -42,27 +44,43 @@ Nine generations, 9 credits.
 - `no ambient occlusion pooling` still earns its place — dropping it puts a
   shadow ring around the plate.
 
-## Open decision before any of this ships
+## The rule this bends, and why
 
 `CLAUDE.md` says generated images are concept references and nothing generated
 goes into the app directly, with the opening film as the single stated
-exception. An icon is the same shape of problem as the film: it has no second
-form — it *is* a 1024×1024 PNG, and there is nothing to model from it.
+exception. **The icon is now the second**, on the film's reasoning: it has no
+second form. A generated picture of a prop cannot be a prop, because the
+geometry still has to be modelled and the plate is only the brief — but an icon
+*is* a 1024×1024 PNG, and there is nothing to model from it.
 
-So either:
+The purer answer, once the kitchen compiles, is to render the icon from the
+game's own cake geometry so the icon is literally the cake the game builds.
+That stays open and this file is the brief for it. Nothing else changes if it
+happens: same framing, same backdrop, drop in a new `icon-1024.png`.
 
-1. **Ship the PNG** as a second documented exception, on the film's reasoning; or
-2. **Treat it as a brief** and render the icon from the game's own geometry, so
-   the icon is literally the cake the game builds.
+## The dark variant
 
-(2) is the purer answer and is not expensive once a cake exists as geometry —
-but the kitchen's cake has never been compiled, let alone rendered. (1) is
-available today.
+`icon-1024-dark.png` is not a second generation — it is `H` with its backdrop
+recoloured by [`recolour-dark.py`](recolour-dark.py), so the cake is pixel for
+pixel the same object in both appearances.
 
-## If (1) is chosen
+The backdrop is the only mint in the picture: cake, plate and star are all
+red-dominant, so `green > max(red, blue)` separates them with no mask, and a
+soft edge on that test stops the antialiased rim leaving a mint halo. The
+contact shadow is darkened backdrop, so scaling the target colour by each
+pixel's own luminance carries the shadow across intact. Target is `#46584C`,
+one step below palette `Sage deep`.
 
-Needs `Assets.xcassets` with an `AppIcon` set. Modern Xcode wants **one
-1024×1024 PNG, no alpha, square, no rounded corners** — the finalists are
-already RGB, no alpha, full-bleed. iOS 18+ also wants dark and tinted variants;
-a dark variant here is a straight backdrop swap (mint → deep sage) with the
-cake unchanged.
+No tinted variant is supplied — iOS derives one, and a bad hand-made greyscale
+is worse than none.
+
+## Catalog notes
+
+Xcode wants **one 1024×1024 PNG, no alpha, square, no rounded corners**; both
+files are RGB colour-type 2 and full-bleed, checked. `Resources` is a
+synchronized group, so the catalog needed no `project.pbxproj` edit —
+`ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon` was already set and had simply
+never had a catalog to point at.
+
+On the home screen iOS will truncate *Nina's Toverbakkerij* to roughly
+*Nina's Tover…*. Nina cannot read it either way; the icon is what she looks for.

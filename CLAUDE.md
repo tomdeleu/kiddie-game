@@ -84,6 +84,9 @@ Rules that keep this from going wrong:
 - **Batch** with `generate_*_batch` + `jobs_wait` + one `show_generation_by_ids`.
 - **Generated images are concept references, not shippable assets.** Going 3D
   means they guide modelling; nothing generated goes into the app directly.
+  Two exceptions, both because the asset has no second form to be modelled into:
+  the opening film (`references/REFERENCES.md` §3) and the app icon
+  (`references/app-icon/`).
 
 **Higgsfield cannot supply music or sound effects.** Its music and SFX models
 are restricted to its internal game pipeline and refuse standalone use. Those
