@@ -75,6 +75,7 @@ final class KitchenRoom {
     private var saidGoodStirring = false
     private var doorGlowJob: Int?
     private var idleJob: Int?
+    private var eyeLifeJob: Int?
     private var bakeJobs: [Int] = []
     private var lastSavedStir: Float = 0
     private var lastBatterMix: Float = -1
@@ -145,6 +146,7 @@ final class KitchenRoom {
         let node = KitchenProps.oven(flat: flat)
         oven = node
         root.addChild(node.root)
+        startEyeLife()
     }
 
     private func buildTableProps() {
@@ -463,8 +465,11 @@ final class KitchenRoom {
             if carried !== tin.root { tin.root.position = Layout.tinHome }
         }
 
-        // Otto's door: open when he is waiting to be loaded, shut otherwise.
-        setDoor(open: state.step == .inOven, animated: animated, oven: oven)
+        // Otto's door: open except while he is actually baking. The dark
+        // mouth is most of his depth — shut, he flattens into a disc (owner's
+        // note on the 2026-08-15 build). The shut door still gets its moment:
+        // closing on the tin is what makes the bake an event.
+        setDoor(open: state.step != .bakken, animated: animated, oven: oven)
 
         // The cake, if she came back to a finished round.
         if state.step == .klaar, cake == nil, let spec = state.cake {
@@ -897,6 +902,7 @@ final class KitchenRoom {
         guard let oven else { return }
         ticker.squash(oven.dome, amount: 0.16)
         blink(oven)
+        googlyEyes(oven)
         guard state.step == .bakken else {
             // Otto is a toy the rest of the time, and says something different
             // every single time she pokes him.
@@ -1243,6 +1249,66 @@ final class KitchenRoom {
         }
     }
 
+    /// The pupils chase a small circle and come home — the googly wobble that
+    /// makes a tap on Otto feel like poking someone rather than something.
+    /// All offsets are from `pupilRest`, never from the current position, so
+    /// this can safely land in the middle of a glance.
+    private func googlyEyes(_ oven: KitchenProps.Oven) {
+        let rest = oven.pupilRest
+        for pupil in oven.pupils {
+            ticker.tween(0.55, ease: Ease.linear, step: { [weak pupil] t in
+                let a = t * 2 * Float.pi
+                pupil?.position = rest + SIMD3<Float>(sin(a) * 0.0022,
+                                                      (cos(a) - 1) * 0.0022, 0)
+            }, done: { [weak pupil] in pupil?.position = rest })
+        }
+    }
+
+    // MARK: - Otto's eyes are alive
+
+    /// Every few seconds Otto blinks or glances somewhere. Purely cosmetic —
+    /// it never gates anything — but still eyes are dead eyes, and he is the
+    /// one prop with a face pointed at her for the whole round.
+    private func startEyeLife() {
+        ticker.cancel(eyeLifeJob)
+        var wait = Float.random(in: 2.0...4.0)
+        eyeLifeJob = ticker.add { [weak self] dt in
+            guard let self else { return false }
+            wait -= dt
+            if wait <= 0 {
+                wait = Float.random(in: 3.0...6.5)
+                if let oven = self.oven {
+                    Bool.random() ? self.blink(oven) : self.glance(oven)
+                }
+            }
+            return true
+        }
+    }
+
+    /// Both pupils drift to the same random spot, hold it for a beat, and
+    /// come back. Small on purpose: the offset keeps the pupil well inside
+    /// the eyeball (0.008 radius, pupil 0.004), so it reads as a look, not
+    /// an escape attempt.
+    private func glance(_ oven: KitchenProps.Oven) {
+        let rest = oven.pupilRest
+        let offset = SIMD3<Float>(Float.random(in: -0.0022...0.0022),
+                                  Float.random(in: -0.0012...0.0012), 0)
+        for pupil in oven.pupils {
+            ticker.tween(0.15, ease: Ease.out, step: { [weak pupil] t in
+                pupil?.position = rest + offset * t
+            })
+        }
+        ticker.after(0.85) { [weak self] in
+            guard let self, let oven = self.oven else { return }
+            for pupil in oven.pupils {
+                let from = pupil.position
+                self.ticker.tween(0.15, ease: Ease.out, step: { [weak pupil] t in
+                    pupil?.position = from + (rest - from) * t
+                }, done: { [weak pupil] in pupil?.position = rest })
+            }
+        }
+    }
+
     // MARK: - The idle nudge
 
     /// After ~25 s of nothing the thing she needs shimmers; after ~45 s Nina
@@ -1390,6 +1456,8 @@ final class KitchenRoom {
         doorGlowJob = nil
         ticker.cancel(idleJob)
         idleJob = nil
+        ticker.cancel(eyeLifeJob)
+        eyeLifeJob = nil
         clearHalo()
         baker?.stop()
         baker = nil

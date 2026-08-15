@@ -216,6 +216,13 @@ blue cake and Bo de vogel's entire wish is one. `Palette.berryBlue` and
 the derivation is written down where they are defined. Sample a real one if a
 plate with blue in it ever gets rendered.
 
+**And then a dark.** With Otto's door standing open for most of the round
+(owner's note on the 2026-08-15 build), the inside of his mouth has to read as
+a cavity, and the locked thirteen bottom out at `woodBrown` — a surface colour.
+`Palette.ovenInside` is `woodBrown` taken darker, used for that one interior
+and nothing else. The no-AO rule is about shadow pooled onto surfaces; a mouth
+is the one place where dark is the subject.
+
 ## The plank instead of the wall
 
 `GAMEPLAY.md` §2 says the wall of twelve frames is the game. It lives in the
@@ -243,7 +250,7 @@ be retired when the wall arrives, not grown.
 | `Kitchen/KitchenRoom.swift` | The room: assembly, the state machine, the toys, the nudges. |
 | `RoomBuilder.swift` | The shell and the furniture, plus `Layout` — every position in the room, in one table. |
 | `FacetedMesh.swift` | **The core of the look.** Flat-shaded primitive builders, plus the smooth variant for A/B. |
-| `Palette.swift` | The locked colours, the two added ones, and the glow material. |
+| `Palette.swift` | The locked colours, the three added ones, and the glow material. |
 | `UI/FacetButton.swift` | **The button.** One faceted octagon, every control in the game. |
 | `LightingRig.swift`, `LightingSettings.swift`, `DebugPanel.swift`, `ContactShadows.swift` | The POC's lighting work, unchanged. |
 | `ContentView.swift` | Scene assembly, the gesture, and the hidden developer panel. |

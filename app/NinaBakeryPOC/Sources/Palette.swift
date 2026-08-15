@@ -41,6 +41,15 @@ enum Palette {
     static let berryBlue     = hex(0xC2D2E8)
     static let berryBlueDeep = hex(0x9BB2D2)
 
+    /// A third addition: the inside of Otto's mouth. The locked thirteen
+    /// bottom out at `woodBrown`, which under the room's even lighting reads
+    /// as a wooden surface, not a cavity — and with the oven door standing
+    /// open all round, the mouth has to read as depth ("needs depth and thus
+    /// more shadow", owner's note on the 2026-08-15 build). The no-AO rule
+    /// bans shadow pooled onto *surfaces*; a mouth interior is the one place
+    /// where dark is the subject. Same hue as `woodBrown`, taken darker.
+    static let ovenInside    = hex(0x554C3F)
+
     /// Blend two palette colours. Used for one thing: batter coming up to
     /// colour as she stirs. Reading components back out is platform-specific,
     /// which is why it lives here rather than at the call site.

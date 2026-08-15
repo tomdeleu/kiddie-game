@@ -21,6 +21,11 @@ enum KitchenProps {
         let doorPivot: Entity
         let door: ModelEntity
         let eyes: [ModelEntity]
+        let pupils: [ModelEntity]
+        /// Where a pupil sits when Otto looks straight ahead, in eye-local
+        /// space. Every eye animation tweens back to this, so overlapping
+        /// glances can never leave a pupil stranded off-centre.
+        let pupilRest: SIMD3<Float>
         let chimneyTop: SIMD3<Float>
     }
 
@@ -64,16 +69,21 @@ enum KitchenProps {
         root.addChild(arch)
 
         // The dark opening. Slightly oversized so its edges hide behind the
-        // soffit rather than leaving a seam, and recessed so the mouth reads as
-        // having depth. It is solid: the tin slides in and is hidden by the
-        // door, which is also how a real oven works.
+        // soffit rather than leaving a seam, and recessed well behind the arch
+        // face so the mouth is a lined tunnel with a dark back wall, not a
+        // painted-on disc — the door now stands open most of the round, so
+        // this cavity is what gives Otto his depth. The recess stays inside
+        // the arch's own depth (0.034) so the tunnel walls are always the
+        // arch's inner surface, never a gap. It is solid: the tin slides in
+        // and is swallowed by the dark, which is also how a real oven works.
         let oversize: Float = 0.002
         let plugDepth: Float = 0.028
+        let plugRecess: Float = 0.022
         let mouth = RoomBuilder.model(.archPlug(radius: Layout.mouthArchInner + oversize,
                                                 legHeight: Layout.mouthLegHeight + oversize,
                                                 depth: plugDepth, segments: 6),
-                                      Palette.woodBrown, flat: flat, name: "OvenMouth")
-        mouth.position = [0, -oversize, archFront - 0.008 - plugDepth / 2]
+                                      Palette.ovenInside, flat: flat, name: "OvenMouth")
+        mouth.position = [0, -oversize, archFront - plugRecess - plugDepth / 2]
         root.addChild(mouth)
 
         // The door. Hinged at the bottom edge so it drops forward — which is
@@ -101,15 +111,19 @@ enum KitchenProps {
         // its vertices on the axes, which stands the shaft on a diamond edge;
         // the plate's chimney is square to the room.
         //
-        // Base low enough to bury itself in the dome — the surface is at
-        // y = 0.056 out where the chimney stands. Boxes are centred, so each
-        // y here is the part's centre.
+        // The shaft runs all the way to the floor. The ideal dome surface out
+        // where the chimney stands is at y = 0.056, but the dome is faceted —
+        // its real surface chords *inside* the ideal ellipsoid — so a shaft
+        // that merely dips below 0.056 can still hang in the air over a chord,
+        // which is exactly what the 2026-08-15 build showed. Grounded, it can
+        // never float, whatever the facets do. Boxes are centred, so each y
+        // here is the part's centre.
         let chimneyX: Float = 0.028
         let chimneyZ: Float = -0.030
 
-        let shaft = RoomBuilder.model(.box([0.022, 0.048, 0.022]),
+        let shaft = RoomBuilder.model(.box([0.022, 0.096, 0.022]),
                                       Palette.cream, flat: flat, name: "Chimney")
-        shaft.position = [chimneyX, 0.048 + 0.024, chimneyZ]
+        shaft.position = [chimneyX, 0.048, chimneyZ]
         body.addChild(shaft)
 
         let capSlab = RoomBuilder.model(.box([0.034, 0.006, 0.034]),
@@ -148,7 +162,9 @@ enum KitchenProps {
         // single dark ball read as a hole in the dome, not an eye. The pupil
         // is a child of the eyeball, so the blink (which scales the entities
         // in `eyes`) squeezes both together.
+        let pupilRest = SIMD3<Float>(0, 0, 0.0055)
         var eyes: [ModelEntity] = []
+        var pupils: [ModelEntity] = []
         for (i, dx) in [Float(-0.018), 0.018].enumerated() {
             let eye = RoomBuilder.model(.icosphere(radius: 0.008, subdivisions: 1),
                                         Palette.creamLight, flat: flat, name: "OttoEye\(i)")
@@ -158,19 +174,24 @@ enum KitchenProps {
 
             let pupil = RoomBuilder.model(.icosphere(radius: 0.004, subdivisions: 1),
                                           Palette.woodBrown, flat: flat, name: "OttoPupil\(i)")
-            pupil.position = [0, 0, 0.0055]
+            pupil.position = pupilRest
             eye.addChild(pupil)
+            pupils.append(pupil)
         }
+        // The cheeks stand clearly proud of the dome, on the same forward
+        // plane as the eyes. They used to sit at z = 0.030, mostly inside the
+        // faceted surface with one tip poking through a chord — which read as
+        // debris, not blush ("what is this?", 2026-08-15 build).
         for (i, dx) in [Float(-0.034), 0.034].enumerated() {
-            let cheek = RoomBuilder.model(.icosphere(radius: 0.007, subdivisions: 0),
+            let cheek = RoomBuilder.model(.icosphere(radius: 0.008, subdivisions: 0),
                                           Palette.rose, flat: flat, name: "OttoCheek\(i)")
-            cheek.position = [dx, 0.042, 0.030]
-            cheek.scale = [1, 0.7, 0.4]
+            cheek.position = [dx, 0.040, 0.042]
+            cheek.scale = [1, 0.7, 0.5]
             body.addChild(cheek)
         }
 
         return Oven(root: root, dome: dome, doorPivot: doorPivot, door: door,
-                    eyes: eyes,
+                    eyes: eyes, pupils: pupils, pupilRest: pupilRest,
                     chimneyTop: Layout.ovenOrigin + SIMD3<Float>(0.028, 0.112, -0.030))
     }
 
