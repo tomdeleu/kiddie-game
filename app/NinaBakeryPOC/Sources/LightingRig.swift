@@ -118,8 +118,9 @@ final class LightingRig {
 
             switch s.lightmapMode {
             case .off:
-                // Fully unoccluded — the direction's default.
-                material.ambientOcclusion = .init(scale: 1.0)
+                // No occlusion map — fully unoccluded, the material's default.
+                // `AmbientOcclusion` carries only a texture; there is no scale.
+                material.ambientOcclusion = .init(texture: nil)
             case .ambientOcclusion:
                 if let aoLightmap {
                     material.ambientOcclusion = .init(texture: .init(aoLightmap))

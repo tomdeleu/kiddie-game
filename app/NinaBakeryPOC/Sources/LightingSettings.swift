@@ -3,10 +3,14 @@ import simd
 
 /// Everything the debug panel can tweak, in one observable object.
 ///
-/// Defaults are the starting guess at matching
-/// `references/plates/03-kitchen-roombox.png`. They are a guess — finding the
-/// real numbers on a device is the entire point of this POC. Use
-/// **Copy settings** in the panel to lift whatever you land on.
+/// **These defaults are approved.** Signed off on iPad on 2026-08-15 against
+/// `references/plates/03-kitchen-roombox.png` — no slider needed moving from
+/// its starting value, so what is written here is what was judged good. The
+/// key light at 2200 lx / 42° / 135° / 6200 K with shadows on, over an 900 lx
+/// 7800 K fill and no IBL, is the look.
+///
+/// Treat a change here as a change to the art direction, not a tweak. Use
+/// **Copy settings** in the panel to lift a new setup before overwriting one.
 final class LightingSettings: ObservableObject {
 
     enum RoomSource: String, CaseIterable, Identifiable {

@@ -104,6 +104,12 @@ same tone), **lighting too strong** (hard shadows appear). Change one at a time.
 
 ## Lighting without AO
 
+> **Answered, 2026-08-15.** It holds. The approved numbers are the committed
+> defaults in `app/NinaBakeryPOC/Sources/LightingSettings.swift`, tabulated in
+> [`app/README.md`](app/README.md#approved-lighting). Item 3 below turned out
+> not to be needed — a second directional fill light stands in for the IBL, and
+> no environment asset is bundled.
+
 The old direction leaned on baked ambient occlusion for its sense of depth. This
 one deliberately does not. What replaces it, in the order the depth actually
 comes from:

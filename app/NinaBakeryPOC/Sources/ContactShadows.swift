@@ -34,7 +34,8 @@ enum ContactShadows {
         disc.name = markerName
         disc.scale = .init(repeating: settings.contactShadowScale)
         prop.addChild(disc)
-        place(disc, under: prop, settings: settings)
+        // Positioning is `update`'s job — the surface below is not known here.
+        // Callers follow every `attach` with an `update`.
     }
 
     static func removeFrom(_ prop: Entity) {

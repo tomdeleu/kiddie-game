@@ -8,11 +8,32 @@ There is no game in here. One room, three loose props, and a debug panel for
 tuning the lighting until it matches — or fails to match —
 `references/plates/03-kitchen-roombox.png`.
 
-> **Written but never compiled.** This was authored in a Linux container with no
-> Xcode, Swift toolchain, or Blender. The code follows the RealityKit APIs as
-> documented, but nothing here has been through a compiler. Expect to fix a
-> signature or two on first build; the places most likely to need it are flagged
-> in comments.
+> **Builds and runs on device** as of 2026-08-15 (iPadOS, Xcode 26.5). It was
+> originally authored blind in a Linux container with no Swift toolchain, so the
+> first build needed two fixes: `PhysicallyBasedMaterial.AmbientOcclusion` takes
+> only a texture, not a `scale`, and `ContactShadows` called a helper that was
+> never written.
+
+## Approved lighting
+
+**Settled on iPad, 2026-08-15.** The values in `LightingSettings.swift` are the
+approved ones — every slider was judged good where it started, so the committed
+defaults *are* the result.
+
+| | |
+|---|---|
+| Key | 2200 lx, 42° elevation, 135° azimuth, 6200 K, shadows **on** |
+| Fill | 900 lx, 7800 K, opposite the key at 18° |
+| IBL | off — no environment bundled, and it is not missed |
+| Contact shadows | on, opacity 0.18, scale 1.15 |
+| Lightmap | off |
+
+This answers the POC's main question in the affirmative: **the faceted direction
+holds with real-time light only, no baked AO.** The key light's cast shadow does
+the grounding that AO was there for, and it stays correct when a prop moves.
+
+Changing these is an art-direction decision, not a tweak. Lift any new setup
+with **Copy settings** before overwriting.
 
 ## Read this before opening it: the simulator
 
@@ -56,7 +77,7 @@ Everything is plain Swift in one folder precisely so this fallback is trivial.
 
 | File | What |
 |---|---|
-| `FacetedMesh.swift` | **The core.** Flat-shaded primitive builders — box, prism, tapered prism, icosphere, dome — plus the smooth variant for A/B. |
+| `FacetedMesh.swift` | **The core.** Flat-shaded primitive builders — box, prism, tapered prism, icosphere, dome, bowl, archway — plus the smooth variant for A/B. |
 | `Palette.swift` | The 13 locked base colours from `references/REFERENCES.md` §4. |
 | `RoomBuilder.swift` | The kitchen room box and props, in metres, at the 0.4 m scale from `POC.md`. |
 | `LightingRig.swift` | Every light in the scene. Key, fill, IBL, and the lightmap application. |
@@ -72,6 +93,14 @@ rounded, which is exactly what this style must not be. Every triangle gets its
 own three vertices carrying the face normal, so no normal is shared between
 adjacent faces. That is what makes a 80-face sphere return ~80 distinct tones
 under a single light — and it is the whole argument for not needing AO.
+
+Because the normal comes from the winding, **winding is load-bearing** — a
+reversed triangle is both unlit and invisible, and you see the surface behind
+it. Two rounds of see-through props came from exactly that. Every primitive is
+now a closed solid wound outward (the dome's base is the one deliberate
+exception; it sits on the floor, and a disc there would z-fight). A hollow
+vessel needs a real inner wall — a single-walled cone has no inside, which is
+why `bowl` exists and `taperedPrism` is not it.
 
 The **Flat shading** toggle in the panel switches to averaged normals. That is
 the "before" picture, and it is the single most informative control in the app:

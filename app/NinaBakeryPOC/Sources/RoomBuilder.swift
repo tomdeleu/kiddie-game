@@ -56,43 +56,64 @@ enum RoomBuilder {
 
     // MARK: - Props
 
-    /// Faceted dome plus an arch, per `references/props/oven.png`.
+    /// Faceted dome, a protruding archway and a chimney, per
+    /// `references/props/oven.png`.
     static func buildOven(flat: Bool) -> Entity {
         let oven = Entity()
         oven.name = "Oven"
         oven.position = [0.09, 0.004, -0.10]
 
-        let dome = model(.dome(radius: 0.062, height: 0.075, sides: 8, rings: 4),
+        let domeRadius: Float = 0.062
+        let dome = model(.dome(radius: domeRadius, height: 0.075, sides: 8, rings: 4),
                          Palette.mint, flat: flat, name: "OvenDome")
         oven.addChild(dome)
 
-        // Arch: a shallow ring of blocks reads as an opening at this scale and
-        // stays honest to the low-poly count.
-        let arch = Entity()
-        arch.name = "OvenArch"
-        let segments = 7
-        for i in 0..<segments {
-            let t = Float(i) / Float(segments - 1)
-            let angle = .pi * t
-            let r: Float = 0.036
-            let block = model(.box([0.012, 0.016, 0.012]),
-                              Palette.rose, flat: flat, name: "ArchBlock\(i)")
-            block.position = [cos(angle) * r, sin(angle) * r + 0.002, 0.058]
-            block.orientation = simd_quatf(angle: angle - .pi / 2, axis: [0, 0, 1])
-            arch.addChild(block)
-        }
+        // The mouth is one continuous archway, not a ring of separate blocks:
+        // the plate shows a single moulded surround, and loose blocks read as
+        // rubble at this size.
+        //
+        // The Z numbers are the fiddly part. The dome is an ellipsoid,
+        // (x²+z²)/r² + y²/h² = 1, so it bulges furthest forward at the centre
+        // of the mouth — z = 0.062 there, but only z = 0.052 out at the legs.
+        // The arch's back plane sits behind the near one so it looks embedded;
+        // anything meant to be seen *through* the opening has to sit in front
+        // of the far one, or the mint dome shows through instead.
+        let archInner: Float = 0.024
+        let archLeg: Float = 0.012
+        let archDepth: Float = 0.034
+        let archBack: Float = 0.042
+        let archFront = archBack + archDepth          // 0.076, clear of the dome
+
+        let arch = model(.archRing(innerRadius: archInner, outerRadius: 0.034,
+                                   legHeight: archLeg, depth: archDepth, segments: 6),
+                         Palette.rose, flat: flat, name: "OvenArch")
+        arch.position = [0, 0, archBack + archDepth / 2]
         oven.addChild(arch)
 
-        // Dark opening behind the arch.
-        let mouth = model(.box([0.052, 0.040, 0.010]),
+        // The dark opening. Same outline as the arch but slightly oversized, so
+        // its edges are hidden behind the soffit rather than leaving a seam,
+        // and recessed into the tunnel so the mouth reads as having depth.
+        let mouthOversize: Float = 0.002
+        let mouthDepth: Float = 0.028
+        let mouth = model(.archPlug(radius: archInner + mouthOversize,
+                                    legHeight: archLeg + mouthOversize,
+                                    depth: mouthDepth, segments: 6),
                           Palette.woodBrown, flat: flat, name: "OvenMouth")
-        mouth.position = [0, 0.020, 0.052]
+        // Y offset keeps the plug's arc centre on the arch's.
+        mouth.position = [0, -mouthOversize, archFront - 0.008 - mouthDepth / 2]
         oven.addChild(mouth)
 
+        // Base low enough to bury itself in the dome — the surface is at
+        // y = 0.056 out where the chimney stands.
         let chimney = model(.prism(radius: 0.011, height: 0.045, sides: 4),
                             Palette.creamLight, flat: flat, name: "Chimney")
-        chimney.position = [0.028, 0.058, -0.030]
+        chimney.position = [0.028, 0.050, -0.030]
         oven.addChild(chimney)
+
+        let chimneyCap = model(.prism(radius: 0.015, height: 0.008, sides: 4),
+                               Palette.cream, flat: flat, name: "ChimneyCap")
+        chimneyCap.position = [0.028, 0.091, -0.030]
+        oven.addChild(chimneyCap)
 
         return oven
     }
@@ -147,8 +168,9 @@ enum RoomBuilder {
     /// The two draggables and the bowl from `POC.md` Stage B. Kept separate
     /// from the room so they can carry contact shadows and, later, gestures.
     static func buildLooseProps(flat: Bool) -> [Entity] {
-        let bowl = model(.taperedPrism(bottomRadius: 0.020, topRadius: 0.030,
-                                       height: 0.024, sides: 12),
+        let bowl = model(.bowl(bottomRadius: 0.020, topRadius: 0.030, height: 0.024,
+                               wallThickness: 0.0028, floorThickness: 0.0035,
+                               sides: 12, rings: 3),
                          Palette.blushPink, flat: flat, name: "Bowl")
         bowl.position = [-0.055, 0.070, 0.045]
 
@@ -173,6 +195,11 @@ enum RoomBuilder {
         case taperedPrism(bottomRadius: Float, topRadius: Float, height: Float, sides: Int)
         case icosphere(radius: Float, subdivisions: Int)
         case dome(radius: Float, height: Float, sides: Int, rings: Int)
+        case bowl(bottomRadius: Float, topRadius: Float, height: Float,
+                  wallThickness: Float, floorThickness: Float, sides: Int, rings: Int)
+        case archRing(innerRadius: Float, outerRadius: Float, legHeight: Float,
+                      depth: Float, segments: Int)
+        case archPlug(radius: Float, legHeight: Float, depth: Float, segments: Int)
 
         var geometry: FacetedMesh.Geometry {
             switch self {
@@ -186,6 +213,16 @@ enum RoomBuilder {
                 return FacetedMesh.icosphere(radius: r, subdivisions: sub)
             case .dome(let r, let h, let s, let rings):
                 return FacetedMesh.dome(radius: r, height: h, sides: s, rings: rings)
+            case .bowl(let br, let tr, let h, let wall, let floor, let s, let rings):
+                return FacetedMesh.bowl(bottomRadius: br, topRadius: tr, height: h,
+                                        wallThickness: wall, floorThickness: floor,
+                                        sides: s, rings: rings)
+            case .archRing(let ir, let or, let leg, let d, let seg):
+                return FacetedMesh.archRing(innerRadius: ir, outerRadius: or,
+                                            legHeight: leg, depth: d, segments: seg)
+            case .archPlug(let r, let leg, let d, let seg):
+                return FacetedMesh.archPlug(radius: r, legHeight: leg,
+                                            depth: d, segments: seg)
             }
         }
     }
