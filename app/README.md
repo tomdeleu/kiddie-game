@@ -48,6 +48,16 @@ than 4:3 are in
 The short version: padding to 16:9 means filling the screen crops the sides,
 never the top, so no iPad aspect can crop into the title.
 
+The view fills the screen the way `object-fit: cover` does, and getting there
+takes three things together — a `GeometryReader` to measure, an explicit
+`frame` to pin the image to that size, and `clipped()` to throw the overflow
+away. **`scaledToFill()` alone does not do it**, which is worth knowing before
+writing the next full-bleed screen: it reports its overflowed size as its
+layout size, so the enclosing stack grows to the image rather than cropping it.
+The plate came out too big, and off-centre with it, because the stack it sits
+in is `alignment: .topTrailing` for the developer corner's sake and an
+oversized child gets pinned to a corner instead of centred.
+
 ### The film
 
 Fourteen seconds, two shots, narrated end to end:
