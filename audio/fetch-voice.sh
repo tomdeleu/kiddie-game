@@ -8,7 +8,7 @@
 #
 # These are Higgsfield result URLs and they may expire. If they 404, regenerate
 # instead: `script-keuken.json` holds every line's text and the character's
-# voice_id, which reproduces the whole set (86 lines, ~26 credits).
+# voice_id, which reproduces the whole set (104 lines, ~32 credits).
 #
 # Egress note: the sandbox allowlist has to include d8j0ntlcm91z4.cloudfront.net.
 
@@ -106,11 +106,12 @@ fetch "hf_20260815_122014_b08247dc-4e8d-4560-ac76-af7c54399a96.mp3" "nina-klaar-
 fetch "hf_20260815_122014_90bd7030-d75d-4747-ac00-cb9bafc3fa14.mp3" "nina-klaar-3.mp3"
 
 # One line per shot, each written to that shot's measured length — see the
-# _timing block in script-intro.json. An earlier set of three shorter lines
-# (welkom / binnen / a briefer keuken) was replaced by these and is not fetched.
+# _timing block in script-intro.json. Regenerated 2026-08-15: the previous pair
+# ran 10.60 s under 14.08 s of film and left the last third of each shot silent.
+# These run 13.33 s and end about two tenths before their own cuts.
 echo "Nina, opening film:"
-fetch "hf_20260815_175122_41ff7a9e-2643-4b46-9f7a-07cda0a1128c.mp3" "nina-intro-buiten-1.mp3"
-fetch "hf_20260815_140133_5d4aec7b-5d5d-436f-8c4e-863fa14be2c6.mp3" "nina-intro-keuken-1.mp3"
+fetch "hf_20260815_184714_5052a0ad-feb2-4464-abca-43e855589390.mp3" "nina-intro-buiten-1.mp3"
+fetch "hf_20260815_184714_5f10a786-5bd1-47b1-a993-a7dc3b354f58.mp3" "nina-intro-keuken-1.mp3"
 
 # Added when the speaker was recast as Nina: the round's opening instruction,
 # the rolling step, the per-source nudges and the restart line.
@@ -118,10 +119,24 @@ fetch "hf_20260815_175136_c3660c19-ed26-468b-8be7-8d0e52496f3e.mp3" "nina-keuken
 fetch "hf_20260815_175136_4fe525bc-99f1-4463-a7a4-f3102fcc75a4.mp3" "nina-keuken-uitrollen-1.mp3"
 fetch "hf_20260815_175136_2e04017d-1185-411d-9240-a1e7b10a3e79.mp3" "nina-keuken-deegKlaar-1.mp3"
 fetch "hf_20260815_175136_a28daf0b-07c0-4836-a5e6-aa0960c2441c.mp3" "nina-keuken-pakGlimmend-1.mp3"
-fetch "hf_20260815_175136_8cfc0fad-f340-479c-90ef-dad5059821ca.mp3" "nina-bron-plank-1.mp3"
 fetch "hf_20260815_175136_6f01e091-4bbd-4bb8-8baf-8dd6ab73bad1.mp3" "nina-bron-aanrecht-1.mp3"
-fetch "hf_20260815_175144_eb54ab9d-00ae-4218-8203-b2fc748cc234.mp3" "nina-bron-mandje-1.mp3"
 fetch "hf_20260815_175144_559353e5-0ff5-48b3-bdab-d5cd2a1a7fcd.mp3" "nina-keuken-opnieuw-1.mp3"
+
+# Added when the round grew from three ingredients to five and the last step
+# became carrying the cake up onto the plank. `nina-bron-plank-1.mp3` is gone:
+# there are two shelves now, so one line saying "van de plank" cannot say which.
+# `nina.bron.mandje` was regenerated too — it used to say "de laatste", and the
+# basket is the fourth of five.
+fetch "hf_20260815_184714_08f439dc-c01e-4178-8cc1-cc2e51153b4c.mp3" "nina-bron-plankHoog-1.mp3"
+fetch "hf_20260815_184714_6712901d-9454-426a-b9b9-5f928dc4c643.mp3" "nina-bron-plankHoog-2.mp3"
+fetch "hf_20260815_184714_64768b4a-d431-48b1-b3c7-7bac773559fd.mp3" "nina-bron-plankLaag-1.mp3"
+fetch "hf_20260815_184714_06b431ef-2524-4f27-b0d8-485d63e2bed3.mp3" "nina-bron-plankLaag-2.mp3"
+fetch "hf_20260815_184714_21f8565a-8a58-46fb-9d24-7fefc80beaff.mp3" "nina-bron-mandje-1.mp3"
+fetch "hf_20260815_184714_4e712266-e289-49bf-8c4f-9fac65f661ce.mp3" "nina-bron-mandje-2.mp3"
+fetch "hf_20260815_184714_1b8c8473-fdf1-4492-9e18-ebc15622fefd.mp3" "nina-bron-krat-1.mp3"
+fetch "hf_20260815_184714_bd77d669-60b4-400b-81e4-076799fce0fa.mp3" "nina-bron-krat-2.mp3"
+fetch "hf_20260815_184714_19bf60cc-4e95-4327-a8b6-ccd6010db992.mp3" "nina-keuken-opDePlank-1.mp3"
+fetch "hf_20260815_184714_19a8dcf7-0a07-45ce-9c7f-c2191ac9d887.mp3" "nina-keuken-opDePlank-2.mp3"
 
 echo "Otto:"
 fetch "hf_20260815_122030_2dec7cd2-aaf3-4f1b-8d55-611737cd89d3.mp3" "otto-tik-1.mp3"
@@ -145,4 +160,4 @@ fetch "hf_20260815_122041_9294bce9-6ec8-4038-9ec5-49ca0ac00737.mp3" "otto-wacht-
 cp script-keuken.json "$OUT/script-keuken.json"
 cp script-intro.json "$OUT/script-intro.json"
 
-echo "Done. 96 lines in $OUT"
+echo "Done. 104 lines in $OUT"

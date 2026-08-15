@@ -64,53 +64,78 @@ enum Layout {
     /// that never gets tapped.
     static let bakerSpot = SIMD3<Float>(-0.105, floorY, -0.062)
 
-    /// **The three places an ingredient can come from, in order.**
+    /// **The five places an ingredient can come from, in order.**
     ///
     /// `GAMEPLAY.md` had all three in one basket on the table. Spreading them
     /// across the room is what makes it a kitchen rather than a work surface —
     /// she has to look up at the shelf, along the counter, and only then down
-    /// at the table. The order is fixed and the halo says which is next, so
-    /// three places never becomes three decisions.
+    /// at the table. The order is suggested by the halo, not enforced, so five
+    /// places never becomes five decisions.
+    ///
+    /// **It grew from three to five**, and the two it grew by are deliberately
+    /// the extremes of reach: the top shelf is the highest thing in the room
+    /// and the crate is on the floor. Every other prop lives on a work surface
+    /// within ten centimetres of the same height, so those two are what make
+    /// the room feel like it has a ceiling and a floor rather than one plane
+    /// with things on it.
     enum Source: Int, CaseIterable {
-        case plank = 0      // the wall shelf, up on the left
-        case aanrecht = 1   // the back counter
-        case mandje = 2     // the basket on the table
+        case plankHoog = 0  // the upper wall shelf — the highest reach in the room
+        case plankLaag = 1  // the lower wall shelf
+        case aanrecht = 2   // the pot on the back counter
+        case mandje = 3     // the basket on the table
+        case krat = 4       // the crate on the floor — the lowest reach
 
         /// Where its ingredient waits.
         var spot: SIMD3<Float> {
             switch self {
-            case .plank: return SIMD3<Float>(-0.181, 0.164, 0.030)
+            case .plankHoog: return SIMD3<Float>(-0.181, 0.164, 0.030)
+            case .plankLaag: return SIMD3<Float>(-0.181, 0.119, 0.030)
             case .aanrecht: return SIMD3<Float>(-0.050, counterTopY + 0.011, -0.150)
             case .mandje: return basketHome + SIMD3<Float>(0, 0.012, 0)
+            case .krat: return crateSpot + SIMD3<Float>(0, 0.017, 0)
             }
         }
 
-        /// The plane a drag off this source is projected onto — the surface it
-        /// is standing on, so the grab does not jump under her finger.
-        var planeY: Float {
-            switch self {
-            case .plank: return 0.164
-            case .aanrecht: return counterTopY + 0.011
-            case .mandje: return tableTopY + 0.012
-            }
-        }
+        /// The plane a drag off this source starts on — the surface it is
+        /// standing on, so the grab does not jump under her finger. It is only
+        /// the *starting* plane: `KitchenRoom` moves it with the prop as it
+        /// descends, which is what lets one drag cross four different heights.
+        var planeY: Float { spot.y }
 
-        /// What Nina says as this one lights up.
+        /// What Nina says as this one lights up. Through `Line` rather than as
+        /// literals, so the five ids are spelled once in the game — a typo here
+        /// is a silent source, which is the hardest kind of bug to notice.
         var lineID: String {
             switch self {
-            case .plank: return "nina.bron.plank"
-            case .aanrecht: return "nina.bron.aanrecht"
-            case .mandje: return "nina.bron.mandje"
+            case .plankHoog: return Line.bronPlankHoog
+            case .plankLaag: return Line.bronPlankLaag
+            case .aanrecht: return Line.bronAanrecht
+            case .mandje: return Line.bronMandje
+            case .krat: return Line.bronKrat
             }
         }
     }
 
-    // Toys on the counter, re-spaced when the ingredient pot moved in beside
-    // them. Four things on a 0.20 m run: sink, scale, pot, flour sack, each
-    // clear of the next by at least a centimetre.
+    /// How many ingredients a round collects. Five sources, five ingredients.
+    static var ingredientsPerRound: Int { Source.allCases.count }
+
+    // Toys on the counter. The flour sack used to be the fourth thing on this
+    // 0.20 m run and is now on the floor, which left the counter with room to
+    // breathe: sink, scale, and the ingredient pot.
     static let sinkSpot = SIMD3<Float>(-0.150, counterTopY, -0.158)
     static let scaleSpot = SIMD3<Float>(-0.098, counterTopY, -0.152)
-    static let flourSpot = SIMD3<Float>(-0.008, counterTopY, -0.152)
+
+    /// **The flour sack sits on the floor**, in the near-left foreground where
+    /// the room is open. A sack of flour is a heavy thing, and a heavy thing on
+    /// a worktop reads as a jar; on the ground it reads as a sack. It is also
+    /// the one prop in front of the table, which gives the shot a foreground.
+    static let flourSpot = SIMD3<Float>(-0.055, floorY, 0.152)
+
+    /// The crate the fifth ingredient waits in, on the floor to Otto's near
+    /// side. Placed off the table's right edge rather than behind it: the
+    /// camera looks down the +X+Z diagonal, so floor to the *left* of the table
+    /// is hidden by the table itself and floor to the right is not.
+    static let crateSpot = SIMD3<Float>(0.098, floorY, 0.042)
 
     /// The plank on the back wall the finished cakes stand on.
     static let cakePlankY: Float = 0.135
@@ -130,6 +155,61 @@ enum Layout {
         simd_length(SIMD2<Float>(a.x - b.x, a.z - b.z))
     }
 
+    // MARK: - Height
+
+    /// **What a prop is standing on at this point in the room.**
+    ///
+    /// Everything used to be carried at one height — the table top — whatever
+    /// it was over, which is why the room read as a painted backdrop: a prop
+    /// dragged off the table stayed at table height and simply floated. The
+    /// fix is not a physics engine; it is knowing what is underneath. Four
+    /// surfaces answer for the whole room, tested nearest-camera first so the
+    /// table wins over the counter where their footprints meet.
+    ///
+    /// `KitchenRoom.carry` eases the carried prop towards this plus a small
+    /// lift, and the drag plane follows it down. So dragging the rolling pin
+    /// off the table and onto the floor *lowers* it, over about a third of a
+    /// second, and it stays under her finger the whole way.
+    ///
+    /// **The cake plank is deliberately not in here.** It hangs on the wall
+    /// directly above the back of the counter, so as a surface it would shadow
+    /// the counter and fling the sink brush shelf-high. It is a snap target
+    /// instead — see `nearPlank` — and only the cake ever uses it.
+    static func surfaceY(at point: SIMD3<Float>) -> Float {
+        if within(point, centre: tableCentre, size: tableSize, margin: 0.006) {
+            return tableTopY
+        }
+        if within(point, centre: counterCentre, size: counterSize, margin: 0.006) {
+            return counterTopY
+        }
+        return floorY
+    }
+
+    /// Whether a point is close enough to the plank to count as putting a cake
+    /// on it. Generous by design: `CONCEPT.md` §5 asks for drops that count
+    /// when they land *near*, and this is the last action of the whole round.
+    static let plankSnapRadius: Float = 0.062
+
+    static func nearPlank(_ point: SIMD3<Float>) -> Bool {
+        let centre = SIMD3<Float>(cakePlankCentre.x, cakePlankY, cakePlankCentre.y)
+        // Along the plank it is a whole shelf wide; away from the wall it is
+        // the snap radius, so reaching for it from the table still counts.
+        return abs(point.x - centre.x) <= cakePlankLength / 2 + plankSnapRadius
+            && abs(point.z - centre.y) <= plankSnapRadius
+    }
+
+    /// True where `point` is over a rectangle, grown by `margin` so a prop set
+    /// down right on an edge lands on the surface rather than beside it.
+    private static func within(_ point: SIMD3<Float>, centre: SIMD2<Float>,
+                               size: SIMD2<Float>, margin: Float) -> Bool {
+        abs(point.x - centre.x) <= size.x / 2 + margin
+            && abs(point.z - centre.y) <= size.y / 2 + margin
+    }
+
+    /// How far above whatever it is standing on a carried prop floats. Small,
+    /// but not nothing: it is what says *held* rather than *shoved*.
+    static let carryLift: Float = 0.012
+
     /// How far a carried prop may travel.
     ///
     /// **The whole working half of the room, not the table.** Two things pushed
@@ -142,13 +222,21 @@ enum Layout {
     ///   clamp that began at the table's edge yanked them four centimetres
     ///   sideways the instant she picked one up.
     ///
-    /// A prop released anywhere in here that is not near something simply
-    /// floats home, so being generous costs nothing.
+    /// A prop released anywhere in here simply stays where it was put, so being
+    /// generous costs nothing.
+    ///
+    /// **The near edge grew** when props stopped floating home. A prop released
+    /// nowhere in particular now lands on whatever is under it, and the floor
+    /// strip in front of the table — the open near side of the room box — is
+    /// both the most visible floor there is and the only place a thing can be
+    /// set down without something else already being there. Stopping the clamp
+    /// at the table's near edge would have made the one obvious place to put a
+    /// rolling pin down the one place it could not go.
     static func clampToPlayArea(_ p: SIMD3<Float>) -> SIMD3<Float> {
         let minX: Float = -0.180
         let maxX: Float = 0.145
-        let minZ: Float = -0.170
-        let maxZ: Float = tableCentre.y + tableSize.y / 2 - 0.010
+        let minZ: Float = -0.178
+        let maxZ: Float = 0.162
         return SIMD3<Float>(min(max(p.x, minX), maxX), p.y, min(max(p.z, minZ), maxZ))
     }
 }
@@ -317,6 +405,9 @@ enum RoomBuilder {
         case archRing(innerRadius: Float, outerRadius: Float, legHeight: Float,
                       depth: Float, segments: Int)
         case archPlug(radius: Float, legHeight: Float, depth: Float, segments: Int)
+        case lathe(profile: [SIMD2<Float>], sides: Int)
+        case extrude(outline: [SIMD2<Float>], thickness: Float)
+        case star(points: Int, outerRadius: Float, innerRadius: Float, thickness: Float)
 
         var geometry: FacetedMesh.Geometry {
             switch self {
@@ -340,6 +431,13 @@ enum RoomBuilder {
             case .archPlug(let r, let leg, let d, let seg):
                 return FacetedMesh.archPlug(radius: r, legHeight: leg,
                                             depth: d, segments: seg)
+            case .lathe(let profile, let sides):
+                return FacetedMesh.lathe(profile: profile, sides: sides)
+            case .extrude(let outline, let thickness):
+                return FacetedMesh.extrude(outline, thickness: thickness)
+            case .star(let points, let outer, let inner, let thickness):
+                return FacetedMesh.star(points: points, outerRadius: outer,
+                                        innerRadius: inner, thickness: thickness)
             }
         }
     }

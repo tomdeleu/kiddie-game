@@ -33,23 +33,56 @@ import simd
 @MainActor
 enum Halo {
 
+    /// How many of a prop's surfaces get lit.
+    ///
+    /// Eight rather than four, because the ingredients stopped being single
+    /// blobs: a strawberry is a body and six leaves, a honey pot is five
+    /// pieces, and lighting only the first four of them lit *part* of the
+    /// thing she was being pointed at, which is worse than lighting none of it.
+    /// Otto has more parts than this and is deliberately not fully lit — at his
+    /// size the dome and the arch carry it.
+    private static let surfaceLimit = 8
+
     /// Light up a prop, and keep it lit until `remove`.
     ///
     /// `size` is roughly the prop's radius — it only sets how wide the sparkles
     /// scatter, since nothing is drawn at that distance any more.
+    ///
+    /// ## Why it was invisible, and what changed
+    ///
+    /// The first version moved `emissiveIntensity` between 0.25 and 1.1 and
+    /// left the base colour alone. On paper that is a glow; on the iPad it was
+    /// nothing at all, and for a reason worth writing down rather than
+    /// re-discovering. Every surface in this game is a **pale pastel** lit by a
+    /// **2200 lx key** (`LightingSettings`), so it is already returning most of
+    /// the light it can. Adding an emissive term below 1 to a surface that is
+    /// three-quarters of the way to white moves it a few percent — and it moves
+    /// it *towards white*, in a room where everything else is also nearly
+    /// white. The cue was there in the buffer and not on the screen.
+    ///
+    /// So it now does three things instead of one, and any one of them alone
+    /// would be visible:
+    ///
+    /// - **Emissive runs 1.2 to 5.0**, well past the point where the surface
+    ///   clearly outruns its neighbours rather than nudging them.
+    /// - **The base colour brightens with it**, up to 40% of the way to white,
+    ///   so the prop reads brighter even where emissive is being tone-mapped
+    ///   away. The *hue* still never moves — colour means what the cake will
+    ///   be, and a cue that recoloured things would teach otherwise.
+    /// - **It breathes down to almost nothing.** The bottom of the pulse is
+    ///   near the prop's own colour, so the eye catches the *change*. A steady
+    ///   bright object in a bright room is camouflage; a pulsing one is not.
     @discardableResult
     static func attach(to entity: Entity, radius size: Float, ticker: Ticker,
                        colour: UIColorLike = Palette.butterYellow) -> Int {
 
-        // Every surface of the prop, up to a handful. A compound prop like the
-        // tin or the rolling pin has to glow as one thing, but Otto has ten
-        // parts and lighting all of them is waste nobody can see.
-        let models = surfaces(of: entity, limit: 4)
+        let models = surfaces(of: entity, limit: surfaceLimit)
         let originals = models.map { $0.model?.materials ?? [] }
+        let tints = originals.map { tint(of: $0) }
 
         var clock: Float = 0
         var lastStep: Int = -1
-        var nextSparkle: Float = 0.4
+        var nextSparkle: Float = 0.25
 
         return ticker.add { [weak entity] dt in
             guard let entity, entity.parent != nil else {
@@ -67,20 +100,22 @@ enum Halo {
             let step = Int(wave * 12)
             if step != lastStep {
                 lastStep = step
-                let intensity = 0.25 + 0.85 * (Float(step) / 12)
+                let t = Float(step) / 12
+                let intensity = 1.2 + 3.8 * t
                 for (index, model) in models.enumerated() {
-                    guard let tint = tint(of: originals[index]) else { continue }
-                    model.model?.materials = [Palette.glowMaterial(tint, intensity: intensity)]
+                    guard let tint = tints[index] else { continue }
+                    let lit = Palette.mix(tint, Palette.white, 0.40 * t)
+                    model.model?.materials = [Palette.glowMaterial(lit, intensity: intensity)]
                 }
             }
 
             nextSparkle -= dt
             if nextSparkle <= 0 {
-                nextSparkle = Float.random(in: 0.75...1.35)
+                nextSparkle = Float.random(in: 0.45...0.85)
                 if let parent = entity.parent {
                     Sparkles.burst(at: entity.position + [0, size * 0.9, 0],
                                    in: parent, ticker: ticker, colour: colour,
-                                   count: 3, size: 0.0022, speed: 0.045,
+                                   count: 4, size: 0.0024, speed: 0.05,
                                    gravity: 0.05, life: 0.9)
                 }
             }
@@ -91,7 +126,7 @@ enum Halo {
     /// Put the prop's own materials back. Safe to call on a prop that was never
     /// lit, and on one whose glow job has already ended by itself.
     static func remove(from entity: Entity, restoring saved: [[RealityKit.Material]]? = nil) {
-        let models = surfaces(of: entity, limit: 4)
+        let models = surfaces(of: entity, limit: surfaceLimit)
         for (index, model) in models.enumerated() {
             if let saved, index < saved.count {
                 model.model?.materials = saved[index]
@@ -106,8 +141,13 @@ enum Halo {
 
     /// Snapshot a prop's materials before lighting it, so they can go back
     /// exactly as they were.
+    ///
+    /// **Always take one.** `remove`'s fallback rebuilds the material from the
+    /// tint the *glowing* one is carrying, and that tint is now brightened
+    /// towards white — so a prop restored without a snapshot comes back paler
+    /// than it started. Every caller in the kitchen passes one.
     static func materials(of entity: Entity) -> [[RealityKit.Material]] {
-        surfaces(of: entity, limit: 4).map { $0.model?.materials ?? [] }
+        surfaces(of: entity, limit: surfaceLimit).map { $0.model?.materials ?? [] }
     }
 
     // MARK: - Internals

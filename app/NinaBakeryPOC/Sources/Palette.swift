@@ -24,6 +24,10 @@ enum Palette {
     /// Reference-plate backdrop only. Never on an in-game surface.
     static let backdropGrey  = hex(0xCFCECF)
 
+    /// Not a palette colour — the end point `Halo` mixes a prop's own tint
+    /// towards while it breathes. Nothing is ever painted this.
+    static let white         = hex(0xFFFFFF)
+
     // MARK: - Added for the kitchen
 
     /// **Two colours the locked thirteen do not contain.**
@@ -40,6 +44,16 @@ enum Palette {
     /// recorded here rather than inlined at the call site so it stays one edit.
     static let berryBlue     = hex(0xC2D2E8)
     static let berryBlueDeep = hex(0x9BB2D2)
+
+    /// **A third derived colour**, for the same reason and by the same method.
+    ///
+    /// `references/ingredients/honing.png` puts a pool of honey inside a cream
+    /// pot, and `butterYellow` beside `creamLight` is not enough separation to
+    /// read as a liquid — the pot swallows it. This is `butterYellow` carried
+    /// two steps towards `sandyWood`: the same hue family and the same
+    /// desaturation as the locked thirteen, one value darker than any of them.
+    /// It appears on exactly one surface in the game, the honey in the pot.
+    static let honeyAmber    = hex(0xD2A868)
 
     /// Blend two palette colours. Used for one thing: batter coming up to
     /// colour as she stirs. Reading components back out is platform-specific,
@@ -116,6 +130,37 @@ extension Palette {
         m.specular = .init(floatLiteral: 0.1)
         m.emissiveColor = .init(color: colour)
         m.emissiveIntensity = intensity
+        return m
+    }
+
+    /// Water, and only water.
+    ///
+    /// `references/REFERENCES.md` asks for no transparency anywhere, and this
+    /// is the one surface that overrules it: an opaque pastel blue prism is
+    /// what the tap used to be, and it read as a painted stick. Everything else
+    /// about it stays on style — it is still lit, still faceted, still matte.
+    static func waterMaterial(_ colour: UIColorLike,
+                              opacity: Float = 0.82) -> RealityKit.Material {
+        var m = PhysicallyBasedMaterial()
+        m.baseColor = .init(tint: colour)
+        m.roughness = .init(floatLiteral: 0.55)
+        m.metallic = .init(floatLiteral: 0.0)
+        m.specular = .init(floatLiteral: 0.25)
+        m.blending = .transparent(opacity: .init(floatLiteral: opacity))
+        return m
+    }
+
+    /// A lit, faceted surface that can be faded out. The flour cloud is the
+    /// only thing that uses it, and it needs the facets — `UnlitMaterial`,
+    /// which is how sparkles fade, would return one flat silhouette and the
+    /// puff would read as a paper cut-out.
+    static func fadingMaterial(_ colour: UIColorLike, opacity: Float) -> RealityKit.Material {
+        var m = PhysicallyBasedMaterial()
+        m.baseColor = .init(tint: colour)
+        m.roughness = .init(floatLiteral: 0.95)
+        m.metallic = .init(floatLiteral: 0.0)
+        m.specular = .init(floatLiteral: 0.05)
+        m.blending = .transparent(opacity: .init(floatLiteral: max(0, min(1, opacity))))
         return m
     }
 }

@@ -26,7 +26,21 @@ final class TouchRouter {
         var radius: Float
         /// Horizontal plane the drag is projected onto — the table top for
         /// props on the table, the counter for props on the counter.
+        ///
+        /// It is not a constant any more. Props travel between surfaces now, so
+        /// `KitchenRoom` drives this down with a prop as it is carried towards
+        /// the floor, and `tracksEntity` recomputes it at the start of the next
+        /// drag from wherever the prop ended up.
         var planeY: Float
+        /// Take `planeY` from the prop's own height when a drag begins, rather
+        /// than from whatever it was left at. True for everything that can be
+        /// put down somewhere other than where it started.
+        var tracksEntity = false
+        /// Added to the prop's height when `tracksEntity` recomputes the plane.
+        /// The bowl is the reason it exists: stirring has to happen on the
+        /// plane of its *rim*, two centimetres above where the bowl sits, or
+        /// the circle her finger draws lands nowhere near the whisk.
+        var planeOffset: Float = 0
         var enabled = true
         // Spelled `@MainActor` because that is what they are: closures formed
         // inside the room, touching entities and game state.
@@ -101,7 +115,11 @@ final class TouchRouter {
         startPoint = point
         travelled = 0
         active = hitTest(point)
-        guard let active, let world = world(for: active, at: point) else { return }
+        guard let active else { return }
+        if active.tracksEntity, let entity = active.entity {
+            active.planeY = entity.position(relativeTo: nil).y + active.planeOffset
+        }
+        guard let world = world(for: active, at: point) else { return }
         active.onDragBegan?(world)
     }
 

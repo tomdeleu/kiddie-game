@@ -72,7 +72,7 @@ enum Sparkles {
         }
     }
 
-    /// Slower, bigger, hangs in the air. Flour, steam, the poof from a sack.
+    /// Slower, bigger, hangs in the air. Steam off a chimney.
     static func puff(at position: SIMD3<Float>,
                      in parent: Entity,
                      ticker: Ticker,
@@ -80,6 +80,100 @@ enum Sparkles {
                      count: Int = 9) {
         burst(at: position, in: parent, ticker: ticker, colour: colour,
               count: count, size: 0.005, speed: 0.045, gravity: 0.02, life: 1.5)
+    }
+
+    /// **A cloud of flour**, per `references/ingredients/flour-cloud.png`.
+    ///
+    /// The flour sack used to poof `Sparkles.puff` — twelve unlit spheres
+    /// thrown on a ballistic arc, which is a firework, not a cloud. What the
+    /// plate shows is a *cluster*: a few big overlapping lobes that swell and
+    /// lift slowly together, ringed by small satellites drifting further out
+    /// and fading first.
+    ///
+    /// Four things separate it from a burst, and all four matter:
+    ///
+    /// - **It swells.** Each lobe grows to two or three times its size instead
+    ///   of shrinking away, which is the difference between dust dispersing
+    ///   and debris flying.
+    /// - **It is lit.** `Palette.fadingMaterial`, not `UnlitMaterial`, so the
+    ///   facets still shade and the cloud has a light side.
+    /// - **It barely moves outward.** Drift is a tenth of a sparkle's speed,
+    ///   with no gravity — flour hangs.
+    /// - **It fades in steps.** Opacity is quantised to eight levels, so a
+    ///   sixteen-lobe cloud rebuilds a handful of materials a second rather
+    ///   than a thousand.
+    static func cloud(at position: SIMD3<Float>,
+                      in parent: Entity,
+                      ticker: Ticker,
+                      colour: UIColorLike = Palette.creamLight,
+                      scale: Float = 1.0) {
+        // Big lobes first, then the satellites. Radius, offset, and how long it
+        // stays — the outliers go first, which is what makes it thin from the
+        // edges inward.
+        struct Lobe { let radius: Float; let offset: SIMD3<Float>; let life: Float }
+        var lobes: [Lobe] = []
+        for i in 0..<6 {
+            let a = Float(i) / 6 * 2 * .pi + Float.random(in: -0.3...0.3)
+            let r = Float.random(in: 0.004...0.007) * scale
+            lobes.append(Lobe(radius: r,
+                              offset: SIMD3<Float>(cos(a) * 0.006 * scale,
+                                                   Float.random(in: -0.002...0.005) * scale,
+                                                   sin(a) * 0.006 * scale),
+                              life: Float.random(in: 1.5...2.1)))
+        }
+        for i in 0..<10 {
+            let a = Float(i) / 10 * 2 * .pi + Float.random(in: -0.4...0.4)
+            let spread = Float.random(in: 0.011...0.019) * scale
+            lobes.append(Lobe(radius: Float.random(in: 0.0014...0.0030) * scale,
+                              offset: SIMD3<Float>(cos(a) * spread,
+                                                   Float.random(in: -0.004...0.008) * scale,
+                                                   sin(a) * spread),
+                              life: Float.random(in: 0.9...1.5)))
+        }
+
+        for lobe in lobes {
+            let geometry = FacetedMesh.icosphere(radius: lobe.radius, subdivisions: 1)
+            let mesh = FacetedMesh.flatShaded(positions: geometry.positions,
+                                              indices: geometry.indices)
+            let blob = ModelEntity(mesh: mesh,
+                                   materials: [Palette.fadingMaterial(colour, opacity: 0.85)])
+            // Named like a sparkle so `Halo.surfaces` keeps stepping over it if
+            // one drifts through a prop that happens to be lit.
+            blob.name = "Sparkle"
+            blob.position = position + lobe.offset
+            blob.scale = SIMD3<Float>(repeating: 0.35)
+            parent.addChild(blob)
+
+            // Outward and up, slowly. The lift is what says flour rather than
+            // smoke: it rises, but only just.
+            let drift = normalize(SIMD3<Float>(lobe.offset.x, 0.0001, lobe.offset.z))
+                * Float.random(in: 0.006...0.014)
+                + SIMD3<Float>(0, Float.random(in: 0.008...0.016), 0)
+            let start = blob.position
+            var age: Float = 0
+            var lastStep = -1
+            ticker.add { [weak blob] dt in
+                guard let blob else { return false }
+                age += dt
+                guard age < lobe.life else {
+                    blob.removeFromParent()
+                    return false
+                }
+                let t = age / lobe.life
+                blob.position = start + drift * age
+                // Swells fast at first and then eases, the way a puff does.
+                let remaining = 1 - t
+                blob.scale = SIMD3<Float>(repeating: 0.35 + 2.0 * (1 - remaining * remaining))
+                let step = Int((1 - t) * 8)
+                if step != lastStep {
+                    lastStep = step
+                    blob.model?.materials = [
+                        Palette.fadingMaterial(colour, opacity: 0.85 * Float(step) / 8)
+                    ]
+                }
+                return true
+            }
+        }
     }
 
     /// A ring that expands and fades on a surface — the "that worked" cue for a

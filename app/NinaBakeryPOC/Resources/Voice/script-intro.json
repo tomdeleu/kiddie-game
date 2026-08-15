@@ -4,17 +4,17 @@
   "_model": "text2speech_v2",
   "_variant": "elevenlabs",
   "_cost_per_line_credits": 0.3,
-  "_generated": "2026-08-15",
+  "_generated": "2026-08-15 — rewritten and regenerated to fill the shots",
   "_files": "app/NinaBakeryPOC/Resources/Voice/",
   "language": "nl",
 
   "_timing": {
     "_comment": "One line per shot, written to the length of that shot. Measured, not guessed: Gracie delivers Dutch at roughly 15-17 characters a second, so a line's character count predicts its duration to within a few tenths. Re-cut a shot and the line to match it — the numbers below are the working budget.",
-    "shot_1": { "file": "Movies/intro-1.mp4", "video": 8.04, "voice": 5.17, "starts_at": 0.4, "tail": 2.47 },
-    "shot_2": { "file": "Movies/intro-2.mp4", "video": 6.04, "voice": 5.43, "starts_at": "the cut", "tail": 0.46 },
-    "total_video": 14.08,
-    "total_voice": 10.60,
-    "_note": "The 1.27s before the cut is deliberate. She asks 'kom je mee naar binnen?' and then we cut inside — the pause is the answer. It grew to 2.47s when the line moved to the first person and lost a word. Wall-to-wall narration would be worse, not better."
+    "shot_1": { "file": "Movies/intro-1.mp4", "video": 8.042, "voice": 7.50, "starts_at": 0.4, "tail": 0.14 },
+    "shot_2": { "file": "Movies/intro-2.mp4", "video": 6.042, "voice": 5.83, "starts_at": "the cut", "tail": 0.21 },
+    "total_video": 14.084,
+    "total_voice": 13.33,
+    "_note": "Both lines were rewritten longer and regenerated on 2026-08-15. They used to total 10.60s under 14.08s of film, which left the last third of each shot silent and made the film look like it was buffering; they now total 13.33s and each ends about two tenths before its own cut. The long pause that used to sit before the cut went with them — it was carrying 'kom je mee naar binnen?' as a question the cut answered, which is still true, except the question is now the last thing in the shot. Video lengths are measured from the mvhd atoms; voice lengths are measured back off the delivered mp3s."
   },
 
   "characters": {
@@ -34,12 +34,12 @@
 
   "lines": [
     { "id": "nina.intro.buiten", "character": "nina", "variants": [
-      { "index": 111, "file": "nina-intro-buiten-1.mp3", "seconds": 5.17,
-        "text": "Welkom in mijn toverbakkerij! Ik ben Nina, en ik ben de bakker. Kom je mee naar binnen?" }
+      { "index": 111, "file": "nina-intro-buiten-1.mp3", "seconds": 7.50,
+        "text": "Welkom in mijn toverbakkerij! Ik ben Nina, de bakker. Hier maak ik de allermooiste tovertaarten. Kom je mee naar binnen?" }
     ]},
     { "id": "nina.intro.keuken", "character": "nina", "variants": [
-      { "index": 112, "file": "nina-intro-keuken-1.mp3", "seconds": 5.43,
-        "text": "Dit is de keuken. Hier bakken we de allerlekkerste tovertaarten. Zullen we beginnen?" }
+      { "index": 112, "file": "nina-intro-keuken-1.mp3", "seconds": 5.83,
+        "text": "Dit is mijn keuken. Hier bakken we de allerlekkerste tovertaarten. Zullen we samen beginnen?" }
     ]}
   ]
 }
