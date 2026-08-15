@@ -78,6 +78,47 @@ Caveats worth knowing up front:
 - Unauthenticated Firecrawl is **concurrency-limited**. Parallel scrapes get
   throttled with a warning and simply take longer.
 
+## Allowlisting a host
+
+The block is an **environment network policy**, enforced upstream of the
+container. A session cannot change it — the proxy docs say to report the blocked
+host rather than route around it. It is changed on the environment itself:
+
+1. Go to [claude.ai/code](https://claude.ai/code).
+2. Click the **cloud icon showing the environment's name**, in the row above the
+   message box. (There is no settings page or direct URL for this selector.)
+3. Hover the environment → click the **settings icon** on its right.
+4. Set **Network access** to **Custom**.
+5. In **Allowed domains**, list one domain per line.
+6. **Tick "Also include default list of common package managers."** Without it,
+   *only* the listed domains are allowed and npm, PyPI and
+   `raw.githubusercontent.com` all stop working.
+
+A leading `*.` matches every subdomain. Changes apply to sessions started
+**afterwards** — a running session keeps the policy it booted with.
+
+For this project:
+
+```text
+higgsfield.ai
+*.higgsfield.ai
+d8j0ntlcm91z4.cloudfront.net
+d1xarpci4ikg0w.cloudfront.net
+```
+
+`*.cloudfront.net` would also work and would survive Higgsfield reprovisioning
+its distributions — but CloudFront is AWS's shared CDN, used by a large fraction
+of the web, so that wildcard is far broader than it looks. The narrow form above
+is tighter but brittle: if those distribution IDs change, downloads break and the
+list needs updating.
+
+Setting **Network access** to **Full** removes the question entirely, at the cost
+of any egress restriction.
+
+**MCP connector traffic does not go through this allowlist.** Higgsfield and
+Firecrawl tool calls already work regardless; the allowlist only governs what the
+container fetches directly, such as `curl`.
+
 ## Getting more out of Firecrawl
 
 The connector works unauthenticated but only exposes Search, Scrape and Parse,
