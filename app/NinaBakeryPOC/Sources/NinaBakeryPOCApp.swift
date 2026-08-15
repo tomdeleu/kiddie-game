@@ -6,7 +6,8 @@ import SwiftUI
 /// the kitchen from `GAMEPLAY.md` §6.3, with its required action (ingredients,
 /// stir, pour, bake), its six toys, Otto, and Luna speaking Dutch. The target
 /// name is still `NinaBakeryPOC` because the Xcode project builds and runs
-/// under it, and renaming a working project buys nothing.
+/// under it, and renaming a working project buys nothing. What Nina sees under
+/// the icon is `CFBundleDisplayName`, which is *Nina's Toverbakkerij*.
 ///
 /// What the POC answered stays answered: the faceted pastel direction survives
 /// real-time rendering with no baked ambient occlusion, and the approved
