@@ -542,7 +542,7 @@ long-standing limitation, not a setup problem.
 
 ### First build
 
-Three places are the most likely to want a fix, and all three are one line:
+Four places are the most likely to want a fix, and all four are one line:
 
 1. **`CameraRig.fovIsVertical`.** `init` sets
    `camera.camera.fieldOfViewOrientation = .vertical` so the unprojection maths
@@ -562,6 +562,11 @@ Three places are the most likely to want a fix, and all three are one line:
    memberwise initialiser carrying `@ViewBuilder` across from the stored `label`
    property. If the compiler disagrees, write the designated `init` out by hand
    in the struct body — five assignments, and every call site stays as it is.
+4. **`Entity.excludeFromShadowCasting()`** in `LightingRig.swift`. Uses iOS 18's
+   `DynamicLightShadowComponent(castsShadow:)` to keep the room shell and the
+   doorway out of the shadow map. If the initialiser has moved, that one
+   function is the only place to fix it — and if it has to come out entirely,
+   the room works, just with the wall-on-wall bands back.
 
 ### The developer panel
 
@@ -575,21 +580,45 @@ whole POC lighting panel underneath.
 
 ## Approved lighting
 
-**Settled on iPad, 2026-08-15.** The values in `LightingSettings.swift` are the
-approved ones — every slider was judged good where it started, so the committed
-defaults *are* the result.
+**Settled on iPad, 2026-08-15; revised twice the same day**, both times from
+on-device screenshots on the owner's call.
+
+**Round one:** the cast shadows read as hard dark bands — the back wall raking
+across the left wall, the doorway arch printing itself onto the plaster. The
+cause was structural: everything a shadow fell on dropped to the fill's ~30%
+of lit brightness, and the room shell was casting onto itself. Fix: rebalance
+the energy (key 2200 → 1400 lx, fill 900 → 700 lx, new 1200 lx ambient dome)
+and stop the shell casting.
+
+**Round two:** softer, but the walls still collected smudges — the table,
+counter, shelves and Nina throwing their silhouettes onto the left wall, which
+is where a 135° azimuth sends every shadow. Fix: key elevation 42° → 62°, so a
+shadow reaches about a third of its caster's height and pools *under* the
+furniture instead of climbing the plaster — the occlusion-render read, from
+lights alone — and the wall-hugging furniture stopped casting like the shell.
+
+Where that leaves the values:
 
 | | |
 |---|---|
-| Key | 2200 lx, 42° elevation, 135° azimuth, 6200 K, shadows **on** |
-| Fill | 900 lx, 7800 K, opposite the key at 18° |
+| Key | 1400 lx (was 2200), 62° elevation (was 42°), 135° azimuth, 6200 K, shadows **on** |
+| Fill | 700 lx (was 900), 7800 K, opposite the key at 18° |
+| **Ambient dome** | **new** — 1200 lx across three non-casting directionals, 120° apart at 55° elevation, neutral 6500 K |
 | IBL | off — no environment bundled, and it is not missed |
-| Contact shadows | on, opacity 0.18, scale 1.15 |
+| Contact shadows | on, opacity 0.22 (was 0.18, nudged for the weaker key), scale 1.15 |
 | Lightmap | off |
+| Static casting | **off** for architecture and wall-huggers — walls, floor, slab, doorway arch, counter, both shelves, cake plank (`Entity.excludeFromShadowCasting()`, iOS 18's `DynamicLightShadowComponent`) |
 
-This answers the POC's main question in the affirmative: **the faceted direction
-holds with real-time light only, no baked AO.** The key light's cast shadow does
-the grounding that AO was there for, and it stays correct when a prop moves.
+Shadowed areas sit near 60% of lit brightness instead of 30%, so a cast shadow
+reads as a soft tone shift. Loose props, Nina and Otto still cast — short
+pools at their feet now, which is the grounding this was always for. In the
+panel, zeroing the **Ambient dome** slider and dropping elevation back to 42°
+brings the old look back for comparison.
+
+This still answers the POC's main question in the affirmative: **the faceted
+direction holds with real-time light only, no baked AO** — the revision doubles
+down on it by getting the soft-shadow feel from lights rather than reaching for
+a bake.
 
 Changing these is an art-direction decision, not a tweak. Lift any new setup
 with **Copy settings** before overwriting.
