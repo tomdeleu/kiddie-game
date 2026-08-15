@@ -19,19 +19,21 @@ a real toverbakkerij. That is the only progression — no scores, no stars, no
 timers, nothing counted anywhere. A round is ~11–12 minutes.
 
 **Status: one room built.** The proof of concept is answered and
-[`app/`](app/) now holds **De Keuken** — the full kitchen round, six toys, Nina
-herself behind the table, and 96 Dutch voice lines. No other room exists.
+[`app/`](app/) now holds **De Keuken** — the full kitchen round, seven toys, Nina
+herself behind the table, and 104 Dutch voice lines. No other room exists.
 
 ## → Start here: [`app/README.md`](app/README.md)
 
-The kitchen is playable end to end: roll the base, fetch three ingredients from
-three places, stir, pour, into Otto, tap, cake, onto the plank, fresh round. It has never been compiled — it
-was written in a container with no Swift toolchain — and its README names the
-two places most likely to want a fix on first build.
+The kitchen is playable end to end: roll the base, fetch five ingredients from
+five places, stir, pour, into Otto, tap, cake, carry it up onto the plank,
+fresh round. It has never been compiled — it was written in a container with no
+Swift toolchain — and its README names the two places most likely to want a fix
+on first build.
 
-Two deliberate deviations from the design are recorded there: the doorway ends
-the round rather than leading to the decorating room, which does not exist yet,
-and the palette gained a blue the locked thirteen do not contain.
+Two deliberate deviations from the design are recorded there: the doorway does
+not lead to the decorating room, which does not exist yet, and the palette
+gained a blue and an amber the locked thirteen do not contain. The round is
+ended by carrying the finished cake up onto the plank.
 
 **Next**, per [`GAMEPLAY.md`](GAMEPLAY.md) §9: decorating, then the party, then
 the wall of twelve frames. And **test the kitchen with Nina first** — `POC.md`
@@ -56,6 +58,7 @@ palette and pass criteria are still the standard every new room is held to.
 | [`references/buttons/`](references/buttons/) | **The button.** Every UI control is one faceted octagon — the plate it came from, the nine candidates, and the measurements the SwiftUI implementation is built on. |
 | [`references/loading-screen/`](references/loading-screen/) | The title plate that opens the app, its eighteen candidates, and the script that pads it to 16:9. |
 | [`references/props/`](references/props/) | Prop concept plates, and why `generate_3d` is not usable for this style. |
+| [`references/ingredients/`](references/ingredients/) | The six ingredients, the flour sack and the flour cloud — the plates the models were built from. |
 | [`references/moodboard/`](references/moodboard/) | Provenance + licences. Gathered for two retired directions — not the current look. |
 | [`references/FETCHING-ASSETS.md`](references/FETCHING-ASSETS.md) | How to get outside material onto disk here, and what fails. |
 | [`audio/voices.json`](audio/voices.json) | Voice casting. Read before generating any line. |

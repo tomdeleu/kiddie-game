@@ -184,11 +184,15 @@ enum Line {
     /// The rolling step, which comes before anything goes in the bowl.
     static let uitrollen = "nina.keuken.uitrollen"
     static let deegKlaar = "nina.keuken.deegKlaar"
-    /// Generic "take the glowing one", and the three places it can be.
+    /// Generic "take the glowing one", and the five places it can be.
     static let pakGlimmend = "nina.keuken.pakGlimmend"
-    static let bronPlank = "nina.bron.plank"
+    static let bronPlankHoog = "nina.bron.plankHoog"
+    static let bronPlankLaag = "nina.bron.plankLaag"
     static let bronAanrecht = "nina.bron.aanrecht"
     static let bronMandje = "nina.bron.mandje"
+    static let bronKrat = "nina.bron.krat"
+    /// The round's last step: carry the cake up onto the plank.
+    static let opDePlank = "nina.keuken.opDePlank"
     static let opnieuw = "nina.keuken.opnieuw"
 
     static let ottoTik = "otto.tik"

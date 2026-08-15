@@ -316,6 +316,165 @@ enum FacetedMesh {
         return (p, idx)
     }
 
+    /// Surface of revolution from a `(radius, y)` profile, bottom to top.
+    ///
+    /// **The workhorse behind the ingredients.** Every plate in
+    /// `references/ingredients/` is a lathe: the strawberry is a profile that
+    /// bulges high and comes to a point, the blueberry is a half-sine, the
+    /// honey pot is a straight-sided jar, the flour sack swells low and gathers
+    /// at the neck. Writing four profiles beats writing four mesh builders, and
+    /// it keeps every one of them at the same facet count.
+    ///
+    /// A profile entry with radius 0 becomes a single apex vertex rather than a
+    /// degenerate ring, so a cone or a pointed berry is a profile and not a
+    /// special case. Ends with a radius get a flat cap, which keeps the solid
+    /// closed — the same rule the rest of this file lives by.
+    static func lathe(profile: [SIMD2<Float>], sides: Int = 10) -> Geometry {
+        precondition(sides >= 3 && profile.count >= 2)
+
+        var p: [SIMD3<Float>] = []
+        var base: [UInt32] = []
+        var apex: [Bool] = []
+
+        for station in profile {
+            base.append(UInt32(p.count))
+            if station.x <= 1e-6 {
+                apex.append(true)
+                p.append([0, station.y, 0])
+            } else {
+                apex.append(false)
+                for s in 0..<sides {
+                    let a = Float(s) / Float(sides) * 2 * .pi
+                    p.append([cos(a) * station.x, station.y, sin(a) * station.x])
+                }
+            }
+        }
+
+        var idx: [UInt32] = []
+        // Every band is the prism's wall winding; the two apex cases are that
+        // same winding with one edge collapsed, which is why they are triangles
+        // rather than a separate rule.
+        for r in 0..<(profile.count - 1) {
+            let low = base[r], high = base[r + 1]
+            for s in 0..<sides {
+                let s32 = UInt32(s), n = UInt32((s + 1) % sides)
+                switch (apex[r], apex[r + 1]) {
+                case (true, true):
+                    continue                                   // two stacked apexes: nothing to draw
+                case (true, false):
+                    idx.append(contentsOf: [low, high + s32, high + n])
+                case (false, true):
+                    idx.append(contentsOf: [low + s32, high, low + n])
+                case (false, false):
+                    idx.append(contentsOf: [low + s32, high + n, low + n,
+                                            low + s32, high + s32, high + n])
+                }
+            }
+        }
+
+        // Flat caps wherever an end is a ring rather than a point.
+        if !apex[0] {
+            let centre = UInt32(p.count); p.append([0, profile[0].y, 0])
+            for s in 0..<sides {
+                let s32 = UInt32(s), n = UInt32((s + 1) % sides)
+                idx.append(contentsOf: [centre, base[0] + s32, base[0] + n])
+            }
+        }
+        if !apex[profile.count - 1] {
+            let top = base[profile.count - 1]
+            let centre = UInt32(p.count); p.append([0, profile[profile.count - 1].y, 0])
+            for s in 0..<sides {
+                let s32 = UInt32(s), n = UInt32((s + 1) % sides)
+                idx.append(contentsOf: [centre, top + n, top + s32])
+            }
+        }
+        return (p, idx)
+    }
+
+    /// A flat ring lying in the XZ plane, facing up.
+    ///
+    /// Single-sided on purpose — it is a decal on a floor or a tabletop and is
+    /// only ever seen from above, so the underside would be geometry nobody can
+    /// reach. That also means **winding still matters**: back faces are culled,
+    /// so a reversed ring is an invisible ring rather than a dark one.
+    ///
+    /// `Halo` stacks a dozen of these at graded opacities to get a soft edge
+    /// without a texture. One band on its own is a hard-edged hoop.
+    static func annulus(innerRadius: Float, outerRadius: Float,
+                        segments: Int = 24) -> Geometry {
+        precondition(segments >= 3 && outerRadius > innerRadius && innerRadius >= 0)
+        var p: [SIMD3<Float>] = []
+        for s in 0..<segments {
+            let a = Float(s) / Float(segments) * 2 * Float.pi
+            p.append([cos(a) * innerRadius, 0, sin(a) * innerRadius])
+            p.append([cos(a) * outerRadius, 0, sin(a) * outerRadius])
+        }
+        var idx: [UInt32] = []
+        for s in 0..<segments {
+            let i = UInt32(s * 2), o = i + 1
+            let n = UInt32(((s + 1) % segments) * 2), no = n + 1
+            // Same handedness as a prism's top cap, which is the +Y face.
+            idx.append(contentsOf: [i, no, o])
+            idx.append(contentsOf: [i, n, no])
+        }
+        return (p, idx)
+    }
+
+    /// A flat convex outline given thickness along Z, centred on Z.
+    ///
+    /// The outline must be **counter-clockwise seen from +Z** and convex, since
+    /// both faces are fan-triangulated from vertex 0. That covers what it is for:
+    /// the strawberry's crown leaves and the clover's heart leaves, which the
+    /// plates show as single flat plates with a visible edge thickness.
+    static func extrude(_ outline: [SIMD2<Float>], thickness: Float) -> Geometry {
+        precondition(outline.count >= 3)
+        let hz = thickness / 2
+        var p: [SIMD3<Float>] = outline.map { [$0.x, $0.y, hz] }
+        p += outline.map { [$0.x, $0.y, -hz] }
+
+        let n = UInt32(outline.count)
+        var idx: [UInt32] = []
+        for i in 1..<(n - 1) {
+            idx.append(contentsOf: [0, i, i + 1])              // front fan, +Z
+            idx.append(contentsOf: [n, n + i + 1, n + i])      // back fan, -Z
+        }
+        for i in 0..<n {
+            let j = (i + 1) % n
+            idx.append(contentsOf: [i, n + i, n + j,  i, n + j, j])
+        }
+        return (p, idx)
+    }
+
+    /// A puffed star with a raised centre ridge — `sterrensuiker`.
+    ///
+    /// Built as two shallow pyramids sharing one outline: the points alternate
+    /// between `outerRadius` and `innerRadius` in the XY plane, and a single
+    /// apex on each side of Z pulls the faces into the ridges the plate shows.
+    /// Not an extrusion — a flat star reads as a sticker, and the ridge is what
+    /// makes it catch the light differently on every arm.
+    static func star(points: Int = 5, outerRadius: Float, innerRadius: Float,
+                     thickness: Float) -> Geometry {
+        precondition(points >= 3 && outerRadius > innerRadius && innerRadius > 0)
+        var p: [SIMD3<Float>] = []
+        let count = points * 2
+        for i in 0..<count {
+            // Start at +Y so the star stands on two arms, the way one is drawn.
+            let a = Float.pi / 2 + Float(i) / Float(count) * 2 * Float.pi
+            let r = i % 2 == 0 ? outerRadius : innerRadius
+            p.append([cos(a) * r, sin(a) * r, 0])
+        }
+        let front = UInt32(p.count); p.append([0, 0, thickness / 2])
+        let back = UInt32(p.count);  p.append([0, 0, -thickness / 2])
+
+        var idx: [UInt32] = []
+        for i in 0..<count {
+            let a = UInt32(i), b = UInt32((i + 1) % count)
+            idx.append(contentsOf: [front, a, b])
+            idx.append(contentsOf: [back, b, a])
+        }
+        return (p, idx)
+    }
+
     /// Icosphere. `subdivisions: 1` gives 80 faces — the sweet spot where a
     /// sphere still reads as faceted. Going above 2 loses the look.
     static func icosphere(radius: Float, subdivisions: Int = 1) -> Geometry {

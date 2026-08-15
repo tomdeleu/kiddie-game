@@ -64,18 +64,32 @@ Fourteen seconds, two shots, narrated end to end:
 
 | | Shot | Voice |
 |---|---|---|
-| 1 | **Outside**, 8.04 s — a slow push-in on the bakery, smoke from the chimney, a little sparkle | 5.17 s: *"Welkom in mijn toverbakkerij! Ik ben Nina, en ik ben de bakker. Kom je mee naar binnen?"* |
-| 2 | **Inside**, 6.04 s — the camera glides across the kitchen while the whisk turns in the bowl, steam lifts off Otto and the jars wobble | 5.43 s: *"Dit is de keuken. Hier bakken we de allerlekkerste tovertaarten. Zullen we beginnen?"* |
+| 1 | **Outside**, 8.042 s — a slow push-in on the bakery, smoke from the chimney, a little sparkle | 7.50 s: *"Welkom in mijn toverbakkerij! Ik ben Nina, de bakker. Hier maak ik de allermooiste tovertaarten. Kom je mee naar binnen?"* |
+| 2 | **Inside**, 6.042 s — the camera glides across the kitchen while the whisk turns in the bowl, steam lifts off Otto and the jars wobble | 5.83 s: *"Dit is mijn keuken. Hier bakken we de allerlekkerste tovertaarten. Zullen we samen beginnen?"* |
 
-10.6 seconds of narration under 14.08 seconds of film. The gaps are where they
-should be: a beat to start, **2.47 s before the cut** — she asks *"kom je mee
-naar binnen?"* and the cut inside is the answer — and half a second at the end.
-Wall-to-wall narration would be worse, not better.
+**13.33 seconds of narration under 14.08 seconds of film**, each line ending
+about two tenths of a second before its own cut. It used to be 10.6, and the
+missing three seconds were audible: each shot went quiet a third of the way
+from its end and the film sat there looking like it was buffering. Both lines
+were rewritten longer and regenerated.
+
+The long pause before the cut is gone with them. It was carrying *"kom je mee
+naar binnen?"* as a question the cut answered — which is still true, except the
+question is now the last thing in the shot rather than a beat before the end,
+which is a better place for it.
 
 The lines are written to the shots by measurement rather than by guess: Gracie
 reads Dutch at 15–17 characters a second, so a line's length is predictable to
-a few tenths. `script-intro.json` carries the numbers, so re-cutting a shot
-tells you exactly how much line it can hold.
+a few tenths. The films were measured out of their `mvhd` atoms, the lines
+sized to fill them, and the delivered mp3s measured back — `script-intro.json`
+carries all of it, so re-cutting a shot tells you exactly how much line it can
+hold.
+
+**It plays full-screen.** `videoGravity` is `.resizeAspectFill` — the shots are
+16:9, the iPad is 4:3, and fitting them left black bars across a third of the
+screen so the opening read as a video embedded in an app rather than as the app
+starting. Filling crops the sides; both shots are centred, so what is lost is
+wall.
 
 One shot per file, cut by an `AVQueuePlayer`. Asking a video model to cut
 between two locations is asking it to invent the second one; a queue does it
@@ -126,12 +140,12 @@ One round is `GAMEPLAY.md` §6.3, end to end:
 | Step | What she does | What answers |
 |---|---|---|
 | **uitrollen** | Roll the ball of dough flat with the rolling pin | It spreads under the pin, puffs flour, and hops into the tin as a base |
-| **vullen** | Fetch three ingredients — **shelf, then counter, then basket** — into the bowl | A plop, a ring of sparkles, the batter rising and changing colour, and Nina naming what that ingredient will do |
+| **vullen** | Fetch **five ingredients**, one from each of five places, into the bowl | A plop, a ring of sparkles, the batter rising and changing colour, and Nina naming what that ingredient will do |
 | **roeren** | Stir with a finger | The whisk follows her hand, the batter turns and comes up to colour |
 | **gieten** | Drag the bowl onto the tin | It tips, pours onto the base, and goes back where it lives |
 | **inOven** | Drag the tin to Otto | It slides in, the door shuts, Otto is delighted |
 | **bakken** | Tap Otto | Four seconds of him puffing and breathing, a rising ping, and the cake comes out in her colours |
-| **klaar** | Tap the doorway | The cake goes up on the plank and a fresh round begins |
+| **klaar** | **Carry the cake up onto the plank** | It rises to shelf height as it nears the wall, shrinks, lands beside the others, and a fresh round begins |
 
 At the top of every round she hears what the whole thing is for — *"meng alle
 toverdingetjes in de kom, en zet de taart daarna in de oven"* — and then the
@@ -145,27 +159,124 @@ passes. **Three turns finishes the stirring — or twice as much scrubbing.** A 
 cannot yet draw a circle still has to be able to make batter, so raw travel
 counts at half rate.
 
-**She cannot fail.** No drop is rejected: a miss floats home with a soft sound
-and Nina says something kind. Nothing is disabled, greyed out or refused, and
-every tap does something — including a tap on nothing, which sparkles.
+**She cannot fail.** No drop is rejected, nothing is disabled, greyed out or
+refused, and every tap does something — including a tap on nothing, which
+sparkles.
 
-### Where things are, and in what order
+**Sparkles are yellow stars.** They were `creamLight` icospheres, which at
+sparkle size is a grey dot — an unlit cream ball two millimetres across against
+a room that is mostly cream reads as dust. A star's silhouette survives being
+three pixels wide, and warm yellow is the one hue nothing in the room is
+painted, so a sparkle is never mistaken for a crumb of the thing it came off.
+Callers that pass a colour still get it: an ingredient dropping into the bowl
+throws its own colour, which is what says *that* one went in.
 
-The three ingredients live in **three different places**, collected in a fixed
-order: the wall shelf, the back counter, the basket on the table. One basket on
-one table made the room a work surface; three places make her look up, along,
-and down.
+**And nothing gets put back** — with one exception. A prop she drags somewhere
+that is not a target settles onto whatever is underneath it and stays there.
+The rolling pin can live on the floor. The exception is the patch of floor
+*behind the table*: the camera never moves, so that is a place she could put
+something and then genuinely not get it back, with no way to look round the
+table. Drops there float home. `Layout.isOutOfSight` derives the patch from the
+camera and the table rather than hardcoding it — at the committed camera it is
+about 170 × 140 mm between the table and the counter. This replaced a rule where a missed drop floated home and
+Nina apologised for it, which was wrong twice: it undid the one thing she can
+do with a kitchen full of objects, and it treated every stray drag as a failed
+attempt when most of them are a 4-year-old moving a rolling pin because it is
+a rolling pin.
 
-The order never has to be guessed. **The one she needs glows** — the object
-itself lit from within, breathing slowly, with two or three sparkles lifting
-off it — the others do not travel until their turn, and Nina names the place as
-each one lights up. Out-of-turn taps still answer, with a wobble and a nudge
-towards whatever is glowing. Nothing is ever disabled.
+**Three misses and the instruction comes back.** A miss now means something
+narrow — she dragged the prop the current step is about and it did not land —
+so it is a real signal rather than noise. Twice, Nina says something kind.
+The third time she says the step's own line again, at full priority, and the
+lit prop gives a squash while she does. She cannot read a reminder, so this is
+the only way one can reach her.
+
+### Where things are
+
+The five ingredients live in **five different places**: the upper wall shelf,
+the lower wall shelf, a pot on the back counter, the basket on the table, and
+a crate on the floor. One basket on one table made the room a work surface;
+five places make her look up, along, and down.
+
+The two that were added are deliberately the extremes of reach — the top shelf
+is the highest thing in the room, the crate is on the ground — because
+everything else in the kitchen lives on a work surface within ten centimetres
+of the same height. Those two are most of what makes the room feel like it has
+a ceiling and a floor.
+
+**The order is a suggestion now, not a rule.** The one she needs glows — the
+object itself lit from within, breathing slowly, with sparkles lifting off it —
+and Nina names the place as it lights up. But every ingredient can be picked up
+whenever she likes, and any of them dropped in the bowl counts; the glow simply
+moves on to whatever is left. What used to happen was that out-of-turn props
+wobbled and refused to travel, which is a locked door with a nice sound on it.
 
 The first version of that cue was a glowing ring drawn on the table around the
 prop, and it was wrong: rendered as a preview it read as a screen-space UI
 element dropped into the room. `references/cues/` has the four alternatives it
 was judged against and why this one won.
+
+**The cue is a ring of light on the surface, and it took three goes.** It was a
+hard-edged ring on the table, rejected from the previews in `references/cues/`
+as reading like screen-space UI; then the object itself lit from within, which
+failed twice on the iPad — first invisible, then, turned up far enough to see,
+recolouring a whole prop to say one thing. Pale pastels under a 2200 lx key are
+already returning most of the light they can, so an emissive term below 1 moves
+them a few percent, towards white, in a room where everything is nearly white.
+
+It is now a **soft** ring on the surface *around* the prop, picked from
+`references/cues/floor/` and built to the sampled colours of that plate: a
+`#F6D861` gold washing out to `#FFF6D8` at the core, with the interior left
+clear. The object keeps its own colour entirely. Softness is the whole reason
+this version survives where the first ring did not — a hard edge is what UI has
+and light does not.
+
+It is eighteen concentric bands of geometry at graded opacities on a Gaussian
+profile, not a texture. A radial-gradient texture needs `TextureResource`, a
+hand-built `CGImage`, UVs `FacetedMesh` does not produce, and an assumption
+about `UnlitMaterial` honouring a base-colour alpha channel — four things that
+can fail on a first build, into a bright yellow square. The bands need none of
+it, and at these sizes each one is about a screen point wide.
+
+The ring is a **sibling** of the prop, not a child, placed each frame at the
+prop's XZ on whatever surface is beneath it. That is what keeps it on the table
+while the prop is lifted off it — most of what makes a held thing look held —
+and what lets it climb onto the plank with the cake.
+
+Three cues in, the lesson is that this decision cannot be made from a render:
+all three looked fine as plates. **Judge the next one on the device.**
+
+### Height
+
+**Props have one now**, and it is most of what stopped the room reading as a
+painted backdrop. Everything used to be carried at table height whatever it was
+over, so a rolling pin dragged off the table hung in mid-air above the floor.
+
+A carried prop now rides just above whatever is underneath it — table, counter,
+floor — and eases there over about a third of a second rather than snapping.
+Pick a berry off the top shelf and it swoops down as she brings it to the bowl;
+carry it back over the table and it lifts again. `Layout.surfaceY` is the whole
+model: four rectangles, tested nearest-camera first.
+
+**The drag plane is fixed for the length of a drag**, and that is not laziness.
+It was written down every frame at first, so the prop stayed pinned under her
+fingertip while it changed height — which is a feedback loop, because the
+height depends on the XZ and the XZ depends on the plane. Raising the plane by
+Δ slides the ray's intersection about 1.7Δ towards the camera at this camera
+angle, which can move the prop straight back out of the region that raised it.
+It made the cake impossible to put on the plank: reaching the plank zone lifted
+it 67 mm, which slid the mapped point out of the zone, so it dropped back to
+the counter, which slid it back in, and it juddered between the two.
+
+With the plane fixed, XZ is a pure function of her finger and cannot oscillate.
+The prop drifts up or down *on screen* against her fingertip as it changes
+surface, which reads better anyway — vertical movement against a still finger
+is the clearest way of saying "this is on the floor now". `tracksEntity` picks
+the plane up from wherever the prop ended when she next grabs it.
+
+One case needed guarding: every tap is also a zero-length drag, so without a
+"barely moved" check, poking the berry on the top shelf would knock it to the
+floor — because that is what is under a shelf.
 
 ### Nina
 
@@ -198,10 +309,42 @@ to add a confirmation, which is unreadable to her by definition.
 
 ### The toys
 
-Six, none of which gate anything: the flour sack (a poof, and flour that
-settles on the counter and fades), the tap, the scale, the six shelf jars, the
-rolling pin (it actually rolls), and Otto himself, who says something different
-every single time he is poked.
+Seven, none of which gate anything: the flour sack, the tap, the scale, the six
+shelf jars, the crate, the rolling pin (it actually rolls), and Otto himself,
+who says something different every single time he is poked.
+
+Two of them were rebuilt from plates in `references/ingredients/`:
+
+**The flour sack is on the floor, and looks like a sack.** It used to be a
+30 mm tapered prism standing on the counter, which read as a paper cup. A sack
+of flour is a heavy thing that slumps — wide and settled at the bottom,
+swelling to its widest a third of the way up, gathered into a band at the neck
+with the cloth above it fanning open, and two corners of cloth splaying where
+it meets the ground. That profile only works at a size a worktop cannot spare,
+so it moved down to the near-left floor, where it is also the only prop in
+front of the table and gives the shot a foreground.
+
+**What comes out of it went to a cloud and came back.** `flour-cloud.png`
+showed a cluster of overlapping lit lobes; it was built, and on device it read
+as *photographic* — a real puff of real flour in a room made of flat pastel
+facets. It was the one thing in the kitchen that looked like it came from
+somewhere else, which is what the four style phrases exist to prevent, and the
+owner called it on sight. `Sparkles.puff` is back. The plate still earned its
+credit: the sack it was generated alongside is the version that shipped, and a
+brief can be right about one thing and wrong about another. One thing was kept
+from the cloud — the sack billows twice, a fifth of a second apart, the way a
+slapped sack does.
+
+**The tap was rebuilt too.** It was a single five-sided prism scaled up the Y
+axis, and it read as a blue stick appearing. Four things now overlap: the
+stream has a shape (narrow at the spout, swelling where it picks up speed,
+pulling in at the bottom); it turns about its own axis at roughly a revolution
+a second, so its six big facets travel and the surface reads as running; the
+basin *fills*, and drains afterwards, because water that never accumulates is
+the tell; and it splashes, with a ripple twice a second and droplets bouncing
+back out. The stream and the pool are slightly transparent, which is the one
+place in the game that overrules `references/REFERENCES.md`'s no-transparency
+rule — opaque water in a pastel palette reads as painted plastic.
 
 ### Idle
 
@@ -209,22 +352,69 @@ After ~25 s of nothing, the thing she needs shimmers. After ~45 s Nina says one
 short line — alternating with "I'm still here" so she never says the same thing
 twice running. Then it goes quiet for a minute.
 
-## Two deliberate deviations from the design
+### The ingredients
 
-**The doorway is not yet a door.** `GAMEPLAY.md` §7 says the door always works,
-even mid-task. Here it cannot: the decorating room does not exist, so there is
-nowhere to go. What it does instead is honest rather than fake — mid-round it
-whooshes and Nina says what is happening now; once the cake is out it ends the
-round, puts the cake on the plank and brings a fresh basket. **When the
-decorating room lands, `tapDoorway()` is the one function to change.**
+All six were remodelled, and each one has a plate in
+`references/ingredients/` that is its brief.
 
-**The palette gained a blue.** The locked thirteen sampled from the plates have
-pink, mint, sage, cream, butter and wood, and no blue at all — the plates
-simply had none in frame. `GAMEPLAY.md` §5 needs one: the toverbosbes gives a
-blue cake and Bo de vogel's entire wish is one. `Palette.berryBlue` and
-`berryBlueDeep` are built to sit in the same register rather than sampled, and
-the derivation is written down where they are defined. Sample a real one if a
-plate with blue in it ever gets rendered.
+They used to be six coloured blobs — two icospheres, a hexagonal prism and a
+smaller icosphere, told apart only by tint. That failed the one job an
+ingredient has. `CONCEPT.md` §5 forbids text, so the **shape is the label**,
+and "a slightly bigger pale sphere" does not say wolkenroom to anybody, least
+of all to someone who cannot read the word either.
+
+| | Reads as |
+|---|---|
+| **regenboogaardbei** | A berry that swells high and comes to a point, under a splayed crown of six flat leaves |
+| **toverbosbes** | A round berry with the little five-point crown a real blueberry has |
+| **zonnehoning** | A pot with a dipper across it — honey has no shape of its own, so the readable object is the jar |
+| **toverklaver** | Four flat hearts on a stem, tips meeting at the hub. Four, not three: the plate came back lucky and it suits the one ingredient with *tover* in its name |
+| **wolkenroom** | Four overlapping faceted spheres, the only way a cloud has ever been built in this style |
+| **sterrensuiker** | One chunky star with a raised centre ridge, standing on two arms |
+
+All six are ~20 mm in both directions, so none of them is the big one. Most of
+them are `FacetedMesh.lathe`, which is new: a profile revolved about Y, with a
+radius of zero becoming an apex rather than a degenerate ring. Six profiles are
+a great deal less code than six mesh builders, and it holds them all to the
+same facet count. `extrude` and `star` are the other two additions — a flat
+outline given thickness, and a two-sided pyramid star.
+
+The clover and the star are flat-fronted, so they are turned 45° to face the
+camera. The camera never moves (`CONCEPT.md` §9.4), so that is a constant
+rather than a billboard.
+
+## Deliberate deviations from the design
+
+**The doorway is not a door, and no longer ends the round either.**
+`GAMEPLAY.md` §7 says the door always works, even mid-task. Here it cannot: the
+decorating room does not exist, so there is nowhere to go. It is now a prop
+that whooshes and says what is happening. **When the decorating room lands,
+`tapDoorway()` is still the one function to change.**
+
+What it used to do was end the round, and that was the weakest moment in the
+game. Everything else she does is a thing with her hands on the object — roll
+it, fill it, stir it, pour it, push it into Otto — and then the cake she had
+just made was finished by tapping a different object across the room, which
+happened to be an arch, while the cake flew onto the plank by itself.
+**She carries it up there now.** Same verb as every other step, ending on the
+object the whole round was about, and it makes the plank — the stand-in for
+the wall of twelve frames, and therefore for the whole game — somewhere she
+reaches rather than somewhere things appear.
+
+That step is the one place two things are lit at once: the cake, because it is
+what she picks up, and the plank, because it is where it goes. Every other step
+lights exactly one prop. A journey has two ends.
+
+**The palette gained a blue, and then an amber.** The locked thirteen sampled
+from the plates have pink, mint, sage, cream, butter and wood, and no blue at
+all — the plates simply had none in frame. `GAMEPLAY.md` §5 needs one: the
+toverbosbes gives a blue cake and Bo de vogel's entire wish is one.
+`Palette.berryBlue` and `berryBlueDeep` are built to sit in the same register
+rather than sampled. `honeyAmber` was added the same way and for the same kind
+of reason — `butterYellow` beside `creamLight` does not read as a liquid, so
+the honey pot swallowed its own honey. It is `butterYellow` carried two steps
+towards `sandyWood`, and it appears on exactly one surface in the game. Sample
+real ones if a plate with either in it ever gets rendered.
 
 ## The plank instead of the wall
 
@@ -240,20 +430,20 @@ be retired when the wall arrives, not grown.
 |---|---|
 | `Engine/CameraRig.swift` | The fixed camera, and screen ↔ world. Every drag in the room is a ray and a plane. |
 | `Engine/Ticker.swift` | The one clock. Every animation is an interruptible closure ticked from here. |
-| `Engine/TouchRouter.swift` | One finger, two verbs. Targets are generous spheres, not meshes. |
-| `Engine/Sparkles.swift` | Faceted bits that fly out and vanish. The whole reward vocabulary. |
-| `Engine/Halo.swift` | The glow on the prop a step is about — the game's only instruction. |
+| `Engine/TouchRouter.swift` | One finger, two verbs. Targets are generous spheres, not meshes, and each carries the plane its prop is standing on. |
+| `Engine/Sparkles.swift` | Faceted yellow stars that fly out and vanish. The whole reward vocabulary. |
+| `Engine/Halo.swift` | The ring of light on the surface under the prop a step is about — the game's only instruction. |
 | `Intro/LoadingScreen.swift` | The title plate, and the floor it is held for. |
 | `Intro/IntroMovie.swift` | The opening film: a queue of shots, and two ways out of it. |
 | `Audio/SoundKit.swift` | All thirteen sound effects, synthesised at launch. |
 | `Audio/VoiceBank.swift` | Nina and Otto, driven by `script-keuken.json`. |
 | `Game/CakeSpec.swift` | Six ingredients → colour, effects, and what Nina says about them. |
 | `Game/RoundState.swift` | The round, and the JSON it is saved to. |
-| `Kitchen/KitchenProps.swift` | Otto, the bowl, the batter, the tin, the cake, the toys. |
+| `Kitchen/KitchenProps.swift` | Otto, the bowl, the batter, the tin, the cake, the six ingredients, the toys. |
 | `Kitchen/KitchenRoom.swift` | The room: assembly, the state machine, the toys, the nudges. |
 | `RoomBuilder.swift` | The shell and the furniture, plus `Layout` — every position in the room, in one table. |
-| `FacetedMesh.swift` | **The core of the look.** Flat-shaded primitive builders, plus the smooth variant for A/B. |
-| `Palette.swift` | The locked colours, the two added ones, and the glow material. |
+| `FacetedMesh.swift` | **The core of the look.** Flat-shaded primitive builders — `lathe`, `extrude`, `star` and `annulus` are what the ingredients and the halo are made of — plus the smooth variant for A/B. |
+| `Palette.swift` | The locked colours, the three added ones, the glow and water materials, and `shade` for the 2D UI. |
 | `UI/FacetButton.swift` | **The button.** One faceted octagon, every control in the game. |
 | `LightingRig.swift`, `LightingSettings.swift`, `DebugPanel.swift`, `ContactShadows.swift` | The POC's lighting work, unchanged. |
 | `ContentView.swift` | Scene assembly, the gesture, and the hidden developer panel. |
@@ -354,9 +544,13 @@ Three places are the most likely to want a fix, and all three are one line:
    everything else keeps working. If drags feel offset from her finger, this is
    the first thing to check.
 2. **`Palette.glowMaterial`.** Uses `emissiveColor` / `emissiveIntensity` on
-   `PhysicallyBasedMaterial`. Only three things glow (a honey cake, Otto's door
-   while baking, the doorway), so if the API has moved, that one function is the
-   only place to fix it.
+   `PhysicallyBasedMaterial`, and `waterMaterial` uses
+   `.blending = .transparent`. Everything that glows or runs goes through those
+   two functions, so if either API has moved they are the only place to fix it.
+   The halo uses neither — it is `UnlitMaterial` with transparent blending, the
+   same as sparkles and contact shadows. If it looks too strong or too tight on
+   device, `Halo.spread`, `Halo.sigma` and the `0.92` in `Halo.profile` are the
+   three numbers that shape it.
 3. **`FacetButton`'s convenience `init`.** It leans on the synthesised
    memberwise initialiser carrying `@ViewBuilder` across from the stored `label`
    property. If the compiler disagrees, write the designated `init` out by hand
@@ -395,7 +589,7 @@ with **Copy settings** before overwriting.
 
 ## Audio
 
-**Voice is real.** 86 Dutch lines, generated with `text2speech_v2` /
+**Voice is real.** 104 Dutch lines, generated with `text2speech_v2` /
 `elevenlabs` and bundled as mp3s — the app never calls an API. Nina is Gracie;
 Otto is provisionally Barrett, and `audio/auditions/README.md` explains how to
 swap him for four credits and no code.

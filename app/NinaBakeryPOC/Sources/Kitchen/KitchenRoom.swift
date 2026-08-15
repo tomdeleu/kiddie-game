@@ -47,14 +47,16 @@ final class KitchenRoom {
     private var whisk: Entity?
     private var tin: KitchenProps.Tin?
     private var basket: ModelEntity?
-    private var tokens: [(ingredient: Ingredient, entity: ModelEntity, home: SIMD3<Float>)] = []
+    private var tokens: [(ingredient: Ingredient, entity: Entity, home: SIMD3<Float>)] = []
     private var cake: Entity?
     private var shelfCakes: [Entity] = []
     private var sink: KitchenProps.Sink?
     private var scaleProp: KitchenProps.Scale?
     private var flourSack: Entity?
+    private var crate: Entity?
     private var rollingPin: Entity?
     private var doorway: KitchenProps.Doorway?
+    private var cakePlank: ModelEntity?
     private var flourPatches: [Entity] = []
     private var baker: BakerCharacter?
     private var dough: ModelEntity?
@@ -62,18 +64,40 @@ final class KitchenRoom {
     private var ingredientPot: ModelEntity?
     /// The glow on whatever she needs next: the job driving it, the prop it is
     /// on, and that prop's own materials so they can be put back exactly.
-    private var haloJob: Int?
-    private weak var haloed: Entity?
-    private var haloedMaterials: [[RealityKit.Material]] = []
+    /// The lit ring on the surface, and the job driving it. One handle instead
+    /// of a job plus an entity plus a snapshot of its materials: the halo does
+    /// not touch the prop any more, so there is nothing to put back.
+    private var halo: Halo.Handle?
 
-    // Interaction.
+    // Interaction. Carrying is four numbers rather than one because a carried
+    // prop now has a height of its own — see `carry(to:)`.
     private var carried: Entity?
     private var carryOffset = SIMD3<Float>.zero
+    private var carryJob: Int?
+    /// Where the prop is now, and where it wants to be. The gap between them,
+    /// closed a little every frame, is the whole height animation.
+    private var carryY: Float = 0
+    private var carryGoalY: Float = 0
+    /// What it is currently over, for the contact shadow.
+    private var carrySurfaceY: Float = Layout.tableTopY
+    /// Exactly where the prop was when she took hold of it, so a touch that
+    /// went nowhere can put it back exactly — see `settle`.
+    private var carryOrigin = SIMD3<Float>.zero
+
+    /// **Three tries and the instruction comes back.** `missCount` only counts
+    /// attempts at the step she is actually on, and resets whenever the step
+    /// changes or something works — so it measures "she is trying this and it
+    /// is not taking", not "she has been playing with the rolling pin".
+    private var missCount = 0
+    private var missStep: KitchenStep?
+
+    private var sinkJobs: [Int] = []
+    private var plankGlowJob: Int?
+
     private var stirLastAngle: Float?
     private var stirLastPoint: SIMD3<Float>?
     private var stirTickAccumulator: Float = 0
     private var saidGoodStirring = false
-    private var doorGlowJob: Int?
     private var idleJob: Int?
     private var bakeJobs: [Int] = []
     private var lastSavedStir: Float = 0
@@ -160,20 +184,25 @@ final class KitchenRoom {
         root.addChild(pot)
         ingredientPot = pot
 
-        // **One ingredient per source, in order.** Token *i* stands where
-        // source *i* is — shelf, then counter, then basket — and the ones she
-        // has already used are simply not built.
+        // **One ingredient per source.** Token *i* stands where source *i* is —
+        // top shelf, lower shelf, counter, basket, crate — and the ones she has
+        // already used are simply not built. `usedSlots` rather than a count,
+        // because she may take them in any order she likes.
+        let used = state.usedSlots
         for (i, ingredient) in state.basket.enumerated() {
             guard let source = Layout.Source(rawValue: i) else { continue }
             let token = KitchenProps.token(ingredient, flat: flat)
             let home = source.spot
             token.position = home
             token.name = "Token\(i)_\(ingredient.rawValue)"
-            token.isEnabled = i >= state.nextIndex
+            token.isEnabled = !used.contains(i)
             root.addChild(token)
             tokens.append((ingredient, token, home))
-            if source == .mandje {
-                ContactShadows.attach(to: token, radius: 0.011, settings: settings)
+            // Only the ones standing on something the shadow can land on. The
+            // two on the wall shelves have a plank 8 mm thick under them and
+            // nothing else, so a disc there lands on the floor far below.
+            if source == .mandje || source == .krat || source == .aanrecht {
+                ContactShadows.attach(to: token, radius: 0.012, settings: settings)
             }
         }
 
@@ -221,10 +250,22 @@ final class KitchenRoom {
         root.addChild(scaleNode.root)
         scaleProp = scaleNode
 
+        // On the floor, in the near foreground. See `Layout.flourSpot`.
         let sack = KitchenProps.flourSack(flat: flat)
         sack.position = Layout.flourSpot
         root.addChild(sack)
         flourSack = sack
+        ContactShadows.attach(to: sack, radius: 0.024, settings: settings)
+        ContactShadows.update(for: sack, surfaceY: Layout.floorY, settings: settings)
+
+        let box = KitchenProps.crate(flat: flat)
+        box.position = Layout.crateSpot
+        root.addChild(box)
+        crate = box
+        ContactShadows.attach(to: box, radius: 0.026, settings: settings)
+        ContactShadows.update(for: box, surfaceY: Layout.floorY, settings: settings)
+
+        cakePlank = root.findEntity(named: "CakePlankBoard") as? ModelEntity
     }
 
     private func buildDoorway() {
@@ -260,7 +301,10 @@ final class KitchenRoom {
             let source = Layout.Source(rawValue: index) ?? .mandje
             touch.register("token\(index)", entity: token.entity,
                            radius: 0.030, planeY: source.planeY) { target in
-                target.onDragBegan = { [weak self] world in self?.pickUp(token.entity, at: world) }
+                target.tracksEntity = true
+                target.onDragBegan = { [weak self] world in
+                    self?.pickUp(token.entity, at: world)
+                }
                 target.onDragMoved = { [weak self] world in self?.carry(to: world) }
                 target.onDragEnded = { [weak self] world in
                     self?.dropToken(index: index, at: world)
@@ -271,6 +315,8 @@ final class KitchenRoom {
 
         touch.register("bowl", entity: bowl, radius: 0.045,
                        planeY: Layout.tableTopY + 0.020) { target in
+            target.tracksEntity = true
+            target.planeOffset = 0.020
             target.onDragBegan = { [weak self] world in self?.bowlTouchBegan(world) }
             target.onDragMoved = { [weak self] world in self?.bowlTouchMoved(world) }
             target.onDragEnded = { [weak self] world in self?.bowlTouchEnded(world) }
@@ -278,6 +324,7 @@ final class KitchenRoom {
 
         touch.register("tin", entity: tin?.root, radius: 0.034,
                        planeY: Layout.tableTopY) { target in
+            target.tracksEntity = true
             target.onDragBegan = { [weak self] world in
                 guard let self, let tin = self.tin else { return }
                 self.pickUp(tin.root, at: world)
@@ -298,6 +345,7 @@ final class KitchenRoom {
 
         touch.register("cake", entity: nil, radius: 0.040,
                        planeY: Layout.tableTopY) { target in
+            target.tracksEntity = true
             target.onTap = { [weak self] in self?.tapCake() }
             target.onDragBegan = { [weak self] world in
                 guard let self, let cake = self.cake else { return }
@@ -314,8 +362,10 @@ final class KitchenRoom {
     }
 
     private func registerToyTargets() {
-        touch.register("flour", entity: flourSack, radius: 0.030,
-                       planeY: Layout.counterTopY) { target in
+        // The sack is on the floor now, and big — a 60 mm target on a prop she
+        // has to reach down for.
+        touch.register("flour", entity: flourSack, radius: 0.045,
+                       planeY: Layout.floorY) { target in
             target.onTap = { [weak self] in self?.tapFlour() }
         }
         touch.register("sink", entity: sink?.root, radius: 0.030,
@@ -326,14 +376,27 @@ final class KitchenRoom {
                        planeY: Layout.counterTopY) { target in
             target.onTap = { [weak self] in self?.tapScale() }
         }
+        touch.register("crate", entity: crate, radius: 0.034,
+                       planeY: Layout.floorY) { target in
+            target.onTap = { [weak self] in
+                guard let self, let crate = self.crate else { return }
+                self.ticker.squash(crate, amount: 0.12)
+                self.sound.playVaried(.thud, volume: 0.5)
+            }
+        }
         touch.register("rollingPin", entity: rollingPin, radius: 0.032,
                        planeY: Layout.tableTopY) { target in
+            target.tracksEntity = true
             target.onDragBegan = { [weak self] world in self?.rollBegan(at: world) }
             target.onDragMoved = { [weak self] world in self?.roll(to: world) }
             target.onDragEnded = { [weak self] _ in
-                self?.carried = nil
-                self?.rollLastPoint = nil
-                self?.sound.play(.thud, volume: 0.35)
+                guard let self, let pin = self.rollingPin else { return }
+                self.rollLastPoint = nil
+                // **It stays where she leaves it**, including on the floor.
+                // The pin is the prop most likely to be carried off for its own
+                // sake, and sending it home was the clearest case of the room
+                // undoing what she had just done.
+                self.settle(pin, missed: false)
             }
             target.onTap = { [weak self] in
                 guard let self, let pin = self.rollingPin else { return }
@@ -361,43 +424,51 @@ final class KitchenRoom {
     /// already passed go quiet, and those are the ones that have nothing left
     /// to do.
     private func refreshInteractivity() {
-        // Only the ingredient whose turn it is can be dragged. The others are
-        // still there, still tappable, still answer with a wobble — they just
-        // do not travel out of turn, which is what makes "in a specific order"
-        // a rule she can feel rather than one she can break.
+        // **Everything that is in the room can be picked up.**
+        //
+        // This used to be the opposite: only the ingredient whose turn it was
+        // could be dragged, the bowl only during stirring and pouring, the tin
+        // only on the way to Otto. Out of turn a prop wobbled and refused to
+        // travel, which is a locked door with a nice sound on it — and
+        // `GAMEPLAY.md` §7 has no locked doors in it. She can now move any of
+        // them anywhere at any time, and the halo carries the whole instruction
+        // by itself, which is what it was always supposed to do.
+        //
+        // What is still disabled is only what is genuinely not there: an
+        // ingredient already in the bowl, and the tin while it is inside Otto.
+        let used = state.usedSlots
         for index in tokens.indices {
-            touch.target(named: "token\(index)")?.enabled =
-                state.step == .vullen && index == state.nextIndex
+            touch.target(named: "token\(index)")?.enabled = !used.contains(index)
         }
-        touch.target(named: "bowl")?.enabled = state.step == .roeren || state.step == .gieten
-        touch.target(named: "tin")?.enabled = state.step == .inOven
+        touch.target(named: "bowl")?.enabled = true
+        touch.target(named: "tin")?.enabled = state.step != .bakken && state.step != .klaar
         touch.target(named: "cake")?.entity = cake
         touch.target(named: "cake")?.enabled = cake != nil
         refreshHalo()
     }
 
-    /// Put the currently lit prop back to its own colours.
+    /// Take the ring away.
     ///
     /// Called before lighting anything else, and directly by `bake()` — once
-    /// she has tapped Otto the cue has done its job, and two things writing to
-    /// the same material every frame is a fight nobody wins.
+    /// she has tapped Otto the cue has done its job. Nothing needs restoring:
+    /// the halo is a separate entity on the surface and never touched the
+    /// prop's own materials.
     private func clearHalo() {
-        ticker.cancel(haloJob)
-        haloJob = nil
-        if let haloed {
-            Halo.remove(from: haloed, restoring: haloedMaterials)
-        }
-        haloed = nil
-        haloedMaterials = []
+        Halo.remove(halo, ticker: ticker)
+        halo = nil
     }
 
     /// Light up whatever she needs next, and nothing else.
     private func refreshHalo() {
         clearHalo()
         guard let target = haloTarget(), target.isEnabled else { return }
-        haloed = target
-        haloedMaterials = Halo.materials(of: target)
-        haloJob = Halo.attach(to: target, radius: haloRadius(for: target), ticker: ticker)
+        halo = Halo.attach(to: target, radius: haloRadius(for: target), ticker: ticker,
+                           surfaceY: { [weak self, weak target] point in
+            guard let self, let target else { return Layout.surfaceY(at: point) }
+            // Through `surfaceUnder`, so the ring climbs onto the plank with
+            // the cake at the end of the round instead of staying on the table.
+            return self.surfaceUnder(point, for: target)
+        })
     }
 
     /// The one prop the current step is about.
@@ -410,10 +481,11 @@ final class KitchenRoom {
         case .gieten: return bowl
         case .inOven: return tin?.root
         case .bakken: return oven?.root
-        // The doorway has its own pulse — `setDoorwayInviting` — in the same
-        // visual language. Lighting it twice would just be two jobs writing to
-        // one material.
-        case .klaar: return nil
+        // The cake, which she now carries up to the plank. The plank itself
+        // pulses separately — `setPlankInviting` — because this is the one step
+        // that is a journey rather than a poke, and a journey needs both ends
+        // lit. Every other step lights exactly one thing.
+        case .klaar: return cake
         }
     }
 
@@ -425,7 +497,8 @@ final class KitchenRoom {
         if entity === tin?.root { return 0.024 }
         if entity === oven?.root { return 0.080 }
         if entity === doorway?.root { return 0.055 }
-        return 0.014
+        if entity === cake { return 0.030 }
+        return 0.018
     }
 
     // MARK: - Step presentation
@@ -435,9 +508,12 @@ final class KitchenRoom {
 
         // The whisk: on the table until she needs it, standing in the bowl
         // while she stirs, back on the table once the batter is done.
+        // Off the bowl's *live* position, not `Layout.bowlHome`: the bowl can be
+        // carried anywhere now, and a whisk that stands where the bowl used to
+        // be is a whisk standing in mid-air.
         let stirring = state.step == .roeren
         let whiskTarget = stirring
-            ? Layout.bowlHome + [0, 0.030, 0]
+            ? (bowl?.position ?? Layout.bowlHome) + [0, 0.030, 0]
             : Layout.whiskHome + [0, 0.006, 0]
         let whiskTilt = stirring ? simd_quatf(angle: 0, axis: [0, 1, 0])
                                  : simd_quatf(angle: .pi / 2.2, axis: [1, 0, 0])
@@ -458,10 +534,12 @@ final class KitchenRoom {
         tin.batter.isEnabled = state.step == .inOven || state.step == .bakken
         tin.batter.model?.materials = [Palette.material(state.bowlSpec.batterColour)]
         tin.root.isEnabled = state.step != .bakken && state.step != .klaar
-        if tin.root.isEnabled {
-            tin.root.scale = SIMD3<Float>(repeating: 1)
-            if carried !== tin.root { tin.root.position = Layout.tinHome }
-        }
+        if tin.root.isEnabled { tin.root.scale = SIMD3<Float>(repeating: 1) }
+        // **It is not sent home on every step change any more.** It used to be,
+        // and that was invisible while the tin could only be dragged during one
+        // step; now that she can move it whenever she likes, resetting its
+        // position on the next step change would be the room quietly tidying up
+        // after her. `build` places it, and nothing else moves it but her.
 
         // Otto's door: open when he is waiting to be loaded, shut otherwise.
         setDoor(open: state.step == .inOven, animated: animated, oven: oven)
@@ -476,7 +554,7 @@ final class KitchenRoom {
             if spec.sparkles { startCakeSparkle(node) }
         }
 
-        setDoorwayInviting(state.step == .klaar)
+        setPlankInviting(state.step == .klaar)
         refreshBowlBatter(animated: false)
         refreshInteractivity()
         bakerAttends()
@@ -537,7 +615,11 @@ final class KitchenRoom {
         guard let bowl else { return }
         // Only while it is in the bowl. After she pours, `inBowl` is still the
         // recipe — it is what the cake is made of — but the bowl is empty.
-        let inTheBowl = state.step == .vullen || state.step == .roeren || state.step == .gieten
+        // `uitrollen` is in the list because nothing stops her dropping a berry
+        // in before she has rolled the dough, and an ingredient that vanishes
+        // on the way into the bowl is the one thing a drop must never do.
+        let inTheBowl = state.step == .uitrollen || state.step == .vullen
+            || state.step == .roeren || state.step == .gieten
         let count = inTheBowl ? state.inBowl.count : 0
         guard count > 0 else {
             bowlBatter?.removeFromParent()
@@ -577,40 +659,189 @@ final class KitchenRoom {
 
     // MARK: - Carrying
 
+    /// Pick something up.
     private func pickUp(_ entity: Entity, at world: SIMD3<Float>) {
+        endCarry()
         carried = entity
         carryOffset = entity.position - world
         carryOffset.y = 0
+        carryOrigin = entity.position
+        carryY = entity.position.y
+        carrySurfaceY = Layout.surfaceY(at: entity.position)
+        carryGoalY = carryY
         stopHint()
         ticker.squash(entity, amount: 0.14, duration: 0.25)
         sound.play(.stirTick, volume: 0.4)
+
+        // One job for the whole drag, rather than easing inside the touch
+        // callback: touch events stop arriving the moment her finger stops
+        // moving, and a prop halfway down to the floor has to keep going.
+        //
+        // **The drag plane is fixed for the whole drag, and that is the fix for
+        // a bug worth remembering.** It used to be written down here every
+        // frame — `carryTarget.planeY = carryY` — so that the prop stayed
+        // pinned under her fingertip as it changed height. That is a feedback
+        // loop, because the height depends on the XZ and the XZ depends on the
+        // plane: raising the plane by Δ moves the ray's intersection about
+        // 1.7Δ towards the camera at this camera angle, which can move the prop
+        // straight back out of the region that raised it.
+        //
+        // The cake going up onto the plank is where it bit. Reaching the plank
+        // zone lifted the cake 67 mm, which slid the mapped point ~70 mm
+        // forwards, out of the zone; it dropped back to the counter, which slid
+        // the point back in, and it juddered between the two. It could not be
+        // put on the plank at all — it stuck on the counter underneath it.
+        //
+        // With the plane fixed, XZ is a pure function of her finger and cannot
+        // oscillate. The prop drifts up or down *on screen* relative to her
+        // finger as it changes surface, which turns out to read better anyway:
+        // vertical movement against a still fingertip is the clearest possible
+        // way of saying "this is on the floor now".
+        carryJob = ticker.add { [weak self] dt in
+            guard let self, let held = self.carried else { return false }
+            // Exponential ease — about 90% of the remaining gap in a third of
+            // a second, whatever the frame rate, and no overshoot.
+            self.carryY += (self.carryGoalY - self.carryY) * (1 - exp(-dt * 7.5))
+            held.position.y = self.carryY
+            ContactShadows.update(for: held, surfaceY: self.carrySurfaceY,
+                                  settings: self.settings)
+            return true
+        }
     }
 
+    /// **The height rule.** A carried prop rides just above whatever is
+    /// underneath it, and eases there rather than jumping.
+    ///
+    /// Everything used to be carried at table height regardless of where it
+    /// was, which is why the room read flat: drag the rolling pin off the table
+    /// and it stayed at table height, hanging in mid-air over the floor with
+    /// nothing to say it was up there. Now it comes down, over about a third of
+    /// a second, and going back up onto the table lifts it again.
     private func carry(to world: SIMD3<Float>) {
         guard let carried else { return }
-        var next = world + carryOffset
-        // Lifted a little, so it reads as held rather than shoved.
-        next.y = Layout.tableTopY + 0.012
-        carried.position = Layout.clampToPlayArea(next)
-        ContactShadows.update(for: carried, surfaceY: Layout.tableTopY, settings: settings)
+        var next = Layout.clampToPlayArea(world + carryOffset)
+        carrySurfaceY = surfaceUnder(next, for: carried)
+        carryGoalY = carrySurfaceY + Layout.carryLift
+        // Y is owned by the carry job; the touch only ever moves it about.
+        next.y = carryY
+        carried.position = next
     }
 
-    /// A drag that landed nowhere. It floats home, and Nina is nice about it.
-    private func floatHome(_ entity: Entity, to home: SIMD3<Float>, speak: Bool = true) {
+    /// What the carried prop is over. The cake is the one prop that can also be
+    /// over the wall plank, which is where the round now ends.
+    private func surfaceUnder(_ point: SIMD3<Float>, for entity: Entity) -> Float {
+        if entity === cake, Layout.nearPlank(point) { return Layout.cakePlankY + 0.004 }
+        return Layout.surfaceY(at: point)
+    }
+
+    private func endCarry() {
+        ticker.cancel(carryJob)
+        carryJob = nil
         carried = nil
-        ticker.move(entity, to: home, duration: 0.45, arc: 0.012, ease: Ease.out) { [weak self] in
-            guard let self else { return }
-            self.sound.play(.thud, volume: 0.5)
-            ContactShadows.update(for: entity, surfaceY: home.y, settings: self.settings)
+    }
+
+    /// **A drop that did not do anything in particular. It stays where she put
+    /// it.**
+    ///
+    /// This replaced `floatHome`, which sent a missed drop back to where it
+    /// came from and had Nina apologise for it. That was wrong twice over. It
+    /// took the room away from her — the one thing she can do with a kitchen
+    /// full of objects is move them around, and every attempt was being undone
+    /// half a second later. And it made a miss into an *event*, with a sound
+    /// and a line about it, when most misses are not attempts at anything: she
+    /// picked up the rolling pin and put it on the floor, which is a thing a
+    /// 4-year-old does to a rolling pin.
+    ///
+    /// So a prop now settles onto whatever is beneath it and simply stays
+    /// there. `missed` is the narrow case that is still worth answering: she
+    /// was working on the current step and it did not take.
+    private func settle(_ entity: Entity, missed: Bool) {
+        let origin = carryOrigin
+        endCarry()
+
+        // **A touch that went nowhere puts it back exactly.** This is what
+        // stops a tap on the top shelf knocking the berry off it: every tap is
+        // also a zero-length drag (`TouchRouter.ended`), and without this the
+        // berry would obediently fall to the floor because that is what is
+        // under the shelf. A grab she thought better of gets the same answer.
+        guard Layout.distanceXZ(entity.position, origin) > 0.010 else {
+            ticker.move(entity, to: origin, duration: 0.16, arc: 0, ease: Ease.out) {
+                [weak self] in
+                guard let self else { return }
+                ContactShadows.update(for: entity, surfaceY: Layout.surfaceY(at: origin),
+                                      settings: self.settings)
+            }
+            return
         }
-        if speak { voice.say(Line.oeps) }
+
+        // **Out of sight is the one place a drop is not allowed to stick.**
+        // The camera is fixed, so the floor behind the table is a patch she
+        // could put something into and never get it back out of — and she has
+        // no way to look round the table. It floats back to where she picked it
+        // up, which is the one case the old float-home behaviour was right
+        // about. Everywhere else on the floor is hers.
+        guard !Layout.isOutOfSight(entity.position) else {
+            sound.play(.whoosh, volume: 0.35)
+            ticker.move(entity, to: origin, duration: 0.4, arc: 0.014, ease: Ease.out) {
+                [weak self] in
+                guard let self else { return }
+                ContactShadows.update(for: entity, surfaceY: Layout.surfaceY(at: origin),
+                                      settings: self.settings)
+            }
+            if missed { noteMiss() }
+            return
+        }
+
+        let resting = SIMD3<Float>(entity.position.x,
+                                   Layout.surfaceY(at: entity.position),
+                                   entity.position.z)
+        ticker.move(entity, to: resting, duration: 0.20, arc: 0, ease: Ease.out) {
+            [weak self] in
+            guard let self else { return }
+            self.sound.play(.thud, volume: 0.42)
+            ContactShadows.update(for: entity, surfaceY: resting.y, settings: self.settings)
+        }
+        if missed { noteMiss() }
+    }
+
+    /// She tried the step and it did not take.
+    ///
+    /// Twice, Nina says something kind and nothing else. **The third time she
+    /// says the instruction again** — the same line the step opened with, at
+    /// normal priority so it is not dropped — because three misses in a row is
+    /// the clearest signal available that the cue was heard once and has since
+    /// been forgotten, and she cannot read a reminder.
+    private func noteMiss() {
+        if missStep != state.step {
+            missStep = state.step
+            missCount = 0
+        }
+        missCount += 1
+        guard missCount >= 3 else {
+            voice.say(Line.oeps)
+            return
+        }
+        missCount = 0
+        voice.say(nudgeLine(for: state.step))
+        // And point at it again while she hears it, in case the glow has
+        // become part of the furniture.
+        if let target = haloTarget(), target.isEnabled {
+            ticker.squash(target, amount: 0.18, duration: 0.5)
+        }
+    }
+
+    /// Something worked. The miss counter only measures a run of failures, so
+    /// any success clears it.
+    private func noteHit() {
+        missCount = 0
+        missStep = state.step
     }
 
     // MARK: - Step 1: filling the bowl
 
     private func nudgeToken(_ index: Int) {
         guard index < tokens.count else { return }
-        ticker.squash(tokens[index].entity, amount: 0.25)
+        ticker.squash(tokens[index].entity, amount: 0.18)
         sound.playVaried(.plop, volume: 0.5)
         // Tapping one whose turn it is not still does something, and what it
         // says is where to look instead.
@@ -618,18 +849,28 @@ final class KitchenRoom {
                   priority: .low)
     }
 
+    /// A token released. In the bowl it counts; anywhere else it just stays
+    /// where she put it.
+    ///
+    /// **Any token counts, not only the lit one.** The order is a suggestion
+    /// now, so if she goes for the crate before the top shelf, the crate's
+    /// ingredient goes in the cake and the halo moves on to whatever is left.
     private func dropToken(index: Int, at world: SIMD3<Float>) {
         guard index < tokens.count, let bowl else { return }
         let token = tokens[index]
-        carried = nil
+        endCarry()
 
         guard Layout.distanceXZ(token.entity.position, bowl.position) <= snapRadius else {
-            floatHome(token.entity, to: token.home)
+            // Only a miss if the bowl is what she is meant to be filling. The
+            // rest of the round she is simply moving a berry about, and being
+            // told "oeps" for tidying up would be nonsense.
+            settle(token.entity, missed: state.step == .vullen)
             return
         }
 
         // Into the bowl. The token is consumed; what is left is a colour.
         let into = bowl.position + [0, 0.014, 0]
+        noteHit()
         ticker.move(token.entity, to: into, duration: 0.28, arc: 0.02, ease: Ease.inCurve) {
             [weak self] in
             guard let self else { return }
@@ -639,23 +880,40 @@ final class KitchenRoom {
             Sparkles.ring(at: into, in: self.root, ticker: self.ticker,
                           colour: token.ingredient.tokenColour, radius: 0.045)
 
-            // The basket is never mutated — `inBowl.count` is how far she has
-            // got, and it is what moves the halo to the next shelf.
+            // The basket is never mutated. `used` records which slot went in,
+            // which is what lets her take them in any order and still have the
+            // room know which shelf is empty.
+            //
+            // **Read the slots before appending, not after.** `usedSlots` falls
+            // back to `0..<inBowl.count` for a round saved by the build that
+            // had no `used` key, so reading it after the append would count the
+            // ingredient that is going in right now as slot 0 — marking a shelf
+            // she has not touched as empty, and ending the fetching an
+            // ingredient early.
+            let slots = self.state.usedSlots
             self.state.inBowl.append(token.ingredient)
+            self.state.used = slots + [index]
             self.refreshBowlBatter(animated: true)
             self.voice.say(token.ingredient.lineID)
             self.baker?.set(.cheering)
             self.save()
-            self.refreshInteractivity()
 
-            if self.state.allCollected {
-                self.ticker.after(1.1) { [weak self] in self?.beginStirring() }
-            } else {
-                // Point at the next place before she has to go looking.
-                self.ticker.after(1.8) { [weak self] in
-                    guard let self, self.state.step == .vullen else { return }
-                    self.sayNextSource()
+            // An ingredient can be dropped in before the dough is rolled. It is
+            // still her cake, so it counts — the round simply arrives at
+            // `vullen` with the bowl already started.
+            if self.state.step == .vullen || self.state.step == .uitrollen {
+                self.refreshInteractivity()
+                if self.state.allCollected && self.state.step == .vullen {
+                    self.ticker.after(1.1) { [weak self] in self?.beginStirring() }
+                } else {
+                    // Point at the next place before she has to go looking.
+                    self.ticker.after(1.8) { [weak self] in
+                        guard let self, self.state.step == .vullen else { return }
+                        self.sayNextSource()
+                    }
                 }
+            } else {
+                self.refreshInteractivity()
             }
         }
     }
@@ -670,41 +928,35 @@ final class KitchenRoom {
 
     // MARK: - Step 2: stirring
 
+    /// The bowl has two verbs, and which one she gets depends only on whether
+    /// this is the stirring step. Everywhere else it is a thing she can pick up
+    /// and move, like everything else in the room.
     private func bowlTouchBegan(_ world: SIMD3<Float>) {
-        switch state.step {
-        case .roeren:
+        guard state.step != .roeren else {
             stirLastAngle = angleAroundBowl(world)
             stirLastPoint = world
-        case .gieten:
-            guard let bowl else { return }
-            pickUp(bowl, at: world)
-        default:
-            break
+            return
         }
+        guard let bowl else { return }
+        pickUp(bowl, at: world)
     }
 
     private func bowlTouchMoved(_ world: SIMD3<Float>) {
-        switch state.step {
-        case .roeren:
+        guard state.step != .roeren else {
             stir(to: world)
-        case .gieten:
-            // The batter is a child of the bowl, so it rides along for free.
-            carry(to: world)
-        default:
-            break
+            return
         }
+        // The batter is a child of the bowl, so it rides along for free.
+        carry(to: world)
     }
 
     private func bowlTouchEnded(_ world: SIMD3<Float>) {
-        switch state.step {
-        case .roeren:
+        guard state.step != .roeren else {
             stirLastAngle = nil
             stirLastPoint = nil
-        case .gieten:
-            dropBowl(at: world)
-        default:
-            break
+            return
         }
+        dropBowl(at: world)
     }
 
     private func angleAroundBowl(_ world: SIMD3<Float>) -> Float {
@@ -798,11 +1050,16 @@ final class KitchenRoom {
 
     private func dropBowl(at world: SIMD3<Float>) {
         guard let bowl, let tin else { return }
-        carried = nil
-        guard Layout.distanceXZ(bowl.position, tin.root.position) <= snapRadius else {
-            floatHome(bowl, to: Layout.bowlHome)
+        endCarry()
+        // Pouring only happens when there is something to pour. Carried over to
+        // the tin during `vullen`, the bowl just gets set down next to it.
+        guard state.step == .gieten,
+              tin.root.isEnabled,
+              Layout.distanceXZ(bowl.position, tin.root.position) <= snapRadius else {
+            settle(bowl, missed: state.step == .gieten)
             return
         }
+        noteHit()
         pour(bowl: bowl, tin: tin)
     }
 
@@ -858,11 +1115,15 @@ final class KitchenRoom {
 
     private func dropTin(at world: SIMD3<Float>) {
         guard let tin, let oven else { return }
-        carried = nil
-        guard Layout.distanceXZ(tin.root.position, Layout.ovenMouth) <= 0.075 else {
-            floatHome(tin.root, to: Layout.tinHome)
+        endCarry()
+        // Otto only takes it once it has batter in it. Before that she can
+        // carry the tin around all she likes and put it down anywhere.
+        guard state.step == .inOven,
+              Layout.distanceXZ(tin.root.position, Layout.ovenMouth) <= 0.075 else {
+            settle(tin.root, missed: state.step == .inOven)
             return
         }
+        noteHit()
 
         // In it goes, and out of sight — an oven you can see into is not an
         // oven, and hiding it is what makes the door opening worth watching.
@@ -976,10 +1237,12 @@ final class KitchenRoom {
             ContactShadows.attach(to: node, radius: 0.026, settings: self.settings)
             ContactShadows.update(for: node, surfaceY: Layout.tableTopY, settings: self.settings)
             if spec.sparkles { self.startCakeSparkle(node) }
-            self.setDoorwayInviting(true)
+            self.setPlankInviting(true)
             self.refreshInteractivity()
-            // Otto first, then Nina on the colour and at most one effect.
-            self.voice.say([Line.ottoKlaar] + spec.reactionLines)
+            // Otto first, then Nina on the colour and at most one effect, and
+            // only then where it goes — the last step is not an interruption of
+            // her looking at what she made.
+            self.voice.say([Line.ottoKlaar] + spec.reactionLines + [Line.opDePlank])
         }
     }
 
@@ -1002,50 +1265,72 @@ final class KitchenRoom {
 
     private func tapCake() {
         guard let cake else { return }
-        ticker.squash(cake, amount: 0.20)
+        ticker.squash(cake, amount: 0.15)
         sound.play(.sparkle, volume: 0.6)
         Sparkles.burst(at: cake.position + [0, 0.04, 0], in: root, ticker: ticker, count: 6)
     }
 
+    /// **The last step of the round: she carries the cake up onto the plank.**
+    ///
+    /// It used to be a tap on the doorway, and that was the weakest moment in
+    /// the round. Everything else she does is a thing with her hands on the
+    /// object — roll it, fill it, stir it, pour it, push it into Otto — and
+    /// then the cake she had just made was finished by tapping a completely
+    /// different object across the room, which happened to be an arch. The
+    /// cake went up on the plank by itself while she watched.
+    ///
+    /// Now she puts it there. It is the same verb as every other step, it ends
+    /// on the object the whole round was about, and the plank — which is the
+    /// stand-in for the wall of twelve frames, and therefore for the entire
+    /// game (`GAMEPLAY.md` §2) — becomes somewhere she reaches rather than
+    /// somewhere things appear.
     private func dropCake(at world: SIMD3<Float>) {
         guard let cake else { return }
-        carried = nil
-        ContactShadows.update(for: cake, surfaceY: Layout.tableTopY, settings: settings)
-        sound.play(.thud, volume: 0.4)
-    }
-
-    /// The doorway. **Not yet a door** — see `app/README.md`. Until the
-    /// decorating room exists it closes the round: the cake goes up on the
-    /// plank and a fresh basket arrives.
-    private func tapDoorway() {
-        guard let doorway else { return }
-        sound.play(.whoosh)
-        ticker.squash(doorway.root, amount: 0.10, duration: 0.35)
-
-        guard state.step == .klaar, let cake, let spec = state.cake else {
-            // Mid-round: she gets told what is happening, not refused.
-            voice.say(nudgeLine(for: state.step), priority: .low)
+        endCarry()
+        guard state.step == .klaar, let spec = state.cake, Layout.nearPlank(cake.position) else {
+            settle(cake, missed: state.step == .klaar)
             return
         }
+        noteHit()
+        placeOnPlank(cake, spec: spec)
+    }
 
+    /// Onto the plank, and a fresh round behind it.
+    private func placeOnPlank(_ cake: Entity, spec: CakeSpec) {
         var shelf = state.shelf
         shelf.append(spec)
         if shelf.count > Layout.cakeShelfCapacity { shelf.removeFirst() }
 
         let slot = shelfSlot(min(shelf.count - 1, Layout.cakeShelfCapacity - 1))
         ContactShadows.removeFrom(cake)
-        ticker.tween(1.0, ease: Ease.inOut, step: { [weak cake] t in
+        clearHalo()
+        setPlankInviting(false)
+        // Shrinks to plank size as it goes, which is what makes four of them
+        // fit on a 13 cm board.
+        ticker.tween(0.7, ease: Ease.inOut, step: { [weak cake] t in
             cake?.scale = SIMD3<Float>(repeating: 1 - 0.38 * t)
         })
-        ticker.move(cake, to: slot, duration: 1.0, arc: 0.06) { [weak self] in
+        ticker.move(cake, to: slot, duration: 0.7, arc: 0.03, ease: Ease.out) { [weak self] in
             guard let self else { return }
             self.sound.play(.sparkle, volume: 0.7)
-            Sparkles.burst(at: slot + [0, 0.02, 0], in: self.root, ticker: self.ticker, count: 8)
+            Sparkles.burst(at: slot + [0, 0.02, 0], in: self.root, ticker: self.ticker, count: 10)
             self.startNewRound(shelf: shelf)
         }
+        baker?.set(.cheering)
         voice.say(Line.klaar)
         self.cake = nil
         touch.target(named: "cake")?.enabled = false
+    }
+
+    /// The doorway. **Still not a door** — see `app/README.md`. It no longer
+    /// ends the round either, now that the cake going up on the plank does
+    /// that, so it is a prop that whooshes and says what is happening. When the
+    /// decorating room lands this is still the one function to change.
+    private func tapDoorway() {
+        guard let doorway else { return }
+        sound.play(.whoosh)
+        ticker.squash(doorway.root, amount: 0.10, duration: 0.35)
+        voice.say(nudgeLine(for: state.step), priority: .low)
     }
 
     private func startNewRound(shelf: [CakeSpec]) {
@@ -1077,24 +1362,47 @@ final class KitchenRoom {
 
     // MARK: - Toys
 
+    /// A poof of flour out of the open neck of the sack.
+    ///
+    /// **This went to a cloud and came back.** `references/ingredients/flour-cloud.png`
+    /// showed a cluster of overlapping lit lobes, it was built, and on device
+    /// it read as *photographic* — a real puff of real flour sitting in a room
+    /// made of flat pastel facets. It was the one thing in the kitchen that
+    /// looked like it came from somewhere else, which is exactly what the four
+    /// style phrases in `CLAUDE.md` exist to prevent. The owner called it on
+    /// sight and the stylised burst went back in.
+    ///
+    /// The plate was still worth its credit: the *sack* it was generated
+    /// alongside is the version that shipped. Reference plates are briefs, and
+    /// a brief can be right about one thing and wrong about another.
     private func tapFlour() {
         guard let flourSack else { return }
-        ticker.squash(flourSack, amount: 0.30)
+        ticker.squash(flourSack, amount: 0.16)
         sound.playVaried(.poof)
-        Sparkles.puff(at: flourSack.position + [0, 0.036, 0], in: root, ticker: ticker, count: 12)
-        dustCounter(near: flourSack.position)
+        // Out of the open collar, not out of the middle of the sack.
+        Sparkles.puff(at: flourSack.position + [0, 0.050, 0], in: root,
+                      ticker: ticker, count: 12)
+        // A second, smaller one a beat later, so it billows twice the way a
+        // slapped sack does. This much of the cloud version was worth keeping.
+        ticker.after(0.22) { [weak self] in
+            guard let self, let sack = self.flourSack else { return }
+            Sparkles.puff(at: sack.position + [0, 0.044, 0], in: self.root,
+                          ticker: self.ticker, count: 7)
+        }
+        dustFloor(near: flourSack.position)
         if Int.random(in: 0..<3) == 0 { voice.say(Line.bloem, priority: .low) }
     }
 
     /// The handprints from `GAMEPLAY.md` §6.3, as a fading patch of flour. It
-    /// stays a while and then quietly stops being there.
-    private func dustCounter(near position: SIMD3<Float>) {
-        let patch = RoomBuilder.model(.prism(radius: Float.random(in: 0.010...0.016),
+    /// stays a while and then quietly stops being there. On the floor now,
+    /// around the foot of the sack, which is where spilt flour goes.
+    private func dustFloor(near position: SIMD3<Float>) {
+        let patch = RoomBuilder.model(.prism(radius: Float.random(in: 0.012...0.020),
                                              height: 0.0007, sides: 9),
                                       Palette.creamLight, flat: flat, name: "Flour")
-        patch.position = [position.x + Float.random(in: -0.020...0.020),
-                          Layout.counterTopY + 0.0006,
-                          position.z + Float.random(in: -0.014...0.014)]
+        patch.position = [position.x + Float.random(in: -0.026...0.026),
+                          Layout.floorY + 0.0006,
+                          position.z + Float.random(in: -0.018...0.018)]
         root.addChild(patch)
         flourPatches.append(patch)
         if flourPatches.count > 5 {
@@ -1108,26 +1416,89 @@ final class KitchenRoom {
         }
     }
 
+    /// The tap runs for two and a half seconds, and four things happen at once.
+    ///
+    /// The old version scaled one blue prism up and back down again, which is
+    /// why it read as a stick appearing rather than as water. What sells it is
+    /// not any one of these, it is that they overlap:
+    ///
+    /// 1. **The stream grows down** from the spout, easing out — it arrives.
+    /// 2. **It turns**, about a revolution a second, so its six big facets
+    ///    travel across the surface and the thing looks like it is moving even
+    ///    while it is a fixed shape.
+    /// 3. **The basin fills**, and drains again after. Water that never
+    ///    accumulates is the tell that it is not water.
+    /// 4. **It splashes** — a ripple in the basin twice a second and a few
+    ///    droplets bouncing back up out of it.
     private func tapSink() {
         guard let sink else { return }
-        let water = sink.water
-        let basinTop = sink.root.position + [0, 0.014, 0]
-        water.isEnabled = true
+        for job in sinkJobs { ticker.cancel(job) }
+        sinkJobs.removeAll()
+
+        let stream = sink.stream, pool = sink.pool
+        let splash = sink.root.position + sink.splash
+        let running: Float = 2.5
+
+        stream.isEnabled = true
+        pool.isEnabled = true
         sound.play(.water)
-        ticker.tween(0.18, ease: Ease.out, step: { [weak water] t in
-            water?.scale = SIMD3<Float>(1, max(0.001, t), 1)
+
+        sinkJobs.append(ticker.tween(0.22, ease: Ease.out, step: { [weak stream] t in
+            stream?.scale = SIMD3<Float>(1, max(0.001, t), 1)
+        }))
+
+        // The turn, and a slight breathing of the stream's width — falling
+        // water is never quite the same thickness two moments running.
+        var spin: Float = 0
+        sinkJobs.append(ticker.add { [weak stream] dt in
+            guard let stream, stream.isEnabled else { return false }
+            spin += dt
+            let wobble = 1 + sin(spin * 11) * 0.10
+            stream.orientation = simd_quatf(angle: spin * 6.0, axis: [0, 1, 0])
+            stream.scale = SIMD3<Float>(wobble, stream.scale.y, wobble)
+            return true
         })
-        ticker.after(0.35) { [weak self] in
+
+        // Filling, then draining. Deliberately not linear: it fills fast and
+        // then slows, the way a basin with a slow drain does.
+        sinkJobs.append(ticker.tween(running * 0.9, ease: Ease.out, step: { [weak pool] t in
+            pool?.scale = SIMD3<Float>(1, max(0.001, t), 1)
+        }))
+
+        // Ripples and droplets while it runs.
+        var next: Float = 0.15
+        var elapsed: Float = 0
+        sinkJobs.append(ticker.add { [weak self] dt in
+            guard let self else { return false }
+            elapsed += dt
+            guard elapsed < running else { return false }
+            next -= dt
+            guard next <= 0 else { return true }
+            next = Float.random(in: 0.4...0.6)
+            Sparkles.ring(at: splash + [0, 0.001, 0], in: self.root, ticker: self.ticker,
+                          colour: Palette.mintLight, radius: 0.024)
+            Sparkles.burst(at: splash, in: self.root, ticker: self.ticker,
+                           colour: Palette.berryBlue, count: 4, size: 0.0016,
+                           speed: 0.05, gravity: 0.35, life: 0.45)
+            return true
+        })
+
+        sinkJobs.append(ticker.after(running) { [weak self] in
             guard let self else { return }
-            Sparkles.ring(at: basinTop, in: self.root, ticker: self.ticker,
-                          colour: Palette.berryBlue, radius: 0.03)
-        }
-        ticker.after(2.1) { [weak self] in
-            guard let self else { return }
-            self.ticker.tween(0.25, ease: Ease.inCurve, step: { [weak water] t in
-                water?.scale = SIMD3<Float>(1, max(0.001, 1 - t), 1)
-            }, done: { [weak water] in water?.isEnabled = false })
-        }
+            self.sinkJobs.append(self.ticker.tween(0.28, ease: Ease.inCurve,
+                                                   step: { [weak stream] t in
+                stream?.scale = SIMD3<Float>(1, max(0.001, 1 - t), 1)
+            }, done: { [weak stream] in stream?.isEnabled = false }))
+            // The pool lingers a moment and then drains, which is what says the
+            // water went somewhere rather than being switched off.
+            self.sinkJobs.append(self.ticker.after(0.5) { [weak self] in
+                guard let self else { return }
+                self.sinkJobs.append(self.ticker.tween(0.9, ease: Ease.inOut,
+                                                       step: { [weak pool] t in
+                    pool?.scale = SIMD3<Float>(1, max(0.001, 1 - t), 1)
+                }, done: { [weak pool] in pool?.isEnabled = false }))
+            })
+        })
     }
 
     private func tapScale() {
@@ -1210,9 +1581,19 @@ final class KitchenRoom {
             self.refreshTinBase()
             self.applyStep(animated: true)
             self.voice.say(Line.deegKlaar)
-            // And then straight into where the first ingredient lives.
+
+            // **She may already have filled the bowl.** Nothing stops her
+            // fetching ingredients before rolling — the halo suggests an order,
+            // it does not impose one — so the round can arrive here with
+            // everything already collected, and without this it would sit in
+            // `vullen` with nothing left to collect and no way forward.
+            guard !self.state.allCollected else {
+                self.ticker.after(1.4) { [weak self] in self?.beginStirring() }
+                return
+            }
+            // And then straight into where the next ingredient lives.
             self.ticker.after(2.2) { [weak self] in
-                guard let self, self.state.step == .vullen, self.state.inBowl.isEmpty else { return }
+                guard let self, self.state.step == .vullen else { return }
                 self.sayNextSource()
             }
         }
@@ -1304,7 +1685,7 @@ final class KitchenRoom {
         case .gieten: return bowl
         case .inOven: return tin?.root
         case .bakken: return oven?.dome
-        case .klaar: return doorway?.root
+        case .klaar: return cake
         }
     }
 
@@ -1316,27 +1697,41 @@ final class KitchenRoom {
         case .gieten: return Line.gieten
         case .inOven: return Line.naarOtto
         case .bakken: return Line.klopOpOtto
-        case .klaar: return Line.klaar
+        case .klaar: return Line.opDePlank
         }
     }
 
-    /// The doorway brightens once the round is done. It works either way.
-    private func setDoorwayInviting(_ inviting: Bool) {
-        guard let doorway else { return }
-        let glow = doorway.glow
-        ticker.cancel(doorGlowJob)
-        doorGlowJob = nil
+    /// **The plank brightens once there is a cake to put on it.**
+    ///
+    /// This is the destination half of the round's last instruction: the cake
+    /// glows because it is what she picks up, and the plank glows because it is
+    /// where it goes. Two lit things at once is the exception the rest of the
+    /// game does not make — every other step lights exactly one prop — and it
+    /// is allowed here because the step is a journey and a journey has two ends.
+    ///
+    /// It pulses in counter-phase to `Halo`'s 2.4 rad/s breathing, so the two
+    /// take turns rather than beating against each other.
+    private func setPlankInviting(_ inviting: Bool) {
+        guard let plank = cakePlank else { return }
+        ticker.cancel(plankGlowJob)
+        plankGlowJob = nil
         guard inviting else {
-            glow.model?.materials = [Palette.material(Palette.cream)]
+            plank.model?.materials = [Palette.material(Palette.rose)]
             return
         }
-        var elapsed: Float = 0
-        doorGlowJob = ticker.add { [weak glow] dt in
-            guard let glow else { return false }
+        var elapsed: Float = .pi / 2.4    // half a cycle behind the cake's halo
+        var lastStep = -1
+        plankGlowJob = ticker.add { [weak plank] dt in
+            guard let plank else { return false }
             elapsed += dt
-            let pulse = 0.45 + 0.35 * (0.5 + 0.5 * sin(elapsed * 2.2))
-            glow.model?.materials = [
-                Palette.glowMaterial(Palette.butterYellow, intensity: pulse)
+            let wave = 0.5 + 0.5 * sin(elapsed * 2.4)
+            let step = Int(wave * 10)
+            guard step != lastStep else { return true }
+            lastStep = step
+            let t = Float(step) / 10
+            plank.model?.materials = [
+                Palette.glowMaterial(Palette.mix(Palette.rose, Palette.white, 0.30 * t),
+                                     intensity: 1.0 + 3.0 * t)
             ]
             return true
         }
@@ -1371,30 +1766,39 @@ final class KitchenRoom {
 
     func refreshContactShadows(settings: LightingSettings) {
         self.settings = settings
-        let props: [Entity?] = [bowl, tin?.root, cake, rollingPin, basket]
+        let props: [Entity?] = [bowl, tin?.root, cake, rollingPin, basket, flourSack, crate]
             + tokens.map { $0.entity as Entity? }
         for prop in props.compactMap({ $0 }) {
             guard prop.isEnabled else { continue }
-            let radius: Float = prop === bowl ? 0.030 : 0.016
+            let radius: Float
+            if prop === bowl { radius = 0.030 }
+            else if prop === flourSack { radius = 0.024 }
+            else if prop === crate { radius = 0.026 }
+            else { radius = 0.016 }
             ContactShadows.attach(to: prop, radius: radius, settings: settings)
-            let surface = prop.position.y > Layout.counterTopY + 0.004
-                ? Layout.tableTopY : Layout.floorY
-            ContactShadows.update(for: prop, surfaceY: surface, settings: settings)
+            // Ask the room what is under it rather than guessing from height:
+            // props now sit on four different surfaces and move between them.
+            ContactShadows.update(for: prop, surfaceY: Layout.surfaceY(at: prop.position),
+                                  settings: settings)
         }
     }
 
     private func cancelEverything() {
         for job in bakeJobs { ticker.cancel(job) }
         bakeJobs.removeAll()
-        ticker.cancel(doorGlowJob)
-        doorGlowJob = nil
+        for job in sinkJobs { ticker.cancel(job) }
+        sinkJobs.removeAll()
+        ticker.cancel(plankGlowJob)
+        plankGlowJob = nil
         ticker.cancel(idleJob)
         idleJob = nil
         clearHalo()
         baker?.stop()
         baker = nil
         stopHint()
-        carried = nil
+        endCarry()
+        missCount = 0
+        missStep = nil
         stirLastAngle = nil
         stirLastPoint = nil
         rollLastPoint = nil
@@ -1402,5 +1806,7 @@ final class KitchenRoom {
         dough = nil
         tinBase = nil
         ingredientPot = nil
+        crate = nil
+        cakePlank = nil
     }
 }
