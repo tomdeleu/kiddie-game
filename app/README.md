@@ -13,7 +13,52 @@ below is still the record of that.
 > thing and needed two fixes on first build; expect similar here, and see
 > [First build](#first-build) for the two places most likely to want one.
 
-## The opening film
+## The opening
+
+Three layers, each uncovering the next: **title plate → film → kitchen.** The
+room is built and lit underneath all of them, so whichever way she arrives, it
+is simply there.
+
+### The title plate
+
+`Nina's Toverbakkerij`, on the cottage the film is about to push in on. It is
+the game's face and the only place its name is written down — and it is the
+only text anywhere in the game. `CONCEPT.md` §5 rules out text she has to read;
+a name on a cover is not that.
+
+It holds for **1.4 seconds minimum**, or until the kitchen is ready, whichever
+is later — and **6 seconds maximum**, ready or not. The floor is there because
+building the room on an iPad is quick enough that without one the title would
+flash past in three frames and read as a glitch. The cap is there because
+"she cannot lose" has to cover a first screen too: the readiness flag is set at
+the end of an `async` closure, and if that closure never returned she would be
+left holding a picture with no way out. An unlit kitchen she can poke is the
+better failure.
+
+A tap ends it early — and a tap anywhere, at any time, puts a sparkle under her
+finger, because a screen that eats a tap silently is where she decides the iPad
+is broken.
+
+The plate breathes, 1.0 → 1.03 over 2.6 s. A still image with nothing moving on
+it looks like an app that has hung.
+
+Provenance, the eighteen candidates and the reason the asset is 16:9 rather
+than 4:3 are in
+[`references/loading-screen/README.md`](../references/loading-screen/README.md).
+The short version: padding to 16:9 means filling the screen crops the sides,
+never the top, so no iPad aspect can crop into the title.
+
+The view fills the screen the way `object-fit: cover` does, and getting there
+takes three things together — a `GeometryReader` to measure, an explicit
+`frame` to pin the image to that size, and `clipped()` to throw the overflow
+away. **`scaledToFill()` alone does not do it**, which is worth knowing before
+writing the next full-bleed screen: it reports its overflowed size as its
+layout size, so the enclosing stack grows to the image rather than cropping it.
+The plate came out too big, and off-centre with it, because the stack it sits
+in is `alignment: .topTrailing` for the developer corner's sake and an
+oversized child gets pinned to a corner instead of centred.
+
+### The film
 
 Fourteen seconds, two shots, narrated end to end:
 
@@ -61,7 +106,8 @@ Two ways, both doing the same thing:
 - **The skip button**, bottom-right, fading in a second after the film starts.
   The skip-to-end glyph from every music player, no text on it, 72 pt across.
   It exists because tap-anywhere is invisible — a grown-up handed the iPad has
-  no way to guess it, and neither does she.
+  no way to guess it, and neither does she. It is a
+  [`FacetButton`](#the-button), the game's one control.
 - **A tap anywhere else.** Kept, because it is what she will do.
 
 It is bottom-right on purpose: top-right is where the developer panel's hidden
@@ -82,8 +128,10 @@ line is. It was generated with Seedance 2.5 starting from the locked cottage
 plate — the provenance, the cost and why a generated asset ships here at all
 are in `references/REFERENCES.md` §3.
 
-`intro-1.mp4` and `intro-2.mp4` are optional. Delete them and the game starts
-straight in the kitchen, with no code change.
+`intro-1.mp4` and `intro-2.mp4` are optional. Delete them and the title plate
+hands straight to the kitchen, with no code change — `IntroMovie.isAvailable` is
+still the only thing that checks, and it now also decides which of the two
+greeting paths runs.
 
 ## The round
 
@@ -382,9 +430,11 @@ be retired when the wall arrives, not grown.
 |---|---|
 | `Engine/CameraRig.swift` | The fixed camera, and screen ↔ world. Every drag in the room is a ray and a plane. |
 | `Engine/Ticker.swift` | The one clock. Every animation is an interruptible closure ticked from here. |
-| `Engine/TouchRouter.swift` | One finger, two verbs. Targets are generous spheres, not meshes, and their drag plane travels with the prop. |
+| `Engine/TouchRouter.swift` | One finger, two verbs. Targets are generous spheres, not meshes, and each carries the plane its prop is standing on. |
 | `Engine/Sparkles.swift` | Faceted yellow stars that fly out and vanish. The whole reward vocabulary. |
 | `Engine/Halo.swift` | The ring of light on the surface under the prop a step is about — the game's only instruction. |
+| `Intro/LoadingScreen.swift` | The title plate, and the floor it is held for. |
+| `Intro/IntroMovie.swift` | The opening film: a queue of shots, and two ways out of it. |
 | `Audio/SoundKit.swift` | All thirteen sound effects, synthesised at launch. |
 | `Audio/VoiceBank.swift` | Nina and Otto, driven by `script-keuken.json`. |
 | `Game/CakeSpec.swift` | Six ingredients → colour, effects, and what Nina says about them. |
@@ -392,10 +442,45 @@ be retired when the wall arrives, not grown.
 | `Kitchen/KitchenProps.swift` | Otto, the bowl, the batter, the tin, the cake, the six ingredients, the toys. |
 | `Kitchen/KitchenRoom.swift` | The room: assembly, the state machine, the toys, the nudges. |
 | `RoomBuilder.swift` | The shell and the furniture, plus `Layout` — every position in the room, in one table. |
-| `FacetedMesh.swift` | **The core of the look.** Flat-shaded primitive builders — `lathe`, `extrude` and `star` are what the ingredients are made of — plus the smooth variant for A/B. |
-| `Palette.swift` | The locked colours, the three added ones, and the glow and water materials. |
+| `FacetedMesh.swift` | **The core of the look.** Flat-shaded primitive builders — `lathe`, `extrude`, `star` and `annulus` are what the ingredients and the halo are made of — plus the smooth variant for A/B. |
+| `Palette.swift` | The locked colours, the three added ones, the glow and water materials, and `shade` for the 2D UI. |
+| `UI/FacetButton.swift` | **The button.** One faceted octagon, every control in the game. |
 | `LightingRig.swift`, `LightingSettings.swift`, `DebugPanel.swift`, `ContactShadows.swift` | The POC's lighting work, unchanged. |
 | `ContentView.swift` | Scene assembly, the gesture, and the hidden developer panel. |
+
+### The button
+
+Every control she touches outside the room is one object: an octagonal cap with
+a chamfered cream rim, a flat deep-pastel face and one big white glyph. It comes
+from `references/buttons/G-faceon-mint.png` — that folder's README has the nine
+candidates and the measurements — and it is drawn, not shipped as an image.
+
+Three things it settles for everything that comes after the kitchen:
+
+- **The rim does the shading.** Eight chamfer facets, each taking its tone from
+  its own angle to one 45° key light. It is the room's shading model done in 2D,
+  because the SwiftUI overlay has no renderer to do it. No gradients — a
+  gradient is a smooth curved surface with extra steps.
+- **The face is always a deep palette colour**, and the glyph is always white,
+  at 42% of the button's width. White on base mint is a contrast ratio of 1.43;
+  the four tones run 1.80 to 2.46. She is four, and a glyph she has to hunt for
+  is a button that does not work.
+- **Pressing sinks it.** The cap scales down, drops 2 pt, and the whole chamfer
+  ring inverts — which is what a cap going down into its socket actually does.
+  Small on purpose: the target must not move out from under her finger
+  mid-press.
+
+Two sizes: 120 pt for a target in the room, 72 pt for chrome at the edge of the
+screen. Two buttons wear it so far, both chrome and both 72 pt: **skip** in sage
+at bottom-right, **restart** in rose at bottom-left. Same object, same size,
+different colour — the family is what makes them read as the same kind of thing,
+and the colour is what lets her tell them apart without reading. The developer
+panel keeps its plain iOS controls — nothing in there is for Nina, and it is
+deliberately not pretty.
+
+The design is verified but **not compiled**, like everything else here.
+`references/buttons/render-facetbutton.py` re-draws `FacetPlate` from the same
+constants so the sheet in that folder shows what the code will produce.
 
 ### Why the touch handling is hand-rolled
 
@@ -450,7 +535,7 @@ long-standing limitation, not a setup problem.
 
 ### First build
 
-Two places are the most likely to want a fix, and both are one line:
+Three places are the most likely to want a fix, and all three are one line:
 
 1. **`CameraRig.fovIsVertical`.** `init` sets
    `camera.camera.fieldOfViewOrientation = .vertical` so the unprojection maths
@@ -459,13 +544,17 @@ Two places are the most likely to want a fix, and both are one line:
    everything else keeps working. If drags feel offset from her finger, this is
    the first thing to check.
 2. **`Palette.glowMaterial`.** Uses `emissiveColor` / `emissiveIntensity` on
-   `PhysicallyBasedMaterial`, and `waterMaterial` / `fadingMaterial` use
-   `.blending = .transparent`. Everything that glows, runs or fades goes
-   through those two functions, so if either API has moved, they are the only
-   place to fix it. The halo no longer uses either — it is `UnlitMaterial` with
-   transparent blending, the same as sparkles and contact shadows. If it looks
-   too strong or too tight on device, `Halo.spread`, `Halo.sigma` and the `0.92`
-   in `Halo.profile` are the three numbers that shape it.
+   `PhysicallyBasedMaterial`, and `waterMaterial` uses
+   `.blending = .transparent`. Everything that glows or runs goes through those
+   two functions, so if either API has moved they are the only place to fix it.
+   The halo uses neither — it is `UnlitMaterial` with transparent blending, the
+   same as sparkles and contact shadows. If it looks too strong or too tight on
+   device, `Halo.spread`, `Halo.sigma` and the `0.92` in `Halo.profile` are the
+   three numbers that shape it.
+3. **`FacetButton`'s convenience `init`.** It leans on the synthesised
+   memberwise initialiser carrying `@ViewBuilder` across from the stored `label`
+   property. If the compiler disagrees, write the designated `init` out by hand
+   in the struct body — five assignments, and every call site stays as it is.
 
 ### The developer panel
 

@@ -2,14 +2,29 @@
 
 ## Assets.xcassets — required
 
-Holds `AppIcon` and nothing else. Two 1024×1024 PNGs, RGB with no alpha: the
-light one and a dark-appearance one that is the same cake on a deep sage
-backdrop. iOS derives the tinted variant itself, so none is supplied.
+Three entries.
+
+**`AppIcon`.** Two 1024×1024 PNGs, RGB with no alpha: the light one and a
+dark-appearance one that is the same cake on a deep sage backdrop. iOS derives
+the tinted variant itself, so none is supplied.
 
 `ASSETCATALOG_COMPILER_APPICON_NAME` was already set to `AppIcon` before the
 catalog existed; this folder is a synchronized group, so dropping the catalog in
 was enough to wire it up. Provenance, the alternates and the recolour script are
 in [`references/app-icon/`](../../../references/app-icon/).
+
+**`LoadingScreen`.** One 2560×1440 PNG, single-scale — the title plate that
+`LoadingScreen.swift` shows while the kitchen is built. 16:9 on purpose: the
+view fills the screen with it, and no iPad is wider than 16:9, so the crop only
+ever takes background off the sides and can never reach the title. Provenance
+and the padding script are in
+[`references/loading-screen/`](../../../references/loading-screen/).
+
+**`LaunchBackground`.** A single colour, `#D0E3CE`, which is the mean of the
+loading plate's four corners. `INFOPLIST_KEY_UILaunchScreen_BackgroundColor`
+points at it, so the static launch screen iOS draws before any code runs is the
+same mint the plate opens on — launching reads as one field of colour rather
+than a white flash.
 
 ## Movies — optional
 

@@ -117,26 +117,23 @@ struct IntroMovie: View {
     /// 72 pt across: the age rules ask for ~120 pt game targets, and this is
     /// not a game target — it is a control a grown-up reaches for and she can
     /// hit by accident with no harm done, since skipping costs her nothing.
+    ///
+    /// It is a `FacetButton`, which is the game's one button — see
+    /// `UI/FacetButton.swift`. It used to be a dark translucent circle, which
+    /// was legible and belonged to no world at all; the faceted cap is legible
+    /// over the film's pastels for a different reason, its deep sage outline
+    /// and its contact shadow, and it is made of the same thing the bakery is.
     private var skipButton: some View {
-        Button {
+        FacetButton(symbol: "forward.end.fill",
+                    // Spoken, not written: the only place a word is allowed is
+                    // somewhere she will never see it.
+                    accessibilityLabel: "Overslaan",
+                    tone: .sage,
+                    diameter: FacetSize.chrome) {
             finish(skipped: true)
-        } label: {
-            Image(systemName: "forward.end.fill")
-                .font(.system(size: 26, weight: .semibold))
-                .foregroundStyle(.white)
-                .frame(width: 72, height: 72)
-                .background(.black.opacity(0.35), in: Circle())
-                .overlay(Circle().strokeBorder(.white.opacity(0.55), lineWidth: 2))
-                // The film is pastel and bright; a shadow is what keeps the
-                // glyph readable over a cream wall.
-                .shadow(color: .black.opacity(0.35), radius: 8, y: 2)
         }
-        .buttonStyle(.plain)
         .padding(32)
         .opacity(showSkip ? 1 : 0)
-        // Spoken, not written: the only place a word is allowed is somewhere
-        // she will never see it.
-        .accessibilityLabel("Overslaan")
     }
 
     private func start() {

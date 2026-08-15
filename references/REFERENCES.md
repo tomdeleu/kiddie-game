@@ -181,12 +181,17 @@ Shot 2 tripped a preset recommendation ("IN THE DARK") on first submission,
 which is exactly wrong for a bright pastel kitchen; it was declined and the
 prompt generated literally. Expect that prompt to keep suggesting it.
 
-**This is the one exception to "nothing generated goes into the app directly".**
-That rule exists because a generated *image* of a prop cannot be a prop — the
-geometry has to be modelled, and the plate is the brief for modelling it. A
-film has no such second form: rendering eight seconds of establishing shot out
-of the game's own primitives would be a week of camera and animation work for
-something she sees once per launch and can skip in a second.
+**This was the first exception to "nothing generated goes into the app
+directly".** That rule exists because a generated *image* of a prop cannot be a
+prop — the geometry has to be modelled, and the plate is the brief for
+modelling it. A film has no such second form: rendering eight seconds of
+establishing shot out of the game's own primitives would be a week of camera and
+animation work for something she sees once per launch and can skip in a second.
+
+Two more assets have since been let through on the same reasoning: the app icon
+(`app-icon/README.md`) and the loading screen (`loading-screen/README.md`).
+Three is not a slippery slope — the test each one passes is that the deliverable
+*is* a picture, with no geometry waiting behind it.
 
 What keeps it honest is the start frame. It begins on the locked plate, so it
 begins exactly on-style; the prompt then asks for almost no change — a push-in,
@@ -194,7 +199,7 @@ smoke from the chimney, a little sparkle, and explicitly *nothing morphing*.
 Motion is where these models drift, so the brief is to move the camera and
 leave the world alone.
 
-It is silent on purpose. Luna speaks over it in her own voice
+It is silent on purpose. Nina speaks over it in her own voice
 (`audio/script-intro.json`), which is both consistent with every other line in
 the game and immune to a video model inventing English.
 
@@ -203,6 +208,24 @@ shorten it (5 s is 32.5 credits, 6 s is 39), calm the motion — for shot 2 that
 means dropping the camera glide and keeping only the whisk and the steam — or
 drop back to the plate as a still with the same voice-over over it. Shots are
 independent files, so a re-cut is one shot's cost, not the film's.
+
+### The loading screen — the third generated asset that ships
+
+The title plate the app opens on, and the only place *Nina's Toverbakkerij* is
+written down. `flux_2` / `pro`, 4:3, 2k, against the scenes reference, job
+`6fe0eaaf-6ba3-41f5-9e9c-8613412c5e8d`; padded to 16:9 before it ships.
+
+The whole record — eighteen candidates, the prompt, and what the passes taught
+about getting a model to spell Dutch — is in
+[`loading-screen/README.md`](loading-screen/README.md). The two findings worth
+carrying anywhere else:
+
+- **`flux_2` spells Dutch about three quarters of the time**, and no prompt
+  wording moves that. Read the word before judging the picture.
+- **The lettering is where the style bends.** Keeping the title faceted made it
+  stiff, and pushing the facet wording harder put wireframe lines on the
+  cottage. A logo has no in-game geometry behind it, so it is allowed to be
+  soft; nothing else is.
 
 ### Gameplay plates 6–11 — composition only, WRONG STYLE
 
@@ -241,6 +264,22 @@ and about flux's behaviour rather than about surface:
 - **The cake should out-saturate its room.** Plate 9's cakes sit well outside the
   room palette on purpose. That rule carries over to the pastel direction intact:
   *the room is quiet, the cake is not.*
+
+### The UI — one button, in [`buttons/`](buttons/)
+
+Every control Nina touches outside the room is the same faceted octagon, chosen
+from nine candidates and measured into SwiftUI. That folder's README carries the
+plate, the job IDs and the numbers; three of its findings generalise and belong
+here:
+
+- **Ask for UI face-on**, not at the room's isometric angle. A control drawn
+  like a prop looks like a prop she can pick up.
+- **One object per plate.** A row of buttons lost every glyph and drifted every
+  colour, exactly as the twelve-friends cast sheet did. That is now two data
+  points for the same rule.
+- **flux cannot assemble a compound glyph.** Two triangles and a bar came back
+  five different wrong ways across nine plates. Prompt the shape of the control,
+  never the symbol on it.
 
 ### The locked style references — USE THESE
 
