@@ -149,18 +149,4 @@ extension Palette {
         m.blending = .transparent(opacity: .init(floatLiteral: opacity))
         return m
     }
-
-    /// A lit, faceted surface that can be faded out. The flour cloud is the
-    /// only thing that uses it, and it needs the facets — `UnlitMaterial`,
-    /// which is how sparkles fade, would return one flat silhouette and the
-    /// puff would read as a paper cut-out.
-    static func fadingMaterial(_ colour: UIColorLike, opacity: Float) -> RealityKit.Material {
-        var m = PhysicallyBasedMaterial()
-        m.baseColor = .init(tint: colour)
-        m.roughness = .init(floatLiteral: 0.95)
-        m.metallic = .init(floatLiteral: 0.0)
-        m.specular = .init(floatLiteral: 0.05)
-        m.blending = .transparent(opacity: .init(floatLiteral: max(0, min(1, opacity))))
-        return m
-    }
 }

@@ -72,10 +72,6 @@ final class KitchenRoom {
     // prop now has a height of its own — see `carry(to:)`.
     private var carried: Entity?
     private var carryOffset = SIMD3<Float>.zero
-    /// The drag plane belonging to whatever she picked up. It is moved down
-    /// with the prop, which is what keeps a prop under her finger while it
-    /// descends from the shelf to the floor.
-    private weak var carryTarget: TouchRouter.Target?
     private var carryJob: Int?
     /// Where the prop is now, and where it wants to be. The gap between them,
     /// closed a little every frame, is the whole height animation.
@@ -305,8 +301,8 @@ final class KitchenRoom {
             touch.register("token\(index)", entity: token.entity,
                            radius: 0.030, planeY: source.planeY) { target in
                 target.tracksEntity = true
-                target.onDragBegan = { [weak self, weak target] world in
-                    self?.pickUp(token.entity, at: world, via: target)
+                target.onDragBegan = { [weak self] world in
+                    self?.pickUp(token.entity, at: world)
                 }
                 target.onDragMoved = { [weak self] world in self?.carry(to: world) }
                 target.onDragEnded = { [weak self] world in
@@ -320,9 +316,7 @@ final class KitchenRoom {
                        planeY: Layout.tableTopY + 0.020) { target in
             target.tracksEntity = true
             target.planeOffset = 0.020
-            target.onDragBegan = { [weak self, weak target] world in
-                self?.bowlTouchBegan(world, via: target)
-            }
+            target.onDragBegan = { [weak self] world in self?.bowlTouchBegan(world) }
             target.onDragMoved = { [weak self] world in self?.bowlTouchMoved(world) }
             target.onDragEnded = { [weak self] world in self?.bowlTouchEnded(world) }
         }
@@ -330,9 +324,9 @@ final class KitchenRoom {
         touch.register("tin", entity: tin?.root, radius: 0.034,
                        planeY: Layout.tableTopY) { target in
             target.tracksEntity = true
-            target.onDragBegan = { [weak self, weak target] world in
+            target.onDragBegan = { [weak self] world in
                 guard let self, let tin = self.tin else { return }
-                self.pickUp(tin.root, at: world, via: target)
+                self.pickUp(tin.root, at: world)
             }
             target.onDragMoved = { [weak self] world in self?.carry(to: world) }
             target.onDragEnded = { [weak self] world in self?.dropTin(at: world) }
@@ -352,9 +346,9 @@ final class KitchenRoom {
                        planeY: Layout.tableTopY) { target in
             target.tracksEntity = true
             target.onTap = { [weak self] in self?.tapCake() }
-            target.onDragBegan = { [weak self, weak target] world in
+            target.onDragBegan = { [weak self] world in
                 guard let self, let cake = self.cake else { return }
-                self.pickUp(cake, at: world, via: target)
+                self.pickUp(cake, at: world)
             }
             target.onDragMoved = { [weak self] world in self?.carry(to: world) }
             target.onDragEnded = { [weak self] world in self?.dropCake(at: world) }
@@ -392,9 +386,7 @@ final class KitchenRoom {
         touch.register("rollingPin", entity: rollingPin, radius: 0.032,
                        planeY: Layout.tableTopY) { target in
             target.tracksEntity = true
-            target.onDragBegan = { [weak self, weak target] world in
-                self?.rollBegan(at: world, via: target)
-            }
+            target.onDragBegan = { [weak self] world in self?.rollBegan(at: world) }
             target.onDragMoved = { [weak self] world in self?.roll(to: world) }
             target.onDragEnded = { [weak self] _ in
                 guard let self, let pin = self.rollingPin else { return }
@@ -666,16 +658,12 @@ final class KitchenRoom {
 
     // MARK: - Carrying
 
-    /// Pick something up. `via` is the target whose drag plane has to travel
-    /// with it; without one the prop still descends, but her finger and the
-    /// prop drift apart as it does.
-    private func pickUp(_ entity: Entity, at world: SIMD3<Float>,
-                        via target: TouchRouter.Target? = nil) {
+    /// Pick something up.
+    private func pickUp(_ entity: Entity, at world: SIMD3<Float>) {
         endCarry()
         carried = entity
         carryOffset = entity.position - world
         carryOffset.y = 0
-        carryTarget = target
         carryOrigin = entity.position
         carryY = entity.position.y
         carrySurfaceY = Layout.surfaceY(at: entity.position)
@@ -687,17 +675,33 @@ final class KitchenRoom {
         // One job for the whole drag, rather than easing inside the touch
         // callback: touch events stop arriving the moment her finger stops
         // moving, and a prop halfway down to the floor has to keep going.
+        //
+        // **The drag plane is fixed for the whole drag, and that is the fix for
+        // a bug worth remembering.** It used to be written down here every
+        // frame — `carryTarget.planeY = carryY` — so that the prop stayed
+        // pinned under her fingertip as it changed height. That is a feedback
+        // loop, because the height depends on the XZ and the XZ depends on the
+        // plane: raising the plane by Δ moves the ray's intersection about
+        // 1.7Δ towards the camera at this camera angle, which can move the prop
+        // straight back out of the region that raised it.
+        //
+        // The cake going up onto the plank is where it bit. Reaching the plank
+        // zone lifted the cake 67 mm, which slid the mapped point ~70 mm
+        // forwards, out of the zone; it dropped back to the counter, which slid
+        // the point back in, and it juddered between the two. It could not be
+        // put on the plank at all — it stuck on the counter underneath it.
+        //
+        // With the plane fixed, XZ is a pure function of her finger and cannot
+        // oscillate. The prop drifts up or down *on screen* relative to her
+        // finger as it changes surface, which turns out to read better anyway:
+        // vertical movement against a still fingertip is the clearest possible
+        // way of saying "this is on the floor now".
         carryJob = ticker.add { [weak self] dt in
             guard let self, let held = self.carried else { return false }
             // Exponential ease — about 90% of the remaining gap in a third of
             // a second, whatever the frame rate, and no overshoot.
             self.carryY += (self.carryGoalY - self.carryY) * (1 - exp(-dt * 7.5))
             held.position.y = self.carryY
-            // **The drag plane follows the prop.** This is the part that makes
-            // a change of height feel like depth rather than like lag: the ray
-            // is intersected with the plane the prop is actually on, so it
-            // stays exactly under her finger the whole way down.
-            self.carryTarget?.planeY = self.carryY
             ContactShadows.update(for: held, surfaceY: self.carrySurfaceY,
                                   settings: self.settings)
             return true
@@ -733,7 +737,6 @@ final class KitchenRoom {
         ticker.cancel(carryJob)
         carryJob = nil
         carried = nil
-        carryTarget = nil
     }
 
     /// **A drop that did not do anything in particular. It stays where she put
@@ -861,8 +864,16 @@ final class KitchenRoom {
             // The basket is never mutated. `used` records which slot went in,
             // which is what lets her take them in any order and still have the
             // room know which shelf is empty.
+            //
+            // **Read the slots before appending, not after.** `usedSlots` falls
+            // back to `0..<inBowl.count` for a round saved by the build that
+            // had no `used` key, so reading it after the append would count the
+            // ingredient that is going in right now as slot 0 — marking a shelf
+            // she has not touched as empty, and ending the fetching an
+            // ingredient early.
+            let slots = self.state.usedSlots
             self.state.inBowl.append(token.ingredient)
-            self.state.used = self.state.usedSlots + [index]
+            self.state.used = slots + [index]
             self.refreshBowlBatter(animated: true)
             self.voice.say(token.ingredient.lineID)
             self.baker?.set(.cheering)
@@ -901,14 +912,14 @@ final class KitchenRoom {
     /// The bowl has two verbs, and which one she gets depends only on whether
     /// this is the stirring step. Everywhere else it is a thing she can pick up
     /// and move, like everything else in the room.
-    private func bowlTouchBegan(_ world: SIMD3<Float>, via target: TouchRouter.Target?) {
+    private func bowlTouchBegan(_ world: SIMD3<Float>) {
         guard state.step != .roeren else {
             stirLastAngle = angleAroundBowl(world)
             stirLastPoint = world
             return
         }
         guard let bowl else { return }
-        pickUp(bowl, at: world, via: target)
+        pickUp(bowl, at: world)
     }
 
     private func bowlTouchMoved(_ world: SIMD3<Float>) {
@@ -1332,20 +1343,32 @@ final class KitchenRoom {
 
     // MARK: - Toys
 
+    /// A poof of flour out of the open neck of the sack.
+    ///
+    /// **This went to a cloud and came back.** `references/ingredients/flour-cloud.png`
+    /// showed a cluster of overlapping lit lobes, it was built, and on device
+    /// it read as *photographic* — a real puff of real flour sitting in a room
+    /// made of flat pastel facets. It was the one thing in the kitchen that
+    /// looked like it came from somewhere else, which is exactly what the four
+    /// style phrases in `CLAUDE.md` exist to prevent. The owner called it on
+    /// sight and the stylised burst went back in.
+    ///
+    /// The plate was still worth its credit: the *sack* it was generated
+    /// alongside is the version that shipped. Reference plates are briefs, and
+    /// a brief can be right about one thing and wrong about another.
     private func tapFlour() {
         guard let flourSack else { return }
         ticker.squash(flourSack, amount: 0.24)
         sound.playVaried(.poof)
-        // A cloud rather than a firework — `Sparkles.cloud` has the argument.
-        // It lifts out of the open collar of the sack, not out of its middle.
-        Sparkles.cloud(at: flourSack.position + [0, 0.052, 0], in: root,
-                       ticker: ticker, scale: 1.15)
-        // And a second, smaller one a beat later, so it billows twice the way
-        // a slapped sack does.
+        // Out of the open collar, not out of the middle of the sack.
+        Sparkles.puff(at: flourSack.position + [0, 0.050, 0], in: root,
+                      ticker: ticker, count: 12)
+        // A second, smaller one a beat later, so it billows twice the way a
+        // slapped sack does. This much of the cloud version was worth keeping.
         ticker.after(0.22) { [weak self] in
             guard let self, let sack = self.flourSack else { return }
-            Sparkles.cloud(at: sack.position + [0, 0.044, 0], in: self.root,
-                           ticker: self.ticker, scale: 0.75)
+            Sparkles.puff(at: sack.position + [0, 0.044, 0], in: self.root,
+                          ticker: self.ticker, count: 7)
         }
         dustFloor(near: flourSack.position)
         if Int.random(in: 0..<3) == 0 { voice.say(Line.bloem, priority: .low) }
@@ -1475,10 +1498,10 @@ final class KitchenRoom {
         sound.playVaried(.rattle, volume: 0.7)
     }
 
-    private func rollBegan(at world: SIMD3<Float>, via target: TouchRouter.Target?) {
+    private func rollBegan(at world: SIMD3<Float>) {
         guard let rollingPin else { return }
         rollLastPoint = world
-        pickUp(rollingPin, at: world, via: target)
+        pickUp(rollingPin, at: world)
     }
 
     private func roll(to world: SIMD3<Float>) {

@@ -75,7 +75,22 @@ final class Ticker {
         }
         ticking = false
 
-        entries = survivors + pending.filter { !cancelled.contains($0.id) }
+        // **`survivors` is filtered too, and that is load-bearing.**
+        //
+        // A job cancelled from inside this very loop — which is the normal case,
+        // because a finished animation's `done` closure is what cancels things —
+        // is only skipped by the `cancelled` check above if it had not already
+        // run this frame. Jobs run in creation order, so a long-lived job like a
+        // halo is always earlier in the array than the short move that ends it:
+        // the halo ran, returned true, and landed in `survivors` a few
+        // microseconds before `clearHalo` asked for it to go away.
+        //
+        // Without this filter that cancellation is simply lost — `cancelled` is
+        // emptied at the end of the frame and the job runs forever. It is how
+        // the halo stayed lit on ingredients that were already in the bowl, and
+        // it would have leaked one more job per ingredient, per round, for as
+        // long as the app was open.
+        entries = (survivors + pending).filter { !cancelled.contains($0.id) }
         pending.removeAll()
         cancelled.removeAll()
     }

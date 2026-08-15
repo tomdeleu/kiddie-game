@@ -85,7 +85,12 @@ enum Halo {
         var nextSparkle: Float = 0.25
 
         return ticker.add { [weak entity] dt in
-            guard let entity, entity.parent != nil else {
+            // `isEnabled` as well as `parent`, and it is not belt-and-braces: an
+            // ingredient that goes into the bowl is hidden rather than removed,
+            // so it keeps its parent forever. Without this the glow would go on
+            // pulsing on a prop nobody can see, throwing sparkles into the bowl
+            // it landed in.
+            guard let entity, entity.parent != nil, entity.isEnabled else {
                 // The prop went away mid-glow — a token dropped into the bowl,
                 // a rebuild. Nothing to restore, and nothing to leak.
                 return false

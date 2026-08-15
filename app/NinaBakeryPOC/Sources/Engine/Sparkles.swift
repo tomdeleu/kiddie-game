@@ -5,8 +5,17 @@ import simd
 ///
 /// **Not a particle system.** `ParticleEmitterComponent` would do this, but its
 /// output is soft round billboards — which is the one thing this art direction
-/// does not have. Twelve 20-face icospheres thrown by the same clock as
+/// does not have. Twelve flat-shaded stars thrown by the same clock as
 /// everything else stay inside the style, and cost nothing at this scale.
+///
+/// **They are stars, and they are yellow.** They used to be 20-face icospheres
+/// in `creamLight`, which at sparkle size is a grey dot: a cream ball a couple
+/// of millimetres across, unlit, against a room that is mostly cream, reads as
+/// dust. A star has a silhouette that survives being three pixels wide, and
+/// warm yellow is the one hue in the palette that nothing in the room is
+/// painted — so a sparkle is never mistaken for a crumb of the thing it came
+/// off. Callers that pass a colour still get it: an ingredient dropping into
+/// the bowl throws its own colour, which is what says *that* one went in.
 ///
 /// This is the game's whole reward vocabulary. `CONCEPT.md` §5: rewards are
 /// animation and sound, because points are meaningless to a pre-reader.
@@ -17,13 +26,18 @@ enum Sparkles {
     static func burst(at position: SIMD3<Float>,
                       in parent: Entity,
                       ticker: Ticker,
-                      colour: UIColorLike = Palette.creamLight,
+                      colour: UIColorLike = Palette.butterYellow,
                       count: Int = 12,
                       size: Float = 0.0026,
                       speed: Float = 0.09,
                       gravity: Float = 0.18,
                       life: Float = 0.75) {
-        let geometry = FacetedMesh.icosphere(radius: size, subdivisions: 0)
+        // A five-point star, thin enough to catch the light edge-on as it
+        // tumbles. `size` is its outer radius, so every existing call site
+        // keeps the scale it was tuned to.
+        let geometry = FacetedMesh.star(points: 5, outerRadius: size * 1.6,
+                                        innerRadius: size * 0.62,
+                                        thickness: size * 0.5)
         let mesh = FacetedMesh.flatShaded(positions: geometry.positions,
                                           indices: geometry.indices)
         var material = UnlitMaterial(color: colour)
@@ -72,7 +86,10 @@ enum Sparkles {
         }
     }
 
-    /// Slower, bigger, hangs in the air. Steam off a chimney.
+    /// Slower, bigger, hangs in the air. Flour off a sack, steam off a chimney.
+    ///
+    /// Cream rather than yellow, because this one is not a reward — it is the
+    /// stuff itself, and flour is the colour of flour.
     static func puff(at position: SIMD3<Float>,
                      in parent: Entity,
                      ticker: Ticker,
@@ -80,100 +97,6 @@ enum Sparkles {
                      count: Int = 9) {
         burst(at: position, in: parent, ticker: ticker, colour: colour,
               count: count, size: 0.005, speed: 0.045, gravity: 0.02, life: 1.5)
-    }
-
-    /// **A cloud of flour**, per `references/ingredients/flour-cloud.png`.
-    ///
-    /// The flour sack used to poof `Sparkles.puff` — twelve unlit spheres
-    /// thrown on a ballistic arc, which is a firework, not a cloud. What the
-    /// plate shows is a *cluster*: a few big overlapping lobes that swell and
-    /// lift slowly together, ringed by small satellites drifting further out
-    /// and fading first.
-    ///
-    /// Four things separate it from a burst, and all four matter:
-    ///
-    /// - **It swells.** Each lobe grows to two or three times its size instead
-    ///   of shrinking away, which is the difference between dust dispersing
-    ///   and debris flying.
-    /// - **It is lit.** `Palette.fadingMaterial`, not `UnlitMaterial`, so the
-    ///   facets still shade and the cloud has a light side.
-    /// - **It barely moves outward.** Drift is a tenth of a sparkle's speed,
-    ///   with no gravity — flour hangs.
-    /// - **It fades in steps.** Opacity is quantised to eight levels, so a
-    ///   sixteen-lobe cloud rebuilds a handful of materials a second rather
-    ///   than a thousand.
-    static func cloud(at position: SIMD3<Float>,
-                      in parent: Entity,
-                      ticker: Ticker,
-                      colour: UIColorLike = Palette.creamLight,
-                      scale: Float = 1.0) {
-        // Big lobes first, then the satellites. Radius, offset, and how long it
-        // stays — the outliers go first, which is what makes it thin from the
-        // edges inward.
-        struct Lobe { let radius: Float; let offset: SIMD3<Float>; let life: Float }
-        var lobes: [Lobe] = []
-        for i in 0..<6 {
-            let a = Float(i) / 6 * 2 * .pi + Float.random(in: -0.3...0.3)
-            let r = Float.random(in: 0.004...0.007) * scale
-            lobes.append(Lobe(radius: r,
-                              offset: SIMD3<Float>(cos(a) * 0.006 * scale,
-                                                   Float.random(in: -0.002...0.005) * scale,
-                                                   sin(a) * 0.006 * scale),
-                              life: Float.random(in: 1.5...2.1)))
-        }
-        for i in 0..<10 {
-            let a = Float(i) / 10 * 2 * .pi + Float.random(in: -0.4...0.4)
-            let spread = Float.random(in: 0.011...0.019) * scale
-            lobes.append(Lobe(radius: Float.random(in: 0.0014...0.0030) * scale,
-                              offset: SIMD3<Float>(cos(a) * spread,
-                                                   Float.random(in: -0.004...0.008) * scale,
-                                                   sin(a) * spread),
-                              life: Float.random(in: 0.9...1.5)))
-        }
-
-        for lobe in lobes {
-            let geometry = FacetedMesh.icosphere(radius: lobe.radius, subdivisions: 1)
-            let mesh = FacetedMesh.flatShaded(positions: geometry.positions,
-                                              indices: geometry.indices)
-            let blob = ModelEntity(mesh: mesh,
-                                   materials: [Palette.fadingMaterial(colour, opacity: 0.85)])
-            // Named like a sparkle so `Halo.surfaces` keeps stepping over it if
-            // one drifts through a prop that happens to be lit.
-            blob.name = "Sparkle"
-            blob.position = position + lobe.offset
-            blob.scale = SIMD3<Float>(repeating: 0.35)
-            parent.addChild(blob)
-
-            // Outward and up, slowly. The lift is what says flour rather than
-            // smoke: it rises, but only just.
-            let drift = normalize(SIMD3<Float>(lobe.offset.x, 0.0001, lobe.offset.z))
-                * Float.random(in: 0.006...0.014)
-                + SIMD3<Float>(0, Float.random(in: 0.008...0.016), 0)
-            let start = blob.position
-            var age: Float = 0
-            var lastStep = -1
-            ticker.add { [weak blob] dt in
-                guard let blob else { return false }
-                age += dt
-                guard age < lobe.life else {
-                    blob.removeFromParent()
-                    return false
-                }
-                let t = age / lobe.life
-                blob.position = start + drift * age
-                // Swells fast at first and then eases, the way a puff does.
-                let remaining = 1 - t
-                blob.scale = SIMD3<Float>(repeating: 0.35 + 2.0 * (1 - remaining * remaining))
-                let step = Int((1 - t) * 8)
-                if step != lastStep {
-                    lastStep = step
-                    blob.model?.materials = [
-                        Palette.fadingMaterial(colour, opacity: 0.85 * Float(step) / 8)
-                    ]
-                }
-                return true
-            }
-        }
     }
 
     /// A ring that expands and fades on a surface — the "that worked" cue for a

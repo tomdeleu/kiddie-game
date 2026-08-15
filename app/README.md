@@ -115,6 +115,14 @@ counts at half rate.
 refused, and every tap does something — including a tap on nothing, which
 sparkles.
 
+**Sparkles are yellow stars.** They were `creamLight` icospheres, which at
+sparkle size is a grey dot — an unlit cream ball two millimetres across against
+a room that is mostly cream reads as dust. A star's silhouette survives being
+three pixels wide, and warm yellow is the one hue nothing in the room is
+painted, so a sparkle is never mistaken for a crumb of the thing it came off.
+Callers that pass a colour still get it: an ingredient dropping into the bowl
+throws its own colour, which is what says *that* one went in.
+
 **And nothing gets put back.** A prop she drags somewhere that is not a target
 settles onto whatever is underneath it and stays there. The rolling pin can
 live on the floor. This replaced a rule where a missed drop floated home and
@@ -177,12 +185,21 @@ Pick a berry off the top shelf and it swoops down as she brings it to the bowl;
 carry it back over the table and it lifts again. `Layout.surfaceY` is the whole
 model: four rectangles, tested nearest-camera first.
 
-The part that makes it feel like depth rather than lag is that **the drag plane
-travels with the prop**. Each frame the carry job writes the prop's current
-height into its `TouchRouter.Target.planeY`, so the ray is intersected with the
-plane the prop is actually on and it stays exactly under her finger the whole
-way down. `tracksEntity` then picks the plane back up from wherever the prop
-ended up when she next grabs it.
+**The drag plane is fixed for the length of a drag**, and that is not laziness.
+It was written down every frame at first, so the prop stayed pinned under her
+fingertip while it changed height — which is a feedback loop, because the
+height depends on the XZ and the XZ depends on the plane. Raising the plane by
+Δ slides the ray's intersection about 1.7Δ towards the camera at this camera
+angle, which can move the prop straight back out of the region that raised it.
+It made the cake impossible to put on the plank: reaching the plank zone lifted
+it 67 mm, which slid the mapped point out of the zone, so it dropped back to
+the counter, which slid it back in, and it juddered between the two.
+
+With the plane fixed, XZ is a pure function of her finger and cannot oscillate.
+The prop drifts up or down *on screen* against her fingertip as it changes
+surface, which reads better anyway — vertical movement against a still finger
+is the clearest way of saying "this is on the floor now". `tracksEntity` picks
+the plane up from wherever the prop ended when she next grabs it.
 
 One case needed guarding: every tap is also a zero-length drag, so without a
 "barely moved" check, poking the berry on the top shelf would knock it to the
@@ -234,13 +251,16 @@ it meets the ground. That profile only works at a size a worktop cannot spare,
 so it moved down to the near-left floor, where it is also the only prop in
 front of the table and gives the shot a foreground.
 
-**What comes out of it is a cloud.** It used to be `Sparkles.puff` — twelve
-unlit spheres on a ballistic arc, which is a firework. `Sparkles.cloud` is
-built from the plate instead: six big overlapping lobes ringed by ten small
-satellites, all of them *swelling* rather than shrinking, drifting at a tenth
-of a sparkle's speed with no gravity, and lit rather than unlit so the facets
-still shade. The satellites fade first, so it thins from the edges in. The sack
-billows twice, a fifth of a second apart, the way a slapped sack does.
+**What comes out of it went to a cloud and came back.** `flour-cloud.png`
+showed a cluster of overlapping lit lobes; it was built, and on device it read
+as *photographic* — a real puff of real flour in a room made of flat pastel
+facets. It was the one thing in the kitchen that looked like it came from
+somewhere else, which is what the four style phrases exist to prevent, and the
+owner called it on sight. `Sparkles.puff` is back. The plate still earned its
+credit: the sack it was generated alongside is the version that shipped, and a
+brief can be right about one thing and wrong about another. One thing was kept
+from the cloud — the sack billows twice, a fifth of a second apart, the way a
+slapped sack does.
 
 **The tap was rebuilt too.** It was a single five-sided prism scaled up the Y
 axis, and it read as a blue stick appearing. Four things now overlap: the
@@ -338,7 +358,7 @@ be retired when the wall arrives, not grown.
 | `Engine/CameraRig.swift` | The fixed camera, and screen ↔ world. Every drag in the room is a ray and a plane. |
 | `Engine/Ticker.swift` | The one clock. Every animation is an interruptible closure ticked from here. |
 | `Engine/TouchRouter.swift` | One finger, two verbs. Targets are generous spheres, not meshes, and their drag plane travels with the prop. |
-| `Engine/Sparkles.swift` | Faceted bits that fly out and vanish, plus the flour cloud. The whole reward vocabulary. |
+| `Engine/Sparkles.swift` | Faceted yellow stars that fly out and vanish. The whole reward vocabulary. |
 | `Engine/Halo.swift` | The glow on the prop a step is about — the game's only instruction. |
 | `Audio/SoundKit.swift` | All thirteen sound effects, synthesised at launch. |
 | `Audio/VoiceBank.swift` | Nina and Otto, driven by `script-keuken.json`. |
@@ -348,7 +368,7 @@ be retired when the wall arrives, not grown.
 | `Kitchen/KitchenRoom.swift` | The room: assembly, the state machine, the toys, the nudges. |
 | `RoomBuilder.swift` | The shell and the furniture, plus `Layout` — every position in the room, in one table. |
 | `FacetedMesh.swift` | **The core of the look.** Flat-shaded primitive builders — `lathe`, `extrude` and `star` are what the ingredients are made of — plus the smooth variant for A/B. |
-| `Palette.swift` | The locked colours, the three added ones, and the glow, water and fading materials. |
+| `Palette.swift` | The locked colours, the three added ones, and the glow and water materials. |
 | `LightingRig.swift`, `LightingSettings.swift`, `DebugPanel.swift`, `ContactShadows.swift` | The POC's lighting work, unchanged. |
 | `ContentView.swift` | Scene assembly, the gesture, and the hidden developer panel. |
 

@@ -27,10 +27,10 @@ final class TouchRouter {
         /// Horizontal plane the drag is projected onto — the table top for
         /// props on the table, the counter for props on the counter.
         ///
-        /// It is not a constant any more. Props travel between surfaces now, so
-        /// `KitchenRoom` drives this down with a prop as it is carried towards
-        /// the floor, and `tracksEntity` recomputes it at the start of the next
-        /// drag from wherever the prop ended up.
+        /// It is fixed for the length of a drag, deliberately: driving it with
+        /// the prop's height mid-drag is a feedback loop, and the reason is
+        /// written out in `KitchenRoom.pickUp`. What does move is where each
+        /// drag *starts* — see `tracksEntity`.
         var planeY: Float
         /// Take `planeY` from the prop's own height when a drag begins, rather
         /// than from whatever it was left at. True for everything that can be
