@@ -385,11 +385,47 @@ rather than a billboard.
 
 ## Deliberate deviations from the design
 
-**The doorway is not a door, and no longer ends the round either.**
+**The doorway does not lead anywhere yet, and no longer ends the round either.**
 `GAMEPLAY.md` §7 says the door always works, even mid-task. Here it cannot: the
-decorating room does not exist, so there is nowhere to go. It is now a prop
-that whooshes and says what is happening. **When the decorating room lands,
-`tapDoorway()` is still the one function to change.**
+decorating room does not exist, so there is nowhere to go. Tapping it opens the
+door, shows the light on the other side, and lets it swing shut. **When the
+decorating room lands, `tapDoorway()` is still the one function to change**,
+and the swing is already the first half of that transition.
+
+**It is a door now, and it used to be an arch.** A pink arched ring lying flat
+on the wall, with a butter-yellow plug filling it that no code ever lit — and
+the plug sat 4 mm *behind* the ring, into the wall, so the opening read as
+plain wall and the whole thing read as a pink outline painted on. Owner's call
+on the 2026-08-15 build: "that doesn't look like a door at all."
+
+It is now modelled from `references/props/door.png`: a rose frame of two jambs
+and a lintel, a sandy-wood leaf on a hinge, two raised blush panels and one
+round butter-yellow knob — seven boxes and a prism, counting the butter-yellow
+plate behind it that is the next room's light. Three things about it are
+decisions rather than measurements:
+
+- **The leaf is wood, not the cream the plate came back with.** The left wall
+  is `Palette.cream`. A cream leaf in a rose frame reads as a picture frame
+  hung on the wall rather than a hole through it — a problem the plate never
+  had to solve, having been rendered on a grey backdrop.
+- **The hinge is on the near side**, so the leaf swings its face round towards
+  the camera. Hinged on the back-wall side it turns edge-on at this camera and
+  reads as a stick standing in a hole. One fixed camera (`CONCEPT.md` §9.4)
+  means this has a right answer, not a preference.
+- **It opens 35°, not wide.** The key light comes over the camera's right
+  shoulder, so past about 45° the leaf's own face turns out of it and the door
+  goes dark as it opens, which reads as a hole rather than a door. Ajar also
+  keeps the frame legible.
+
+The swing replaced a `ticker.squash` on the whole arch — the generic prop
+reaction, applied to the one prop in the room that has a hinge. A door bending
+is a door made of rubber.
+
+None of that has been compiled either, but it has been checked: the geometry
+was rebuilt in a throwaway z-buffered renderer at this room's exact camera
+(`CameraRig.eye`, 26° vertical) and key light (42°/135°), which is how the
+first hinge side and the first swing sign — the leaf turned into the wall —
+were caught.
 
 What it used to do was end the round, and that was the weakest moment in the
 game. Everything else she does is a thing with her hands on the object — roll
@@ -584,7 +620,7 @@ whole POC lighting panel underneath.
 on-device screenshots on the owner's call.
 
 **Round one:** the cast shadows read as hard dark bands — the back wall raking
-across the left wall, the doorway arch printing itself onto the plaster. The
+across the left wall, the door printing itself onto the plaster. The
 cause was structural: everything a shadow fell on dropped to the fill's ~30%
 of lit brightness, and the room shell was casting onto itself. Fix: rebalance
 the energy (key 2200 → 1400 lx, fill 900 → 700 lx, new 1200 lx ambient dome)
@@ -607,7 +643,7 @@ Where that leaves the values:
 | IBL | off — no environment bundled, and it is not missed |
 | Contact shadows | on, opacity 0.22 (was 0.18, nudged for the weaker key), scale 1.15 |
 | Lightmap | off |
-| Static casting | **off** for architecture and wall-huggers — walls, floor, slab, doorway arch, counter, both shelves, cake plank (`Entity.excludeFromShadowCasting()`, iOS 18's `DynamicLightShadowComponent`) |
+| Static casting | **off** for architecture and wall-huggers — walls, floor, slab, the door, counter, both shelves, cake plank (`Entity.excludeFromShadowCasting()`, iOS 18's `DynamicLightShadowComponent`) |
 
 Shadowed areas sit near 60% of lit brightness instead of 30%, so a cast shadow
 reads as a soft tone shift. Loose props, Nina and Otto still cast — short

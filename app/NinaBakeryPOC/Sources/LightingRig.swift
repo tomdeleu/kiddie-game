@@ -221,7 +221,7 @@ extension Entity {
     /// receiving would unground every prop on it.
     ///
     /// This is for the big statics: a wall shadowing the other wall, or the
-    /// doorway arch printing itself across the plaster, is architecture
+    /// door printing itself across the plaster, is architecture
     /// casting onto architecture — a hard dark band that reads as a render
     /// error in a pastel room. Props, characters and Otto keep casting;
     /// their shadows are the grounding this rig exists to provide.

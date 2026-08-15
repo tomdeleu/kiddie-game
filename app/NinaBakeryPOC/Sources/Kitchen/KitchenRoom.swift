@@ -56,6 +56,8 @@ final class KitchenRoom {
     private var crate: Entity?
     private var rollingPin: Entity?
     private var doorway: KitchenProps.Doorway?
+    /// The door's open-hold-shut turn, held so a second tap restarts it.
+    private var doorSwing: Int?
     private var cakePlank: ModelEntity?
     private var flourPatches: [Entity] = []
     private var baker: BakerCharacter?
@@ -498,7 +500,7 @@ final class KitchenRoom {
         if entity === bowl { return 0.034 }
         if entity === tin?.root { return 0.024 }
         if entity === oven?.root { return 0.080 }
-        if entity === doorway?.root { return 0.055 }
+        if entity === doorway?.root { return 0.075 }   // taller since it is a door
         if entity === cake { return 0.030 }
         return 0.018
     }
@@ -1328,15 +1330,47 @@ final class KitchenRoom {
         touch.target(named: "cake")?.enabled = false
     }
 
-    /// The doorway. **Still not a door** — see `app/README.md`. It no longer
-    /// ends the round either, now that the cake going up on the plank does
-    /// that, so it is a prop that whooshes and says what is happening. When the
-    /// decorating room lands this is still the one function to change.
+    /// The door. It does not go anywhere yet — the decorating room does not
+    /// exist, and the cake going up on the plank is what ends the round now —
+    /// so tapping it opens it, shows the light on the other side, and lets it
+    /// swing shut. **When the decorating room lands this is still the one
+    /// function to change**, and the swing is already the first half of the
+    /// transition.
+    ///
+    /// It used to squash the whole arch, which was the generic prop reaction
+    /// applied to the one prop in the room that has a hinge. A door bending is
+    /// a door made of rubber; a door opening is a door.
     private func tapDoorway() {
         guard let doorway else { return }
         sound.play(.whoosh)
-        ticker.squash(doorway.root, amount: 0.10, duration: 0.35)
+        swingDoor(doorway)
         voice.say(nudgeLine(for: state.step), priority: .low)
+    }
+
+    /// Open, hold, fall shut — 1.5 s, and re-tapping restarts it rather than
+    /// stacking a second turn on top of the first, which would leave the leaf
+    /// wherever the two disagreed.
+    private func swingDoor(_ doorway: KitchenProps.Doorway) {
+        ticker.cancel(doorSwing)
+        let hinge = doorway.hinge
+        // Negative swings it into the room. **35°, not wide open**: past about
+        // 45° the leaf's face turns out of the key light — the light comes over
+        // the camera's right shoulder — and a door that goes dark as it opens
+        // looks like a hole. Ajar also leaves the frame legible, so what she
+        // sees is a door that moved rather than a door that left.
+        let openAngle: Float = -0.62
+        doorSwing = ticker.tween(1.5, ease: Ease.linear, step: { [weak hinge] t in
+            guard let hinge else { return }
+            let amount: Float
+            switch t {
+            case ..<0.3:  amount = Ease.out(t / 0.3)
+            case ..<0.62: amount = 1
+            default:      amount = 1 - Ease.inOut((t - 0.62) / 0.38)
+            }
+            hinge.orientation = simd_quatf(angle: openAngle * amount, axis: [0, 1, 0])
+        }, done: { [weak hinge] in
+            hinge?.orientation = simd_quatf(angle: 0, axis: [0, 1, 0])
+        })
     }
 
     private func startNewRound(shelf: [CakeSpec]) {
@@ -1860,6 +1894,8 @@ final class KitchenRoom {
         idleJob = nil
         ticker.cancel(eyeLifeJob)
         eyeLifeJob = nil
+        ticker.cancel(doorSwing)
+        doorSwing = nil
         clearHalo()
         baker?.stop()
         baker = nil
