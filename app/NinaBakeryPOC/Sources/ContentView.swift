@@ -80,7 +80,7 @@ struct ContentView: View {
         .ignoresSafeArea()
         .onChange(of: scenePhase) { _, phase in
             // The round survives the iPad being taken away mid-stir.
-            if phase != .active { scene.kitchen?.save() }
+            if phase != .active { scene.room?.save() }
         }
     }
 
@@ -220,7 +220,7 @@ struct ContentView: View {
                             // without reading anything.
                             tone: .rose,
                             diameter: FacetSize.chrome) {
-                    scene.kitchen?.restartRound()
+                    scene.room?.restartRound()
                 }
                 .padding(32)
                 Spacer()
@@ -234,7 +234,7 @@ struct ContentView: View {
         ZStack(alignment: .topTrailing) {
             if showDeveloperPanel {
                 VStack(alignment: .trailing, spacing: 8) {
-                    KitchenDebugStrip(scene: scene, settings: settings) {
+                    RoomDebugStrip(scene: scene, settings: settings) {
                         showDeveloperPanel = false
                     }
                     DebugPanel(settings: settings,
@@ -277,8 +277,17 @@ final class GameScene: ObservableObject {
 
     private(set) var touch: TouchRouter!
     private(set) var voice: VoiceBank!
-    private(set) var kitchen: KitchenRoom?
 
+    /// **The room that is up.** `@Published` so the debug strip re-renders when
+    /// it changes — an `@ObservedObject` will not notice a plain stored property.
+    @Published private(set) var room: (any Room)?
+    @Published private(set) var currentRoom: RoomID = .keuken
+
+    /// The last cake handed over by the previous room, so the decorating room
+    /// can be entered mid-round rather than only from a fresh visit.
+    private var handedCake: CakeSpec?
+
+    private var settings: LightingSettings?
     private var builtFlat: Bool?
     private var started = false
 
@@ -298,21 +307,76 @@ final class GameScene: ObservableObject {
     func start(settings: LightingSettings, greeting: Bool = true) {
         guard !started else { return }
         started = true
+        self.settings = settings
 
         sound.prepare()
         voice.load()
         ticker.start()
 
-        let room = KitchenRoom(ticker: ticker, touch: touch, voice: voice,
-                               sound: sound, settings: settings)
-        kitchen = room
-        sceneRoot.addChild(room.root)
-        room.build(flat: settings.flatShading)
+        enter(.keuken, greeting: greeting)
+    }
+
+    /// **Put a room up, and take the old one down.**
+    ///
+    /// The teardown half matters as much as the build half: `leave()` cancels
+    /// every ticker job the outgoing room owns and writes its state down, and
+    /// `touch.removeAll()` clears its targets. Without either, the old room goes
+    /// on animating and answering taps underneath the new one.
+    ///
+    /// `handing` is how a round crosses a doorway — the kitchen's finished cake
+    /// arriving at the decorating room. Omit it and the room is a visit
+    /// (`GAMEPLAY.md` §3), which is also exactly what the debug switcher does.
+    func enter(_ id: RoomID, handing cake: CakeSpec? = nil, greeting: Bool = true) {
+        guard let settings else { return }
+
+        room?.leave()
+        room?.root.removeFromParent()
+        touch.removeAll()
+        voice.stop()
+
+        handedCake = cake
+        let mode: RoomMode = cake == nil ? .bezoek : .ronde
+        // `let`, not `var`: `Room` is `AnyObject`-bound, so `onExit` is set
+        // through the reference rather than mutating the binding.
+        let next = makeRoom(id, cake: cake, mode: mode, settings: settings)
+        next.onExit = { [weak self] exit in self?.handle(exit) }
+
+        room = next
+        currentRoom = id
+        sceneRoot.addChild(next.root)
+        next.build(flat: settings.flatShading)
         builtFlat = settings.flatShading
 
         // A beat before she is greeted, so the room is on screen first.
         if greeting {
-            ticker.after(0.9) { [weak room] in room?.greet() }
+            ticker.after(0.9) { [weak next] in next?.greet() }
+        }
+    }
+
+    private func makeRoom(_ id: RoomID, cake: CakeSpec?, mode: RoomMode,
+                          settings: LightingSettings) -> any Room {
+        switch id {
+        case .keuken:
+            return KitchenRoom(ticker: ticker, touch: touch, voice: voice,
+                               sound: sound, settings: settings, mode: mode)
+        case .versieren:
+            return VersierRoom(ticker: ticker, touch: touch, voice: voice,
+                               sound: sound, settings: settings, mode: mode,
+                               handedCake: cake)
+        }
+    }
+
+    /// A room finished. **The beat before the swap is the ceremony**, not dead
+    /// time: the door is still swinging open when this fires, and the room being
+    /// left gets to finish saying so.
+    private func handle(_ exit: RoomExit) {
+        switch exit {
+        case .versieren(let cake):
+            ticker.after(1.4) { [weak self] in self?.enter(.versieren, handing: cake) }
+        case .bakkerij:
+            // The bakery does not exist yet, so a visit ends back where it
+            // started. `ROOMS.md` §9: never promise a room that does not exist.
+            break
         }
     }
 
@@ -334,7 +398,7 @@ final class GameScene: ObservableObject {
             waited += dt
             guard waited > delay else { return true }
             guard !self.voice.isSpeaking || waited > timeout else { return true }
-            self.kitchen?.greet()
+            self.room?.greet()
             return false
         }
     }
@@ -342,29 +406,44 @@ final class GameScene: ObservableObject {
     /// Called on every SwiftUI update. Only the flat/smooth toggle rebuilds
     /// anything; the rest is lights and shadows, which are cheap.
     func update(settings: LightingSettings) {
+        self.settings = settings
         if let builtFlat, builtFlat != settings.flatShading {
-            kitchen?.build(flat: settings.flatShading)
+            room?.build(flat: settings.flatShading)
             self.builtFlat = settings.flatShading
         }
         rig.apply(settings, to: sceneRoot)
-        kitchen?.refreshContactShadows(settings: settings)
+        room?.refreshContactShadows(settings: settings)
     }
 }
 
-/// The game half of the debug overlay. The lighting half is `DebugPanel`,
-/// unchanged from the POC.
+/// The game half of the debug overlay, and **the way into any room without
+/// playing the game to get there.** The lighting half is `DebugPanel`, unchanged
+/// from the POC.
+///
+/// It lives behind `ContentView.developerHotspot` — three taps on an invisible
+/// 64 × 64 patch in the top-right corner — so it costs no on-screen pixels and
+/// `CONCEPT.md` §5's "no text anywhere" is untouched. Nothing in here is for
+/// Nina, and a visible room picker is a thing she would press.
+///
+/// **Rooms and readouts are room-agnostic.** The strip used to reach into
+/// `kitchen.state` for four fields; it now renders `Room.debugRows` and
+/// `Room.debugActions`, so a new room shows up in here for free and this file
+/// never learns a concrete type.
 @MainActor
-struct KitchenDebugStrip: View {
+struct RoomDebugStrip: View {
     @ObservedObject var scene: GameScene
     @ObservedObject var settings: LightingSettings
     var onClose: () -> Void
 
     @State private var muted = false
+    /// Which cake the decorating room is handed when it is entered from here.
+    /// `nil` is a visit, which deals a random one.
+    @State private var cakePreset: CakePreset = .willekeurig
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("KITCHEN")
+                Text("ROOMS")
                     .font(.caption2.weight(.semibold))
                     .foregroundStyle(.secondary)
                 Spacer()
@@ -373,13 +452,35 @@ struct KitchenDebugStrip: View {
                     .controlSize(.small)
             }
 
-            if let kitchen = scene.kitchen {
-                Text("Step: \(kitchen.state.step.rawValue)")
-                Text("Bowl: \(kitchen.state.inBowl.map(\.rawValue).joined(separator: ", "))")
+            // The switcher. Picking a room enters it immediately — there is no
+            // Go button, because the whole point is to be one tap from any room.
+            Picker("", selection: Binding(get: { scene.currentRoom },
+                                          set: { enter($0) })) {
+                ForEach(RoomID.allCases) { Text($0.title).tag($0) }
+            }
+            .pickerStyle(.segmented)
+
+            // Which cake `versieren` gets. Only meaningful for that room, so it
+            // only shows there — a control that does nothing is worse than none.
+            if scene.currentRoom == .versieren {
+                Picker("Cake", selection: $cakePreset) {
+                    ForEach(CakePreset.allCases) { Text($0.title).tag($0) }
+                }
+                .pickerStyle(.menu)
+                Button("Re-enter with this cake") { enter(.versieren) }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+            }
+
+            Divider()
+
+            Text(scene.room?.debugTitle ?? "—")
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(.secondary)
+            ForEach(Array((scene.room?.debugRows ?? []).enumerated()), id: \.offset) { _, row in
+                Text(row)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
-                Text("Stir: \(Int(kitchen.state.stir * 100))%  ·  Shelf: \(kitchen.state.shelf.count)")
-                    .foregroundStyle(.secondary)
             }
 
             // Which line just played. During a session with Nina this is the
@@ -390,7 +491,9 @@ struct KitchenDebugStrip: View {
                 .fixedSize(horizontal: false, vertical: true)
 
             HStack {
-                Button("New round") { scene.kitchen?.resetRound() }
+                ForEach(Array((scene.room?.debugActions ?? []).enumerated()), id: \.offset) { _, action in
+                    Button(action.0) { action.1() }
+                }
                 Toggle("Mute", isOn: $muted)
                     .onChange(of: muted) { _, value in scene.sound.enabled = !value }
             }
@@ -403,5 +506,44 @@ struct KitchenDebugStrip: View {
         .font(.caption)
         .padding(.horizontal, 16)
         .padding(.top, 16)
+    }
+
+    private func enter(_ id: RoomID) {
+        scene.enter(id, handing: id == .versieren ? cakePreset.spec : nil)
+    }
+
+    /// The cakes worth being able to reach in one tap: one of each `CakeSpec.Kind`
+    /// plus the effects, because the decorating room has to look right on a tall
+    /// glowing sparkling rainbow and on a plain cream one alike.
+    enum CakePreset: String, CaseIterable, Identifiable {
+        case willekeurig, room, effenRoze, gemengd, regenboog, alleEffecten
+
+        var id: String { rawValue }
+
+        var title: String {
+            switch self {
+            case .willekeurig: return "Willekeurig"
+            case .room: return "Room (geen kleur)"
+            case .effenRoze: return "Effen roze"
+            case .gemengd: return "Gemengd"
+            case .regenboog: return "Regenboog"
+            case .alleEffecten: return "Regenboog + hoog + fonkelt"
+            }
+        }
+
+        /// `nil` means "no cake handed over", which is a visit — and a visit
+        /// deals its own random one (`GAMEPLAY.md` §6.4, owner's call).
+        var spec: CakeSpec? {
+            switch self {
+            case .willekeurig: return nil
+            case .room: return CakeSpec(ingredients: [.sterrensuiker, .maanstof])
+            case .effenRoze: return CakeSpec(ingredients: [.aardbei, .aardbei, .sterrensuiker])
+            case .gemengd: return CakeSpec(ingredients: [.aardbei, .bosbes, .sterrensuiker])
+            case .regenboog: return CakeSpec(ingredients: [.aardbei, .bosbes, .klaver, .honing])
+            case .alleEffecten:
+                return CakeSpec(ingredients: [.aardbei, .bosbes, .klaver,
+                                              .wolkenroom, .sterrensuiker])
+            }
+        }
     }
 }

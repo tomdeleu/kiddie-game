@@ -64,9 +64,9 @@ struct RoundState: Codable {
     var allCollected: Bool { usedSlots.count >= basket.count && !basket.isEmpty }
 
     /// Which of the five places the next ingredient is waiting in.
-    var nextSource: Layout.Source? {
+    var nextSource: KitchenLayout.Source? {
         guard !allCollected else { return nil }
-        return Layout.Source(rawValue: min(nextIndex, Layout.Source.allCases.count - 1))
+        return KitchenLayout.Source(rawValue: min(nextIndex, KitchenLayout.Source.allCases.count - 1))
     }
 
     /// A fresh basket, one ingredient per source.
@@ -121,14 +121,14 @@ struct RoundState: Codable {
     /// still out of reach** and honestly cannot be bought this way: one colour
     /// from five draws needs four colourless ingredients in the hand, which
     /// needs at least four in the deck, which is most of it. The remaining
-    /// lever is `Layout.ingredientsPerRound` — at three, the colour count is
+    /// lever is `KitchenLayout.ingredientsPerRound` — at three, the colour count is
     /// free to be one, two or three and every cake in §5 comes back. That is
     /// the change to make when the garden lands and starts choosing what goes
     /// in the basket, because an interesting three beats an exhaustive five.
     static func fresh(keeping shelf: [CakeSpec] = []) -> RoundState {
         var state = RoundState()
         var deck: [Ingredient] = []
-        state.basket = (0..<Layout.ingredientsPerRound).map { _ in
+        state.basket = (0..<KitchenLayout.ingredientsPerRound).map { _ in
             if deck.isEmpty { deck = Ingredient.allCases.shuffled() }
             return deck.removeLast()
         }
@@ -138,11 +138,15 @@ struct RoundState: Codable {
     }
 }
 
-/// JSON in Application Support, as `CONCEPT.md` §10 asks. SwiftData is more
-/// machinery than one small struct needs.
-enum RoundStore {
-
-    private static let fileName = "keuken.json"
+/// **One save file per room**, JSON in Application Support, as `CONCEPT.md` §10
+/// asks. SwiftData is more machinery than one small struct needs.
+///
+/// One file per room rather than one game-wide struct, because a room's state is
+/// only ever read by that room — and it means **adding a room cannot corrupt
+/// another room's save** (`GAMEPLAY.md` §8). The one thing that genuinely
+/// crosses rooms is `CakeSpec`, and it travels inside whichever room's file is
+/// currently holding it.
+enum RoomStore {
 
     private static var directory: URL? {
         guard let base = FileManager.default.urls(for: .applicationSupportDirectory,
@@ -153,19 +157,38 @@ enum RoundStore {
         return folder
     }
 
-    static func load() -> RoundState {
+    /// **A decode failure falls back rather than throwing**, and that is the
+    /// dangerous path, not the safe one: it loses her round. `ROOMS.md` §2 —
+    /// every field added after the first build is `Optional`, so this stays the
+    /// exceptional case it is meant to be.
+    static func load<S: Decodable>(_ fileName: String, fallback: () -> S) -> S {
         guard let url = directory?.appendingPathComponent(fileName),
               let data = try? Data(contentsOf: url),
-              let state = try? JSONDecoder().decode(RoundState.self, from: data) else {
-            return .fresh()
+              let state = try? JSONDecoder().decode(S.self, from: data) else {
+            return fallback()
         }
         return state
     }
 
-    static func save(_ state: RoundState) {
+    static func save<S: Encodable>(_ state: S, to fileName: String) {
         guard let url = directory?.appendingPathComponent(fileName),
               let data = try? JSONEncoder().encode(state) else { return }
         try? data.write(to: url, options: .atomic)
+    }
+}
+
+/// The kitchen's own save. A thin name over `RoomStore` so its call sites did
+/// not have to move when the decorating room needed one too.
+enum RoundStore {
+
+    private static let fileName = "keuken.json"
+
+    static func load() -> RoundState {
+        RoomStore.load(fileName) { .fresh() }
+    }
+
+    static func save(_ state: RoundState) {
+        RoomStore.save(state, to: fileName)
     }
 
     /// For the debug panel — the whole kitchen back to the beginning, plank

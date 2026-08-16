@@ -169,6 +169,35 @@ struct CakeSpec: Codable, Equatable {
 
     var ingredients: [Ingredient] = []
 
+    /// **A cake nobody baked**, for a room entered on a visit rather than
+    /// mid-round.
+    ///
+    /// `GAMEPLAY.md` §6.4 left it open whether the decorating room has a visit
+    /// mode at all, on the grounds that decorating with no cake in front of her
+    /// is not a thing. The owner's call (2026-08-16) is that it does, and that
+    /// the answer to the missing cake is to deal one rather than to refuse her
+    /// the room.
+    ///
+    /// Dealt off a shuffled deck, the same rule as `RoundState.fresh` and for
+    /// the same reason: five independent rolls of a six-sided die come up all
+    /// different only about 9% of the time, and a visit cake that is two of the
+    /// same berry is a duller cake than the room deserves.
+    ///
+    /// Five is spelled here rather than read off `KitchenLayout` on purpose:
+    /// this struct is the one thing that crosses rooms (`ROOMS.md` §2) and must
+    /// not depend on any of them. The lever that will change the real number is
+    /// `KitchenLayout.ingredientsPerRound`, when the garden lands and starts
+    /// filling the basket with an interesting three rather than an exhaustive
+    /// five — and this default should follow it then.
+    static func dealt(_ count: Int = 5) -> CakeSpec {
+        var deck: [Ingredient] = []
+        let picks = (0..<count).map { _ -> Ingredient in
+            if deck.isEmpty { deck = Ingredient.allCases.shuffled() }
+            return deck.removeLast()
+        }
+        return CakeSpec(ingredients: picks)
+    }
+
     /// Distinct colours, in the order she added them. Order matters: the tiers
     /// are painted from it, so two identical baskets stirred in a different
     /// order still look like her cake.
