@@ -262,6 +262,16 @@ enum Line {
     static let plankGezet = "nina.plank.gezet"
     static let plankNogEen = "nina.plank.nogeen"
 
+    /// **And the third line's other half.** `plankNogEen` is what she hears
+    /// after cakes one and two — *shall we make another?* — and this is what
+    /// replaces it after the third, when the plank is full enough to finish the
+    /// room and the door is the next thing. `KitchenRoom.placeOnPlank` picks
+    /// between them.
+    static let kamerKlaar = "nina.kamer.klaar"
+    /// Tapping the open door once the kitchen is finished. Deliberately promises
+    /// a room *soon* rather than a room *now* — see `KitchenRoom.endRoom`.
+    static let kamerDeur = "nina.kamer.deur"
+
     /// What we are doing today, said once at the top of every round.
     static let opdracht = "nina.keuken.opdracht"
     /// The rolling step, which comes before anything goes in the bowl.

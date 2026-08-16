@@ -251,6 +251,23 @@ enum Layout {
     static let cakePlankLength: Float = 0.190
     static let cakeShelfCapacity = 4
 
+    /// **How many cakes finish the kitchen.**
+    ///
+    /// The room had no end. It looped: bake a cake, put it on the plank, bake
+    /// another, forever, and the only thing that ever changed was which four
+    /// cakes were on the shelf. Three gives the loop a shape — long enough that
+    /// the third one is an achievement, short enough that it is one sitting for
+    /// a 4-year-old at roughly eleven minutes a round.
+    ///
+    /// It is a floor rather than a quota. Nothing stops at three: a fresh round
+    /// still starts, the dough is still on the table, and she can bake a fourth
+    /// if she would rather. What three does is **open the door** —
+    /// `KitchenRoom.roomComplete`.
+    ///
+    /// Below `cakeShelfCapacity` on purpose, so finishing the room never
+    /// depends on the plank having dropped an older cake off the end of itself.
+    static let cakesToFinish = 3
+
     /// **Nina's portrait, framed, on the back wall above Otto.**
     ///
     /// The one picture in the kitchen, and the only thing hanging on the back
@@ -336,6 +353,26 @@ enum Layout {
     /// The frame's centre, and the leaf's back face — both out in the room.
     static let doorFrameZ: Float = 0.002
     static let doorLeafZ: Float = 0.003
+
+    /// **Where the leaf rests once the kitchen is finished: on the latch, not
+    /// shut.** About 11°, which is the smallest angle that still shows a slice
+    /// of the light behind it at this camera — the point is not to open the
+    /// door, it is to say the door is *openable*, and a door standing ajar says
+    /// that without a word or an arrow. Tapping it takes it the rest of the way
+    /// and lets it fall back to here rather than to shut.
+    static let doorAjarAngle: Float = -0.20
+    /// How far a tap opens it. **35°, not wide open**: past about 45° the leaf's
+    /// face turns out of the key light, which comes over the camera's right
+    /// shoulder, and a door that goes dark as it opens looks like a hole.
+    static let doorOpenAngle: Float = -0.62
+
+    /// Where the ring of light sits when the door is the thing she should go
+    /// for. On the floor at the threshold, a little way out into the room —
+    /// centred on the doorway itself the ring would be half inside the wall,
+    /// which at 43 mm of radius it now clears by 5 mm.
+    static var doorHaloSpot: SIMD3<Float> {
+        SIMD3<Float>(doorwayCentre.x + 0.046, floorY, doorwayCentre.z)
+    }
 
     /// Horizontal distance. Snapping ignores height on purpose: she aims at
     /// where a thing *is on the table*, not at its centre of mass.

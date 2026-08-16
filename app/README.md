@@ -291,6 +291,66 @@ White is the honest exception — `wolkenroom` makes a white cake, so its batter
 brightens rather than changes hue — and `sterrensuiker` changes nothing at all,
 which is the point of it (`GAMEPLAY.md` §5: "no colours" is a real outcome).
 
+### Ending the room
+
+**Three cakes finish the kitchen, and then she taps the door to leave.**
+
+The room had no end. It looped: bake a cake, put it on the plank, bake another,
+forever, and the only thing that ever changed was which four cakes were on the
+shelf. Three gives the loop a shape — long enough that the third one is an
+achievement, short enough to be one sitting at roughly eleven minutes a round,
+and one below `cakeShelfCapacity` so finishing never depends on the plank having
+dropped an older cake off its own end.
+
+**It is a floor, not a quota.** A fresh round still starts after the third cake,
+the dough is still on the table, the halo is still on the rolling pin. Nothing
+is forced and nothing is taken away; three cakes simply *open the door*.
+
+When the room is finished, three things happen to the door at once, and they are
+three ways of saying the same sentence to somebody who cannot read:
+
+- **the leaf comes off the latch** and rests ajar at 11° — the smallest angle
+  that still shows a slice of the light behind it at this camera. The point is
+  not to open the door, it is to say the door is *openable*.
+- **the light behind it turns on**, emissive, so that slice is worth seeing.
+  Unlit it read as the inside of a cupboard.
+- **a ring lands on the floor at the threshold** — the same cue as every other
+  instruction in the game, on a marker 46 mm out from the wall so a 43 mm ring
+  is not half buried in the plaster.
+
+This is **the second time the game lights two things at once**, and the reason is
+different from the first. The cake-to-plank halo was a journey with two ends;
+this is a room with genuinely **two right answers** — carry on baking, or go
+through the door — and a cue that named only one of them would be a lie.
+
+Nina's closing line splits to match. After cakes one and two it is *"zullen we er
+nog eentje maken?"*; after the third it becomes *"drie taarten op de plank, de
+keuken is klaar — tik maar op de deur"*, and the new round that starts behind it
+**says nothing at all**, because following that with "let's mix everything in the
+bowl" would be the room arguing with itself. Coming back later to a finished
+kitchen is greeted the same way.
+
+**Tapping the door is the ending**, and for now it is a ceremony rather than a
+transition, because there is nowhere yet to transition to: the leaf swings wide
+and holds, light spills across the threshold, and Nina says — carefully — that
+this is where they will carry on. *"Die komt gauw, hoor"* rather than a promise
+of a room this build cannot open, because a 4-year-old told she is going
+somewhere and then not taken there has been lied to. `KitchenRoom.endRoom` is
+**the one function the decorating room replaces**, and the swing is already the
+first half of that transition.
+
+Nothing is consumed by it. The plank keeps her cakes, the leaf falls back to
+*ajar* rather than shut so the room stays finished and stays finishable, and she
+can tap it as often as she likes.
+
+One thing had to be fixed to make the door tappable at all: targets are spheres
+centred on an entity's origin, and the doorway's origin is on the **floor**, so
+the 54 mm sphere covered the bottom of the door and nothing else. The middle of
+the leaf sat 50 mm off that centre and the top of it 100 mm — the top half of the
+door has never been tappable. Survivable while it was a toy; not survivable now
+that it is how the room ends, and a 4-year-old aims at the middle of a door. The
+target now hangs on a marker at the leaf's mid-height.
+
 ### Ending a round
 
 **The end of a round used to last three quarters of a second.** The cake landed
@@ -669,12 +729,14 @@ the table, 11 mm between the frame and the floor's near edge.
 are laid out on and every one of those positions is absolute, so moving it is
 seven more edits and seven more chances to put something over an edge.
 
-**The doorway does not lead anywhere yet, and no longer ends the round either.**
-`GAMEPLAY.md` §7 says the door always works, even mid-task. Here it cannot: the
-decorating room does not exist, so there is nowhere to go. Tapping it opens the
-door, shows the light on the other side, and lets it swing shut. **When the
-decorating room lands, `tapDoorway()` is still the one function to change**,
-and the swing is already the first half of that transition.
+**The doorway does not lead anywhere yet — but it does now end the room.**
+`GAMEPLAY.md` §7 says the door always works, even mid-task. Here it cannot go
+anywhere: the decorating room does not exist. So it has two answers instead.
+Before three cakes it is a toy — it opens, shows the light, swings shut, and Nina
+says what it is. After three cakes it is the way out, and tapping it plays the
+room's ending. **When the decorating room lands, `endRoom()` is the one function
+to change**, and the swing is already the first half of that transition. See
+[Ending the room](#ending-the-room).
 
 **It is a door now, and it used to be an arch.** A pink arched ring lying flat
 on the wall, with a butter-yellow plug filling it that no code ever lit — and
@@ -991,14 +1053,14 @@ with **Copy settings** before overwriting.
 
 ## Audio
 
-**Voice is real.** 130 Dutch lines, generated with `text2speech_v2` /
+**Voice is real.** 134 Dutch lines, generated with `text2speech_v2` /
 `elevenlabs` and bundled as mp3s — the app never calls an API. Nina is Gracie;
 Otto is provisionally Barrett, and `audio/auditions/README.md` explains how to
 swap him for four credits and no code.
 
-The 26 added on 2026-08-16 — 7.8 credits — are the 21 naming lines in
-`script-namen.json` and the 5 that make the end of a round a moment rather than a
-cut. `VoiceBank` loads every bundled `script-*.json` and merges them, so a whole
+The 30 added on 2026-08-16 — 9 credits — are the 21 naming lines in
+`script-namen.json`, the 5 that make the end of a round a moment rather than a
+cut, and the 4 that finish the room and open the door. `VoiceBank` loads every bundled `script-*.json` and merges them, so a whole
 new layer of speech is a new file and no Swift change; the same is true of the
 next room.
 

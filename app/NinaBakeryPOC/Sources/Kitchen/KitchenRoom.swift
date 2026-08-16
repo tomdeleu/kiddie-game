@@ -60,6 +60,27 @@ final class KitchenRoom {
     private var portrait: Entity?
     /// The door's open-hold-shut turn, held so a second tap restarts it.
     private var doorSwing: Int?
+    /// **Where the leaf sits when nothing is swinging it** — shut while the
+    /// kitchen is unfinished, ajar once it is.
+    private var doorRest: Float = 0
+    /// An empty marker on the floor at the threshold, so the door's halo has a
+    /// place to stand that is not inside the wall. See `Layout.doorHaloSpot`.
+    private var doorMarker: Entity?
+    /// And one at the middle of the leaf, so the whole door answers a tap
+    /// rather than only its bottom half — see `buildDoorway`.
+    private var doorTouchSpot: Entity?
+    /// **The second halo, and the second time the game lights two things at
+    /// once.**
+    ///
+    /// Every step lights exactly one prop, because a cue that names two things
+    /// names neither. The first exception was the cake going up onto the plank,
+    /// where the step is a journey and a journey has two ends. This is the
+    /// second, and it is a different shape: once three cakes are up, the room
+    /// genuinely has **two right answers** — carry on baking, or go through the
+    /// door — and a cue that lit only one of them would be a lie. So the step
+    /// keeps its own halo and the door gets one of its own, lit for as long as
+    /// the room is finished.
+    private var doorHalo: Halo.Handle?
     private var cakePlank: ModelEntity?
     private var flourPatches: [Entity] = []
     private var baker: BakerCharacter?
@@ -309,6 +330,81 @@ final class KitchenRoom {
         let node = KitchenProps.doorway(flat: flat)
         root.addChild(node.root)
         doorway = node
+
+        // Nothing to look at — it exists so the door's ring of light has a
+        // position on the floor to follow, out where the ring is not half
+        // buried in the wall. An empty entity rather than a hidden model,
+        // because `Halo` only ever reads its position.
+        let marker = Entity()
+        marker.name = "DoorHaloSpot"
+        marker.position = Layout.doorHaloSpot
+        root.addChild(marker)
+        doorMarker = marker
+
+        // **And a second marker, at the middle of the leaf, for the touch.**
+        //
+        // Targets are spheres centred on an entity's own origin, and the
+        // doorway's origin is on the *floor* — so a 54 mm sphere there covered
+        // the bottom of the door and nothing else. Tapping the middle of the
+        // leaf sat about 50 mm off that centre and the top of it about 100 mm,
+        // which means the top half of the door has never been tappable. That
+        // was survivable while the door was a toy. It is not survivable now that
+        // tapping it is how the room ends, and a 4-year-old aims at the middle
+        // of a door.
+        let hit = Entity()
+        hit.name = "DoorTouchSpot"
+        hit.position = SIMD3<Float>(Layout.doorwayCentre.x + 0.010,
+                                    Layout.floorY + Layout.doorOpening.y / 2,
+                                    Layout.doorwayCentre.z)
+        root.addChild(hit)
+        doorTouchSpot = hit
+    }
+
+    /// **The kitchen is finished.** Three cakes on the plank, and the door is
+    /// the way on — see `Layout.cakesToFinish`.
+    ///
+    /// A floor, not a quota: a fresh round still starts, and she is free to
+    /// bake a fourth instead. It stays true once true, so coming back to a
+    /// finished kitchen finds the door still open and still lit.
+    var roomComplete: Bool { state.shelf.count >= Layout.cakesToFinish }
+
+    /// **Put the door in the state the plank has earned.**
+    ///
+    /// Three things at once, and they are three ways of saying the same
+    /// sentence to somebody who cannot read: the leaf comes off the latch, the
+    /// light behind it starts to glow so the slice of it showing through is
+    /// worth seeing, and a ring lands on the floor at the threshold. None of
+    /// them is an arrow and none of them is a word.
+    ///
+    /// Called from `applyStep`, so it is correct on a rebuild, on every step
+    /// change, and on coming back to a saved round that was already finished.
+    private func refreshDoorInvitation() {
+        guard let doorway else { return }
+        let done = roomComplete
+
+        doorRest = done ? Layout.doorAjarAngle : 0
+        // Only when nothing is swinging it — mid-tap the tween owns the hinge,
+        // and it returns to `doorRest` by itself.
+        if doorSwing == nil {
+            doorway.hinge.orientation = simd_quatf(angle: doorRest, axis: [0, 1, 0])
+        }
+
+        // The next room, seen through the gap. Lit rather than merely painted:
+        // it is a butter-yellow plate deep inside the frame with a leaf across
+        // most of it, and unlit it reads as the inside of a cupboard.
+        doorway.glow.model?.materials = [
+            done ? Palette.glowMaterial(Palette.butterYellow, intensity: 1.8)
+                 : Palette.material(Palette.butterYellow)
+        ]
+
+        guard done else {
+            Halo.remove(doorHalo, ticker: ticker)
+            doorHalo = nil
+            return
+        }
+        guard doorHalo == nil, let marker = doorMarker else { return }
+        doorHalo = Halo.attach(to: marker, radius: 0.032, ticker: ticker,
+                               surfaceY: { _ in Layout.floorY })
     }
 
     /// Her finished cakes, standing on the plank.
@@ -413,7 +509,11 @@ final class KitchenRoom {
             target.onTap = { [weak self] in self?.tapOtto() }
         }
 
-        touch.register("doorway", entity: doorway?.root, radius: 0.054,
+        // Centred on the middle of the leaf rather than on the doorway's own
+        // origin, which is on the floor — see `buildDoorway`. 56 mm reaches the
+        // top of the door and stops 3 mm short of the basket's token, which is
+        // the nearest other target at 85 mm.
+        touch.register("doorway", entity: doorTouchSpot, radius: 0.056,
                        planeY: Layout.floorY) { target in
             target.onTap = { [weak self] in self?.tapDoorway() }
         }
@@ -711,6 +811,7 @@ final class KitchenRoom {
         }
 
         setPlankInviting(state.step == .klaar)
+        refreshDoorInvitation()
         refreshBowlBatter(animated: false)
         refreshInteractivity()
         bakerAttends()
@@ -1591,7 +1692,14 @@ final class KitchenRoom {
             self.celebrate(shelf: shelf, at: slot)
         }
         baker?.set(.cheering)
-        voice.sayWhenQuiet([Line.klaar, Line.plankGezet, Line.plankNogEen], gap: 0.42)
+        // **The third line is the one that changes.** The first two are about
+        // the cake and the plank and are true every time; the last one is what
+        // happens next, and what happens next is not the same after the third
+        // cake as after the first. `shelf` already counts the one that has just
+        // landed, so this asks about the plank she is looking at.
+        let finishes = shelf.count >= Layout.cakesToFinish
+        voice.sayWhenQuiet([Line.klaar, Line.plankGezet,
+                            finishes ? Line.kamerKlaar : Line.plankNogEen], gap: 0.42)
         self.cake = nil
         touch.target(named: "cake")?.enabled = false
     }
@@ -1634,31 +1742,76 @@ final class KitchenRoom {
     /// It used to squash the whole arch, which was the generic prop reaction
     /// applied to the one prop in the room that has a hinge. A door bending is
     /// a door made of rubber; a door opening is a door.
+    /// **The door, which now has two answers.**
+    ///
+    /// Unfinished kitchen: it opens, shows the light, falls shut, and Nina says
+    /// what it is. That is a toy, and it always was.
+    ///
+    /// Three cakes up: it is **the way out of the room**, and tapping it is what
+    /// ends the kitchen (owner, 2026-08-16). Everything about the door has been
+    /// telling her so since the third cake landed — it is standing ajar, the
+    /// light behind it is on, and there is a ring on the floor at the threshold.
     private func tapDoorway() {
         guard let doorway else { return }
         sound.play(.whoosh)
-        swingDoor(doorway)
-        // It used to repeat the current step's instruction, which was the door
-        // apologising for not going anywhere. It now says what it is, like every
-        // other prop — and "daarachter is nog een kamer" is true, promises
-        // nothing, and is the right thing for her to be told about a door that
-        // will one day open onto the decorating room.
-        voice.say(Line.ditDeur, priority: .low)
+        guard roomComplete else {
+            swingDoor(doorway)
+            voice.say(Line.ditDeur, priority: .low)
+            return
+        }
+        endRoom(doorway)
     }
 
-    /// Open, hold, fall shut — 1.5 s, and re-tapping restarts it rather than
-    /// stacking a second turn on top of the first, which would leave the leaf
-    /// wherever the two disagreed.
-    private func swingDoor(_ doorway: KitchenProps.Doorway) {
+    /// **The end of the kitchen.**
+    ///
+    /// It is a ceremony rather than a transition, because there is nowhere yet
+    /// to transition to: the door swings wide and holds there, the light behind
+    /// it spills onto the threshold, and Nina says — carefully — that this is
+    /// where they will carry on. *"Die komt gauw, hoor"* rather than a promise
+    /// of a room this build cannot open, because a 4-year-old told she is going
+    /// somewhere and then not taken there has been lied to.
+    ///
+    /// **This is the one function the decorating room replaces**, and by then
+    /// the swing is already the first half of the transition. Until then it can
+    /// be tapped as often as she likes: nothing is consumed, the plank keeps her
+    /// cakes, and the leaf falls back to ajar rather than shut so the room stays
+    /// finished and stays finishable.
+    private func endRoom(_ doorway: KitchenProps.Doorway) {
+        swingDoor(doorway, hold: 2.6)
+        baker?.set(.cheering)
+        sound.play(.reward, volume: 0.7)
+        voice.sayWhenQuiet(Line.kamerDeur)
+
+        // Light coming through the gap, twice, on the beat of the swing opening
+        // and of it standing there.
+        let threshold = Layout.doorHaloSpot
+        for (i, delay) in [Float(0.45), 1.5].enumerated() {
+            ticker.after(delay) { [weak self] in
+                guard let self else { return }
+                Sparkles.burst(at: threshold + [0, 0.030, 0], in: self.root,
+                               ticker: self.ticker, colour: Palette.butterYellow,
+                               count: i == 0 ? 12 : 8, size: 0.0026,
+                               speed: 0.07, life: 1.1)
+                self.sound.play(.sparkle, volume: 0.45, rate: 1.0 + Float(i) * 0.15)
+            }
+        }
+    }
+
+    /// Open, hold, fall back to `doorRest` — and re-tapping restarts it rather
+    /// than stacking a second turn on top of the first, which would leave the
+    /// leaf wherever the two disagreed.
+    ///
+    /// **It falls back to the rest angle, not to shut.** That is the whole of
+    /// what keeps a finished kitchen finished-looking: once three cakes are up
+    /// the leaf lives on the latch at `Layout.doorAjarAngle`, and a swing that
+    /// ended by closing it would quietly undo the invitation every time she
+    /// took it up.
+    private func swingDoor(_ doorway: KitchenProps.Doorway, hold: Float = 1.5) {
         ticker.cancel(doorSwing)
         let hinge = doorway.hinge
-        // Negative swings it into the room. **35°, not wide open**: past about
-        // 45° the leaf's face turns out of the key light — the light comes over
-        // the camera's right shoulder — and a door that goes dark as it opens
-        // looks like a hole. Ajar also leaves the frame legible, so what she
-        // sees is a door that moved rather than a door that left.
-        let openAngle: Float = -0.62
-        doorSwing = ticker.tween(1.5, ease: Ease.linear, step: { [weak hinge] t in
+        let rest = doorRest
+        let open = Layout.doorOpenAngle
+        doorSwing = ticker.tween(hold, ease: Ease.linear, step: { [weak hinge] t in
             guard let hinge else { return }
             let amount: Float
             switch t {
@@ -1666,9 +1819,14 @@ final class KitchenRoom {
             case ..<0.62: amount = 1
             default:      amount = 1 - Ease.inOut((t - 0.62) / 0.38)
             }
-            hinge.orientation = simd_quatf(angle: openAngle * amount, axis: [0, 1, 0])
-        }, done: { [weak hinge] in
-            hinge?.orientation = simd_quatf(angle: 0, axis: [0, 1, 0])
+            hinge.orientation = simd_quatf(angle: rest + (open - rest) * amount,
+                                           axis: [0, 1, 0])
+        }, done: { [weak self, weak hinge] in
+            hinge?.orientation = simd_quatf(angle: rest, axis: [0, 1, 0])
+            // Cleared so `refreshDoorInvitation` knows the hinge is its own
+            // again — otherwise a step change during a swing would either be
+            // ignored forever or fight the tween for the same quaternion.
+            self?.doorSwing = nil
         })
     }
 
@@ -1681,7 +1839,16 @@ final class KitchenRoom {
         // rebuild is triggered by Nina going quiet, but a re-recorded line or a
         // timeout could still put the two within a syllable of each other.
         ticker.after(0.8) { [weak self] in
-            self?.voice.sayWhenQuiet([Line.opdracht, Line.uitrollen], gap: 0.35)
+            guard let self else { return }
+            // **A finished kitchen does not announce another cake.** The last
+            // thing Nina said was that three are up and the door is open, and
+            // following it with "let's mix everything in the bowl" would be the
+            // room arguing with itself. The dough is on the table if she wants
+            // it and the halo is on the rolling pin; the idle nudge picks it up
+            // if she stands still. Doing nothing here is the whole point — she
+            // is being offered the door, not marched through it.
+            guard !self.roomComplete else { return }
+            self.voice.sayWhenQuiet([Line.opdracht, Line.uitrollen], gap: 0.35)
         }
     }
 
@@ -2174,7 +2341,18 @@ final class KitchenRoom {
     /// de oven" — and then the first step. Coming back to a round already in
     /// progress skips all that and just says where she was.
     func greet() {
-        guard state.step == .uitrollen, state.roll == 0 else {
+        let atTheTop = state.step == .uitrollen && state.roll == 0
+        // **Coming back to a finished kitchen is greeted as one.** Three cakes
+        // are already on the plank and the door is already standing open with a
+        // ring at its foot; opening on "let's mix everything in the bowl" would
+        // ignore the room she is looking at. Mid-round it still says where she
+        // was — a half-stirred bowl is a better thing to be reminded of than a
+        // door.
+        if roomComplete && atTheTop {
+            voice.say([Line.hallo, Line.kamerKlaar], gap: 0.35)
+            return
+        }
+        guard atTheTop else {
             voice.say(nudgeLine(for: state.step))
             return
         }
@@ -2227,6 +2405,11 @@ final class KitchenRoom {
         eyeLifeJob = nil
         ticker.cancel(doorSwing)
         doorSwing = nil
+        doorRest = 0
+        doorMarker = nil
+        doorTouchSpot = nil
+        Halo.remove(doorHalo, ticker: ticker)
+        doorHalo = nil
         clearHalo()
         baker?.stop()
         baker = nil
