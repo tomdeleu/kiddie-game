@@ -1046,7 +1046,7 @@ final class GardenRoom: Room {
         swingDoor(doorway, hold: 2.6)
         sound.play(.reward, volume: 0.7)
         save()
-        voice.sayWhenQuiet(Line.Tuin.kamerDeur)
+        voice.sayInstead(Line.Tuin.kamerDeur)
 
         let threshold = doorMarker?.position ?? GardenLayout.gateCentre
         for (i, delay) in [Float(0.45), 1.5].enumerated() {
@@ -1342,22 +1342,30 @@ final class GardenRoom: Room {
     }
 
     /// **A step transition never opens its mouth while the last line is still
-    /// going.** `sayWhenQuiet`, never `say` — `ROOMS.md` §4, and the reason is
-    /// that playing fast should not cost her the words.
+    /// going.** Never bare `say` — `ROOMS.md` §4, and the reason is that playing
+    /// fast should not cost her the words.
     ///
     /// Only one line can ever be waiting and a newer one replaces it, so five
     /// quick drops earn the most recent thing that is still true rather than a
     /// monologue about things that have already happened.
+    ///
+    /// **`sayInstead` rather than `sayWhenQuiet`, because a step transition is
+    /// not an extra remark — it is the room moving on, and everything queued
+    /// behind the sentence in the air is about where she just was.** The
+    /// greeting is three lines long and she can have the bed sown before it
+    /// finishes; joining that queue means being told to sow, then told the
+    /// basket is full. The sentence sounding now still finishes: this drops the
+    /// queue, never the voice.
     private var lastAnnounced: GardenStep?
     private func announceStep() {
         guard state.step != lastAnnounced else { return }
         lastAnnounced = state.step
         switch state.step {
-        case .zaaien: voice.sayWhenQuiet(Line.Tuin.zaaien)
-        case .gieten: voice.sayWhenQuiet(Line.Tuin.gieten)
-        case .plukken: voice.sayWhenQuiet(Line.Tuin.rijp)
+        case .zaaien: voice.sayInstead(Line.Tuin.zaaien)
+        case .gieten: voice.sayInstead(Line.Tuin.gieten)
+        case .plukken: voice.sayInstead(Line.Tuin.rijp)
         case .klaar:
-            voice.sayWhenQuiet([Line.Tuin.mandjeVol, Line.Tuin.kamerKlaar], gap: 0.35)
+            voice.sayInstead([Line.Tuin.mandjeVol, Line.Tuin.kamerKlaar], gap: 0.35)
         }
     }
 
