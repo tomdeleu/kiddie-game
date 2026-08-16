@@ -66,6 +66,35 @@ enum Palette {
     /// `woodBrown`, taken darker. One surface, the oven's mouth plug.
     static let ovenInside    = hex(0x554C3F)
 
+    /// A palette colour one or more steps into shadow.
+    ///
+    /// **This is the game's only ambient occlusion**, and it exists against a
+    /// standing rule — `references/REFERENCES.md` bans occlusion outright,
+    /// because the facets are supposed to do the shading and corners are
+    /// supposed to stay light. That rule holds everywhere a facet can answer
+    /// the question. The toverbosbes is where it cannot: once its crown stands
+    /// up off the berry rather than lying folded on it, the crater floor and
+    /// the crown's underside face the same way as everything around them, so
+    /// they come back the same tone and nothing says the two shapes touch.
+    ///
+    /// It is not a lightmap and it costs nothing at runtime. `bake_ao_facets`
+    /// in `models/lowpoly.py` measures the occlusion at model time and splits
+    /// the faces in the crevice into their own mesh named `…Shade1` / `…Shade2`;
+    /// `ModelLibrary` sees the suffix and calls this. So the occlusion is still
+    /// a flat tone on a facet, which is what the whole style is made of.
+    ///
+    /// **`occlusionStep` is kept in step with `OCCLUSION_STEP` in
+    /// `models/lowpoly.py`**, which is only there so a prop looks the same in
+    /// Blender as it does in the game. If one moves, move the other.
+    static let occlusionStep = 0.88
+
+    static func occluded(_ colour: UIColorLike, steps: Int) -> UIColorLike {
+        guard steps > 0 else { return colour }
+        let c = components(colour)
+        let f = pow(occlusionStep, Double(steps))
+        return UIColorLike(red: c.0 * f, green: c.1 * f, blue: c.2 * f, opacity: 1)
+    }
+
     /// Blend two palette colours. Used for one thing: batter coming up to
     /// colour as she stirs. Reading components back out is platform-specific,
     /// which is why it lives here rather than at the call site.

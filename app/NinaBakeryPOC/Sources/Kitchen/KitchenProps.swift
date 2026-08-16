@@ -310,7 +310,27 @@ enum KitchenProps {
 
     /// `toverbosbes` — a round berry with the little five-point crown a real
     /// blueberry has, which is the detail that stops it reading as a marble.
+    ///
+    /// **Modelled in Blender**, and the second prop to be — `models/bosbes.py`,
+    /// the same route and the same two fallbacks as `flourSack(flat:)`. The
+    /// plate wants a faceted globe with a calyx dished into the top and a
+    /// folded crown standing in it; a lathe gives broad vertical panels, a pole
+    /// at each end, and no way to make a dish and a dome out of one profile.
+    ///
+    /// No wrapper entity here: `token(_:flat:)` has already made `root`, and it
+    /// is upright, which is what the squash on drop needs.
     private static func buildBlueberry(into root: Entity, flat: Bool) {
+        if flat, let modelled = ModelLibrary.load("bosbes",
+                                                  tint: ["Bosbes": Palette.berryBlueDeep,
+                                                         "BosbesCrown": Palette.berryBlue]) {
+            root.addChild(modelled)
+            return
+        }
+        buildProceduralBlueberry(into: root, flat: flat)
+    }
+
+    /// The code-built berry. See `buildBlueberry(into:flat:)` for when it runs.
+    private static func buildProceduralBlueberry(into root: Entity, flat: Bool) {
         let body = RoomBuilder.model(.lathe(profile: [[0, 0],
                                                       [0.0058, 0.0022],
                                                       [0.0095, 0.0068],
@@ -554,7 +574,33 @@ enum KitchenProps {
     /// swelling to its widest about a third of the way up, gathered into a band
     /// at the neck, with the cloth above the band fanning open. That profile is
     /// what says *sack*, and it only works at a size a worktop cannot spare.
+    ///
+    /// **The first prop modelled in Blender rather than in code.** Cloth is
+    /// where the `FacetedMesh` vocabulary runs out: the code version below is
+    /// four stacked lathes and two wedges doing an impression of one gathered
+    /// bag, and the gather — the vertical folds pinching into the tie, the
+    /// pleated crown above it — is the half of the reference plate it cannot
+    /// reach. `models/flour-sack.py` builds those directly. See `ModelLibrary`.
+    ///
+    /// Two ways to end up with the code version, both wanted:
+    /// - the USDZ is missing from the bundle, and a prop she can tap matters
+    ///   more than which prop it is;
+    /// - `flat` is `false`. The exported mesh carries one normal per face and
+    ///   nothing re-derives them, so smooth is a question only the procedural
+    ///   mesh can still answer. The lighting panel's A/B keeps working.
     static func flourSack(flat: Bool) -> Entity {
+        if flat, let modelled = ModelLibrary.load("flour-sack",
+                                                  tint: ["FlourSack": Palette.creamLight,
+                                                         "FlourSackTie": Palette.blushPinkDeep,
+                                                         "FlourSackCorner": Palette.cream]) {
+            modelled.name = "FlourSack"
+            return modelled
+        }
+        return proceduralFlourSack(flat: flat)
+    }
+
+    /// The code-built sack. See `flourSack(flat:)` for when it is used.
+    static func proceduralFlourSack(flat: Bool) -> Entity {
         let sack = Entity()
         sack.name = "FlourSack"
 

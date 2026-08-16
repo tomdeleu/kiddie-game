@@ -444,6 +444,24 @@ rather than a billboard.
 
 ## Deliberate deviations from the design
 
+**There is ambient occlusion on the toverbosbes, and nowhere else.**
+`references/REFERENCES.md` bans it outright — the facets are supposed to do the
+shading and corners are supposed to stay light — and that holds everywhere a
+facet can answer the question. The berry is where it cannot: its crown stands
+up off the globe rather than lying folded on it, and the crater floor and the
+crown's underside face the same way as everything around them, so they come
+back the same tone and nothing says the two shapes touch. Owner's call, on
+seeing the standing crown.
+
+It is baked **to the facets, not to a texture** — `bake_ao_facets` in
+`models/lowpoly.py` measures the occlusion at model time and splits the faces
+in the crevice into their own mesh, which `Palette.occluded` paints a step
+darker. So there are still no UVs, no lightmap and no runtime cost, and the
+occlusion is still one flat tone on a facet. Its reach is 2.2 mm: contact
+shading where two parts meet, not the all-over darkening the clay direction was
+rejected for. `models/README.md` has the argument in full, and `LIGHTMAPS.md`
+is still the untaken texture route.
+
 **The room is 0.46 m across and the camera moved with it.** `POC.md` asks for a
 box "around 0.4 m" and signed off a framing; this is that box grown 15% and that
 eye pulled back 8%, because at 0.40 m the props had no space between them. The
@@ -618,6 +636,44 @@ The **Flat shading** toggle in the debug panel switches to averaged normals.
 That is the "before" picture, and it is still the single most informative
 control in the app.
 
+### Props modelled in Blender
+
+**Two props are not built in code: the flour sack and the toverbosbes.** Both
+are USDZ files in `Resources/Models/`, modelled by the scripts in
+[`models/`](../models/README.md) and loaded by `ModelLibrary`.
+
+They are a trial of a second authoring route, and both were picked on the same
+test — the prop where the `FacetedMesh` vocabulary visibly runs out against its
+plate, not the prop that would be fun to model.
+
+- **The sack**: cloth. The gather folds pinching into the tie and the pleated
+  crown above them are half of what
+  `references/ingredients/flour-sack.png` is, and the code version — four
+  stacked lathes and two wedges — reads as a bag with a collar rather than a
+  bag that has been gathered and tied.
+- **The berry**: a faceted globe with a calyx dished into its top and a crown
+  of five sharp spikes standing in it. A lathe gives broad vertical panels, a
+  pole at each end, and no way to make a dish and a dome from one profile.
+  Without the crown a round berry is a blue marble. It also carries the game's
+  only ambient occlusion — see the deviations above.
+
+What the route costs is a round trip through a file, and what it buys is shapes
+that have to be built vertex by vertex. `models/README.md` has the rules a
+model has to hold to, and the export settings that are load-bearing.
+
+Three things about it are worth knowing here:
+
+- **The palette still wins.** Whatever material the exporter wrote is thrown
+  away on load and replaced with `Palette.material`. `Palette.swift` stays the
+  only place a colour is defined.
+- **`flat: false` falls back to the code versions.** The exported meshes carry
+  one normal per face and nothing re-derives them, so the debug panel's
+  flat-shading A/B is a question only the procedural meshes can answer. They
+  are still there — `KitchenProps.proceduralFlourSack` and
+  `buildProceduralBlueberry` — still built, still correct.
+- **So does a missing asset.** `ModelLibrary.load` returns `nil` rather than
+  trapping, because a prop she can tap matters more than which prop it is.
+
 ## Running it
 
 ```
@@ -644,7 +700,7 @@ long-standing limitation, not a setup problem.
 
 ### First build
 
-Four places are the most likely to want a fix, and all four are one line:
+Five places are the most likely to want a fix, and all five are one line:
 
 1. **`CameraRig.fovIsVertical`.** `init` sets
    `camera.camera.fieldOfViewOrientation = .vertical` so the unprojection maths
@@ -669,6 +725,13 @@ Four places are the most likely to want a fix, and all four are one line:
    doorway out of the shadow map. If the initialiser has moved, that one
    function is the only place to fix it — and if it has to come out entirely,
    the room works, just with the wall-on-wall bands back.
+5. **Where the USDZ files land in the bundle.** They sit in
+   `Resources/Models/`, and whether a subfolder of a synchronised group
+   survives into the built bundle as a directory or is flattened into its root
+   is not something worth guessing at, so `ModelLibrary.url(for:)` asks for
+   both. If the sack or the berry looks like its old self on device, that
+   function is the place to look — the symptom is the code-built prop instead,
+   never a crash and never a hole in the floor.
 
 ### The developer panel
 
