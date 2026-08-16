@@ -18,9 +18,14 @@ a frame on the bakery wall.
 a real toverbakkerij. That is the only progression — no scores, no stars, no
 timers, nothing counted anywhere. A round is ~11–12 minutes.
 
-**Status: one room built.** The proof of concept is answered and
-[`app/`](app/) now holds **De Keuken** — the full kitchen round, seven toys, Nina
-herself behind the table, and 104 Dutch voice lines. No other room exists.
+**Status: two rooms built.** The proof of concept is answered and
+[`app/`](app/) holds **De Keuken** — the full kitchen round, seven toys, Nina
+herself behind the table — and **Versieren**, the decorating room: a cake on a
+turntable, seven sticker trays, a piping bag, a sprinkle shaker and five more
+toys. 196 Dutch voice lines between them. The kitchen's door now leads to the
+decorating room rather than promising one, and a **debug room switcher** behind
+the triple-tap developer corner reaches either room in one tap, in either mode,
+with any cake.
 
 ## → Start here: [`app/README.md`](app/README.md)
 
@@ -30,16 +35,18 @@ fresh round. It has never been compiled — it was written in a container with n
 Swift toolchain — and its README names the two places most likely to want a fix
 on first build.
 
-Four deliberate deviations from the design are recorded there: the doorway does
-not lead to the decorating room, which does not exist yet; the palette gained a
+Deliberate deviations from the design are recorded there. The doorway now does
+lead to the decorating room; the palette gained a
 blue and an amber the locked thirteen do not contain; the room box is now
 0.46 m with the camera pulled back 8%, rather than the 0.4 m and the framing
 `POC.md` signed off; and **the ten Blender props carry ambient occlusion**,
 which nothing else does — see below. The round is ended by carrying the finished cake
 up onto the plank.
 
-**Next**, per [`GAMEPLAY.md`](GAMEPLAY.md) §9: decorating, then the party, then
-the wall of twelve frames. And **test the kitchen with Nina first** — `POC.md`
+**Next**, per [`GAMEPLAY.md`](GAMEPLAY.md) §9: the party, then the wall of
+twelve frames — and start the music search before the party, since it is the one
+genuinely blocked dependency in the project. And **test the two rooms with Nina
+first** — `POC.md`
 has the protocol, and what it says about the snap radius and target sizes is
 the thing worth knowing before another room is built on the same numbers.
 
@@ -55,7 +62,7 @@ palette and pass criteria are still the standard every new room is held to.
 
 | Path | What |
 |---|---|
-| [`app/`](app/) | **The app.** De Keuken, whole: the round, the toys, Nina, Otto, the lighting panel. Written but never compiled — see its README. |
+| [`app/`](app/) | **The app.** De Keuken and Versieren: the round, the toys, Nina, Otto, the cake and everything she puts on it, the room switcher, the lighting panel. Written but never compiled — see its README. |
 | [`models/`](models/) | **Props modelled in Blender**, as Python that rebuilds them. Ten so far — the flour sack, the toverbosbes, the crate, the toverklaver, the toverveertje, the maanstof pouch, the sink, the spoon, the cake and the scale, the only props not built in code. Its README has the rules, the export settings, and the test a prop has to pass to belong there. |
 | [`GAMEPLAY.md`](GAMEPLAY.md) | **Storyline and gameplay in detail.** The wall, the eleven friends and their wishes, the cake rules, what each room requires versus what is optional, the timing budget. Reconciled with the built kitchen on 2026-08-16. |
 | [`ROOMS.md`](ROOMS.md) | **How to build a room.** The contract De Keuken established: the box, the camera, the step machine, the halo, the voice rules, touch, carrying, idle, misses, the door — and the traps that have already been paid for once. Read before writing a room. |
@@ -67,7 +74,8 @@ palette and pass criteria are still the standard every new room is held to.
 | [`references/plates/`](references/plates/) | **The locked style references.** Plates 01 and 02 are the look. |
 | [`references/buttons/`](references/buttons/) | **The button.** Every UI control is one faceted octagon — the plate it came from, the nine candidates, and the measurements the SwiftUI implementation is built on. |
 | [`references/loading-screen/`](references/loading-screen/) | The title plate that opens the app, its eighteen candidates, and the script that pads it to 16:9. |
-| [`references/props/`](references/props/) | Prop concept plates, and why `generate_3d` is not usable for this style. |
+| [`references/props/`](references/props/) | Prop concept plates for the kitchen, and why `generate_3d` is not usable for this style. |
+| [`references/versieren/`](references/versieren/) | The decorating room's seventeen plates — the turntable, the two tools, the seven sticker shapes and the toys — and what three attempts at its room box taught about making flux name its own facet counts. |
 | [`references/ingredients/`](references/ingredients/) | The six ingredients, the flour sack and the flour cloud — the plates the models were built from. |
 | [`references/moodboard/`](references/moodboard/) | Provenance + licences. Gathered for two retired directions — not the current look. |
 | [`references/FETCHING-ASSETS.md`](references/FETCHING-ASSETS.md) | How to get outside material onto disk here, and what fails. |
