@@ -268,11 +268,11 @@ enum GardenRoomBuilder {
         // Each run stops at the far corner and reaches out to the open edge of
         // the slab, so the L closes properly at one end and simply ends at the
         // other — which is what a garden fence disappearing out of frame does.
-        addRun(to: fence, alongZ: true, line: GardenLayout.fenceLineX,
-               from: GardenLayout.fenceLineZ, to: half + 0.004,
+        addRun(into: fence, alongZ: true, line: GardenLayout.fenceLineX,
+               from: GardenLayout.fenceLineZ, upTo: half + 0.004,
                gapCentre: GardenLayout.gateCentre.z, flat: flat)
-        addRun(to: fence, alongZ: false, line: GardenLayout.fenceLineZ,
-               from: GardenLayout.fenceLineX, to: half + 0.004,
+        addRun(into: fence, alongZ: false, line: GardenLayout.fenceLineZ,
+               from: GardenLayout.fenceLineX, upTo: half + 0.004,
                gapCentre: nil, flat: flat)
 
         return fence
@@ -283,8 +283,8 @@ enum GardenRoomBuilder {
     /// `alongZ` says which way the run travels; `line` is its fixed coordinate
     /// on the other axis. Written once for both runs rather than twice, because
     /// two copies of a picket loop is two places for the rail height to drift.
-    private static func addRun(to fence: Entity, alongZ: Bool, line: Float,
-                               from start: Float, to end: Float,
+    private static func addRun(into fence: Entity, alongZ: Bool, line: Float,
+                               from start: Float, upTo end: Float,
                                gapCentre: Float?, flat: Bool) {
         let height = GardenLayout.fenceHeight
         let picket = GardenLayout.fencePicket
@@ -319,12 +319,13 @@ enum GardenRoomBuilder {
             posts.removeAll { abs($0 - gapCentre) < offset - 0.001 }
         }
 
+        // A post is square in plan, so unlike the pickets and the rails it does
+        // not care which way the run travels.
+        let postSize = SIMD3<Float>(GardenLayout.fencePostSize,
+                                    GardenLayout.fencePostHeight,
+                                    GardenLayout.fencePostSize)
         for (i, along) in posts.enumerated() {
-            let post = model(.box(alongZ
-                                  ? [GardenLayout.fencePostSize, GardenLayout.fencePostHeight,
-                                     GardenLayout.fencePostSize]
-                                  : [GardenLayout.fencePostSize, GardenLayout.fencePostHeight,
-                                     GardenLayout.fencePostSize]),
+            let post = model(.box(postSize),
                              Palette.creamLight, flat: flat, name: "FencePost\(i)")
             post.position = place(0, floorY + GardenLayout.fencePostHeight / 2, along)
             fence.addChild(post)

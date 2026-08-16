@@ -39,9 +39,13 @@ screen until asked for — a visible teleport button is the most pressable thing
 that could be on that screen — but the way in is now visible, because the
 triple-tap it replaced sat under the film and could not be tapped at all.
 
-Neither room has ever been compiled — both were written in a container with no
-Swift toolchain — and `app/README.md` names the five places most likely to want a
-fix on first build.
+**Both rooms compiled clean on 2026-08-16** — Xcode 26.6, iOS Simulator, Debug —
+which is the first time any of this has met a Swift compiler. What that build
+caught is in `app/README.md`.
+
+**The fence, the gate and the potting bench landed after it and have not been
+built**, so treat those as correct-by-construction until the next compile: they
+were written back in a container with no toolchain.
 
 Deliberate deviations from the design are recorded there. The kitchen's: the
 doorway does not lead to the decorating room, which does not exist yet; the
@@ -74,7 +78,7 @@ palette and pass criteria are still the standard every new room is held to.
 
 | Path | What |
 |---|---|
-| [`app/`](app/) | **The app.** De Keuken and De Tuin, whole: the rounds, the toys, Nina, Otto, the room switcher, the lighting panel. Written but never compiled — see its README. |
+| [`app/`](app/) | **The app.** De Keuken and De Tuin, whole: the rounds, the toys, Nina, Otto, the room switcher, the lighting panel. Compiles; the garden's fence and bench came after that build — see its README. |
 | [`models/`](models/) | **Props modelled in Blender**, as Python that rebuilds them. Ten so far — the flour sack, the toverbosbes, the crate, the toverklaver, the toverveertje, the maanstof pouch, the sink, the spoon, the cake and the scale, the only props not built in code. Its README has the rules, the export settings, and the test a prop has to pass to belong there. |
 | [`GAMEPLAY.md`](GAMEPLAY.md) | **Storyline and gameplay in detail.** The wall, the eleven friends and their wishes, the cake rules, what each room requires versus what is optional, the timing budget. Reconciled with the built kitchen on 2026-08-16. |
 | [`ROOMS.md`](ROOMS.md) | **How to build a room.** The contract De Keuken established: the box, the camera, the step machine, the halo, the voice rules, touch, carrying, idle, misses, the door — and the traps that have already been paid for once. Read before writing a room. |
@@ -88,7 +92,7 @@ palette and pass criteria are still the standard every new room is held to.
 | [`references/loading-screen/`](references/loading-screen/) | The title plate that opens the app, its eighteen candidates, and the script that pads it to 16:9. |
 | [`references/props/`](references/props/) | Prop concept plates, and why `generate_3d` is not usable for this style. |
 | [`references/ingredients/`](references/ingredients/) | The eight ingredients, the flour sack and the flour cloud — the plates the models were built from. |
-| [`references/garden/`](references/garden/) | **De Tuin's twenty-two plates** — the bed, the can, the basket, four plant stages, eight ripe plants and six toys. Its README has the job IDs and the two plates the room box overruled. |
+| [`references/garden/`](references/garden/) | **De Tuin's twenty-five plates** — the bed, the can, the basket, four plant stages, eight ripe plants, six toys, and the fence, gate and potting bench that replaced its walls. Its README has the job IDs and the three studio plates the room box overruled. |
 | [`references/moodboard/`](references/moodboard/) | Provenance + licences. Gathered for two retired directions — not the current look. |
 | [`references/FETCHING-ASSETS.md`](references/FETCHING-ASSETS.md) | How to get outside material onto disk here, and what fails. |
 | [`audio/voices.json`](audio/voices.json) | Voice casting. Read before generating any line. |

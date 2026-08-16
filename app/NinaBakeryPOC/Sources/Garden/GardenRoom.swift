@@ -660,11 +660,14 @@ final class GardenRoom: GameRoom {
         touch.register(name, entity: seed, radius: 0.024,
                        planeY: GardenLayout.floorY) { target in
             target.tracksEntity = true
+            // Looked up by name rather than captured: a `Target` whose own
+            // closure holds it is a retain cycle, and `TouchRouter.removeAll`
+            // dropping the array would not break it.
             target.onDragBegan = { [weak self, weak seed] world in
                 guard let self, let seed, self.carriedSeed == nil else { return }
                 self.carriedSeed = (ingredient, seed)
                 self.strays.removeAll { $0 === seed }
-                target.enabled = false
+                self.touch.target(named: name)?.enabled = false
                 self.refreshInteractivity()
                 self.carrier.pickUp(seed, at: world)
             }

@@ -8,10 +8,16 @@ pastel low-poly direction survive real-time rendering without baked ambient
 occlusion?* — is answered and stays answered. [Approved lighting](#approved-lighting)
 below is still the record of that.
 
-> **Never compiled.** Everything from the kitchen onwards was written in a Linux
-> container with no Swift toolchain. The POC before it went through the same
-> thing and needed two fixes on first build; expect similar here, and see
-> [First build](#first-build) for the two places most likely to want one.
+> **Compiled once, on 2026-08-16** — Xcode 26.6, iOS Simulator, Debug — after
+> everything up to that point had been written in a Linux container with no Swift
+> toolchain. Five errors, all the same mistake (`[weak]` on a struct), plus five
+> warnings. See [First build](#first-build).
+>
+> **The garden's fence, gate and potting bench came after that build and have not
+> been compiled**, so they are still correct-by-construction. They were written
+> back in the container. The same class of mistake is what to look for first, and
+> the two things worth knowing are already checked: no `[weak]` in them captures
+> anything but an `Entity`, and no function signature repeats an argument label.
 
 > **De Keuken is the reference implementation.** What it established that every
 > later room inherits — the box and the camera, the step machine, the save
@@ -1669,6 +1675,16 @@ long-standing limitation, not a setup problem.
 | **iOS Simulator** | Try it; it may work in non-AR mode. | Unreliable — conclude nothing from it |
 
 ### First build
+
+> **It has now happened**, and what it actually cost is in the commit *Make both
+> rooms compile*: five errors, every one of them `[weak can]` on
+> `GardenProps.WateringCan`, which is a struct — `weak` only applies to classes.
+> The closures did not want the struct anyway, they wanted the two entities
+> inside it. **None of the five predictions below was among them.**
+>
+> They are kept because they are still the right list for *the SDK moving under
+> the project*, which is the other way this breaks, and because the fence, the
+> gate and the potting bench have not been through a compiler yet.
 
 Five places are the most likely to want a fix, and all five are one line:
 
