@@ -4,10 +4,9 @@
   "_model": "text2speech_v2",
   "_variant": "elevenlabs",
   "_cost_per_line_credits": 0.3,
-  "_generated": "2026-08-15 — kitchen, then five sources and the plank step",
+  "_generated": "2026-08-15 — kitchen, five sources and the plank step; 2026-08-16 — the handover to Versieren",
   "_files": "app/NinaBakeryPOC/Resources/Voice/",
   "language": "nl",
-
   "characters": {
     "nina": {
       "name": "Nina",
@@ -23,7 +22,6 @@
       "_status": "provisional — see audio/auditions/README.md"
     }
   },
-
   "_line_ids": {
     "_comment": "What the game calls, and when. Every id here is referenced from Swift; every id in Swift exists here.",
     "nina.keuken.hallo": "On entering the kitchen.",
@@ -42,10 +40,6 @@
     "nina.speel.bloem": "Occasionally, when the flour sack is thumped.",
     "nina.stil": "The 45-second idle line. Never twice in a row.",
     "nina.klaar": "The cake is on the plank and the round is over.",
-    "nina.plank.gezet": "Second line of the finishing celebration: it is up there with the others. Three variants, one of which is simply being proud of her — the round ends on a person rather than on a fact.",
-    "nina.plank.nogeen": "Third and last: what happens next. Added 2026-08-16 because the round used to reset three quarters of a second after the cake landed, which read as the game throwing her work away rather than putting it up. The rebuild now waits for this line to finish.",
-    "nina.kamer.klaar": "The third cake landed and the kitchen is finished. Replaces nina.plank.nogeen in the closing chain from that cake on, and is also how a finished kitchen greets her when she comes back to it. Points at the door.",
-    "nina.kamer.deur": "Tapping the open door once the kitchen is finished — the room's ending. Promises the next room *soon* rather than *now*, because it does not exist yet and a 4-year-old told she is going somewhere has to be taken there.",
     "nina.keuken.opDePlank": "The round's last step: carry the finished cake up onto the taartenplank. Replaced tapping the doorway.",
     "nina.bron.plankHoog": "Source 0, the upper wall shelf — the highest reach in the room.",
     "nina.bron.plankLaag": "Source 1, the lower wall shelf.",
@@ -54,252 +48,918 @@
     "otto.vormErin": "The tin goes in.",
     "otto.bakken": "While baking.",
     "otto.klaar": "The cake is ready.",
-    "otto.wacht": "Otto is open and waiting for the tin."
+    "otto.wacht": "Otto is open and waiting for the tin.",
+    "nina.keuken.naarVersieren": "The door, once there is a cake to take through it. Replaces nina.kamer.deur in that case — that one is the careful 'the next room is coming soon' and is still what she hears when there is nothing to hand over."
   },
-
   "lines": [
-    { "id": "nina.keuken.hallo", "character": "nina", "variants": [
-      { "index": 1, "file": "nina-keuken-hallo-1.mp3", "text": "Hoi! Ik ben Nina. Kom je mee bakken? De kom staat al klaar." },
-      { "index": 2, "file": "nina-keuken-hallo-2.mp3", "text": "Daar ben je! Ik heb alles al klaargezet, hoor." },
-      { "index": 3, "file": "nina-keuken-hallo-3.mp3", "text": "Oeh, wat zullen we vandaag eens bakken?" },
-      { "index": 4, "file": "nina-keuken-hallo-4.mp3", "text": "Kom, we maken samen een toffe taart!" }
-    ]},
-
-    { "id": "nina.keuken.doeInKom", "character": "nina", "variants": [
-      { "index": 5, "file": "nina-keuken-doeInKom-1.mp3", "text": "Doe de toverdingetjes maar in de kom." },
-      { "index": 6, "file": "nina-keuken-doeInKom-2.mp3", "text": "Kijk, alles mag in de kom!" },
-      { "index": 7, "file": "nina-keuken-doeInKom-3.mp3", "text": "Pak er eentje, en laat hem in de kom vallen." }
-    ]},
-
-    { "id": "nina.ingredient.aardbei", "character": "nina", "variants": [
-      { "index": 8, "file": "nina-ingredient-aardbei-1.mp3", "text": "Een regenboogaardbei! Die maakt de taart roze." },
-      { "index": 9, "file": "nina-ingredient-aardbei-2.mp3", "text": "Mmm, aardbei. Nu wordt hij lekker roze!" }
-    ]},
-    { "id": "nina.ingredient.bosbes", "character": "nina", "variants": [
-      { "index": 10, "file": "nina-ingredient-bosbes-1.mp3", "text": "Een toverbosbes! Wat een mooi blauw." },
-      { "index": 11, "file": "nina-ingredient-bosbes-2.mp3", "text": "Bosbesjes erin. Die maken hem blauw!" }
-    ]},
-    { "id": "nina.ingredient.honing", "character": "nina", "variants": [
-      { "index": 12, "file": "nina-ingredient-honing-1.mp3", "text": "Zonnehoning! Nu gaat hij glimmen." },
-      { "index": 13, "file": "nina-ingredient-honing-2.mp3", "text": "Oeh, honing. Lekker geel en glanzend." }
-    ]},
-    { "id": "nina.ingredient.klaver", "character": "nina", "variants": [
-      { "index": 14, "file": "nina-ingredient-klaver-1.mp3", "text": "Toverklaver! Groen, net als het gras." },
-      { "index": 15, "file": "nina-ingredient-klaver-2.mp3", "text": "Klavertjes erbij. Nu wordt hij groen!" }
-    ]},
-    { "id": "nina.ingredient.wolkenroom", "character": "nina", "variants": [
-      { "index": 16, "file": "nina-ingredient-wolkenroom-1.mp3", "text": "Wolkenroom! Daar wordt hij lekker hoog van." },
-      { "index": 17, "file": "nina-ingredient-wolkenroom-2.mp3", "text": "Room van een echte wolk. Kijk maar hoe hoog hij wordt!" }
-    ]},
-    { "id": "nina.ingredient.sterrensuiker", "character": "nina", "variants": [
-      { "index": 18, "file": "nina-ingredient-sterrensuiker-1.mp3", "text": "Sterrensuiker! Nu gaat hij fonkelen." },
-      { "index": 19, "file": "nina-ingredient-sterrensuiker-2.mp3", "text": "Sterretjes erin. Die maken hem helemaal glinsterend!" }
-    ]},
-
-    { "id": "nina.ingredient.maanstof", "character": "nina", "variants": [
-      { "file": "nina-ingredient-maanstof-1.mp3", "seconds": 3.27,
-        "text": "Maanstof! Nu gaat de taart zachtjes gloeien." },
-      { "file": "nina-ingredient-maanstof-2.mp3", "seconds": 3.58,
-        "text": "Oeh, maanstof. Daar wordt hij mooi glanzend van!" }
-    ]},
-    { "id": "nina.ingredient.veertje", "character": "nina", "variants": [
-      { "file": "nina-ingredient-veertje-1.mp3", "seconds": 3.74,
-        "text": "Een toverveertje! Daar wordt de taart lekker hoog van." },
-      { "file": "nina-ingredient-veertje-2.mp3", "seconds": 3.66,
-        "text": "Kijk, een veertje erbij. Nu rijst hij helemaal omhoog!" }
-    ]},
-
-    { "id": "nina.keuken.roeren", "character": "nina", "variants": [
-      { "index": 20, "file": "nina-keuken-roeren-1.mp3", "text": "Nu roeren! Draai maar rondjes met je vinger." },
-      { "index": 21, "file": "nina-keuken-roeren-2.mp3", "text": "Roer maar lekker door, met de pollepel." },
-      { "index": 22, "file": "nina-keuken-roeren-3.mp3", "text": "Rondjes draaien! Dan mengt alles lekker door elkaar." }
-    ]},
-    { "id": "nina.keuken.roerenGoedZo", "character": "nina", "variants": [
-      { "index": 23, "file": "nina-keuken-roerenGoedZo-1.mp3", "text": "Ja! Zo doe je dat." },
-      { "index": 24, "file": "nina-keuken-roerenGoedZo-2.mp3", "text": "Kijk eens hoe mooi het mengt." },
-      { "index": 25, "file": "nina-keuken-roerenGoedZo-3.mp3", "text": "Nog even doorroeren. Het gaat super!" }
-    ]},
-    { "id": "nina.keuken.beslagKlaar", "character": "nina", "variants": [
-      { "index": 26, "file": "nina-keuken-beslagKlaar-1.mp3", "text": "Het beslag is klaar! Wat een mooie kleur." },
-      { "index": 27, "file": "nina-keuken-beslagKlaar-2.mp3", "text": "Kijk eens, helemaal glad. Goed geroerd!" },
-      { "index": 28, "file": "nina-keuken-beslagKlaar-3.mp3", "text": "Klaar met roeren. Nu mag het in de vorm!" }
-    ]},
-
-    { "id": "nina.keuken.gieten", "character": "nina", "variants": [
-      { "index": 29, "file": "nina-keuken-gieten-1.mp3", "text": "Giet het beslag maar in de vorm." },
-      { "index": 30, "file": "nina-keuken-gieten-2.mp3", "text": "Til de kom op, en kiep hem leeg in de vorm." },
-      { "index": 31, "file": "nina-keuken-gieten-3.mp3", "text": "In de bakvorm ermee!" }
-    ]},
-    { "id": "nina.keuken.gegoten", "character": "nina", "variants": [
-      { "index": 32, "file": "nina-keuken-gegoten-1.mp3", "text": "Precies goed gegoten!" },
-      { "index": 33, "file": "nina-keuken-gegoten-2.mp3", "text": "Kijk, de vorm zit lekker vol." }
-    ]},
-
-    { "id": "nina.keuken.naarOtto", "character": "nina", "variants": [
-      { "index": 34, "file": "nina-keuken-naarOtto-1.mp3", "text": "Breng de vorm maar naar Otto." },
-      { "index": 35, "file": "nina-keuken-naarOtto-2.mp3", "text": "Otto heeft honger. Zet de vorm maar in zijn buik!" },
-      { "index": 36, "file": "nina-keuken-naarOtto-3.mp3", "text": "Otto mag hem bakken. Schuif de vorm er maar in." }
-    ]},
-    { "id": "nina.keuken.klopOpOtto", "character": "nina", "variants": [
-      { "index": 37, "file": "nina-keuken-klopOpOtto-1.mp3", "text": "Tik maar op Otto, dan begint hij." },
-      { "index": 38, "file": "nina-keuken-klopOpOtto-2.mp3", "text": "Geef Otto een tikje. Hij wacht op jou!" }
-    ]},
-
-    { "id": "nina.taart.roze", "character": "nina", "variants": [
-      { "index": 39, "file": "nina-taart-roze-1.mp3", "text": "Een roze taart! Wat is die mooi geworden." },
-      { "index": 40, "file": "nina-taart-roze-2.mp3", "text": "Kijk eens, helemaal roze. Precies zoals de aardbeien." }
-    ]},
-    { "id": "nina.taart.blauw", "character": "nina", "variants": [
-      { "index": 41, "file": "nina-taart-blauw-1.mp3", "text": "Een blauwe taart! Net de lucht." },
-      { "index": 42, "file": "nina-taart-blauw-2.mp3", "text": "Wauw! Zo blauw als de zee." }
-    ]},
-    { "id": "nina.taart.geel", "character": "nina", "variants": [
-      { "index": 43, "file": "nina-taart-geel-1.mp3", "text": "Een gele taart! Net een klein zonnetje." },
-      { "index": 44, "file": "nina-taart-geel-2.mp3", "text": "Helemaal geel van de honing. Wat mooi!" }
-    ]},
-    { "id": "nina.taart.groen", "character": "nina", "variants": [
-      { "index": 45, "file": "nina-taart-groen-1.mp3", "text": "Een groene taart! Zo groen als het gras." },
-      { "index": 46, "file": "nina-taart-groen-2.mp3", "text": "Kijk, helemaal groen van de klavertjes." }
-    ]},
-    { "id": "nina.taart.wit", "character": "nina", "variants": [
-      { "index": 47, "file": "nina-taart-wit-1.mp3", "text": "Een witte wolkentaart! Zo zacht." },
-      { "index": 48, "file": "nina-taart-wit-2.mp3", "text": "Helemaal wit en hoog. Net een wolk!" }
-    ]},
-    { "id": "nina.taart.room", "character": "nina", "variants": [
-      { "index": 49, "file": "nina-taart-room-1.mp3", "text": "Een lekkere roomtaart. Simpel en mooi!" },
-      { "index": 50, "file": "nina-taart-room-2.mp3", "text": "Kijk eens, een zachte gele roomtaart." }
-    ]},
-    { "id": "nina.taart.gemengd", "character": "nina", "variants": [
-      { "index": 51, "file": "nina-taart-gemengd-1.mp3", "text": "Oeh! Twee kleuren door elkaar. Wat een mooie krullen." },
-      { "index": 52, "file": "nina-taart-gemengd-2.mp3", "text": "Kijk, ze draaien om elkaar heen. Prachtig!" }
-    ]},
-    { "id": "nina.taart.regenboog", "character": "nina", "variants": [
-      { "index": 53, "file": "nina-taart-regenboog-1.mp3", "text": "Een regenboogtaart! Dat is de allermooiste die er is." },
-      { "index": 54, "file": "nina-taart-regenboog-2.mp3", "text": "Wauw! Drie kleuren! Kijk toch eens hoe hij glimt." },
-      { "index": 55, "file": "nina-taart-regenboog-3.mp3", "text": "Een echte regenboog in een taart! Hoe hebben we dat gedaan?" }
-    ]},
-
-    { "id": "nina.effect.fonkelt", "character": "nina", "variants": [
-      { "index": 56, "file": "nina-effect-fonkelt-1.mp3", "text": "En hij fonkelt! Van de sterrensuiker." },
-      { "index": 57, "file": "nina-effect-fonkelt-2.mp3", "text": "Kijk, allemaal kleine sterretjes." }
-    ]},
-    { "id": "nina.effect.glimt", "character": "nina", "variants": [
-      { "index": 58, "file": "nina-effect-glimt-1.mp3", "text": "En hij gloeit een beetje. Dat doet de honing." },
-      { "index": 59, "file": "nina-effect-glimt-2.mp3", "text": "Zie je dat lichtje? Helemaal van de zonnehoning." }
-    ]},
-    { "id": "nina.effect.hoog", "character": "nina", "variants": [
-      { "index": 60, "file": "nina-effect-hoog-1.mp3", "text": "En kijk hoe hoog hij is!" },
-      { "index": 61, "file": "nina-effect-hoog-2.mp3", "text": "Zo hoog als een toren. Dat komt van de wolkenroom." }
-    ]},
-
-    { "id": "nina.oeps", "character": "nina", "variants": [
-      { "index": 62, "file": "nina-oeps-1.mp3", "text": "Oeps! Probeer die andere eens." },
-      { "index": 63, "file": "nina-oeps-2.mp3", "text": "Hihi, die wilde even niet. Probeer nog eens!" },
-      { "index": 64, "file": "nina-oeps-3.mp3", "text": "Bijna! Doe maar gewoon opnieuw." }
-    ]},
-    { "id": "nina.speel.bloem", "character": "nina", "variants": [
-      { "index": 65, "file": "nina-speel-bloem-1.mp3", "text": "Hihi, bloem op je neus!" },
-      { "index": 66, "file": "nina-speel-bloem-2.mp3", "text": "Poef! Een hele wolk van bloem." }
-    ]},
-    { "id": "nina.stil", "character": "nina", "variants": [
-      { "index": 67, "file": "nina-stil-1.mp3", "text": "Ik ben er nog, hoor. Wat zullen we doen?" },
-      { "index": 68, "file": "nina-stil-2.mp3", "text": "Zullen we verder gaan?" },
-      { "index": 69, "file": "nina-stil-3.mp3", "text": "Kijk eens, daar glimt iets!" }
-    ]},
-    { "id": "nina.klaar", "character": "nina", "variants": [
-      { "index": 70, "file": "nina-klaar-1.mp3", "text": "Wat een prachtige taart hebben we gemaakt!" },
-      { "index": 71, "file": "nina-klaar-2.mp3", "text": "Die is echt mooi geworden. Zullen we er nog eentje maken?" },
-      { "index": 72, "file": "nina-klaar-3.mp3", "text": "Zet hem maar op de plank, bij de andere taarten." }
-    ]},
-    { "id": "nina.plank.gezet", "character": "nina", "variants": [
-      { "file": "nina-plank-gezet-1.mp3", "seconds": 3.58,
-        "text": "Kijk! Nu staat hij op de plank, netjes bij de andere taarten." },
-      { "file": "nina-plank-gezet-2.mp3", "seconds": 4.15,
-        "text": "Kijk eens hoeveel mooie taarten er al op de plank staan. Allemaal van jou!" },
-      { "file": "nina-plank-gezet-3.mp3", "seconds": 3.66,
-        "text": "Wat heb jij dat goed gedaan, zeg. Ik ben zo trots op jou!" }
-    ]},
-    { "id": "nina.plank.nogeen", "character": "nina", "variants": [
-      { "file": "nina-plank-nogeen-1.mp3", "seconds": 3.19,
-        "text": "Zullen we er nog eentje maken? Ik zet alvast een nieuwe kom klaar." },
-      { "file": "nina-plank-nogeen-2.mp3", "seconds": 3.66,
-        "text": "En nu? Nog een taart natuurlijk! Ik haal een nieuw balletje deeg." }
-    ]},
-    { "id": "nina.kamer.klaar", "character": "nina", "variants": [
-      { "file": "nina-kamer-klaar-1.mp3", "seconds": 5.02,
-        "text": "Kijk eens! Drie taarten op de plank. De keuken is klaar! Tik maar op de deur." },
-      { "file": "nina-kamer-klaar-2.mp3", "seconds": 4.78,
-        "text": "Er staan al drie taarten, wat knap! De deur staat op een kiertje. Tik er maar op." }
-    ]},
-    { "id": "nina.kamer.deur", "character": "nina", "variants": [
-      { "file": "nina-kamer-deur-1.mp3", "seconds": 4.78,
-        "text": "Kijk! Achter de deur is het helemaal licht. Daar gaan we straks samen verder." },
-      { "file": "nina-kamer-deur-2.mp3", "seconds": 5.28,
-        "text": "Oeh, de deur gaat open! Daarachter is nog een kamer. Die komt gauw, hoor." }
-    ]},
-
-    { "id": "nina.keuken.opdracht", "character": "nina", "variants": [
-      { "index": 401, "file": "nina-keuken-opdracht-1.mp3", "text": "Meng alle toverdingetjes in de kom, en zet de taart daarna in de oven!" }
-    ]},
-    { "id": "nina.keuken.uitrollen", "character": "nina", "variants": [
-      { "index": 402, "file": "nina-keuken-uitrollen-1.mp3", "text": "Eerst het deeg uitrollen. Rol maar heen en weer met de deegroller!" }
-    ]},
-    { "id": "nina.keuken.deegKlaar", "character": "nina", "variants": [
-      { "index": 403, "file": "nina-keuken-deegKlaar-1.mp3", "text": "Kijk, een mooie bodem! Die gaat in de vorm." }
-    ]},
-    { "id": "nina.keuken.pakGlimmend", "character": "nina", "variants": [
-      { "index": 404, "file": "nina-keuken-pakGlimmend-1.mp3", "text": "Pak maar wat er glimt!" }
-    ]},
-    { "id": "nina.bron.plankHoog", "character": "nina", "variants": [
-      { "index": 409, "file": "nina-bron-plankHoog-1.mp3", "text": "Die ligt hoog! Op de bovenste plank." },
-      { "index": 410, "file": "nina-bron-plankHoog-2.mp3", "text": "Kijk eens omhoog, helemaal op de bovenste plank!" }
-    ]},
-    { "id": "nina.bron.plankLaag", "character": "nina", "variants": [
-      { "index": 411, "file": "nina-bron-plankLaag-1.mp3", "text": "En nu eentje van de onderste plank." },
-      { "index": 412, "file": "nina-bron-plankLaag-2.mp3", "text": "Daar, op de plank eronder!" }
-    ]},
-    { "id": "nina.bron.aanrecht", "character": "nina", "variants": [
-      { "index": 406, "file": "nina-bron-aanrecht-1.mp3", "text": "En nu eentje van het aanrecht." }
-    ]},
-    { "id": "nina.bron.mandje", "character": "nina", "variants": [
-      { "index": 413, "file": "nina-bron-mandje-1.mp3", "text": "Deze ligt in het mandje op tafel." },
-      { "index": 414, "file": "nina-bron-mandje-2.mp3", "text": "Uit het mandje, die daar!" }
-    ]},
-    { "id": "nina.bron.krat", "character": "nina", "variants": [
-      { "index": 415, "file": "nina-bron-krat-1.mp3", "text": "Bukken! Er ligt er eentje in de kist op de grond." },
-      { "index": 416, "file": "nina-bron-krat-2.mp3", "text": "Kijk eens naar beneden, in de kist!" }
-    ]},
-    { "id": "nina.keuken.opDePlank", "character": "nina", "variants": [
-      { "index": 417, "file": "nina-keuken-opDePlank-1.mp3", "text": "Zet de taart maar op de plank, bij de andere taarten!" },
-      { "index": 418, "file": "nina-keuken-opDePlank-2.mp3", "text": "Sleep hem maar omhoog, naar de taartenplank." }
-    ]},
-    { "id": "nina.keuken.opnieuw", "character": "nina", "variants": [
-      { "index": 408, "file": "nina-keuken-opnieuw-1.mp3", "text": "Nieuwe taart! We beginnen gewoon opnieuw." }
-    ]},
-
-    { "id": "otto.tik", "character": "otto", "variants": [
-      { "index": 73, "file": "otto-tik-1.mp3", "text": "Hihi, dat kietelt!" },
-      { "index": 74, "file": "otto-tik-2.mp3", "text": "Hallo Nina. Ik ben Otto!" },
-      { "index": 75, "file": "otto-tik-3.mp3", "text": "Brrr. Ik ben vanbinnen al lekker warm." },
-      { "index": 76, "file": "otto-tik-4.mp3", "text": "Heb je al iets voor mij? Ik heb honger." },
-      { "index": 77, "file": "otto-tik-5.mp3", "text": "Hoehoe! Ik hou zo van taart." }
-    ]},
-    { "id": "otto.vormErin", "character": "otto", "variants": [
-      { "index": 78, "file": "otto-vormErin-1.mp3", "text": "Oeh, lekker. Dank je wel, Nina!" },
-      { "index": 79, "file": "otto-vormErin-2.mp3", "text": "Hap! Die zet ik er goed in." }
-    ]},
-    { "id": "otto.bakken", "character": "otto", "variants": [
-      { "index": 80, "file": "otto-bakken-1.mp3", "text": "Bakken maar. Rommel de bommel!" },
-      { "index": 81, "file": "otto-bakken-2.mp3", "text": "Warm, warmer, warmst. Bijna klaar!" }
-    ]},
-    { "id": "otto.klaar", "character": "otto", "variants": [
-      { "index": 82, "file": "otto-klaar-1.mp3", "text": "Ting! Je taart is klaar." },
-      { "index": 83, "file": "otto-klaar-2.mp3", "text": "Tada! Kijk eens wat een mooie taart." },
-      { "index": 84, "file": "otto-klaar-3.mp3", "text": "Klaar! En hij ruikt heerlijk, Nina." }
-    ]},
-    { "id": "otto.wacht", "character": "otto", "variants": [
-      { "index": 85, "file": "otto-wacht-1.mp3", "text": "Ik wacht hoor! Mijn buik is nog helemaal leeg." },
-      { "index": 86, "file": "otto-wacht-2.mp3", "text": "Kom maar. Ik hou de deur voor je open." }
-    ]}
-  ]
+    {
+      "id": "nina.keuken.hallo",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 1,
+          "file": "nina-keuken-hallo-1.mp3",
+          "text": "Hoi! Ik ben Nina. Kom je mee bakken? De kom staat al klaar."
+        },
+        {
+          "index": 2,
+          "file": "nina-keuken-hallo-2.mp3",
+          "text": "Daar ben je! Ik heb alles al klaargezet, hoor."
+        },
+        {
+          "index": 3,
+          "file": "nina-keuken-hallo-3.mp3",
+          "text": "Oeh, wat zullen we vandaag eens bakken?"
+        },
+        {
+          "index": 4,
+          "file": "nina-keuken-hallo-4.mp3",
+          "text": "Kom, we maken samen een toffe taart!"
+        }
+      ]
+    },
+    {
+      "id": "nina.keuken.doeInKom",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 5,
+          "file": "nina-keuken-doeInKom-1.mp3",
+          "text": "Doe de toverdingetjes maar in de kom."
+        },
+        {
+          "index": 6,
+          "file": "nina-keuken-doeInKom-2.mp3",
+          "text": "Kijk, alles mag in de kom!"
+        },
+        {
+          "index": 7,
+          "file": "nina-keuken-doeInKom-3.mp3",
+          "text": "Pak er eentje, en laat hem in de kom vallen."
+        }
+      ]
+    },
+    {
+      "id": "nina.ingredient.aardbei",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 8,
+          "file": "nina-ingredient-aardbei-1.mp3",
+          "text": "Een regenboogaardbei! Die maakt de taart roze."
+        },
+        {
+          "index": 9,
+          "file": "nina-ingredient-aardbei-2.mp3",
+          "text": "Mmm, aardbei. Nu wordt hij lekker roze!"
+        }
+      ]
+    },
+    {
+      "id": "nina.ingredient.bosbes",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 10,
+          "file": "nina-ingredient-bosbes-1.mp3",
+          "text": "Een toverbosbes! Wat een mooi blauw."
+        },
+        {
+          "index": 11,
+          "file": "nina-ingredient-bosbes-2.mp3",
+          "text": "Bosbesjes erin. Die maken hem blauw!"
+        }
+      ]
+    },
+    {
+      "id": "nina.ingredient.honing",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 12,
+          "file": "nina-ingredient-honing-1.mp3",
+          "text": "Zonnehoning! Nu gaat hij glimmen."
+        },
+        {
+          "index": 13,
+          "file": "nina-ingredient-honing-2.mp3",
+          "text": "Oeh, honing. Lekker geel en glanzend."
+        }
+      ]
+    },
+    {
+      "id": "nina.ingredient.klaver",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 14,
+          "file": "nina-ingredient-klaver-1.mp3",
+          "text": "Toverklaver! Groen, net als het gras."
+        },
+        {
+          "index": 15,
+          "file": "nina-ingredient-klaver-2.mp3",
+          "text": "Klavertjes erbij. Nu wordt hij groen!"
+        }
+      ]
+    },
+    {
+      "id": "nina.ingredient.wolkenroom",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 16,
+          "file": "nina-ingredient-wolkenroom-1.mp3",
+          "text": "Wolkenroom! Daar wordt hij lekker hoog van."
+        },
+        {
+          "index": 17,
+          "file": "nina-ingredient-wolkenroom-2.mp3",
+          "text": "Room van een echte wolk. Kijk maar hoe hoog hij wordt!"
+        }
+      ]
+    },
+    {
+      "id": "nina.ingredient.sterrensuiker",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 18,
+          "file": "nina-ingredient-sterrensuiker-1.mp3",
+          "text": "Sterrensuiker! Nu gaat hij fonkelen."
+        },
+        {
+          "index": 19,
+          "file": "nina-ingredient-sterrensuiker-2.mp3",
+          "text": "Sterretjes erin. Die maken hem helemaal glinsterend!"
+        }
+      ]
+    },
+    {
+      "id": "nina.keuken.roeren",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 20,
+          "file": "nina-keuken-roeren-1.mp3",
+          "text": "Nu roeren! Draai maar rondjes met je vinger."
+        },
+        {
+          "index": 21,
+          "file": "nina-keuken-roeren-2.mp3",
+          "text": "Roer maar lekker door, met de garde."
+        },
+        {
+          "index": 22,
+          "file": "nina-keuken-roeren-3.mp3",
+          "text": "Rondjes draaien! Dan mengt alles lekker door elkaar."
+        }
+      ]
+    },
+    {
+      "id": "nina.keuken.roerenGoedZo",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 23,
+          "file": "nina-keuken-roerenGoedZo-1.mp3",
+          "text": "Ja! Zo doe je dat."
+        },
+        {
+          "index": 24,
+          "file": "nina-keuken-roerenGoedZo-2.mp3",
+          "text": "Kijk eens hoe mooi het mengt."
+        },
+        {
+          "index": 25,
+          "file": "nina-keuken-roerenGoedZo-3.mp3",
+          "text": "Nog even doorroeren. Het gaat super!"
+        }
+      ]
+    },
+    {
+      "id": "nina.keuken.beslagKlaar",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 26,
+          "file": "nina-keuken-beslagKlaar-1.mp3",
+          "text": "Het beslag is klaar! Wat een mooie kleur."
+        },
+        {
+          "index": 27,
+          "file": "nina-keuken-beslagKlaar-2.mp3",
+          "text": "Kijk eens, helemaal glad. Goed geroerd!"
+        },
+        {
+          "index": 28,
+          "file": "nina-keuken-beslagKlaar-3.mp3",
+          "text": "Klaar met roeren. Nu mag het in de vorm!"
+        }
+      ]
+    },
+    {
+      "id": "nina.keuken.gieten",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 29,
+          "file": "nina-keuken-gieten-1.mp3",
+          "text": "Giet het beslag maar in de vorm."
+        },
+        {
+          "index": 30,
+          "file": "nina-keuken-gieten-2.mp3",
+          "text": "Til de kom op, en kiep hem leeg in de vorm."
+        },
+        {
+          "index": 31,
+          "file": "nina-keuken-gieten-3.mp3",
+          "text": "In de bakvorm ermee!"
+        }
+      ]
+    },
+    {
+      "id": "nina.keuken.gegoten",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 32,
+          "file": "nina-keuken-gegoten-1.mp3",
+          "text": "Precies goed gegoten!"
+        },
+        {
+          "index": 33,
+          "file": "nina-keuken-gegoten-2.mp3",
+          "text": "Kijk, de vorm zit lekker vol."
+        }
+      ]
+    },
+    {
+      "id": "nina.keuken.naarOtto",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 34,
+          "file": "nina-keuken-naarOtto-1.mp3",
+          "text": "Breng de vorm maar naar Otto."
+        },
+        {
+          "index": 35,
+          "file": "nina-keuken-naarOtto-2.mp3",
+          "text": "Otto heeft honger. Zet de vorm maar in zijn buik!"
+        },
+        {
+          "index": 36,
+          "file": "nina-keuken-naarOtto-3.mp3",
+          "text": "Otto mag hem bakken. Schuif de vorm er maar in."
+        }
+      ]
+    },
+    {
+      "id": "nina.keuken.klopOpOtto",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 37,
+          "file": "nina-keuken-klopOpOtto-1.mp3",
+          "text": "Tik maar op Otto, dan begint hij."
+        },
+        {
+          "index": 38,
+          "file": "nina-keuken-klopOpOtto-2.mp3",
+          "text": "Geef Otto een tikje. Hij wacht op jou!"
+        }
+      ]
+    },
+    {
+      "id": "nina.taart.roze",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 39,
+          "file": "nina-taart-roze-1.mp3",
+          "text": "Een roze taart! Wat is die mooi geworden."
+        },
+        {
+          "index": 40,
+          "file": "nina-taart-roze-2.mp3",
+          "text": "Kijk eens, helemaal roze. Precies zoals de aardbeien."
+        }
+      ]
+    },
+    {
+      "id": "nina.taart.blauw",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 41,
+          "file": "nina-taart-blauw-1.mp3",
+          "text": "Een blauwe taart! Net de lucht."
+        },
+        {
+          "index": 42,
+          "file": "nina-taart-blauw-2.mp3",
+          "text": "Wauw! Zo blauw als de zee."
+        }
+      ]
+    },
+    {
+      "id": "nina.taart.geel",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 43,
+          "file": "nina-taart-geel-1.mp3",
+          "text": "Een gele taart! Net een klein zonnetje."
+        },
+        {
+          "index": 44,
+          "file": "nina-taart-geel-2.mp3",
+          "text": "Helemaal geel van de honing. Wat mooi!"
+        }
+      ]
+    },
+    {
+      "id": "nina.taart.groen",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 45,
+          "file": "nina-taart-groen-1.mp3",
+          "text": "Een groene taart! Zo groen als het gras."
+        },
+        {
+          "index": 46,
+          "file": "nina-taart-groen-2.mp3",
+          "text": "Kijk, helemaal groen van de klavertjes."
+        }
+      ]
+    },
+    {
+      "id": "nina.taart.wit",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 47,
+          "file": "nina-taart-wit-1.mp3",
+          "text": "Een witte wolkentaart! Zo zacht."
+        },
+        {
+          "index": 48,
+          "file": "nina-taart-wit-2.mp3",
+          "text": "Helemaal wit en hoog. Net een wolk!"
+        }
+      ]
+    },
+    {
+      "id": "nina.taart.room",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 49,
+          "file": "nina-taart-room-1.mp3",
+          "text": "Een lekkere roomtaart. Simpel en mooi!"
+        },
+        {
+          "index": 50,
+          "file": "nina-taart-room-2.mp3",
+          "text": "Kijk eens, een zachte gele roomtaart."
+        }
+      ]
+    },
+    {
+      "id": "nina.taart.gemengd",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 51,
+          "file": "nina-taart-gemengd-1.mp3",
+          "text": "Oeh! Twee kleuren door elkaar. Wat een mooie krullen."
+        },
+        {
+          "index": 52,
+          "file": "nina-taart-gemengd-2.mp3",
+          "text": "Kijk, ze draaien om elkaar heen. Prachtig!"
+        }
+      ]
+    },
+    {
+      "id": "nina.taart.regenboog",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 53,
+          "file": "nina-taart-regenboog-1.mp3",
+          "text": "Een regenboogtaart! Dat is de allermooiste die er is."
+        },
+        {
+          "index": 54,
+          "file": "nina-taart-regenboog-2.mp3",
+          "text": "Wauw! Drie kleuren! Kijk toch eens hoe hij glimt."
+        },
+        {
+          "index": 55,
+          "file": "nina-taart-regenboog-3.mp3",
+          "text": "Een echte regenboog in een taart! Hoe hebben we dat gedaan?"
+        }
+      ]
+    },
+    {
+      "id": "nina.effect.fonkelt",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 56,
+          "file": "nina-effect-fonkelt-1.mp3",
+          "text": "En hij fonkelt! Van de sterrensuiker."
+        },
+        {
+          "index": 57,
+          "file": "nina-effect-fonkelt-2.mp3",
+          "text": "Kijk, allemaal kleine sterretjes."
+        }
+      ]
+    },
+    {
+      "id": "nina.effect.glimt",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 58,
+          "file": "nina-effect-glimt-1.mp3",
+          "text": "En hij gloeit een beetje. Dat doet de honing."
+        },
+        {
+          "index": 59,
+          "file": "nina-effect-glimt-2.mp3",
+          "text": "Zie je dat lichtje? Helemaal van de zonnehoning."
+        }
+      ]
+    },
+    {
+      "id": "nina.effect.hoog",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 60,
+          "file": "nina-effect-hoog-1.mp3",
+          "text": "En kijk hoe hoog hij is!"
+        },
+        {
+          "index": 61,
+          "file": "nina-effect-hoog-2.mp3",
+          "text": "Zo hoog als een toren. Dat komt van de wolkenroom."
+        }
+      ]
+    },
+    {
+      "id": "nina.oeps",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 62,
+          "file": "nina-oeps-1.mp3",
+          "text": "Oeps! Probeer die andere eens."
+        },
+        {
+          "index": 63,
+          "file": "nina-oeps-2.mp3",
+          "text": "Hihi, die wilde even niet. Probeer nog eens!"
+        },
+        {
+          "index": 64,
+          "file": "nina-oeps-3.mp3",
+          "text": "Bijna! Doe maar gewoon opnieuw."
+        }
+      ]
+    },
+    {
+      "id": "nina.speel.bloem",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 65,
+          "file": "nina-speel-bloem-1.mp3",
+          "text": "Hihi, bloem op je neus!"
+        },
+        {
+          "index": 66,
+          "file": "nina-speel-bloem-2.mp3",
+          "text": "Poef! Een hele wolk van bloem."
+        }
+      ]
+    },
+    {
+      "id": "nina.stil",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 67,
+          "file": "nina-stil-1.mp3",
+          "text": "Ik ben er nog, hoor. Wat zullen we doen?"
+        },
+        {
+          "index": 68,
+          "file": "nina-stil-2.mp3",
+          "text": "Zullen we verder gaan?"
+        },
+        {
+          "index": 69,
+          "file": "nina-stil-3.mp3",
+          "text": "Kijk eens, daar glimt iets!"
+        }
+      ]
+    },
+    {
+      "id": "nina.klaar",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 70,
+          "file": "nina-klaar-1.mp3",
+          "text": "Wat een prachtige taart hebben we gemaakt!"
+        },
+        {
+          "index": 71,
+          "file": "nina-klaar-2.mp3",
+          "text": "Die is echt mooi geworden. Zullen we er nog eentje maken?"
+        },
+        {
+          "index": 72,
+          "file": "nina-klaar-3.mp3",
+          "text": "Zet hem maar op de plank, bij de andere taarten."
+        }
+      ]
+    },
+    {
+      "id": "nina.keuken.opdracht",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 401,
+          "file": "nina-keuken-opdracht-1.mp3",
+          "text": "Meng alle toverdingetjes in de kom, en zet de taart daarna in de oven!"
+        }
+      ]
+    },
+    {
+      "id": "nina.keuken.uitrollen",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 402,
+          "file": "nina-keuken-uitrollen-1.mp3",
+          "text": "Eerst het deeg uitrollen. Rol maar heen en weer met de deegroller!"
+        }
+      ]
+    },
+    {
+      "id": "nina.keuken.deegKlaar",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 403,
+          "file": "nina-keuken-deegKlaar-1.mp3",
+          "text": "Kijk, een mooie bodem! Die gaat in de vorm."
+        }
+      ]
+    },
+    {
+      "id": "nina.keuken.pakGlimmend",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 404,
+          "file": "nina-keuken-pakGlimmend-1.mp3",
+          "text": "Pak maar wat er glimt!"
+        }
+      ]
+    },
+    {
+      "id": "nina.bron.plankHoog",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 409,
+          "file": "nina-bron-plankHoog-1.mp3",
+          "text": "Die ligt hoog! Op de bovenste plank."
+        },
+        {
+          "index": 410,
+          "file": "nina-bron-plankHoog-2.mp3",
+          "text": "Kijk eens omhoog, helemaal op de bovenste plank!"
+        }
+      ]
+    },
+    {
+      "id": "nina.bron.plankLaag",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 411,
+          "file": "nina-bron-plankLaag-1.mp3",
+          "text": "En nu eentje van de onderste plank."
+        },
+        {
+          "index": 412,
+          "file": "nina-bron-plankLaag-2.mp3",
+          "text": "Daar, op de plank eronder!"
+        }
+      ]
+    },
+    {
+      "id": "nina.bron.aanrecht",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 406,
+          "file": "nina-bron-aanrecht-1.mp3",
+          "text": "En nu eentje van het aanrecht."
+        }
+      ]
+    },
+    {
+      "id": "nina.bron.mandje",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 413,
+          "file": "nina-bron-mandje-1.mp3",
+          "text": "Deze ligt in het mandje op tafel."
+        },
+        {
+          "index": 414,
+          "file": "nina-bron-mandje-2.mp3",
+          "text": "Uit het mandje, die daar!"
+        }
+      ]
+    },
+    {
+      "id": "nina.bron.krat",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 415,
+          "file": "nina-bron-krat-1.mp3",
+          "text": "Bukken! Er ligt er eentje in de kist op de grond."
+        },
+        {
+          "index": 416,
+          "file": "nina-bron-krat-2.mp3",
+          "text": "Kijk eens naar beneden, in de kist!"
+        }
+      ]
+    },
+    {
+      "id": "nina.keuken.opDePlank",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 417,
+          "file": "nina-keuken-opDePlank-1.mp3",
+          "text": "Zet de taart maar op de plank, bij de andere taarten!"
+        },
+        {
+          "index": 418,
+          "file": "nina-keuken-opDePlank-2.mp3",
+          "text": "Sleep hem maar omhoog, naar de taartenplank."
+        }
+      ]
+    },
+    {
+      "id": "nina.keuken.opnieuw",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 408,
+          "file": "nina-keuken-opnieuw-1.mp3",
+          "text": "Nieuwe taart! We beginnen gewoon opnieuw."
+        }
+      ]
+    },
+    {
+      "id": "otto.tik",
+      "character": "otto",
+      "variants": [
+        {
+          "index": 73,
+          "file": "otto-tik-1.mp3",
+          "text": "Hihi, dat kietelt!"
+        },
+        {
+          "index": 74,
+          "file": "otto-tik-2.mp3",
+          "text": "Hallo Nina. Ik ben Otto!"
+        },
+        {
+          "index": 75,
+          "file": "otto-tik-3.mp3",
+          "text": "Brrr. Ik ben vanbinnen al lekker warm."
+        },
+        {
+          "index": 76,
+          "file": "otto-tik-4.mp3",
+          "text": "Heb je al iets voor mij? Ik heb honger."
+        },
+        {
+          "index": 77,
+          "file": "otto-tik-5.mp3",
+          "text": "Hoehoe! Ik hou zo van taart."
+        }
+      ]
+    },
+    {
+      "id": "otto.vormErin",
+      "character": "otto",
+      "variants": [
+        {
+          "index": 78,
+          "file": "otto-vormErin-1.mp3",
+          "text": "Oeh, lekker. Dank je wel, Nina!"
+        },
+        {
+          "index": 79,
+          "file": "otto-vormErin-2.mp3",
+          "text": "Hap! Die zet ik er goed in."
+        }
+      ]
+    },
+    {
+      "id": "otto.bakken",
+      "character": "otto",
+      "variants": [
+        {
+          "index": 80,
+          "file": "otto-bakken-1.mp3",
+          "text": "Bakken maar. Rommel de bommel!"
+        },
+        {
+          "index": 81,
+          "file": "otto-bakken-2.mp3",
+          "text": "Warm, warmer, warmst. Bijna klaar!"
+        }
+      ]
+    },
+    {
+      "id": "otto.klaar",
+      "character": "otto",
+      "variants": [
+        {
+          "index": 82,
+          "file": "otto-klaar-1.mp3",
+          "text": "Ting! Je taart is klaar."
+        },
+        {
+          "index": 83,
+          "file": "otto-klaar-2.mp3",
+          "text": "Tada! Kijk eens wat een mooie taart."
+        },
+        {
+          "index": 84,
+          "file": "otto-klaar-3.mp3",
+          "text": "Klaar! En hij ruikt heerlijk, Nina."
+        }
+      ]
+    },
+    {
+      "id": "otto.wacht",
+      "character": "otto",
+      "variants": [
+        {
+          "index": 85,
+          "file": "otto-wacht-1.mp3",
+          "text": "Ik wacht hoor! Mijn buik is nog helemaal leeg."
+        },
+        {
+          "index": 86,
+          "file": "otto-wacht-2.mp3",
+          "text": "Kom maar. Ik hou de deur voor je open."
+        }
+      ]
+    },
+    {
+      "id": "nina.ingredient.maanstof",
+      "character": "nina",
+      "variants": [
+        {
+          "file": "nina-ingredient-maanstof-1.mp3",
+          "seconds": 3.27,
+          "text": "Maanstof! Nu gaat de taart zachtjes gloeien."
+        },
+        {
+          "file": "nina-ingredient-maanstof-2.mp3",
+          "seconds": 3.58,
+          "text": "Oeh, maanstof. Daar wordt hij mooi glanzend van!"
+        }
+      ]
+    },
+    {
+      "id": "nina.ingredient.veertje",
+      "character": "nina",
+      "variants": [
+        {
+          "file": "nina-ingredient-veertje-1.mp3",
+          "seconds": 3.74,
+          "text": "Een toverveertje! Daar wordt de taart lekker hoog van."
+        },
+        {
+          "file": "nina-ingredient-veertje-2.mp3",
+          "seconds": 3.66,
+          "text": "Kijk, een veertje erbij. Nu rijst hij helemaal omhoog!"
+        }
+      ]
+    },
+    {
+      "id": "nina.plank.gezet",
+      "character": "nina",
+      "variants": [
+        {
+          "file": "nina-plank-gezet-1.mp3",
+          "seconds": 3.58,
+          "text": "Kijk! Nu staat hij op de plank, netjes bij de andere taarten."
+        },
+        {
+          "file": "nina-plank-gezet-2.mp3",
+          "seconds": 4.15,
+          "text": "Kijk eens hoeveel mooie taarten er al op de plank staan. Allemaal van jou!"
+        },
+        {
+          "file": "nina-plank-gezet-3.mp3",
+          "seconds": 3.66,
+          "text": "Wat heb jij dat goed gedaan, zeg. Ik ben zo trots op jou!"
+        }
+      ]
+    },
+    {
+      "id": "nina.plank.nogeen",
+      "character": "nina",
+      "variants": [
+        {
+          "file": "nina-plank-nogeen-1.mp3",
+          "seconds": 3.19,
+          "text": "Zullen we er nog eentje maken? Ik zet alvast een nieuwe kom klaar."
+        },
+        {
+          "file": "nina-plank-nogeen-2.mp3",
+          "seconds": 3.66,
+          "text": "En nu? Nog een taart natuurlijk! Ik haal een nieuw balletje deeg."
+        }
+      ]
+    },
+    {
+      "id": "nina.kamer.klaar",
+      "character": "nina",
+      "variants": [
+        {
+          "file": "nina-kamer-klaar-1.mp3",
+          "seconds": 5.02,
+          "text": "Kijk eens! Drie taarten op de plank. De keuken is klaar! Tik maar op de deur."
+        },
+        {
+          "file": "nina-kamer-klaar-2.mp3",
+          "seconds": 4.78,
+          "text": "Er staan al drie taarten, wat knap! De deur staat op een kiertje. Tik er maar op."
+        }
+      ]
+    },
+    {
+      "id": "nina.kamer.deur",
+      "character": "nina",
+      "variants": [
+        {
+          "file": "nina-kamer-deur-1.mp3",
+          "seconds": 4.78,
+          "text": "Kijk! Achter de deur is het helemaal licht. Daar gaan we straks samen verder."
+        },
+        {
+          "file": "nina-kamer-deur-2.mp3",
+          "seconds": 5.28,
+          "text": "Oeh, de deur gaat open! Daarachter is nog een kamer. Die komt gauw, hoor."
+        }
+      ]
+    },
+    {
+      "id": "nina.keuken.naarVersieren",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 540,
+          "file": "nina-keuken-naarVersieren-1.mp3",
+          "text": "Nu gaan we hem versieren!"
+        },
+        {
+          "index": 541,
+          "file": "nina-keuken-naarVersieren-2.mp3",
+          "text": "Kom mee, we gaan hem mooi maken!"
+        },
+        {
+          "index": 542,
+          "file": "nina-keuken-naarVersieren-3.mp3",
+          "text": "Op naar de versierkamer! Daar mag je hem versieren."
+        }
+      ]
+    }
+  ],
+  "_drift_note": "2026-08-16: this file was six line ids behind the bundled copy in Resources/Voice/ — nina.plank.*, nina.kamer.* and the two shelf sources had been added to the bundle without coming back here, which is the exact drift the _files note is meant to prevent. Recovered from the bundle. The mp3s were always present, so nothing was audibly broken; what was broken was that regenerating the voice from this file would have silently dropped them."
 }

@@ -50,7 +50,7 @@ final class BakerCharacter {
     init(ticker: Ticker, flat: Bool) {
         self.ticker = ticker
         root.name = "Nina"
-        root.position = Layout.bakerSpot
+        root.position = KitchenLayout.bakerSpot
 
         // Slightly turned towards the room, so she is never a flat cut-out.
         root.orientation = simd_quatf(angle: 0.28, axis: [0, 1, 0])
@@ -247,9 +247,9 @@ final class BakerCharacter {
             cheerTime -= dt
             // A little hop on top of everything else.
             let hop = max(0, sin((0.9 - cheerTime) / 0.9 * .pi)) * 0.010
-            root.position = Layout.bakerSpot + SIMD3<Float>(0, hop, 0)
+            root.position = KitchenLayout.bakerSpot + SIMD3<Float>(0, hop, 0)
             if cheerTime <= 0 {
-                root.position = Layout.bakerSpot
+                root.position = KitchenLayout.bakerSpot
                 set(.idle)
             }
         }

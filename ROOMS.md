@@ -358,7 +358,15 @@ voice and the save are identical. What differs:
 In the kitchen this is exactly two functions: `refreshDoorInvitation()`, which
 decides whether the door is inviting, and `endRoom()`, which is what happens
 when it is tapped. **`endRoom()` is the one function the decorating room
-replaces.**
+replaces** — and as of 2026-08-16 it has: the kitchen's swing is now the first
+half of a handover, and the finished `CakeSpec` goes to Versieren on the beat
+the leaf reaches full open.
+
+The two rooms differ in one instructive way. The kitchen's door waits for three
+cakes; **the decorating room's is inviting from the first frame**, because it
+has no required action to wait for. `refreshDoorInvitation` still exists there
+and is nearly empty, which is the right shape — a room with nothing to gate on
+should say so in the function that would have gated it, not by deleting it.
 
 ### The door says it three ways at once
 
@@ -381,8 +389,13 @@ None of them a word or an arrow, because she cannot read one:
   the clipping was.** Worth remembering for any cue that belongs to something
   standing against a wall.
 
-**Never promise a room that does not exist.** With nowhere to go, the kitchen's
-ending is a ceremony — the leaf swings wide, light spills over the threshold, and
+**Never promise a room that does not exist**, and note this does not stop
+applying once one of them does. The kitchen now says *"nu gaan we hem
+versieren!"* — but only when there is a cake to take through; reach a finished
+kitchen with an empty plank and it still says the careful thing. Versieren's own
+door promises a party that is coming *straks*, because the party is not built.
+
+With nowhere to go, the kitchen's ending was a ceremony — the leaf swings wide, light spills over the threshold, and
 Nina says the next room is coming *soon* rather than *now*. A 4-year-old told she
 is going somewhere and then not taken there has been lied to.
 
@@ -450,6 +463,20 @@ A checklist, in the order it is worth doing:
 - **Size a surface from the widest thing that stands on it**, not from what
   looks right in elevation. The wall shelves were 14 mm deep under a 31 mm honey
   pot, so its contents overhung the front and pushed into the plaster at once.
+- **`TouchRouter.register` appends.** Re-registering a name leaves both
+  targets, and the second one still holds its entity and still wins hit tests.
+  Harmless while every target is registered once in `build`; a leak per frame
+  the moment a room registers one mid-round. `remove(prefixed:)` exists for
+  exactly that.
+- **A number two rooms depend on belongs to neither of them.** The cake's tier
+  radii lived in `KitchenProps` and again in `models/cake.py`, which was fine
+  until every sticker position in a second room derived from them. They are
+  `CakeGeometry` now. The general form: the moment a constant crosses a room
+  boundary, it stops being that room's.
+- **Check spacing against the sum of the radii, not against a pitch.** Seven
+  trays at a 64 mm pitch are correctly spaced from each other and 2 mm too close
+  to the tools beside them, because the tools carry a larger radius.
+  `VersierLayout.assertSpacing` is the cheap version of noticing.
 - **A prop's resting height must be derived, never hand-typed.** The shelf
   ingredients hovered 10 mm above their plank from the day the shelves were
   built, because the jars took the plank's top and the ingredients took a

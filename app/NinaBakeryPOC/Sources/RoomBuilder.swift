@@ -6,28 +6,24 @@ import simd
 /// One table of numbers rather than magic constants spread across the room and
 /// the game, because almost every bug in a room like this is two files
 /// disagreeing about where the table top is.
-enum Layout {
+enum KitchenLayout {
 
-    /// Room box, **0.46 m across**. `POC.md` asks for "around 0.4 m"; this is
-    /// that number grown 15% because the 0.40 m room had run out of floor.
-    ///
-    /// The room did not get more props — it got the ones it has far enough
-    /// apart to be separate objects. At 0.40 m the table's right edge and
-    /// Otto's dome were 33 mm apart, the three counter toys sat at 48–52 mm
-    /// centres, and seven things shared a 0.210 × 0.115 m table top. Everything
-    /// was reachable and nothing had any air around it.
-    ///
-    /// **The camera moved with it** — `CameraRig.eye` is pulled back 8%,
-    /// because the old framing already had the slab's tips on the frame edge.
-    /// Growing the room without that is a room with its corners sawn off.
-    static let roomSize: Float = 0.46
-    static let half: Float = roomSize / 2
-    /// Up from 0.22 with the floor: same walls on a wider floor read squat, and
-    /// the extra 15 mm is headroom above the top shelf's jars.
-    static let wallHeight: Float = 0.235
-    static let wallThickness: Float = 0.012
-    static let slabThickness: Float = 0.014
-    static let floorY: Float = 0.004
+    // **The box itself is in `RoomBox`** — `roomSize`, `half`, `wallHeight`,
+    // `wallThickness`, `slabThickness`, `floorY`, `carryLift`, `distanceXZ`,
+    // `pointOnRay` and `within`, plus the two walls and the floor themselves.
+    //
+    // They moved there when the decorating room arrived, because `ROOMS.md` §0
+    // makes "the same box and the same eye" a rule rather than a convention, and
+    // a rule kept in two files is the thing the paragraph below is a warning
+    // about. What is left here is the kitchen's *furniture*, which is the only
+    // thing that was ever kitchen-specific.
+    //
+    // The history worth keeping: the box is 0.40 m grown 15%, because the 0.40 m
+    // kitchen had run out of floor — the table's right edge and Otto's dome were
+    // 33 mm apart, the three counter toys sat at 48–52 mm centres, and seven
+    // things shared a 0.210 × 0.115 m table top. Everything was reachable and
+    // nothing had any air around it. **The camera moved with it**, pulled back
+    // 8%, and every touch radius was scaled by the same factor.
 
     /// The work surface. Everything she drags lives on this plane.
     ///
@@ -57,7 +53,7 @@ enum Layout {
     /// without hanging off it. Moving him back as well clears his footprint out
     /// of the table's depth entirely — the two no longer share any Z at all,
     /// where before the table's corner and his dome were 33 mm apart.
-    static let ovenOrigin = SIMD3<Float>(0.152, floorY, -0.112)
+    static let ovenOrigin = SIMD3<Float>(0.152, RoomBox.floorY, -0.112)
     static let ovenDomeRadius: Float = 0.062
     static let ovenDomeHeight: Float = 0.075
     /// Mouth opening, in Otto's local space.
@@ -120,7 +116,7 @@ enum Layout {
     /// counter the sink went left too, and at x = −0.145 she now clears all but
     /// a sliver of it instead of covering its near half. Further left is not
     /// better — past about −0.150 she starts crossing the lower wall shelf.
-    static let bakerSpot = SIMD3<Float>(-0.145, floorY, -0.072)
+    static let bakerSpot = SIMD3<Float>(-0.145, RoomBox.floorY, -0.072)
 
     /// **The two wall shelves.**
     ///
@@ -135,7 +131,7 @@ enum Layout {
     /// every jar and every ingredient overhung the board and pushed into the
     /// wall behind it.
     static let shelfDepth: Float = 0.036
-    static var shelfX: Float { -half + wallThickness + shelfDepth / 2 }
+    static var shelfX: Float { -RoomBox.half + RoomBox.wallThickness + shelfDepth / 2 }
 
     /// The top face of a shelf plank, which is what everything on it stands on.
     ///
@@ -233,7 +229,7 @@ enum Layout {
     /// the room is open. A sack of flour is a heavy thing, and a heavy thing on
     /// a worktop reads as a jar; on the ground it reads as a sack. It is also
     /// the one prop in front of the table, which gives the shot a foreground.
-    static let flourSpot = SIMD3<Float>(-0.062, floorY, 0.178)
+    static let flourSpot = SIMD3<Float>(-0.062, RoomBox.floorY, 0.178)
 
     /// The crate the fifth ingredient waits in, on the floor to Otto's near
     /// side. Placed off the table's right edge rather than behind it: the
@@ -252,7 +248,7 @@ enum Layout {
     /// It is also now the right-hand half of a pair: the flour sack stands on
     /// the near-left floor and this stands on the near-right, so the two of them
     /// bracket the open foreground instead of both crowding the middle.
-    static let crateSpot = SIMD3<Float>(0.150, floorY, 0.126)
+    static let crateSpot = SIMD3<Float>(0.150, RoomBox.floorY, 0.126)
 
     /// The plank on the back wall the finished cakes stand on.
     ///
@@ -307,7 +303,7 @@ enum Layout {
     ///
     /// The height is fixed at both ends: the frame's bottom edge clears the top
     /// of Otto's chimney rim (0.114) and its top edge clears the wall (0.235).
-    static let portraitCentre = SIMD3<Float>(0.152, 0.175, -half + wallThickness)
+    static let portraitCentre = SIMD3<Float>(0.152, 0.175, -RoomBox.half + RoomBox.wallThickness)
     /// Outer size of the frame, and how far it stands off the plaster.
     /// **The box the picture fits inside**, rather than a fixed picture size.
     ///
@@ -367,7 +363,7 @@ enum Layout {
     /// The table did not have to move, and did not. It is the one thing in the
     /// room seven props are laid out on, and every one of those positions is
     /// absolute.
-    static let doorwayCentre = SIMD3<Float>(-0.216, floorY, 0.172)
+    static let doorwayCentre = SIMD3<Float>(-0.216, RoomBox.floorY, 0.172)
 
     /// The hole in the wall: width, then height. **Taller than Nina**, who is
     /// 0.125 m — a door she could not walk through is a cupboard, and the one
@@ -385,7 +381,7 @@ enum Layout {
     /// which is exactly how the arch it replaced ended up with a glow nobody
     /// could ever have seen. Derived, so moving the door along the wall or
     /// changing the wall's thickness cannot leave it stale.
-    static var doorWallFace: Float { (-half + wallThickness) - doorwayCentre.x }
+    static var doorWallFace: Float { (-RoomBox.half + RoomBox.wallThickness) - doorwayCentre.x }
     /// The frame's centre, and the leaf's back face — both out in the room.
     static let doorFrameZ: Float = 0.002
     static let doorLeafZ: Float = 0.003
@@ -420,18 +416,12 @@ enum Layout {
     /// looks like: the thing that was wrong was never the clipping, it was
     /// pulling the ring away from the door to avoid it.
     static var doorHaloSpot: SIMD3<Float> {
-        SIMD3<Float>(doorwayCentre.x + doorFrameZ, floorY, doorwayCentre.z)
+        SIMD3<Float>(doorwayCentre.x + doorFrameZ, RoomBox.floorY, doorwayCentre.z)
     }
     /// Passed to `Halo.attach`, which multiplies it by 1.10 — so this is 35 mm
     /// of ring, of which the front ~60% clears the wall and shows. Slightly
     /// larger than the prop halos on purpose: half of it is behind plaster.
     static let doorHaloRadius: Float = 0.032
-
-    /// Horizontal distance. Snapping ignores height on purpose: she aims at
-    /// where a thing *is on the table*, not at its centre of mass.
-    static func distanceXZ(_ a: SIMD3<Float>, _ b: SIMD3<Float>) -> Float {
-        simd_length(SIMD2<Float>(a.x - b.x, a.z - b.z))
-    }
 
     // MARK: - Height
 
@@ -454,30 +444,13 @@ enum Layout {
     /// the counter and fling the sink brush shelf-high. It is a snap target
     /// instead — see `nearPlank` — and only the cake ever uses it.
     static func surfaceY(at point: SIMD3<Float>) -> Float {
-        if within(point, centre: tableCentre, size: tableSize, margin: 0.006) {
+        if RoomBox.within(point, centre: tableCentre, size: tableSize, margin: 0.006) {
             return tableTopY
         }
-        if within(point, centre: counterCentre, size: counterSize, margin: 0.006) {
+        if RoomBox.within(point, centre: counterCentre, size: counterSize, margin: 0.006) {
             return counterTopY
         }
-        return floorY
-    }
-
-    /// **The same ray she is pointing along, read at a different height.**
-    ///
-    /// The camera never moves, so any world point plus the eye is a complete
-    /// description of the ray through it — which means a touch reported on one
-    /// horizontal plane can be re-read on any other with no extra plumbing from
-    /// the gesture. `TouchRouter` hands the room a point on a fixed plane; this
-    /// is what turns it back into "where she is pointing".
-    ///
-    /// It is the whole basis of `KitchenRoom.carry`. See `surfacePointedAt`.
-    @MainActor
-    static func pointOnRay(through anchor: SIMD3<Float>, atHeight y: Float) -> SIMD3<Float> {
-        let eye = CameraRig.eye
-        let along = anchor - eye
-        guard abs(along.y) > 1e-6 else { return anchor }
-        return eye + along * ((y - eye.y) / along.y)
+        return RoomBox.floorY
     }
 
     /// **What her finger is pointing at**, which is not the same question as
@@ -528,15 +501,15 @@ enum Layout {
     /// is nearest-camera first.
     @MainActor
     static func surfacePointedAt(from anchor: SIMD3<Float>) -> Float {
-        if within(pointOnRay(through: anchor, atHeight: tableTopY),
+        if RoomBox.within(RoomBox.pointOnRay(through: anchor, atHeight: tableTopY),
                   centre: tableCentre, size: tableSize, margin: 0.006) {
             return tableTopY
         }
-        if within(pointOnRay(through: anchor, atHeight: counterTopY),
+        if RoomBox.within(RoomBox.pointOnRay(through: anchor, atHeight: counterTopY),
                   centre: counterCentre, size: counterSize, margin: 0.006) {
             return counterTopY
         }
-        return floorY
+        return RoomBox.floorY
     }
 
     /// **The shelf a prop is standing on, if it is standing on one.**
@@ -585,18 +558,6 @@ enum Layout {
             && abs(point.z - cakePlankCentre.y) <= plankSnapRadius
     }
 
-    /// True where `point` is over a rectangle, grown by `margin` so a prop set
-    /// down right on an edge lands on the surface rather than beside it.
-    private static func within(_ point: SIMD3<Float>, centre: SIMD2<Float>,
-                               size: SIMD2<Float>, margin: Float) -> Bool {
-        abs(point.x - centre.x) <= size.x / 2 + margin
-            && abs(point.z - centre.y) <= size.y / 2 + margin
-    }
-
-    /// How far above whatever it is standing on a carried prop floats. Small,
-    /// but not nothing: it is what says *held* rather than *shoved*.
-    static let carryLift: Float = 0.012
-
     /// **Somewhere she could put a thing and then not get it back.**
     ///
     /// "It stays where you put it" is right up until she puts it where the
@@ -620,16 +581,16 @@ enum Layout {
     /// table hides more floor behind it, so more floor has to be off limits.
     @MainActor
     static func isOutOfSight(_ point: SIMD3<Float>) -> Bool {
-        guard surfaceY(at: point) <= floorY + 0.001 else { return false }
+        guard surfaceY(at: point) <= RoomBox.floorY + 0.001 else { return false }
         // Inside the counter is inside a solid box, which is worse than hidden.
-        if within(point, centre: counterCentre, size: counterSize, margin: 0.004) {
+        if RoomBox.within(point, centre: counterCentre, size: counterSize, margin: 0.004) {
             return true
         }
         let eye = CameraRig.eye
-        let t = (tableTopY - eye.y) / (floorY - eye.y)
+        let t = (tableTopY - eye.y) / (RoomBox.floorY - eye.y)
         let crossing = SIMD3<Float>(eye.x + (point.x - eye.x) * t, tableTopY,
                                     eye.z + (point.z - eye.z) * t)
-        return within(crossing, centre: tableCentre, size: tableSize, margin: 0.004)
+        return RoomBox.within(crossing, centre: tableCentre, size: tableSize, margin: 0.004)
     }
 
     /// How far a carried prop may travel.
@@ -677,54 +638,28 @@ enum Layout {
 /// round-trip, and it removes the asset pipeline from the question the POC
 /// existed to answer.
 ///
-/// This file builds only what does not move: the shell, the furniture, Otto's
-/// body. Anything she can pick up, fill, stir or eat is in `KitchenProps` and
-/// is owned by `KitchenRoom`, because those have state and this does not.
+/// This file builds only what does not move: the furniture and Otto's body.
+/// The shell — two walls, a floor and a slab — is `RoomBox.shell`, because it is
+/// the same in every room. Anything she can pick up, fill, stir or eat is in
+/// `KitchenProps` and is owned by `KitchenRoom`, because those have state and
+/// this does not.
 enum RoomBuilder {
 
     static func build(flat: Bool) -> Entity {
         let root = Entity()
         root.name = "RoomRoot"
 
-        let size = Layout.roomSize
-        let half = Layout.half
-
-        // Base slab — the footing every room sits on, from the cottage plate.
-        let slab = model(.box([size + 0.03, Layout.slabThickness, size + 0.03]),
-                         Palette.cream, flat: flat, name: "Slab")
-        slab.position = [0, -Layout.slabThickness / 2, 0]
-        root.addChild(slab)
-
-        let floor = model(.box([size, 0.004, size]),
-                          Palette.blushPink, flat: flat, name: "Floor")
-        floor.position = [0, 0.002, 0]
-        root.addChild(floor)
-
-        // Two walls, open on the two near sides.
-        let backWall = model(.box([size, Layout.wallHeight, Layout.wallThickness]),
-                             Palette.creamLight, flat: flat, name: "WallBack")
-        backWall.position = [0, Layout.wallHeight / 2, -half + Layout.wallThickness / 2]
-        root.addChild(backWall)
-
-        let leftWall = model(.box([Layout.wallThickness, Layout.wallHeight, size]),
-                             Palette.cream, flat: flat, name: "WallLeft")
-        leftWall.position = [-half + Layout.wallThickness / 2, Layout.wallHeight / 2, 0]
-        root.addChild(leftWall)
-
-        // The shell never casts — the back wall's shadow raking across the
-        // left wall was the hardest band in the room, and architecture
-        // shadowing architecture buys no grounding. Receiving is untouched:
-        // the floor and walls still catch the shadows of props and characters.
-        for shellPiece in [slab, floor, backWall, leftWall] {
-            shellPiece.excludeFromShadowCasting()
-        }
+        // **The shell is `RoomBox`'s**, not the kitchen's — two walls, a floor
+        // and a slab, identical in every room. What follows is the furniture,
+        // which is the only part that was ever the kitchen's own.
+        root.addChild(RoomBox.shell(flat: flat))
 
         root.addChild(buildTable(flat: flat))
         root.addChild(buildCounter(flat: flat))
         // The lower shelf is built mirrored end for end. Its ingredient then
         // stands at the far end while the upper shelf's stands at the near one,
         // so the two are 148 mm apart along the wall instead of one directly
-        // above the other — see `Layout.Source.spot`.
+        // above the other — see `KitchenLayout.Source.spot`.
         root.addChild(buildShelf(flat: flat, height: 0.150, mirrored: false))
         root.addChild(buildShelf(flat: flat, height: 0.105, mirrored: true))
         root.addChild(buildCakePlank(flat: flat))
@@ -737,17 +672,17 @@ enum RoomBuilder {
     static func buildTable(flat: Bool) -> Entity {
         let table = Entity()
         table.name = "Table"
-        table.position = [Layout.tableCentre.x, 0, Layout.tableCentre.y]
+        table.position = [KitchenLayout.tableCentre.x, 0, KitchenLayout.tableCentre.y]
 
-        let topCentreY = Layout.tableTopY - Layout.tableThickness / 2
-        let top = model(.box([Layout.tableSize.x, Layout.tableThickness, Layout.tableSize.y]),
+        let topCentreY = KitchenLayout.tableTopY - KitchenLayout.tableThickness / 2
+        let top = model(.box([KitchenLayout.tableSize.x, KitchenLayout.tableThickness, KitchenLayout.tableSize.y]),
                         Palette.sandyWood, flat: flat, name: "TableTop")
         top.position = [0, topCentreY, 0]
         table.addChild(top)
 
-        let legHeight = topCentreY - Layout.tableThickness / 2
-        let dx = Layout.tableSize.x / 2 - 0.014
-        let dz = Layout.tableSize.y / 2 - 0.014
+        let legHeight = topCentreY - KitchenLayout.tableThickness / 2
+        let dx = KitchenLayout.tableSize.x / 2 - 0.014
+        let dz = KitchenLayout.tableSize.y / 2 - 0.014
         for (i, offset) in [SIMD2<Float>(-dx, -dz), [dx, -dz], [-dx, dz], [dx, dz]].enumerated() {
             let leg = model(.box([0.012, legHeight, 0.012]),
                             Palette.sandyWood, flat: flat, name: "TableLeg\(i)")
@@ -762,17 +697,17 @@ enum RoomBuilder {
     static func buildCounter(flat: Bool) -> Entity {
         let counter = Entity()
         counter.name = "Counter"
-        counter.position = [Layout.counterCentre.x, 0, Layout.counterCentre.y]
+        counter.position = [KitchenLayout.counterCentre.x, 0, KitchenLayout.counterCentre.y]
 
-        let bodyHeight = Layout.counterTopY - Layout.floorY - 0.008
-        let body = model(.box([Layout.counterSize.x - 0.012, bodyHeight, Layout.counterSize.y - 0.010]),
+        let bodyHeight = KitchenLayout.counterTopY - RoomBox.floorY - 0.008
+        let body = model(.box([KitchenLayout.counterSize.x - 0.012, bodyHeight, KitchenLayout.counterSize.y - 0.010]),
                          Palette.creamLight, flat: flat, name: "CounterBody")
-        body.position = [0, Layout.floorY + bodyHeight / 2, 0]
+        body.position = [0, RoomBox.floorY + bodyHeight / 2, 0]
         counter.addChild(body)
 
-        let top = model(.box([Layout.counterSize.x, 0.008, Layout.counterSize.y]),
+        let top = model(.box([KitchenLayout.counterSize.x, 0.008, KitchenLayout.counterSize.y]),
                         Palette.sandyWood, flat: flat, name: "CounterTop")
-        top.position = [0, Layout.counterTopY - 0.004, 0]
+        top.position = [0, KitchenLayout.counterTopY - 0.004, 0]
         counter.addChild(top)
 
         // Hugs the back wall and meets the floor along its whole footprint —
@@ -795,7 +730,7 @@ enum RoomBuilder {
     static func buildShelf(flat: Bool, height: Float, mirrored: Bool = false) -> Entity {
         let shelf = Entity()
         shelf.name = "Shelf\(Int(height * 1000))"
-        let x = Layout.shelfX
+        let x = KitchenLayout.shelfX
         let plankCentreZ: Float = -0.030
 
         // 0.180 long, up from 0.150, so the three jars and the ingredient
@@ -808,7 +743,7 @@ enum RoomBuilder {
         // wall (owner, 2026-08-16: "ingredients clip the wall"). The depth is
         // now set by the widest prop that can stand here rather than by what
         // looked like a shelf in elevation.
-        let plank = model(.box([Layout.shelfDepth, 0.008, 0.180]),
+        let plank = model(.box([KitchenLayout.shelfDepth, 0.008, 0.180]),
                           Palette.sandyWood, flat: flat, name: "ShelfPlank")
         plank.position = [x, height, plankCentreZ]
         shelf.addChild(plank)
@@ -824,12 +759,12 @@ enum RoomBuilder {
             let z = mirrored ? 2 * plankCentreZ - along : along
             let jar = model(.prism(radius: 0.010, height: 0.022, sides: 8),
                             colour, flat: flat, name: "Jar\(Int(height * 1000))_\(i)")
-            jar.position = [x, Layout.shelfTopY(height), z]
+            jar.position = [x, KitchenLayout.shelfTopY(height), z]
             shelf.addChild(jar)
 
             let lid = model(.prism(radius: 0.011, height: 0.005, sides: 8),
                             Palette.rose, flat: flat, name: "JarLid\(Int(height * 1000))_\(i)")
-            lid.position = [x, Layout.shelfTopY(height) + 0.022, z]
+            lid.position = [x, KitchenLayout.shelfTopY(height) + 0.022, z]
             shelf.addChild(lid)
         }
         // Wall-mounted, centimetres from the plaster: the shadow a shelf and
@@ -848,21 +783,21 @@ enum RoomBuilder {
         let shelf = Entity()
         shelf.name = "CakePlank"
 
-        let plank = model(.box([Layout.cakePlankLength, 0.008, 0.030]),
+        let plank = model(.box([KitchenLayout.cakePlankLength, 0.008, 0.030]),
                           Palette.rose, flat: flat, name: "CakePlankBoard")
-        plank.position = [Layout.cakePlankCentre.x, Layout.cakePlankY, Layout.cakePlankCentre.y]
+        plank.position = [KitchenLayout.cakePlankCentre.x, KitchenLayout.cakePlankY, KitchenLayout.cakePlankCentre.y]
         shelf.addChild(plank)
 
         // The brackets follow the ends of the board rather than sitting at a
         // typed-in offset, so lengthening the plank cannot leave them stranded
         // in the middle of it.
-        let bracketInset = Layout.cakePlankLength / 2 - 0.013
+        let bracketInset = KitchenLayout.cakePlankLength / 2 - 0.013
         for (i, dx) in [-bracketInset, bracketInset].enumerated() {
             let bracket = model(.box([0.008, 0.020, 0.008]),
                                 Palette.blushPinkDeep, flat: flat, name: "CakePlankBracket\(i)")
-            bracket.position = [Layout.cakePlankCentre.x + dx,
-                                Layout.cakePlankY - 0.014,
-                                Layout.cakePlankCentre.y - 0.008]
+            bracket.position = [KitchenLayout.cakePlankCentre.x + dx,
+                                KitchenLayout.cakePlankY - 0.014,
+                                KitchenLayout.cakePlankCentre.y - 0.008]
             shelf.addChild(bracket)
         }
         // Wall-mounted like the ingredient shelves, and for the same reason.
@@ -888,6 +823,8 @@ enum RoomBuilder {
         case lathe(profile: [SIMD2<Float>], sides: Int)
         case extrude(outline: [SIMD2<Float>], thickness: Float)
         case star(points: Int, outerRadius: Float, innerRadius: Float, thickness: Float)
+        case ribbon(points: [SIMD3<Float>], normals: [SIMD3<Float>],
+                    width: Float, thickness: Float)
 
         var geometry: FacetedMesh.Geometry {
             switch self {
@@ -918,6 +855,9 @@ enum RoomBuilder {
             case .star(let points, let outer, let inner, let thickness):
                 return FacetedMesh.star(points: points, outerRadius: outer,
                                         innerRadius: inner, thickness: thickness)
+            case .ribbon(let points, let normals, let width, let thickness):
+                return FacetedMesh.ribbon(points: points, normals: normals,
+                                          width: width, thickness: thickness)
             }
         }
     }

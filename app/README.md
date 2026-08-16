@@ -1,7 +1,13 @@
-# Nina's Toverbakkerij — De Keuken
+# Nina's Toverbakkerij — De Keuken en Versieren
 
-The kitchen, whole. Gameplay, graphics and Dutch voice, in one RealityKit app
-that runs on the iPad.
+Two rooms now. Gameplay, graphics and Dutch voice, in one RealityKit app that
+runs on the iPad.
+
+Most of this file is about **the kitchen**, which is the reference
+implementation and the reason everything else is cheap. The decorating room is
+[Versieren](#versieren--the-decorating-room), near the bottom, and it is
+deliberately short: almost all of it is the kitchen's machinery pointed at a
+different verb.
 
 It grew out of the Step 0 proof of concept, whose question — *does the faceted
 pastel low-poly direction survive real-time rendering without baked ambient
@@ -369,14 +375,21 @@ keuken is klaar — tik maar op de deur"*, and the new round that starts behind 
 bowl" would be the room arguing with itself. Coming back later to a finished
 kitchen is greeted the same way.
 
-**Tapping the door is the ending**, and for now it is a ceremony rather than a
-transition, because there is nowhere yet to transition to: the leaf swings wide
-and holds, light spills across the threshold, and Nina says — carefully — that
-this is where they will carry on. *"Die komt gauw, hoor"* rather than a promise
-of a room this build cannot open, because a 4-year-old told she is going
-somewhere and then not taken there has been lied to. `KitchenRoom.endRoom` is
-**the one function the decorating room replaces**, and the swing is already the
-first half of that transition.
+**Tapping the door is the ending, and it is a transition now.** The leaf swings
+wide, light spills across the threshold, and on the beat it reaches full open
+the finished `CakeSpec` goes to the decorating room. Nina says *"nu gaan we hem
+versieren!"* — which `ROOMS.md` §9 wrote down as the round-mode line long before
+it could be said.
+
+**The old ceremony survives for the case where nothing can be handed over** — a
+save from before the decorating room, or a plank cleared by restarting. Then she
+hears the careful *"die komt gauw, hoor"* instead, because *never promise a room
+that does not exist* does not stop applying once one of them does.
+
+What the door hands over is `state.lastFinished`, not `shelf.last`. They are
+nearly the same and differ in a case that will happen: the plank holds four and
+drops the oldest off the end, so after a long session the shelf is a window
+rather than a history.
 
 Nothing is consumed by it. The plank keeps her cakes, the leaf falls back to
 *ajar* rather than shut so the room stays finished and stays finishable, and she
@@ -1427,6 +1440,137 @@ Freesound or a bought pack is still the plan, and until then these are honest
 placeholders. Swapping one in is a filename in `Sound.fileName`.
 
 **Music is absent**, as agreed. `GAMEPLAY.md` §10 still has it open.
+
+## Versieren — the decorating room
+
+`GAMEPLAY.md` §6.4, built 2026-08-16. The cake stands on a turntable, seven
+trays wrap the two open edges of the floor, a piping bag draws cream and a
+shaker rains sprinkles. Drag a sticker anywhere on the cake and it stays where
+she put it.
+
+**It asks her for nothing**, and that is the whole design rather than a gap in
+it. Three things follow:
+
+- **The halo has nothing to point at.** The kitchen's grammar is *one lit prop,
+  which is the next thing to do*, and a room with no required action breaks it.
+  The answer is not to invent one — the **door is lit from the first frame**,
+  which says *you may go when you like*, true here and nowhere else.
+- **The miss machinery is not wired.** `noteMiss` means *she dragged the prop
+  the step is about and it did not land*, and there is no such prop. A sticker
+  dropped off the cake is a removal, not a failure.
+- **The idle line is not an instruction.** *"Hij is al zo mooi — zullen we
+  gaan?"*, alternating with *"ik ben er nog, hoor"*.
+
+### The seam it forced
+
+The app had one room and no way to hold a second. `GameScene` owned a concrete
+`KitchenRoom`, `ContentView` read its state directly, and `Layout` was 680 lines
+of kitchen constants under a name the next room would want. Three things
+changed, all of them mechanical:
+
+- **`RoomBox`** takes the box every room inherits — the size, the walls, the
+  floor, `carryLift`, `distanceXZ`, `pointOnRay`, `within` — plus `shell(flat:)`,
+  lifted out of `RoomBuilder.build`. `ROOMS.md` §0 makes "the same box and the
+  same eye" a rule rather than a convention, and a rule kept in two files is
+  what `KitchenLayout`'s own opening warning is about. The rest is
+  **`KitchenLayout`**: 193 references across five files.
+- **`protocol Room`** is seven methods and two readouts, derived from what
+  actually crossed the boundary rather than from what a room might want.
+  `debugRows` and `debugActions` are what let `ContentView` stop reaching into
+  `kitchen.state`. `onExit` means a room says *what just finished* and hands
+  back control — it never learns what comes next.
+- **`RoomStore`** is generic; `RoundStore` is a thin kitchen-named wrapper over
+  it and its call sites did not move. One file per room is what stops a new room
+  corrupting an old one's save.
+
+### The room switcher
+
+Behind the existing developer hotspot — three taps on the invisible 64 × 64
+patch top-right. No new on-screen pixels, so `CONCEPT.md` §5's no-text rule is
+untouched and Nina will not find it.
+
+It carries a **cake preset**, because the decorating room has to look right on a
+tall glowing sparkling rainbow and on a plain cream one alike, and reaching
+those by baking is six minutes each. Entering `versieren` with no cake is a
+visit, which deals a random one — so the switcher and visit mode are the same
+code path rather than two.
+
+### The four things that did not exist before
+
+**The drop point on a curved surface.** `Versieren/CakeSurface.swift` — a ray
+solved analytically against the tier cylinders and the top discs. Not a
+`CollisionComponent`, for the reason `CameraRig` already records about
+`targetedToAnyEntity()`: a cake with forty stickers on it would be forty
+collision shapes each hitting exactly its own mesh, in a game whose entire touch
+model is *near enough counts*. Two details worth keeping:
+
+- **The full top disc is tested, not the visible annulus.** Any ray landing
+  inside the next tier's footprint was already stopped by that tier, which is
+  nearer along the ray — so nearest-hit-wins does the annulus for free, and an
+  explicit inner bound would be a special case that only ever agreed with the
+  general one.
+- **Undersides are not tested**, because the radii strictly decrease upward and
+  no tier overhangs the one below it. There is a note in the file saying what to
+  add if a cake ever inverts, and that the right answer then is to *reject* the
+  hit — a sticker glued under an overhang is one she cannot see.
+
+**Cake-local polar anchors.** Tier, face, angle, and a fraction along that face.
+Turning the turntable is free, `isTall` cannot stretch a heart, and the party
+and the wall can re-render the same cake from the spec alone. A world-space
+position would tie a permanent trophy to one camera and one turntable angle.
+
+**The stroke.** `FacetedMesh.ribbon` sweeps a whole path into **one** geometry,
+so a finished stroke is one entity however long she drags. The cap is arc length
+per bag-full, and it is **visible before it bites**: cream inside the bag goes
+down as she draws, the ribbon thins below 15%, and letting go refills it. A cap
+you can watch approaching is not a refusal — the same argument as the door
+saying *openable* three ways at once.
+
+**A room whose halo has nothing to point at** — above.
+
+### Deviations, and things worth knowing
+
+- **The cake is presented at 2.5×.** `CakeGeometry` is 52 mm across, which is
+  about 82 pt on screen — fine for a prop she carries across a kitchen and
+  hopeless as a canvas for forty stickers. It is a scale on the wrapper, not a
+  second geometry, so `CakeSpec` stays the single description of the cake.
+- **The tier radii moved to `CakeGeometry`.** They existed in
+  `KitchenProps.proceduralCake` and again in `models/cake.py`, which was
+  survivable while only the code that drew them read them. Every sticker
+  position now derives from them, and a third copy is how stickers end up two
+  millimetres inside the icing.
+- **The sticker layer hangs beside the cake, not under it.** `isTall` is a 1.5×
+  Y scale on the cake wrapper and would come out as stretched hearts.
+- **Seven trays needed an L.** Two 32 mm touch spheres need 64 mm centres, so
+  seven in a row would take 384 mm of a 460 mm room. The box is open on its +X
+  and +Z sides, so the trays wrap the near corner in runs of four and three.
+  `VersierLayout.assertSpacing` checks every pair against the sum of their radii
+  in debug builds — it caught the two tool/tray pairs, which overlapped by 2 mm
+  because the tools carry a 34 mm radius rather than 32.
+- **The tea towel was cut.** Its plate came back soft on the top faces and reads
+  as a folded sheet rather than a faceted prop — cloth is where the
+  `FacetedMesh` vocabulary runs out, which `models/flour-sack.py` already
+  records. The stool took its place as the fifth toy and cost nothing.
+- **`FacetedMesh.extrude` is convex-only**, so the heart is two lobes plus a
+  triangle and the crown is a band plus five triangles. A single heart outline
+  would fan-triangulate into a fold.
+- **No Blender props yet.** Everything is `FacetedMesh` primitives, to be
+  swapped for `models/*.usdz` exactly as the kitchen's ten were.
+
+### Two bugs this room found in shipped code
+
+- **`TouchRouter.register` appends**, so re-registering a name leaves both. That
+  was survivable while every target was registered once in `build`, and stopped
+  being so the moment a room adds one mid-round: the decorating room would have
+  accumulated a dead target per grain of sprinkle, each still holding its entity
+  and still winning hit tests near where a sticker used to be.
+  `remove(prefixed:)` is the fix.
+- **`audio/script-keuken.json` had drifted six line ids behind the bundled
+  copy.** `nina.plank.*`, `nina.kamer.*` and the two colourless ingredients had
+  been added to the bundle without coming back to the canonical file. Nothing
+  was audibly broken, which is why it went unnoticed; what was broken is that
+  regenerating the kitchen's voice from the canonical script would have silently
+  dropped six lines.
 
 ## What this room may not conclude
 

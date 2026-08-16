@@ -560,6 +560,69 @@ enum FacetedMesh {
         return (p, idx)
     }
 
+    /// **A ribbon swept along a path** — the piping bag's line of cream.
+    ///
+    /// The one primitive in the game whose size is decided by how long she
+    /// drags, and the reason it is a primitive at all: a stroke built as one
+    /// small box per segment is two entities every three millimetres, which at
+    /// forty strokes is several hundred entities doing the work of forty. This
+    /// returns **one geometry** for a whole stroke, so a finished stroke is one
+    /// `ModelEntity`.
+    ///
+    /// `points` are the centre-line, `normals` the outward surface normal at
+    /// each — the ribbon lies *on* a curved surface, so its up vector turns with
+    /// the cake rather than being constant.
+    ///
+    /// The cross-section is a rectangle, `width` across the surface and
+    /// `thickness` proud of it, so a bend has no gap: consecutive segments share
+    /// their ring of four vertices rather than butting two boxes together.
+    static func ribbon(points: [SIMD3<Float>], normals: [SIMD3<Float>],
+                       width: Float, thickness: Float) -> Geometry {
+        guard points.count >= 2, normals.count == points.count else { return ([], []) }
+
+        var p: [SIMD3<Float>] = []
+        for i in points.indices {
+            // Tangent from the neighbours, so the ring at a bend splits the
+            // angle instead of facing one of the two segments.
+            let ahead = points[min(i + 1, points.count - 1)]
+            let behind = points[max(i - 1, 0)]
+            var tangent = ahead - behind
+            let len = simd_length(tangent)
+            tangent = len > 1e-7 ? tangent / len : SIMD3<Float>(1, 0, 0)
+
+            let up = simd_normalize(normals[i])
+            var across = simd_cross(up, tangent)
+            let acrossLen = simd_length(across)
+            // Degenerate only if the path runs straight along the normal, which
+            // a path lying on a surface cannot. Fall back rather than divide.
+            across = acrossLen > 1e-6 ? across / acrossLen
+                                      : simd_normalize(simd_cross(up, SIMD3<Float>(0, 0, 1)))
+
+            let w = across * (width / 2)
+            let t = up * thickness
+            p.append(points[i] - w)
+            p.append(points[i] + w)
+            p.append(points[i] + w + t)
+            p.append(points[i] - w + t)
+        }
+
+        var idx: [UInt32] = []
+        for i in 0..<(points.count - 1) {
+            let a = UInt32(i * 4), b = UInt32((i + 1) * 4)
+            // Four quads around the tube, each two triangles, wound outward.
+            for k in 0..<4 {
+                let k0 = UInt32(k), k1 = UInt32((k + 1) % 4)
+                idx.append(contentsOf: [a + k0, b + k0, b + k1])
+                idx.append(contentsOf: [a + k0, b + k1, a + k1])
+            }
+        }
+        // Caps, so the two ends are solid rather than open tubes.
+        let last = UInt32((points.count - 1) * 4)
+        idx.append(contentsOf: [0, 2, 1, 0, 3, 2])
+        idx.append(contentsOf: [last, last + 1, last + 2, last, last + 2, last + 3])
+        return (p, idx)
+    }
+
     // MARK: - Convenience
 
     static func mesh(_ geometry: Geometry, flat: Bool) -> MeshResource {
