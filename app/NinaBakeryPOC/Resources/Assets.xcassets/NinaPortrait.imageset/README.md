@@ -1,17 +1,28 @@
 # The photograph in the frame
 
-**Drop the photo in this folder as `nina-portrait.jpg`.** Nothing else to do —
-`Contents.json` already names it, and `KitchenProps.portrait` already looks for
-the image set by name.
+`nina-portrait.jpeg` — 1402 × 1212 — hangs in the framed picture on the
+kitchen's back wall, above Otto.
 
-It hangs in the framed picture on the kitchen's back wall, above Otto.
+## If you replace it
 
-## Why the file is not in the repository
+**The filename in `Contents.json` has to match the file on disk, exactly,
+extension included.** That is the one thing here that fails quietly: the wiring
+looks up the *image set* by its folder name (`NinaPortrait`), so a `Contents.json`
+pointing at a name nothing on disk has does not error at runtime — it produces an
+empty image set, the texture load returns `nil`, and the frame silently falls
+back to the modelled girl. The picture is simply not there and nothing says why.
 
-It is a photograph of a child. The frame, the wiring and the fallback are all
-committed; the picture itself is added locally by whoever is building the app.
-The session that built this could see the photo in the conversation but had no
-file handle to it, so it could not commit it either way.
+It has already happened once: the file arrived as `.jpeg` and this file said
+`.jpg`.
+
+Nothing else needs changing. Any aspect ratio works — `KitchenProps.portrait`
+reads the texture's own pixel dimensions and fits the picture inside
+`Layout.portraitPictureMax`, so a landscape photo gives a landscape frame and a
+portrait one gives a portrait frame, at the same visual weight on the wall.
+
+512–1024 px on the long edge is plenty: the picture is 76 mm across in a 460 mm
+room and occupies a couple of hundred points on an iPad. A 4000 px photo costs
+memory and buys nothing.
 
 ## What happens without it
 
@@ -25,20 +36,7 @@ broken.
 So the app is correct either way. With the file it is her photo; without it, it
 is a picture of her.
 
-## What the file should be
-
-- **Any aspect ratio.** The frame measures the texture and fits it inside
-  `Layout.portraitPictureMax` preserving the aspect, so a landscape photo gives a
-  landscape frame and a portrait one gives a portrait frame. No numbers need
-  changing when the file changes.
-- **Roughly 512–1024 px on the long edge is plenty.** The picture is 76 mm across
-  in a 460 mm room, and on an iPad it occupies a couple of hundred points. A
-  4000 px photo costs memory and buys nothing.
-- **JPEG or PNG.** If you use PNG, change the `filename` in `Contents.json` to
-  match.
-
 ## If you would rather not use the asset catalog
 
-`photograph()` also tries the name `nina-portrait`, so a loose
-`nina-portrait.jpg` added to `Resources/` as a bundle resource works without
-touching the catalog.
+`photograph()` also tries the bare name `nina-portrait`, so a loose file added
+to `Resources/` as a bundle resource works without touching the catalog at all.

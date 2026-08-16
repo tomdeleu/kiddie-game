@@ -911,15 +911,18 @@ props never had:
   behind glass would. Unlit would be truer to the file and would read as a screen
   hanging on the wall.
 
-**The photograph is not in the repository, and the app is correct without it.**
-It is a picture of a child; the frame, the wiring and the fallback are committed
-and the file is added locally —
-[`Resources/Assets.xcassets/NinaPortrait.imageset/README.md`](NinaBakeryPOC/Resources/Assets.xcassets/NinaPortrait.imageset/README.md)
-is a one-line instruction. Without it the frame falls back to the modelled girl,
-which is kept for a reason `ModelLibrary` already established: **a missing asset
-must never leave a live tap target with nothing behind it.** An empty frame over
-a working tap is the "every tap does something" rule broken. With the file it is
-her photo; without it, it is a picture of her.
+**Replacing the file is one edit, and it has one trap.** The filename in
+`Contents.json` must match what is on disk exactly, extension included — the
+wiring looks the image set up by its folder name, so a mismatch does not error:
+it yields an empty image set, the texture load returns `nil`, and the frame
+silently falls back to the modelled girl with nothing saying why. It has already
+happened once, `.jpeg` against `.jpg`. Everything else adapts on its own.
+
+That fallback is kept for a reason `ModelLibrary` already established: **a
+missing asset must never leave a live tap target with nothing behind it.** An
+empty frame over a working tap is the "every tap does something" rule broken. So
+the app is correct either way — with the file it is her photo, without it a
+picture of her.
 
 The frame is a shallow shadow-box 12 mm deep — the same depth the door frame
 stands proud of the left wall, and for the same reason: at this camera a casing
