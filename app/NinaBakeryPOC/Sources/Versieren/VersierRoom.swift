@@ -54,7 +54,7 @@ final class VersierRoom: Room {
     private var trays: [StickerKind: Entity] = [:]
     private var spuitzak: VersierProps.Spuitzak?
     private var strooibus: Entity?
-    private var doorway: KitchenProps.Doorway?
+    private var doorway: Props.Doorway?
     private var doorTouchSpot: Entity?
     private var doorHalo: Halo.Handle?
     private var doorRest: Float = 0
@@ -232,7 +232,7 @@ final class VersierRoom: Room {
     /// The same door as the kitchen's, in the same place. It is the same door —
     /// she walks through one and arrives at the other.
     private func buildDoorway() {
-        let node = KitchenProps.doorway(flat: flat)
+        let node = Props.doorway(flat: flat)
         root.addChild(node.root)
         doorway = node
 
@@ -268,7 +268,7 @@ final class VersierRoom: Room {
 
         doorRest = KitchenLayout.doorAjarAngle
         doorway.hinge.orientation = simd_quatf(angle: doorRest, axis: [0, 1, 0])
-        doorway.glow.isEnabled = true
+        doorway.glow?.isEnabled = true
 
         if doorHalo == nil {
             let marker = Entity()
@@ -975,7 +975,7 @@ final class VersierRoom: Room {
     /// **The door works from the first frame and always means the same thing.**
     /// There is no required action to gate it on — §6.4: *the door works
     /// immediately, and this room must never ask her for anything.*
-    private func endRoom(_ doorway: KitchenProps.Doorway) {
+    private func endRoom(_ doorway: Props.Doorway) {
         swingDoor(doorway, hold: 2.6)
         baker?.set(.cheering)
         sound.play(.reward, volume: 0.7)
@@ -1001,7 +1001,7 @@ final class VersierRoom: Room {
         }
     }
 
-    private func swingDoor(_ doorway: KitchenProps.Doorway, hold: Float = 1.5) {
+    private func swingDoor(_ doorway: Props.Doorway, hold: Float = 1.5) {
         ticker.cancel(doorSwing)
         let hinge = doorway.hinge
         let rest = doorRest

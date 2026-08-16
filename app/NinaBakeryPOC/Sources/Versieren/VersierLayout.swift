@@ -215,6 +215,30 @@ enum VersierLayout {
     /// rather than a test because there is no test target in this project yet,
     /// and a number that has to hold is better checked by the app that depends
     /// on it than not checked at all.
+    ///
+    /// **And XZ is not the distance `TouchRouter` measures**, which is the
+    /// finding that came back from De Tuin and is why the second loop is here.
+    /// `CameraRig.distance(fromWorld:toRayThrough:)` returns the distance from a
+    /// target's centre to the touch *ray* — a perpendicular distance, in a plane
+    /// facing the camera — and this eye stands at 45° to both floor axes, so a
+    /// pair of targets separated along X or along Z keeps only **0.75–0.80** of
+    /// its XZ spacing as separation on screen. (Along the X−Z diagonal it keeps
+    /// all of it, which is why the number is a range rather than a constant.)
+    /// Every ledge in this room runs along an axis, so every pair on it is at
+    /// the bad end of that.
+    ///
+    /// **The second loop warns rather than asserts, deliberately.** The room it
+    /// is reporting on is built, compiled and on device; re-spacing seven trays
+    /// and two tools inside a 0.46 m box is a design change with a look to it,
+    /// and it belongs to whoever can see the screen. Crashing every debug launch
+    /// until then would be this check taking that decision instead of surfacing
+    /// it. The tray pitch would have to go from 64 mm to about 85 mm, or the
+    /// 32 mm radius down to about 24 mm — which is 60 pt, under `CONCEPT.md`
+    /// §5's floor. Neither is free, and that is the point.
+    /// `@MainActor` because the second loop asks `RoomBox.screenSeparation`,
+    /// which reads `CameraRig.eye`. Its one caller is `VersierRoom.build`,
+    /// which is already on the main actor, so this costs nothing.
+    @MainActor
     static func assertSpacing() {
         #if DEBUG
         var spots: [(String, SIMD3<Float>, Float)] = []
@@ -233,6 +257,18 @@ enum VersierLayout {
                 assert(d >= ar + br - 1e-4,
                        "VersierLayout: \(an) and \(bn) are \(Int(d * 1000)) mm apart "
                        + "but need \(Int((ar + br) * 1000)) mm — their touch spheres overlap.")
+            }
+        }
+
+        for i in spots.indices {
+            for j in (i + 1)..<spots.count {
+                let (an, ap, ar) = spots[i]
+                let (bn, bp, br) = spots[j]
+                let d = RoomBox.screenSeparation(ap, bp)
+                guard d < ar + br - 1e-4 else { continue }
+                print("VersierLayout: \(an) and \(bn) are \(Int(d * 1000)) mm apart "
+                      + "as the camera sees them but need \(Int((ar + br) * 1000)) mm — "
+                      + "whichever one the tie-break prefers is the one she gets.")
             }
         }
         #endif

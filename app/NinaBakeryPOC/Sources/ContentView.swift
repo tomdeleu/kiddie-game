@@ -51,7 +51,6 @@ struct ContentView: View {
                 backdrop
                 roomView
                 restartButton
-                developerLayer
                 // **Order and transitions are both load-bearing here.** The
                 // plate is last, so it is on top of the film; and each cover
                 // appears with no animation and leaves with a fade, so there is
@@ -67,6 +66,14 @@ struct ContentView: View {
                     LoadingScreen(ready: sceneReady, onFinish: finishLoading)
                         .transition(.asymmetric(insertion: .identity, removal: .opacity))
                 }
+                // **Last, so it is above the covers.** It used to sit under
+                // them, which meant the one moment a grown-up most wants the
+                // room picker — the app has just started and the film is
+                // playing — was the one moment nothing could be tapped. A
+                // developer control that is only reachable once the game has
+                // already got where you were trying to skip to is not a
+                // developer control.
+                developerLayer
             }
             .coordinateSpace(.named("room"))
             .onAppear {
@@ -242,18 +249,56 @@ struct ContentView: View {
                                lightmapsAvailable: scene.rig.lightmapsAvailable)
                 }
             } else {
-                developerHotspot
+                developerButton
             }
         }
     }
 
-    /// Three taps in the top-right corner. `CONCEPT.md` §5 asks for a parent
-    /// gate she will not find; this is that, and it costs no on-screen pixels.
-    private var developerHotspot: some View {
-        Color.black.opacity(0.001)
-            .frame(width: 64, height: 64)
-            .contentShape(Rectangle())
-            .onTapGesture(count: 3) { showDeveloperPanel = true }
+    /// The way in to the developer panel: a small wrench in the top-right.
+    ///
+    /// **This replaces the triple-tap, on the owner's call, 2026-08-16.** The
+    /// invisible corner satisfied `CONCEPT.md` §5's parent gate at no cost in
+    /// pixels, and the cost it did carry was worse: an invisible control that
+    /// silently does nothing is indistinguishable from a broken one, and it was
+    /// in fact broken — it sat under the film and the loading plate. A control
+    /// you cannot see is a control you cannot debug.
+    ///
+    /// So it is visible, and it is deliberately dull about it: 28 pt of grey
+    /// glyph at half opacity, against 72 pt of saturated `FacetButton` for the
+    /// two controls that are hers. Everything the game wants her to press is
+    /// big, coloured and faceted; this is small, grey and flat, in the one
+    /// corner neither of hers uses. **It is still the most pressable thing on
+    /// the screen that is not meant for her** — if she finds it and starts
+    /// teleporting between rooms, the fix is to put it back behind a gesture
+    /// she cannot make, not to shrink it further.
+    ///
+    /// The triple-tap stays alongside it, because a gate that costs nothing to
+    /// keep is worth keeping: if this button ever does go away again, the
+    /// corner still opens.
+    private var developerButton: some View {
+        Button {
+            showDeveloperPanel = true
+        } label: {
+            Image(systemName: "wrench.adjustable")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(.secondary)
+                // The 44 pt frame is the tap target; the 28 pt circle is all
+                // that shows. A grown-up thumb gets the whole of Apple's
+                // minimum, and the screen only pays for a third of it.
+                .frame(width: 28, height: 28)
+                .background(.ultraThinMaterial, in: Circle())
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .opacity(0.5)
+        .padding(.top, 8)
+        .padding(.trailing, 8)
+        .accessibilityLabel("Developer panel")
+        // The old gate, kept. `count: 3` on the same view a single tap already
+        // opens is harmless — the first tap has opened the panel and swapped
+        // this view out long before a third could land.
+        .simultaneousGesture(TapGesture(count: 3).onEnded { showDeveloperPanel = true })
     }
 
     private func keepTheScreenAwake() {
@@ -324,9 +369,16 @@ final class GameScene: ObservableObject {
     /// on animating and answering taps underneath the new one.
     ///
     /// `handing` is how a round crosses a doorway — the kitchen's finished cake
-    /// arriving at the decorating room. Omit it and the room is a visit
+    /// arriving at the decorating room, or the garden's picked basket arriving
+    /// at the kitchen. Hand nothing over and the room is a visit
     /// (`GAMEPLAY.md` §3), which is also exactly what the debug switcher does.
-    func enter(_ id: RoomID, handing cake: CakeSpec? = nil, greeting: Bool = true) {
+    ///
+    /// Two payloads rather than one enum, because they are handed to *different
+    /// rooms* and no room ever wants both: the kitchen takes a basket, the
+    /// decorating room takes a cake. `RoomExit` is the shape that carries them
+    /// between rooms; this is the shape that gets them into one.
+    func enter(_ id: RoomID, handing cake: CakeSpec? = nil,
+               picked: [Ingredient] = [], greeting: Bool = true) {
         guard let settings else { return }
 
         room?.leave()
@@ -335,10 +387,11 @@ final class GameScene: ObservableObject {
         voice.stop()
 
         handedCake = cake
-        let mode: RoomMode = cake == nil ? .bezoek : .ronde
+        let mode: RoomMode = cake == nil && picked.isEmpty ? .bezoek : .ronde
         // `let`, not `var`: `Room` is `AnyObject`-bound, so `onExit` is set
         // through the reference rather than mutating the binding.
-        let next = makeRoom(id, cake: cake, mode: mode, settings: settings)
+        let next = makeRoom(id, cake: cake, picked: picked, mode: mode,
+                            settings: settings)
         next.onExit = { [weak self] exit in self?.handle(exit) }
 
         room = next
@@ -353,12 +406,16 @@ final class GameScene: ObservableObject {
         }
     }
 
-    private func makeRoom(_ id: RoomID, cake: CakeSpec?, mode: RoomMode,
-                          settings: LightingSettings) -> any Room {
+    private func makeRoom(_ id: RoomID, cake: CakeSpec?, picked: [Ingredient],
+                          mode: RoomMode, settings: LightingSettings) -> any Room {
         switch id {
+        case .tuin:
+            return GardenRoom(ticker: ticker, touch: touch, voice: voice,
+                              sound: sound, settings: settings, mode: mode)
         case .keuken:
             return KitchenRoom(ticker: ticker, touch: touch, voice: voice,
-                               sound: sound, settings: settings, mode: mode)
+                               sound: sound, settings: settings, mode: mode,
+                               picked: picked)
         case .versieren:
             return VersierRoom(ticker: ticker, touch: touch, voice: voice,
                                sound: sound, settings: settings, mode: mode,
@@ -371,6 +428,8 @@ final class GameScene: ObservableObject {
     /// left gets to finish saying so.
     private func handle(_ exit: RoomExit) {
         switch exit {
+        case .keuken(let basket):
+            ticker.after(1.4) { [weak self] in self?.enter(.keuken, picked: basket) }
         case .versieren(let cake):
             ticker.after(1.4) { [weak self] in self?.enter(.versieren, handing: cake) }
         case .bakkerij:
@@ -420,10 +479,16 @@ final class GameScene: ObservableObject {
 /// playing the game to get there.** The lighting half is `DebugPanel`, unchanged
 /// from the POC.
 ///
-/// It lives behind `ContentView.developerHotspot` — three taps on an invisible
-/// 64 × 64 patch in the top-right corner — so it costs no on-screen pixels and
-/// `CONCEPT.md` §5's "no text anywhere" is untouched. Nothing in here is for
-/// Nina, and a visible room picker is a thing she would press.
+/// **The strip itself stays off screen until it is asked for**, and that much
+/// of `CONCEPT.md` §5's parent gate is intact: a visible row of buttons that
+/// teleports her out of the room she is playing is the most pressable thing that
+/// could be put on this screen, so it is not on the screen.
+///
+/// What opens it is no longer a gesture she cannot make. It is
+/// `ContentView.developerButton` — a small grey wrench in the top-right corner —
+/// because the invisible triple-tap patch it replaced sat *under* the opening
+/// film and there was no way to see that it could not be tapped. The triple tap
+/// is still wired up beside it for anyone with the muscle memory.
 ///
 /// **Rooms and readouts are room-agnostic.** The strip used to reach into
 /// `kitchen.state` for four fields; it now renders `Room.debugRows` and

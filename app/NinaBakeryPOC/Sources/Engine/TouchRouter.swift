@@ -73,6 +73,17 @@ final class TouchRouter {
     /// Called on every press, before routing. The idle nudge listens here.
     var onAnyTouch: (@MainActor () -> Void)?
 
+    /// **Where her finger is, whatever it is doing** — reported on the floor
+    /// plane whether or not the press hit a target, and whether or not the
+    /// target it hit wanted the drag.
+    ///
+    /// It exists for the garden's butterfly, which `GAMEPLAY.md` §6.2 says
+    /// follows her finger. That is the one thing in the game that responds to a
+    /// touch which was not aimed at it, so it cannot hang off a `Target` — and
+    /// giving the butterfly a target big enough to catch every drag would make
+    /// it eat every other drag in the room.
+    var onMoved: (@MainActor (SIMD3<Float>) -> Void)?
+
     init(camera: CameraRig) {
         self.camera = camera
     }
@@ -140,6 +151,12 @@ final class TouchRouter {
 
     func moved(to point: CGPoint) {
         travelled = max(travelled, hypot(point.x - startPoint.x, point.y - startPoint.y))
+        // Reported on the floor rather than on the active target's plane, so
+        // that it means the same thing on every frame of every drag — a
+        // follower that changed plane when she picked something up would jump.
+        if let listener = onMoved, let floor = camera.point(onPlaneY: 0.004, through: point) {
+            listener(floor)
+        }
         guard let active, let world = world(for: active, at: point) else { return }
         active.onDragMoved?(world)
     }

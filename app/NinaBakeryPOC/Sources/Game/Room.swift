@@ -60,7 +60,7 @@ protocol Room: AnyObject {
 
 /// Which rooms exist. Also the debug switcher's picker.
 enum RoomID: String, CaseIterable, Identifiable {
-    case keuken, versieren
+    case tuin, keuken, versieren
 
     var id: String { rawValue }
 
@@ -68,6 +68,7 @@ enum RoomID: String, CaseIterable, Identifiable {
     /// `CONCEPT.md` §5 rules out text she has to read.
     var title: String {
         switch self {
+        case .tuin: return "TUIN"
         case .keuken: return "KEUKEN"
         case .versieren: return "VERSIEREN"
         }
@@ -88,6 +89,19 @@ enum RoomMode: Equatable {
 /// Why a room ended, said in terms of what just happened rather than of where to
 /// go next.
 enum RoomExit {
+    /// The garden's basket is full; five ingredients want baking. **The order
+    /// is the order she picked them in** and `CakeSpec` reads it, so this is a
+    /// list rather than a set and must never be sorted.
+    ///
+    /// This replaced a `harvest.json` file written by the garden and read by the
+    /// kitchen, and **one thing was genuinely traded away**: an exit is live and
+    /// in memory, so a basket picked just before the app is closed no longer
+    /// survives to the next launch. That is the right call only because there is
+    /// no bakery hub yet to be interrupted *in* — the garden's own `tuin.json`
+    /// still holds the bed and the basket, so nothing she grew is lost, only the
+    /// fact that she was on her way to the kitchen with it. Worth reopening when
+    /// the hub lands.
+    case keuken([Ingredient])
     /// The kitchen's cake is baked and on the plank; it wants decorating.
     case versieren(CakeSpec)
     /// A visit is over, or a round has run out of rooms that exist yet.

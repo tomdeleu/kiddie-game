@@ -50,6 +50,16 @@ enum RoomBox {
     ///
     /// There is no ceiling and no fourth wall. The open front edge is where her
     /// hands come in.
+    ///
+    /// **De Tuin does not call this, and that is deliberate rather than an
+    /// oversight.** A garden with plaster walls read as a room with soil in it
+    /// (owner, 2026-08-16), so it builds a picket fence and a gate on exactly
+    /// the two lines the walls stood on — `GardenRoomBuilder.buildFence`, and
+    /// `GardenLayout.fenceLineX`/`fenceLineZ` are `-half + wallThickness`. The
+    /// box, the slab, the floor and the eye are untouched; only what stands on
+    /// the two back edges differs. It is the one room allowed to, and any room
+    /// that wants the same has to argue for it the same way — `CLAUDE.md`'s
+    /// deviations list and `references/REFERENCES.md` §1 both record it.
     static func shell(flat: Bool) -> Entity {
         let root = Entity()
         root.name = "RoomShell"
@@ -109,6 +119,38 @@ enum RoomBox {
         let along = anchor - eye
         guard abs(along.y) > 1e-6 else { return anchor }
         return eye + along * ((y - eye.y) / along.y)
+    }
+
+    /// **How far apart two targets are as the camera sees them**, which is not
+    /// how far apart they are on the floor.
+    ///
+    /// `TouchRouter` picks the target whose centre is nearest her touch *ray*,
+    /// and `CameraRig.distance(fromWorld:toRayThrough:)` measures that
+    /// perpendicular to the ray. So the separation that decides whether two
+    /// targets can be told apart is the component of the gap between them
+    /// perpendicular to the view direction — everything along the view direction
+    /// is one behind the other and buys nothing.
+    ///
+    /// **This eye stands at 45° to both floor axes** (`CameraRig.eye` is
+    /// (0.636, 0.611, 0.636)), so a row laid out along X or along Z keeps only
+    /// about **0.75–0.80** of its spacing, while a row along the X−Z diagonal
+    /// keeps essentially all of it. Every "these do not overlap" sum written
+    /// before De Tuin was done in XZ and was therefore optimistic by a fifth —
+    /// which is not a rounding error when the numbers are chosen to touch
+    /// exactly.
+    ///
+    /// Use this, not `distanceXZ`, whenever the question is *can she tell these
+    /// two things apart*. `distanceXZ` remains right for snapping, which is
+    /// about where a prop lands rather than about what she is pointing at.
+    @MainActor
+    static func screenSeparation(_ a: SIMD3<Float>, _ b: SIMD3<Float>) -> Float {
+        let eye = CameraRig.eye
+        let midpoint = (a + b) / 2
+        let toMid = midpoint - eye
+        guard length(toMid) > 1e-6 else { return length(b - a) }
+        let view = normalize(toMid)
+        let gap = b - a
+        return length(gap - view * dot(gap, view))
     }
 
     /// True where `point` is over a rectangle, grown by `margin` so a prop set

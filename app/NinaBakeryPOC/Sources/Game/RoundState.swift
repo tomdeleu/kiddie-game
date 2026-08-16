@@ -142,15 +142,42 @@ struct RoundState: Codable {
     /// free to be one, two or three and every cake in §5 comes back. That is
     /// the change to make when the garden lands and starts choosing what goes
     /// in the basket, because an interesting three beats an exhaustive five.
-    static func fresh(keeping shelf: [CakeSpec] = []) -> RoundState {
+    ///
+    /// ## And the garden fills it, when she has been there
+    ///
+    /// `picked` is De Tuin's basket, arriving through `RoomExit.keuken` the way
+    /// the kitchen's cake reaches the decorating room through
+    /// `RoomExit.versieren`. It is the five things she actually grew, and the
+    /// round is baked from those instead of from five dealt off a deck. The
+    /// order is hers and is not sorted — `CakeSpec.colours` reads it and paints
+    /// the tiers from it, which is what makes two identical baskets come out as
+    /// two different cakes.
+    ///
+    /// **The deck stays as the fallback rather than being replaced**, because
+    /// the garden is one room of six and she is allowed to walk into the kitchen
+    /// without having been anywhere first.
+    ///
+    /// **A basket is used exactly as it came**, short or not. `GAMEPLAY.md`
+    /// §6.2: she may leave the garden with one ingredient or with five, and
+    /// fewer is a plainer cake rather than a broken round — the kitchen lays its
+    /// sources out from the basket it is handed, so three ingredients is three
+    /// places to visit. Topping it up to five would quietly overrule her.
+    static func fresh(keeping shelf: [CakeSpec] = [],
+                      picked: [Ingredient] = []) -> RoundState {
         var state = RoundState()
+        state.used = []
+        state.shelf = shelf
+
+        if !picked.isEmpty {
+            state.basket = Array(picked.prefix(KitchenLayout.ingredientsPerRound))
+            return state
+        }
+
         var deck: [Ingredient] = []
         state.basket = (0..<KitchenLayout.ingredientsPerRound).map { _ in
             if deck.isEmpty { deck = Ingredient.allCases.shuffled() }
             return deck.removeLast()
         }
-        state.used = []
-        state.shelf = shelf
         return state
     }
 }

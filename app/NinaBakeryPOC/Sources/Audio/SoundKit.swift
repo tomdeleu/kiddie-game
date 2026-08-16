@@ -32,6 +32,15 @@ enum Sound: String, CaseIterable {
     case stirTick    // one soft blip per stir, quiet by design
     case thud        // a prop set down
 
+    // **The garden's two, and only two.** `ROOMS.md` §10: reuse the existing
+    // cases wherever a room can, and add one only for a genuinely new event.
+    // Planting is a `plop`, watering is `water`, a plant ripening is a
+    // `sparkle`, and the five chiming flowers are `ding` played at five
+    // different rates — a whole musical scale for nothing, which is the
+    // cheapest thing in the room and a quiet rehearsal for the party's pads.
+    case buzz        // the bee, when she chases it
+    case dig         // Mo coming up out of the molehill
+
     /// Filename in `Resources/SFX` to use instead of the synth, once one
     /// exists. Nothing has one yet — see the type doc.
     var fileName: String? { nil }
@@ -144,6 +153,26 @@ private enum Synth {
         case .poof:
             return wav(0.55) { t in
                 lowpassNoise(t, cutoff: 0.16) * decay(t, 6) * 0.55
+            }
+
+        case .buzz:
+            // A low triangle with a second one a few hertz off it, so the two
+            // beat against each other — which is what a bumblebee actually is,
+            // and it costs one extra oscillator. Swells in and out rather than
+            // starting hard, because she is chasing it rather than hitting it.
+            return wav(0.9) { t in
+                let wing = triangle(112, t) * 0.5 + triangle(119, t) * 0.35
+                let swell = Float(min(1, t * 6)) * Float(min(1, (0.9 - t) * 4))
+                return wing * swell * 0.30
+            }
+
+        case .dig:
+            // Loose earth, then Mo. Noise that closes down as the hill settles,
+            // with one short rising blip on top for the head coming out.
+            return wav(0.7) { t in
+                let earth = lowpassNoise(t, cutoff: 0.10) * decay(t, 5) * 0.5
+                let pop = sine(220 + 260 * t, t) * decay(t, 9) * 0.28
+                return earth + pop
             }
 
         case .water:

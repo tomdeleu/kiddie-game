@@ -102,25 +102,15 @@ final class KitchenRoom: Room {
     /// not touch the prop any more, so there is nothing to put back.
     private var halo: Halo.Handle?
 
-    // Interaction. Carrying is four numbers rather than one because a carried
-    // prop now has a height of its own — see `carry(to:)`.
-    private var carried: Entity?
-    private var carryOffset = SIMD3<Float>.zero
-    private var carryJob: Int?
-    /// Where the prop is now, and where it wants to be. The gap between them,
-    /// closed a little every frame, is the whole height animation.
-    private var carryY: Float = 0
-    private var carryGoalY: Float = 0
-    /// What it is currently over, for the contact shadow.
-    private var carrySurfaceY: Float = KitchenLayout.tableTopY
-    /// The last place her finger reported, on the drag's fixed plane. Kept
-    /// because the ray through it is what the prop's position is read off, and
-    /// that has to be recomputed on frames where no touch arrived — see
-    /// `placeCarried`.
-    private var carryAnchor = SIMD3<Float>.zero
-    /// Exactly where the prop was when she took hold of it, so a touch that
-    /// went nowhere can put it back exactly — see `settle`.
-    private var carryOrigin = SIMD3<Float>.zero
+    /// **Carrying, which is now `Engine/CarryController.swift`.**
+    ///
+    /// It used to be eight stored properties and seven methods sitting in this
+    /// file, and every word of it was about the camera rather than about a
+    /// kitchen. The garden drags a seed into a hole and sweeps a can across a
+    /// bed, which is the same model — and `ROOMS.md` §6 says inherit it rather
+    /// than rediscover it, so it moved out. The wrappers below keep every call
+    /// site in this file spelled exactly as it was.
+    private var carrier: CarryController!
 
     /// **Three tries and the instruction comes back.** `missCount` only counts
     /// attempts at the step she is actually on, and resets whenever the step
@@ -176,15 +166,62 @@ final class KitchenRoom: Room {
     private let snapRadius: Float = 0.067
 
     init(ticker: Ticker, touch: TouchRouter, voice: VoiceBank,
-         sound: SoundKit, settings: LightingSettings, mode: RoomMode = .bezoek) {
+         sound: SoundKit, settings: LightingSettings, mode: RoomMode = .bezoek,
+         picked: [Ingredient] = []) {
         self.ticker = ticker
         self.touch = touch
         self.voice = voice
         self.sound = sound
         self.settings = settings
         self.mode = mode
-        self.state = RoundStore.load()
+        // **A basket from the garden starts a new round rather than resuming
+        // the saved one.** She has just walked in carrying five things she
+        // grew; finding the kitchen halfway through Tuesday's cake instead
+        // would be the game losing what she did. The plank is kept, because the
+        // cakes already on it are the room's own history and not part of a
+        // round (`restartRound` argues the same point from the other side).
+        let saved = RoundStore.load()
+        self.state = picked.isEmpty
+            ? saved
+            : RoundState.fresh(keeping: saved.shelf, picked: picked)
         root.name = "Kitchen"
+
+        let carrier = CarryController(ticker: ticker, sound: sound,
+                                      surfaces: KitchenLayout.surfaces, settings: settings)
+        // Everything with an inside, read fresh every frame of a drag — see
+        // `CarryController.containers` for why this is a closure.
+        carrier.containers = { [weak self] in
+            guard let self else { return [] }
+            var found: [CarryController.Container] = []
+            if let bowl = self.bowl {
+                found.append((bowl, KitchenProps.bowlHeight, KitchenProps.bowlTopRadius))
+            }
+            if let tin = self.tin?.root, tin.isEnabled { found.append((tin, 0.013, 0.024)) }
+            if let basket = self.basket { found.append((basket, 0.014, 0.024)) }
+            if let crate = self.crate { found.append((crate, 0.022, 0.027)) }
+            return found
+        }
+        // **The cake plank, the room's one exception to the surface model.** It
+        // hangs above the back of the counter, so as a real surface it would
+        // shadow the counter and fling the sink shelf-high. Only the cake, and
+        // only on the round's last step, can ever reach it.
+        carrier.pointedExtra = { [weak self] anchor, entity in
+            guard let self, entity === self.cake else { return nil }
+            let plankHeight = KitchenLayout.cakePlankY + 0.004
+            guard KitchenLayout.nearPlank(RoomBox.pointOnRay(through: anchor,
+                                                       atHeight: plankHeight))
+            else { return nil }
+            return plankHeight
+        }
+        // The same exception asked position-based, which is what the halo needs
+        // so its ring climbs onto the plank with the cake.
+        carrier.restingExtra = { [weak self] point, entity in
+            guard let self, entity === self.cake, KitchenLayout.nearPlank(point) else { return nil }
+            return KitchenLayout.cakePlankY + 0.004
+        }
+        carrier.onPickUp = { [weak self] _ in self?.stopHint() }
+        carrier.onMiss = { [weak self] in self?.noteMiss() }
+        self.carrier = carrier
     }
 
     // MARK: - Building
@@ -408,7 +445,9 @@ final class KitchenRoom: Room {
         // The next room, seen through the gap. Lit rather than merely painted:
         // it is a butter-yellow plate deep inside the frame with a leaf across
         // most of it, and unlit it reads as the inside of a cupboard.
-        doorway.glow.model?.materials = [
+        // Optional since the garden's gate has no wall to hold a lit plate —
+        // see `Props.Doorway.glow`. The kitchen always has one.
+        doorway.glow?.model?.materials = [
             done ? Palette.glowMaterial(Palette.butterYellow, intensity: 1.8)
                  : Palette.material(Palette.butterYellow)
         ]
@@ -969,255 +1008,42 @@ final class KitchenRoom: Room {
 
     // MARK: - Carrying
 
-    /// Pick something up.
+    /// **All of this moved to `Engine/CarryController.swift`.**
+    ///
+    /// The height rule, the ray that keeps a prop under her fingertip, the
+    /// container rims, the settle rules and the one patch of floor a drop is not
+    /// allowed to stick in — none of it was ever about a kitchen, and the garden
+    /// needs every line of it. `ROOMS.md` §6 is the prose; the two bugs it cost
+    /// are documented over `Surfaces.pointedAt` and `CarryController.pickUp`.
+    ///
+    /// These wrappers exist so that every call site in this file — four
+    /// `pickUp`s, every `onDragMoved`, six `settle`s, five `endCarry`s and the
+    /// halo's `surfaceUnder` — is spelled exactly as it was before the move.
+    /// Moving the hardest code in the project should not also be a rename of
+    /// twenty call sites.
+
+    private var carried: Entity? { carrier.carried }
+
     private func pickUp(_ entity: Entity, at world: SIMD3<Float>) {
-        endCarry()
-        carried = entity
-        carryAnchor = world
-        // **Measured against the ray at the prop's own height, not against the
-        // touch point.** For most props those are the same thing, because the
-        // drag plane starts at the prop's height — but the bowl's target carries
-        // a 20 mm `planeOffset` so that stirring happens on the plane of its
-        // rim, and reading the offset off a point 20 mm higher would put a 23 mm
-        // step into the very first frame of the drag.
-        carryOffset = entity.position
-            - RoomBox.pointOnRay(through: world, atHeight: entity.position.y)
-        carryOffset.y = 0
-        carryOrigin = entity.position
-        carryY = entity.position.y
-        carrySurfaceY = KitchenLayout.surfaceY(at: entity.position)
-        carryGoalY = carryY
-        stopHint()
-        ticker.squash(entity, amount: 0.14, duration: 0.25)
-        sound.play(.stirTick, volume: 0.4)
-
-        // One job for the whole drag, rather than easing inside the touch
-        // callback: touch events stop arriving the moment her finger stops
-        // moving, and a prop halfway down to the floor has to keep going.
-        //
-        // **The drag plane is fixed for the whole drag, and that is the fix for
-        // a bug worth remembering.** It used to be written down here every
-        // frame — `carryTarget.planeY = carryY` — so that the prop stayed
-        // pinned under her fingertip as it changed height. That is a feedback
-        // loop, because the height depends on the XZ and the XZ depends on the
-        // plane: raising the plane by Δ moves the ray's intersection about
-        // 1.7Δ towards the camera at this camera angle, which can move the prop
-        // straight back out of the region that raised it.
-        //
-        // The cake going up onto the plank is where it bit. Reaching the plank
-        // zone lifted the cake 67 mm, which slid the mapped point ~70 mm
-        // forwards, out of the zone; it dropped back to the counter, which slid
-        // the point back in, and it juddered between the two. It could not be
-        // put on the plank at all — it stuck on the counter underneath it.
-        //
-        // **And the second half of that fix, added 2026-08-16.** Freezing the
-        // plane stopped the oscillation and left the prop drifting up and down
-        // the screen away from her fingertip as it changed surface — the note
-        // that used to sit here argued that reads *better*, and on the device it
-        // does not: 68 mm of world height between the table and the floor throws
-        // the prop most of a thumb's width off her finger, and what she sees is
-        // the thing she is holding jumping somewhere else (owner's report).
-        //
-        // What broke the loop for good is `KitchenLayout.surfacePointedAt` deciding the
-        // surface from the *ray* rather than from the prop's position, so height
-        // can no longer feed back into the choice. With that settled, the prop's
-        // XZ can safely be read off the same ray at whatever height it has
-        // reached — which is what `placeCarried` does, and what keeps it pinned
-        // under her fingertip the whole way down. The reasoning is written out
-        // in full over `surfacePointedAt`.
-        //
-        // The job re-places it every frame rather than only on touch events,
-        // because touches stop arriving the moment her finger stops moving and a
-        // prop halfway down to the floor has to keep going *and* stay under the
-        // finger that is holding still.
-        carryJob = ticker.add { [weak self] dt in
-            guard let self, let held = self.carried else { return false }
-            // Exponential ease — about 90% of the remaining gap in a third of
-            // a second, whatever the frame rate, and no overshoot.
-            self.carryY += (self.carryGoalY - self.carryY) * (1 - exp(-dt * 7.5))
-            self.placeCarried()
-            ContactShadows.update(for: held, surfaceY: self.carrySurfaceY,
-                                  settings: self.settings)
-            return true
-        }
+        carrier.pickUp(entity, at: world)
     }
 
-    /// **The height rule.** A carried prop rides just above whatever is
-    /// underneath it, and eases there rather than jumping.
-    ///
-    /// Everything used to be carried at table height regardless of where it
-    /// was, which is why the room read flat: drag the rolling pin off the table
-    /// and it stayed at table height, hanging in mid-air over the floor with
-    /// nothing to say it was up there. Now it comes down, over about a third of
-    /// a second, and going back up onto the table lifts it again.
-    private func carry(to world: SIMD3<Float>) {
-        guard let carried else { return }
-        carryAnchor = world
-        carrySurfaceY = pointedSurface(from: world, for: carried)
-        carryGoalY = carrySurfaceY + RoomBox.carryLift
-        placeCarried()
-    }
+    private func carry(to world: SIMD3<Float>) { carrier.move(to: world) }
 
-    /// **Put the carried prop back under her fingertip.**
-    ///
-    /// One line of arithmetic, and it is the whole of the drag: the prop goes on
-    /// the ray she is pointing along, read at whatever height it has eased to.
-    /// Height moves, the finger does not, and the prop stays where the finger
-    /// is — which is what a drag has to feel like.
-    private func placeCarried() {
-        guard let carried else { return }
-        var next = KitchenLayout.clampToPlayArea(
-            RoomBox.pointOnRay(through: carryAnchor, atHeight: carryY) + carryOffset)
-        // Y is owned by the carry job; the touch only ever moves it about.
-        next.y = carryY
-        carried.position = next
-    }
+    private func endCarry() { carrier.end() }
 
-    /// **What she is pointing at**, for a prop being carried.
-    ///
-    /// `KitchenLayout.surfacePointedAt` answers it for the room's three real surfaces.
-    /// The one thing it does not know about is the cake plank, which is not a
-    /// surface anywhere else in the game — it would shadow the counter it hangs
-    /// over and fling the sink shelf-high — and is checked first here, for the
-    /// one prop and the one step that can reach it.
-    private func pointedSurface(from anchor: SIMD3<Float>, for entity: Entity) -> Float {
-        if entity === cake {
-            let plankHeight = KitchenLayout.cakePlankY + 0.004
-            if KitchenLayout.nearPlank(RoomBox.pointOnRay(through: anchor, atHeight: plankHeight)) {
-                return plankHeight
-            }
-        }
-        if let rim = containerRim(from: anchor, carrying: entity) { return rim }
-        return KitchenLayout.surfacePointedAt(from: anchor)
-    }
-
-    /// **The rim of a container she is holding something over.**
-    ///
-    /// `KitchenLayout.surfacePointedAt` knows about the room's three flat surfaces, and
-    /// a bowl standing on the table is not one of them — so a berry carried over
-    /// the mixing bowl rode at table height, which is 26 mm *below* the bowl's
-    /// rim. It went straight through the side of it (owner, 2026-08-16: "when
-    /// dragging to the mixing bowl it should automatically position right above
-    /// the bowl instead of clipping it").
-    ///
-    /// The containers answer for themselves here rather than being added to
-    /// `Layout`, because unlike the table and the counter they **move**: she can
-    /// pick the bowl up and put it anywhere, so their footprints are a fact
-    /// about the current state of the room and not about its plan.
-    ///
-    /// Tallest wins, and the carried prop never rides on itself — otherwise
-    /// picking up the bowl would launch it up its own rim, every frame.
-    ///
-    /// This is safe for every drop in the game because **every snap test is
-    /// XZ-only**: `dropToken`, `dropBowl` and `dropTin` all measure horizontal
-    /// distance, so riding higher cannot make a drop harder to land. It only
-    /// changes what she sees on the way there.
-    private func containerRim(from anchor: SIMD3<Float>, carrying entity: Entity) -> Float? {
-        var best: Float?
-        for (container, height, radius) in containers where container !== entity {
-            guard container.isEnabled, container.parent != nil else { continue }
-            let top = container.position.y + height
-            let over = RoomBox.pointOnRay(through: anchor, atHeight: top)
-            guard RoomBox.distanceXZ(over, container.position) <= radius else { continue }
-            if best == nil || top > best! { best = top }
-        }
-        return best
-    }
-
-    /// Everything with an inside, and how high its rim stands above its own
-    /// origin. Read every frame of a drag, so it is a computed list of what
-    /// exists rather than a stored one that a rebuild could leave dangling.
-    private var containers: [(Entity, Float, Float)] {
-        var found: [(Entity, Float, Float)] = []
-        if let bowl { found.append((bowl, KitchenProps.bowlHeight, KitchenProps.bowlTopRadius)) }
-        if let tin = tin?.root, tin.isEnabled { found.append((tin, 0.013, 0.024)) }
-        if let basket { found.append((basket, 0.014, 0.024)) }
-        if let crate { found.append((crate, 0.022, 0.027)) }
-        return found
+    /// A drop that did not do anything in particular. It stays where she put it.
+    private func settle(_ entity: Entity, missed: Bool) {
+        carrier.settle(entity, missed: missed)
     }
 
     /// What a prop that is standing somewhere is standing *on*. Position-based,
-    /// where `pointedSurface` is ray-based — the halo asks this one, because it
-    /// follows a prop rather than a finger, and it has to be right for a prop
-    /// nobody is holding.
+    /// where the drag's question is ray-based — the halo asks this one, because
+    /// it follows a prop rather than a finger.
     private func surfaceUnder(_ point: SIMD3<Float>, for entity: Entity) -> Float {
-        if entity === cake, KitchenLayout.nearPlank(point) { return KitchenLayout.cakePlankY + 0.004 }
-        // The two ingredients that wait on the wall shelves. Without this the
-        // ring for them landed on the floor 150 mm below the berry it was
-        // pointing at — see `KitchenLayout.shelfSurfaceY`.
-        if let shelf = KitchenLayout.shelfSurfaceY(at: point) { return shelf }
-        return KitchenLayout.surfaceY(at: point)
+        carrier.surfaceUnder(point, for: entity)
     }
 
-    private func endCarry() {
-        ticker.cancel(carryJob)
-        carryJob = nil
-        carried = nil
-    }
-
-    /// **A drop that did not do anything in particular. It stays where she put
-    /// it.**
-    ///
-    /// This replaced `floatHome`, which sent a missed drop back to where it
-    /// came from and had Nina apologise for it. That was wrong twice over. It
-    /// took the room away from her — the one thing she can do with a kitchen
-    /// full of objects is move them around, and every attempt was being undone
-    /// half a second later. And it made a miss into an *event*, with a sound
-    /// and a line about it, when most misses are not attempts at anything: she
-    /// picked up the rolling pin and put it on the floor, which is a thing a
-    /// 4-year-old does to a rolling pin.
-    ///
-    /// So a prop now settles onto whatever is beneath it and simply stays
-    /// there. `missed` is the narrow case that is still worth answering: she
-    /// was working on the current step and it did not take.
-    private func settle(_ entity: Entity, missed: Bool) {
-        let origin = carryOrigin
-        endCarry()
-
-        // **A touch that went nowhere puts it back exactly.** This is what
-        // stops a tap on the top shelf knocking the berry off it: every tap is
-        // also a zero-length drag (`TouchRouter.ended`), and without this the
-        // berry would obediently fall to the floor because that is what is
-        // under the shelf. A grab she thought better of gets the same answer.
-        guard RoomBox.distanceXZ(entity.position, origin) > 0.010 else {
-            ticker.move(entity, to: origin, duration: 0.16, arc: 0, ease: Ease.out) {
-                [weak self] in
-                guard let self else { return }
-                ContactShadows.update(for: entity, surfaceY: KitchenLayout.surfaceY(at: origin),
-                                      settings: self.settings)
-            }
-            return
-        }
-
-        // **Out of sight is the one place a drop is not allowed to stick.**
-        // The camera is fixed, so the floor behind the table is a patch she
-        // could put something into and never get it back out of — and she has
-        // no way to look round the table. It floats back to where she picked it
-        // up, which is the one case the old float-home behaviour was right
-        // about. Everywhere else on the floor is hers.
-        guard !KitchenLayout.isOutOfSight(entity.position) else {
-            sound.play(.whoosh, volume: 0.35)
-            ticker.move(entity, to: origin, duration: 0.4, arc: 0.014, ease: Ease.out) {
-                [weak self] in
-                guard let self else { return }
-                ContactShadows.update(for: entity, surfaceY: KitchenLayout.surfaceY(at: origin),
-                                      settings: self.settings)
-            }
-            if missed { noteMiss() }
-            return
-        }
-
-        let resting = SIMD3<Float>(entity.position.x,
-                                   KitchenLayout.surfaceY(at: entity.position),
-                                   entity.position.z)
-        ticker.move(entity, to: resting, duration: 0.20, arc: 0, ease: Ease.out) {
-            [weak self] in
-            guard let self else { return }
-            self.sound.play(.thud, volume: 0.42)
-            ContactShadows.update(for: entity, surfaceY: resting.y, settings: self.settings)
-        }
-        if missed { noteMiss() }
-    }
 
     /// She tried the step and it did not take.
     ///
@@ -1522,7 +1348,7 @@ final class KitchenRoom: Room {
         let tinBatter = tin.batter
         let above = tinRoot.position + [0, 0.030, 0]
 
-        ticker.move(bowl, to: above, duration: 0.3, arc: 0.01) { [weak self] in
+        ticker.move(bowl, to: above, duration: 0.3, arc: 0.01, done: { [weak self] in
             guard let self else { return }
             self.sound.play(.pour)
 
@@ -1533,7 +1359,7 @@ final class KitchenRoom: Room {
             }, done: { [weak self] in
                 self?.runPour(from: above, into: tinRoot, batter: tinBatter, tipped: tipped)
             })
-        }
+        })
     }
 
     /// The pour itself, once the bowl is over the tin and tilted.
@@ -1641,7 +1467,7 @@ final class KitchenRoom: Room {
         // oven, and hiding it is what makes the door opening worth watching.
         let mouth = KitchenLayout.ovenMouth
         let tinRoot = tin.root
-        ticker.move(tinRoot, to: mouth, duration: 0.3, arc: 0.01) { [weak self] in
+        ticker.move(tinRoot, to: mouth, duration: 0.3, arc: 0.01, done: { [weak self] in
             guard let self else { return }
             self.sound.play(.whoosh, volume: 0.7)
             ContactShadows.removeFrom(tinRoot)
@@ -1661,7 +1487,7 @@ final class KitchenRoom: Room {
                     self.voice.say(Line.klopOpOtto, priority: .low)
                 }
             })
-        }
+        })
     }
 
     // MARK: - Step 5: baking
@@ -2570,6 +2396,7 @@ final class KitchenRoom: Room {
 
     func refreshContactShadows(settings: LightingSettings) {
         self.settings = settings
+        carrier.update(settings: settings)
         let props: [Entity?] = [bowl, tin?.root, cake, rollingPin, basket, flourSack, crate]
             + tokens.map { $0.entity as Entity? }
         for prop in props.compactMap({ $0 }) {

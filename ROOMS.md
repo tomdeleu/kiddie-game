@@ -8,9 +8,24 @@ reverse-engineered out of 2,447 lines of `KitchenRoom.swift`.
 obey to feel like the same game. Everything here is shipped code, not a plan;
 where a number appears, it is the number in the file, and the file is named.
 
-**None of it has been compiled.** The kitchen was written in a container with no
-Swift toolchain, so treat every constant as correct-by-construction and check it
-on first build — `app/README.md`, "First build".
+**All three rooms have now compiled** — Xcode 26.6, twice on 2026-08-16. That is
+worth knowing precisely, because of *what* the two builds caught: eight errors,
+not one of which was a number. Every one was scope, actor isolation, or a type
+turning out to be a struct. **So the constants in this file have survived two
+compilers and the prose around them has not**, and the two edits that most need a
+build behind them are moving a function between files and calling into anything
+main-actor. `app/README.md`, "First build", has all eight.
+
+What none of it has survived is **a 4-year-old**. Nothing here has been in front
+of Nina, so every touch radius and every tolerance below is still a calculation.
+
+> **De Tuin is built, and it is the first room built *against* this file rather
+> than out of it.** Where it needed something this contract described as living
+> inside `KitchenRoom`, that thing moved: §5's targets and §6's carrying are now
+> `Engine/Surfaces.swift` and `Engine/CarryController.swift`, the door is
+> `Props/Doorway.swift`, and a room is a `Room` the developer panel can switch
+> between. Nothing in the *rules* changed; the addresses did, and they
+> are updated below.
 
 ---
 
@@ -112,6 +127,14 @@ whole instruction.** `Engine/Halo.swift`.
   **journey**, which lights the thing to pick up and the place it goes; and a
   room with **two right answers**, which the finished kitchen has (carry on
   baking, or leave). Never light two things for emphasis.
+- **A journey with an interchangeable source is not a journey.** The garden's
+  sowing step looks like one — pick a seed up, put it in a hole — and it gets a
+  single halo, on the hole. Its two ends are not the same kind of thing: the
+  destination is a fact, and the source is **her choice between eight equally
+  right answers**. Lighting one jar says that jar is the one, which is false;
+  lighting all eight is not an instruction. The rule generalises: **light the end
+  that is a fact, and let the idle shimmer cover the end that is a choice** —
+  which is also, exactly, where `GAMEPLAY.md` §6.2 puts the wish hint.
 - **It disables nothing.** Every other prop still answers a tap while it is on.
 
 ### Do not re-derive the colour
@@ -220,6 +243,45 @@ press that travels less than **24 pt** (`tapSlop`) is a tap.
   registrations are written in points and the world-space number is derived.
 - **Nearest centre wins**, so a big generous target never swallows a small one
   sitting on top of it.
+- **A target's real size is measured on the screen, not on the ground**, and this
+  is the one every layout in the project got wrong until the garden's second
+  pass. `hitTest` measures the **perpendicular distance from a centre to the
+  camera ray**, so what matters is separation *across the view*, not in XZ.
+  A row running along X or Z is tilted about 37° away from the screen and keeps
+  only **0.798** of its spacing; a row along the **X−Z diagonal** is exactly
+  screen-horizontal and keeps **1.000** of it. The garden's flowers at 32 mm
+  centres were giving each a 55 pt band against `CONCEPT.md` §5's ~120 pt, and
+  the sum in XZ had looked fine.
+  **And height counts as separation too, in the wrong direction**: a prop 85 mm
+  in the air and 130 mm nearer the camera lands on nearly the same screen point
+  as one on the ground behind it, which is how the garden's butterfly came to
+  sit on top of two of the bed's five holes. Check a layout by perpendicular
+  distance, and check the fliers.
+  **`RoomBox.screenSeparation(_:_:)` is that measurement**, and it is what a
+  spacing check must call. `RoomBox.distanceXZ` is still right for snapping — a
+  drop is about where a prop lands — but it is the wrong question for *can she
+  tell these two apart*.
+  **Versieren was checked against this and does not pass.** Its
+  `VersierLayout.assertSpacing` measures XZ, and all seven sticker trays run
+  along an axis at a 64 mm pitch, so on screen they are 47–51 mm apart against a
+  64 mm requirement; the two tools and the stool are the same story. That check
+  now prints the perpendicular overlaps as well as asserting the XZ ones, and it
+  **warns rather than asserts** on them deliberately: the room is built and on
+  device, the fix is either an 85 mm pitch or a 24 mm radius — 60 pt, under
+  `CONCEPT.md` §5's floor — and choosing between those needs someone who can see
+  the screen. Do not let a new room ship in that state; it is far cheaper before
+  the props are placed than after.
+- **Overlap between like things in a row is intended; overlap between unlike
+  things is a bug.** Five holes, eight jars, five flowers: nearest-wins gives
+  each an equal band and an imprecise tap always lands on the nearest one, which
+  is exactly what a generous row should do. What must not overlap is two targets
+  that would give *different kinds of answer* — a toy taking the tap meant for a
+  required action is the failure that matters.
+- **Some props cannot have a naming target at all.** A large prop entirely
+  covered by smaller ones — a bench under eight jars, a bed under five holes —
+  loses every tap it is ever offered, wherever the marker is put. Fold its word
+  into the things standing on it instead, at the flour sack's ratio: mostly the
+  thing under her finger, now and then the thing it is standing on.
 - **Entity-targeted gestures are deliberately not used.** `targetedToAnyEntity()`
   needs a `CollisionComponent` per prop and hits exactly the mesh; owning the ray
   keeps the generosity a number in one file rather than a shape on every entity.
@@ -243,19 +305,31 @@ are world-space spheres satisfying a rule about the *screen*.
 ## 6. Carrying things
 
 The hardest part of the kitchen, and it is solved — inherit it rather than
-rediscovering it.
+rediscovering it. **It is `Engine/CarryController.swift` and
+`Engine/Surfaces.swift` now**, parameterised by each room's own rectangles,
+because the garden needed every line of it and copying it would have been
+copying the two bugs below as well.
 
 A carried prop **rides just above whatever is underneath it** — table, counter,
 floor — easing there over about a third of a second rather than snapping. Pick a
 berry off the top shelf and it swoops down as she brings it to the bowl.
 
-The whole model is two functions in `Layout`:
+The whole model is two functions on `Surfaces`, and a room supplies its own:
 
-- **`surfaceY(at:)`** — four rectangles, tested nearest-camera first. What is
+- **`y(at:)`** — the room's rectangles, tested nearest-camera first. What is
   under a point.
-- **`surfacePointedAt(from:)`** — what the ray from her eye through her fingertip
+- **`pointedAt(from:)`** — what the ray from her eye through her fingertip
   lands on first. **This is the one that decides the surface during a drag**, and
   it is a pure function of the touch that never looks at the prop.
+
+**A room's one-off exceptions hang off the controller, and there are two hooks
+because they are two different questions.** `pointedExtra` answers for a drag
+(the kitchen's cake plank, reachable by one prop on one step); `restingExtra`
+answers for the halo, which follows a prop rather than a finger. The garden needs
+both and they disagree: its bed is a surface at its **rim** for a carried seed,
+because the rim is what a seed would clip, and at its **soil** for the halo,
+because the holes are sunk 10 mm below the rim and a ring floating over a hole is
+a ring pointing at nothing.
 
 That distinction is load-bearing and cost two failed attempts:
 
@@ -370,7 +444,17 @@ should say so in the function that would have gated it, not by deleting it.
 
 ### The door says it three ways at once
 
-None of them a word or an arrow, because she cannot read one:
+None of them a word or an arrow, because she cannot read one.
+
+> **A room with no wall behind its way out says it twice.** De Tuin's exit is a
+> gate in a picket fence: there is nothing behind it to light, and she can see
+> straight through it already. It keeps the leaf off the latch and the ring at
+> the threshold, and drops the middle one — owner's call, and
+> `Props.Doorway.glow` is `Optional` to say so rather than being a hidden entity
+> nobody assigns to. What partly stands in for it emits nothing at all: **a worn
+> sandy path leading out through the gate**, which is how ground says somebody
+> goes this way. Take the third cue as *required wherever it is possible*, not as
+> a count.
 
 - **the leaf comes off the latch** and rests ajar at 11° — the smallest angle
   that still shows a slice of the light behind it at this camera. The point is
@@ -418,10 +502,30 @@ it can and add cases only for genuinely new events.
 
 A checklist, in the order it is worth doing:
 
-1. **A `Layout` block** — every position in one table. Almost every bug in a room
-   like this is two files disagreeing about where the table top is.
+0. **Conformance to `Room`** (`Sources/Game/Room.swift`) and a case in `RoomID`,
+   so it appears in the developer panel's room picker and can be visited without
+   playing the game up to it. A handful of small members, of which only `leave()`
+   has a trap: **a `Ticker` job a torn-down room still holds keeps animating a
+   detached entity forever, and nothing on screen says so.** Every job id and
+   every `Halo.Handle` goes in it — which is the same list a rebuild already
+   needs, so write it once and call it from both. `GameScene` detaches the tree
+   and clears the touch targets on its own side, so `leave()` owns the jobs, the
+   save, and any `TouchRouter` callback the room set beyond its targets
+   (`onEmptyTap`, `onAnyTouch`, `onMoved` — the garden's butterfly follows the
+   last of those, and a stale one would follow her finger around the kitchen).
+   **Ending is `onExit`**, not a jump: the room says what just happened —
+   `RoomExit.keuken(basket)`, `.versieren(cake)`, `.bakkerij` — and hands back
+   control. A room that knows what comes next is a routing table waiting to
+   happen.
+1. **A `Layout` block** — every position in one table, plus the room's own
+   `Surfaces`. Almost every bug in a room like this is two files disagreeing
+   about where the table top is.
 2. **A step enum and a `Codable` state struct**, versioned, with `RoundStore`'s
-   load/save/reset shape.
+   load/save/reset shape. **The step may be derived** — the garden's is a pure
+   function of its bed, stored so the room can be entered cold and recomputed
+   after every action so it can never disagree with what is on screen. A step
+   that can be computed and is also stored independently is a second place for
+   the truth to live.
 3. **Props**, in `FacetedMesh` primitives. **Check Kenney's Food Kit and
    Furniture Kit first** — do not model what 340 CC0 models already provide. They
    arrive flat-shaded and hard-edged, which is the target shading model; they
@@ -446,6 +550,11 @@ A checklist, in the order it is worth doing:
   texture load returns nil, and the asset is silently absent. Nothing raises.
 - **A missing asset must never leave a live tap target with nothing behind it.**
   `ModelLibrary` establishes the fallback rule; the portrait follows it.
+- **Every element of a script's `lines` array must be a real line.** `VoiceBank`
+  decodes them with a non-optional `{id, character, variants}` model, so one
+  `{"_section": "…"}` marker slipped in for readability makes the **whole file**
+  fail to decode — silently, into a room where every line in it is mute. Section
+  notes go in `_why`.
 - **`scaledToFill()` does not crop.** It reports its overflowed size as its
   layout size. A full-bleed view needs a `GeometryReader`, an explicit `frame`
   and `clipped()`, all three.

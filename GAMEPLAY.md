@@ -318,6 +318,19 @@ Two consequences, both real:
   three colours all become reachable again. The lever is
   `Layout.ingredientsPerRound`.
 
+  > **The garden has landed, and this is now more pressing rather than less.**
+  > It fills the basket for real — `RoomExit.keuken` hands it to the kitchen — and
+  > it fills it with **whatever she chose**, repeats included, from eight jars.
+  > So the arithmetic above is no longer the game's: five rainbow strawberries
+  > are now a reachable, deliberate, very pink cake, and so is a bed of five
+  > different things.
+  >
+  > What has *not* changed is that the bed has five holes because the basket
+  > holds five. `GardenLayout.plotCount` follows `Layout.ingredientsPerRound`, so
+  > the decision is still exactly one constant, the bed follows it, and
+  > `GardenStore.load` already migrates a save whose bed is the wrong length.
+  > **Still worth deciding before the friends are built.**
+
 - **Four of the eleven wishes go automatic in the meantime.** Bella's *roze*,
   Bas's *geel*, Bram's *groen* and Bo's *blauw* all match when the cake's colour
   includes theirs, and a rainbow includes nearly everything; Nel's *twee kleuren
@@ -402,9 +415,24 @@ Two things make this room harder than it looks, and both are the wall:
   in for the thirty seconds before she picks a frame. That is what the toys are
   for here, more than anywhere else.
 
-### 6.2 De Tuin — the garden
+### 6.2 De Tuin — the garden — **BUILT**
 
 **Required:** plant, water, pick — **five** ingredients into the basket.
+
+> **Built 2026-08-16.** [`app/README.md`](app/README.md), "De Tuin", is the
+> record. Everything below is what shipped, with three exceptions recorded
+> there: the shelf holds **eight** seeds rather than this section's six, because
+> the kitchen deals eight and a garden that could not grow two of them would
+> leave a hole; a full basket is the completion rule in **both** modes, because a
+> sixth ingredient has nowhere to go; and the way out is the kitchen's door in
+> the kitchen's place rather than a garden gate.
+>
+> The one thing worth reading here that the build sharpened: **the halo lights
+> the hole, never a seed jar.** Sowing looks like a journey, and a journey may
+> light both ends — but its two ends are not the same kind of thing. The
+> destination is a fact; the source is her choice between eight equally right
+> answers, and lighting one of them would be a lie. The jars get the shimmer,
+> which is where this section already put the wish hint. `ROOMS.md` §3.
 
 Six seed jars on a shelf. Drag a seed to any of **five** holes in the bed. Drag
 the watering can across the bed: **each pass grows everything it crosses by one
@@ -664,8 +692,8 @@ assumed. The kitchen is the calibration: 46 line ids across 86 files came to
 | De Keuken — **done** | 47 + 21 names | ~32 |
 | The opening film — **done** | 3 | ~1 |
 | Versieren — **done** | 12 + 15 names | ~11 |
+| De Tuin — **done** | 17 + 15 names | ~16 |
 | Het Feest | ~10 + ~10 names | ~10 |
-| De Tuin | ~14 + ~18 names | ~15 |
 | De Bakkerij | ~10 + ~10 names | ~10 |
 | Eleven friends × 6–8 | ~80 | ~24 |
 | The finale | ~4 | ~2 |
@@ -732,8 +760,15 @@ about it. After that:
 5. **The wall** — twelve frames, the grey ghosts, the level select, and
    persistence. This moves *up*: it is not a reward system bolted on later, it
    is the thing that makes the game a game, and everything else hangs off it.
-6. **The garden**, which turns the round into a cycle and makes the wish system
-   mean something.
+6. ~~**The garden**~~ — **built**, 2026-08-16, out of order. See
+   [`app/README.md`](app/README.md), "De Tuin". It came before decorating and the
+   party because two of its three costs were not the garden at all: **carrying,
+   extracted** into `Engine/CarryController.swift` and `Engine/Surfaces.swift`
+   where every later room can have it, and **a room switcher**, without which
+   checking anything in a room is a five-minute walk through the ones before it.
+   Both get cheaper the earlier they happen and neither is any use with one room.
+   It also closes the loop it was always going to: the basket it fills is the
+   basket the kitchen bakes.
 7. **The friends and the wishes** — eleven of them, added one at a time. This is
    content, not engineering, and it can grow after she is already playing.
 8. **The toys**, continuously. Add one or two every time you touch a room. This

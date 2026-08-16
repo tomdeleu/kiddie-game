@@ -81,6 +81,16 @@ cheap to produce.
 two near sides, sitting on a slim square base slab, seen from a fixed isometric
 three-quarter angle.
 
+> **De Tuin trades its two walls for a picket fence**, on the owner's call
+> (2026-08-16): a garden with plaster around it reads as a garden indoors. **The
+> rule's purpose survives it exactly** — the fence stands on the same two far
+> edges the walls stood on, so the two near sides are still open, no boundary
+> comes between the camera and a prop, and the room is still one corner seen from
+> one angle. What changed is the material, not the composition. The grey backdrop
+> showing above it turns out to be a gain rather than a cost: it is the same grey
+> the plates are shot on, so the room reads as the diorama they already look
+> like. `app/README.md`, "De Tuin", has the consequences.
+
 This survives the style change unchanged, because it was never a style
 decision — it is a gameplay one:
 
