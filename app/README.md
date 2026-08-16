@@ -223,6 +223,30 @@ the round's first step, and forwarding means a grab near the dough picks up the
 pin — which is what she meant — while a tap on the dough gets to be a tap on the
 dough.
 
+### Two things that only go wrong under a finger
+
+**Finishing the stir used to fail the pour.** The third turn completes *mid-drag*
+— she is still holding the bowl's target when `state.step` becomes `.gieten` —
+and the rest of that same gesture then ran down the pouring path. Stirring never
+picks the bowl up, so the bowl was still at its home position 70 mm from the tin,
+and letting go counted as a failed pour: Nina said "oeps" a second after
+congratulating her on the batter, and the miss counter started climbing toward a
+reminder she had done nothing to earn. `carried` is the honest test — a drag that
+began as a stir never set it, so there is nothing to drop and nothing to fail.
+
+**Carrying something over the bowl used to put it through the side.**
+`Layout.surfacePointedAt` knows the room's three flat surfaces, and a bowl
+standing on the table is not one of them — so a berry carried over the mixing
+bowl rode at table height, 26 mm *below* the bowl's rim. Containers answer for
+themselves now, and they have to: unlike the table and the counter they **move**,
+so their footprints are a fact about the current state of the room rather than
+about its plan. Tallest rim wins, and the carried prop never rides on itself.
+
+It is safe for every drop in the game because **every snap test is XZ-only** —
+`dropToken`, `dropBowl` and `dropTin` all measure horizontal distance, so riding
+higher cannot make a drop harder to land. It only changes what she sees on the
+way there.
+
 ### Nobody gets talked over
 
 **A step never opens its mouth while the last line is still going.** `say` at
@@ -546,13 +570,15 @@ falloff itself, so the band's centre line glows hardest and its edges fade into
 the floor rather than stopping at one. If it still reads flat on device, the one
 lever is `Halo.emissionPeak`; the geometry and the profile are right.
 
-**Then it had to get smaller.** Emitting, the ring's old proportions read as
+**Then it had to get smaller, twice.** Emitting, the ring's old proportions read as
 heavy: the band was 0.34 of the radius either side — two thirds of the radius
 across, 31 mm of glow around a 46 mm ring on the bowl — and the ring itself was
 drawn a third wider than the prop it marked. Both numbers were tuned while it was
 *dim*, when a faint thing needs area to be found at all. A light does not. The
-band is 0.18 now (13 mm on that same bowl) and the ring 1.10 of the prop rather
-than 1.35, so it sits just proud of what it is pointing at instead of hooping it.
+band is 0.18 now (13 mm on that same bowl) and the ring **0.97** of the prop
+rather than 1.35 — under 1, so it passes just *inside* the prop's own footprint
+and what shows is a rim of light escaping from under it, rather than a hoop
+thrown around it.
 
 **The sparkles took up the slack.** They are the ring's own colour, a third
 bigger, three at a time rather than two, and they emit — an unlit star against
@@ -915,17 +941,28 @@ The extra third is what makes the honey visible as honey.
 
 ### De pollepel
 
-**The thing she stirs with is a wooden spoon now**, modelled from
-`references/props/spoon.png`. It was a whisk — two prisms, a stick with an
-upside-down cone on the end — and it read as neither a whisk nor anything else.
+**The thing she stirs with is a wooden spoon now.** It was a whisk — two prisms,
+a stick with an upside-down cone on the end — and it read as neither a whisk nor
+anything else.
 
-A spoon is one of the few kitchen objects a 4-year-old can already draw, which
-means she knows when it is wrong, so the plate is followed closely. Three things
-carry it: **the scoop is hollow** (`FacetedMesh.bowl` gives it a real rim and a
-real inside, which is the whole difference between a spoon and a lollipop), **the
-handle tapers** thicker at the scoop and narrower at the tip, and **it is
-chunky** — 28 mm across against a 32 mm mixing bowl, where the whisk's head was
-22 mm.
+The first spoon was rejected too, and the reason is worth keeping: it was
+modelled from a *generated* plate that turned out to be the wrong brief — a
+long-handled ladle seen at an angle — and what came out of it was a shallow dish
+on a stick. It was rebuilt from a photograph of three real wooden spoons, which
+settled three things the plate had backwards:
+
+- **The handle is narrow at the bowl and thick at the far end.** The first
+  version tapered the other way, thick at the scoop and drawn to a point, which
+  is the silhouette of a trowel. A real spoon is turned the opposite way round: a
+  slim neck under the bowl opening out to a chunky end you can get a fist around.
+  That single inversion is most of the difference.
+- **The bowl is nearly a hemisphere, and its rim is thick** — not a saucer.
+- **There is a neck**, a short waisted section between bowl and handle, and it is
+  what makes the two read as one turned object rather than two prims stuck
+  together.
+
+A spoon is one of the few kitchen objects a 4-year-old can already draw, which is
+exactly why it took two goes: she knows when it is wrong.
 
 It is built standing on its scoop with the handle straight up, which is the
 convention the whisk used, so nothing in the round had to change: stirring stands
@@ -956,7 +993,7 @@ fills** — a source that pours forever into a filling destination is the same t
 as water that never gathers in the basin, which is why the tap has a pool. All
 three happen over the same 0.7 seconds.
 
-### Ingredient variety, and what it cost
+### Ingredient variety, and getting the cake rules back
 
 The five slots each took their own `randomElement()`, which is five independent
 rolls of a six-sided die: the odds of all five coming up different were about
@@ -965,24 +1002,49 @@ normal outcome rather than bad luck. The room has five places to visit and it wa
 routinely sending her to two of them for the same thing.
 
 They are dealt from a shuffled deck now, reshuffled only when it runs out — so a
-repeat is impossible until every type has been seen once, and with six
-ingredients in five slots that means every round is five different things.
+repeat is impossible until every type has been seen once.
 
-**This costs the cake rules, and the trade was deliberate.** Five of six
-ingredients means at least four coloured ones in every bowl, and three colours or
-more is a `regenboogtaart` — so `.effen` and `.gemengd`, the one-colour and
-two-colour cakes in `GAMEPLAY.md` §5, are now unreachable, along with the lines
-Nina has for each colour. Ingredient variety was bought with cake variety, on the
-grounds that being sent twice to the same berry is something she notices every
-round and which of four cake shapes she got is not.
+**That cost the cake rules, and two new ingredients bought them back.** Five
+distinct draws out of six meant at least four coloured ones in every bowl, and
+three colours or more is a `regenboogtaart` — so `.effen` and `.gemengd` became
+unreachable overnight, and Nina's per-colour lines with them.
 
-It is worth undoing when the garden lands, because the garden is what fills the
-basket and can fill it with an interesting *three* rather than an exhaustive
-five. Until then the lever is `Layout.ingredientsPerRound`: at three, dealing
-still guarantees no repeats and the colour count is free to be one, two or three
-again.
+`maanstof` and `veertje` are both **colourless**, which changes the arithmetic
+rather than working around it. The deck is now five coloured and three
+colourless, and five draws from that gives:
 
-### The portrait
+| colours drawn | chance | cake |
+|---|---|---|
+| 2 | 17.9% | `gemengd` — two colours, marbled |
+| 3 | 53.6% | `regenboog` |
+| 4 | 26.8% | `regenboog` |
+| 5 | 1.8% | `regenboog` |
+
+So a two-colour cake is back, about one round in six. **`.effen` is still out of
+reach**, and honestly cannot be bought this way: one colour from five draws needs
+four colourless ingredients in the hand, which needs at least four in the deck,
+which is most of it. The remaining lever is `Layout.ingredientsPerRound` — at
+three the colour count is free to be one, two or three and every cake in
+`GAMEPLAY.md` §5 comes back. That is the change to make when the garden lands and
+starts choosing what goes in the basket, because an interesting three beats an
+exhaustive five.
+
+They earn their place beyond the arithmetic. Both carry an effect that until now
+only a *coloured* ingredient could give — `maanstof` glows like sun honey,
+`veertje` rises like cloud cream — so those two effects stop being welded to
+yellow and white and can land on a cake of any colour.
+
+The props follow the set's own rules. **Moon dust is read through its pouch**,
+which is the lesson the honey pot taught: a substance with no shape of its own is
+read through its container, and dust is that problem in a harder form. It is
+deliberately unlike the honey pot — a tall soft bag pinched shut against a wide
+rigid jar with a dipper across it — because at thumbnail size two containers have
+to differ in silhouette or they are one prop in two colours. **The feather** is a
+flat extruded blade facing the camera, like the clover and the star, and what
+sells it is the asymmetry: fuller on one side of the shaft than the other, which
+a symmetrical leaf shape cannot borrow.
+
+### The portrait### The portrait
 
 **There is a photograph of Nina on the back wall above Otto**, framed in rose.
 Tapping it sparkles and she says who it is. It fills the one large blank surface
@@ -1316,7 +1378,7 @@ with **Copy settings** before overwriting.
 
 ## Audio
 
-**Voice is real.** 136 Dutch lines, generated with `text2speech_v2` /
+**Voice is real.** 142 Dutch lines, generated with `text2speech_v2` /
 `elevenlabs` and bundled as mp3s — the app never calls an API. Nina is Gracie;
 Otto is provisionally Barrett, and `audio/auditions/README.md` explains how to
 swap him for four credits and no code.
@@ -1324,7 +1386,8 @@ swap him for four credits and no code.
 The 30 added on 2026-08-16 — 9 credits — are the 21 naming lines in
 `script-namen.json`, the 5 that make the end of a round a moment rather than a
 cut, the 4 that finish the room and open the door, and 2 for the spoon that replaced
-the whisk — the naming line, and the one `roeren` variant that named the tool. `VoiceBank` loads every bundled `script-*.json` and merges them, so a whole
+the whisk — the naming line, and the one `roeren` variant that named the tool — and 6 for
+the two new ingredients. `VoiceBank` loads every bundled `script-*.json` and merges them, so a whole
 new layer of speech is a new file and no Swift change; the same is true of the
 next room.
 

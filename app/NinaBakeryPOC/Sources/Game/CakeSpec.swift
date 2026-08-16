@@ -13,6 +13,18 @@ enum Ingredient: String, Codable, CaseIterable {
     case klaver          // toverklaver
     case wolkenroom      // wolkenroom
     case sterrensuiker   // sterrensuiker
+    // **The two colourless ones, added 2026-08-16 to get the cake rules back.**
+    // See the note over `RoundState.fresh`: five distinct ingredients drawn
+    // from six meant at least four coloured ones in every bowl, so every cake
+    // was a regenboogtaart and `.effen` and `.gemengd` had quietly become
+    // unreachable. Two more *colourless* ones change the arithmetic — the draw
+    // can now come up two-coloured about one round in six.
+    //
+    // They earn their place beyond the arithmetic. Both carry an effect that
+    // until now only a coloured ingredient could give, so `glimt` and `hoog`
+    // stop being tied to yellow and white and can land on a cake of any colour.
+    case maanstof        // moon dust — makes it glow, no colour of its own
+    case veertje         // a magic feather — makes it rise, no colour of its own
 
     var dutchName: String {
         switch self {
@@ -22,6 +34,8 @@ enum Ingredient: String, Codable, CaseIterable {
         case .klaver: return "toverklaver"
         case .wolkenroom: return "wolkenroom"
         case .sterrensuiker: return "sterrensuiker"
+        case .maanstof: return "maanstof"
+        case .veertje: return "toverveertje"
         }
     }
 
@@ -34,14 +48,18 @@ enum Ingredient: String, Codable, CaseIterable {
         case .honing: return .geel
         case .klaver: return .groen
         case .wolkenroom: return .wit
-        case .sterrensuiker: return nil
+        // **Three colourless ingredients now, and that is the point of them.**
+        // `GAMEPLAY.md` §5 always allowed "no colours" as a real outcome; what
+        // it did not survive was five draws from a deck that was five-sixths
+        // coloured.
+        case .sterrensuiker, .maanstof, .veertje: return nil
         }
     }
 
     var effect: CakeEffect? {
         switch self {
-        case .honing: return .glimt
-        case .wolkenroom: return .hoog
+        case .honing, .maanstof: return .glimt
+        case .wolkenroom, .veertje: return .hoog
         case .sterrensuiker: return .fonkelt
         default: return nil
         }
@@ -68,6 +86,8 @@ enum Ingredient: String, Codable, CaseIterable {
         case .klaver: return Palette.sageDeep
         case .wolkenroom: return Palette.creamLight
         case .sterrensuiker: return Palette.mintLight
+        case .maanstof: return Palette.lilac
+        case .veertje: return Palette.creamLight
         }
     }
 }

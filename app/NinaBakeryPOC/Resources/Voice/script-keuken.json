@@ -96,6 +96,19 @@
       { "index": 19, "file": "nina-ingredient-sterrensuiker-2.mp3", "text": "Sterretjes erin. Die maken hem helemaal glinsterend!" }
     ]},
 
+    { "id": "nina.ingredient.maanstof", "character": "nina", "variants": [
+      { "file": "nina-ingredient-maanstof-1.mp3", "seconds": 3.27,
+        "text": "Maanstof! Nu gaat de taart zachtjes gloeien." },
+      { "file": "nina-ingredient-maanstof-2.mp3", "seconds": 3.58,
+        "text": "Oeh, maanstof. Daar wordt hij mooi glanzend van!" }
+    ]},
+    { "id": "nina.ingredient.veertje", "character": "nina", "variants": [
+      { "file": "nina-ingredient-veertje-1.mp3", "seconds": 3.74,
+        "text": "Een toverveertje! Daar wordt de taart lekker hoog van." },
+      { "file": "nina-ingredient-veertje-2.mp3", "seconds": 3.66,
+        "text": "Kijk, een veertje erbij. Nu rijst hij helemaal omhoog!" }
+    ]},
+
     { "id": "nina.keuken.roeren", "character": "nina", "variants": [
       { "index": 20, "file": "nina-keuken-roeren-1.mp3", "text": "Nu roeren! Draai maar rondjes met je vinger." },
       { "index": 21, "file": "nina-keuken-roeren-2.mp3", "text": "Roer maar lekker door, met de pollepel." },

@@ -156,13 +156,14 @@ enum Halo {
 
         guard let parent = entity.parent else { return nil }
 
-        // **1.10, down from 1.35, and the clamps came down with it.** The ring
-        // used to be drawn a third wider than the prop it was marking, which
-        // was right while it was dim — a faint thing needs size to be found.
-        // Emitting, that same margin reads as a hoop thrown around the prop
-        // rather than as light at its foot, and it is what made the cue feel
-        // big. Just proud of the prop is enough now.
-        let radius = min(0.062, max(0.016, size * 1.10))
+        // **0.97, down from 1.35 by way of 1.10.** The ring used to be drawn a
+        // third wider than the prop it was marking, which was right while it
+        // was dim — a faint thing needs size to be found. Emitting, that margin
+        // reads as a hoop thrown around the prop rather than as light at its
+        // foot. Under 1 the ring passes just *inside* the prop's own footprint,
+        // so what shows is a rim of light escaping from under it, which is both
+        // smaller and more like a thing standing on a lit spot.
+        let radius = min(0.055, max(0.014, size * 0.97))
         let ring = Entity()
         ring.name = ringName
 
