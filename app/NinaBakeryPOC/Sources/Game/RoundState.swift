@@ -122,9 +122,12 @@ enum RoundStore {
         try? data.write(to: url, options: .atomic)
     }
 
-    /// For the debug panel — start the round over without deleting her shelf.
-    static func reset(keepingShelf shelf: [CakeSpec]) -> RoundState {
-        let state = RoundState.fresh(keeping: shelf)
+    /// For the debug panel — the whole kitchen back to the beginning, plank
+    /// included. It used to keep the shelf; `KitchenRoom.restartRound` has the
+    /// argument for why nothing does any more, now that what is on the plank is
+    /// what finishes the room.
+    static func reset() -> RoundState {
+        let state = RoundState.fresh()
         save(state)
         return state
     }

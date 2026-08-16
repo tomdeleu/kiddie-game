@@ -315,8 +315,12 @@ three ways of saying the same sentence to somebody who cannot read:
 - **the light behind it turns on**, emissive, so that slice is worth seeing.
   Unlit it read as the inside of a cupboard.
 - **a ring lands on the floor at the threshold** — the same cue as every other
-  instruction in the game, on a marker 46 mm out from the wall so a 43 mm ring
-  is not half buried in the plaster.
+  instruction in the game. It sits 40 mm out from the wall with a 38 mm radius,
+  which tucks its inner edge *under the jambs*: light spilling from beneath a
+  door is a thing she has seen, whereas a disc of light near a door is not. It
+  started 6 mm further out and looked exactly like the second thing. The wall's
+  inner face is what stops it getting closer — a ring reaching into the plaster
+  is a ring with a bite out of it.
 
 This is **the second time the game lights two things at once**, and the reason is
 different from the first. The cake-to-plank halo was a journey with two ends;
@@ -491,22 +495,41 @@ It is now a **soft** ring on the surface *around* the prop, picked from
 colour entirely. Softness is the whole reason this version survives where the
 first ring did not — a hard edge is what UI has and light does not.
 
-**And it is bright yellow, which took a fourth go.** The colour was sampled
+**And getting it to look like light took four goes.** The colour was sampled
 straight off the plate — a `#F6D861` gold washing out to `#FFF6D8` at the core —
 and that failed for the same reason the emissive version before it did: *the
 core was where the ring was brightest, and the core was almost white*. In a room
 whose floor, walls, counter and half the props are cream, a near-white band on a
-cream surface is a smudge, and it read as a faint yellow-ish nothing. It now
-runs from an amber `#F0AE12` in the shoulders *up* to a saturated `#FFE01F` at
-the core rather than *down* to white, the peak band is fully opaque, and the
-falloff is slightly fatter so more of the ring sits near that peak. Yellow is the
-one hue nothing in the kitchen is painted — the same argument that made the
-sparkles yellow — so the ring is the only thing on screen that colour.
+cream surface is a smudge, and it read as a faint yellow-ish nothing.
 
-The lesson, on the fourth attempt, is narrower than "judge it on the device":
-the plate was right about the *shape* of the falloff and wrong about the
-*value*, because it was rendered on a grey studio backdrop and the value is the
-half that has to survive the room it is standing on.
+The third go made it a saturated amber-to-yellow, and that was **worse** — for a
+reason worth writing down because it is counter-intuitive: **saturating a yellow
+darkens it.** `#F0AE12` sits at 68% luminance and the kitchen floor is
+`blushPink` at 84%, so painting the ring a stronger yellow painted it *darker
+than the floor it was lying on*. An unlit transparent material can only ever
+blend towards its own colour, so what came out was a dim gold stain — and the
+harder it tried, the dimmer it got.
+
+**The fourth is different in kind: the ring emits.** `Palette.lightMaterial` puts
+`emissiveIntensity` above 1, which lands the surface *above white* in the HDR
+buffer before tonemapping — somewhere no base colour can reach, because a base
+colour is by definition a fraction of the light falling on it. That is the whole
+difference between a yellow shape and a light, and the first three attempts were
+all trying to reach the second using only the tools of the first.
+
+Two things follow. The colours are now **hot and pale** rather than saturated —
+`#FFD44A` in the shoulders, `#FFF6C0` at the core, both at or above the floor's
+own luminance, so the ring can only ever brighten what it lies on. And the
+**emission is scaled by the falloff squared** while opacity is scaled by the
+falloff itself, so the band's centre line glows hardest and its edges fade into
+the floor rather than stopping at one. If it still reads flat on device, the one
+lever is `Halo.emissionPeak`; the geometry and the profile are right.
+
+The lesson is narrower than "judge it on the device". The plate was right about
+the *shape* of the falloff and wrong about the *value*, because it was rendered
+on a grey studio backdrop — and a value sampled against grey says nothing about
+what it will do against pink. **Read a colour against the surface it will
+actually lie on; and if it has to look like a light, make it one.**
 
 It is eighteen concentric bands of geometry at graded opacities on a Gaussian
 profile, not a texture. A radial-gradient texture needs `TextureResource`, a
@@ -601,12 +624,22 @@ of frames is recorded in `GAMEPLAY.md` §1.
 ### Starting over
 
 A **restart button**, bottom-left, same size and weight as the intro's skip
-button and with no text on it either. It throws away the cake she is holding,
-keeps every cake already on the plank, and Nina says so out loud.
+button and with no text on it either. It puts **the whole kitchen back to the
+beginning — plank and all** — and Nina says so out loud.
 
-She can press it, and that is fine: nothing finished is ever lost. If she turns
-out to press it constantly, the fix is to move it behind the parent gate — not
-to add a confirmation, which is unreadable to her by definition.
+It used to keep the cakes already on the plank, on the argument that nothing she
+has finished should ever be lost. That was right while the plank was only a
+trophy shelf, and it stopped being right the moment three cakes on it became the
+thing that *finishes the room*: keeping them would make one button mean two
+things depending on when it was pressed — on an empty plank, start again; on a
+full one, start again but stay finished, with the door still standing open behind
+her. **A button that has to be explained is a button a 4-year-old cannot use.**
+It now has one meaning, and the room agrees with it: with the shelf empty
+`roomComplete` goes false, so the door closes and its halo goes out.
+
+She can press it, and that is fine. If she turns out to press it constantly, the
+fix is to move it behind the parent gate — not to add a confirmation, which is
+unreadable to her by definition.
 
 ### The toys
 
@@ -806,14 +839,14 @@ That step is the one place two things are lit at once: the cake, because it is
 what she picks up, and the plank, because it is where it goes. Every other step
 lights exactly one prop. A journey has two ends.
 
-**And a lilac.** The photograph the portrait is built from has the girl in a
-lilac t-shirt covered in deeper purple daisies, and purple is the second hue the
-locked thirteen do not contain — the plates had no more purple in frame than they
-had blue. `Palette.lilac` and `lilacDeep` are built the same way `berryBlue` was,
-and it is worth saying again because it is the rule rather than the exception:
-**not sampled off a screen, derived to the register.** Same desaturation and the
-same lightness as `mint` and `berryBlue`, so the shirt sits beside the mint jars
-rather than shouting over them. Two surfaces in the game, both inside the frame.
+**And a lilac**, which is now only used by the portrait's *fallback*. The
+photograph has the girl in a lilac t-shirt covered in deeper purple daisies, and
+purple is the second hue the locked thirteen do not contain — the plates had no
+more purple in frame than they had blue. `Palette.lilac` and `lilacDeep` are
+built the same way `berryBlue` was, and it is worth saying again because it is
+the rule rather than the exception: **not sampled off a screen, derived to the
+register.** They survive the switch to the real photograph because the modelled
+girl behind it does.
 
 **The palette gained a blue, and then an amber.** The locked thirteen sampled
 from the plates have pink, mint, sage, cream, butter and wood, and no blue at
@@ -833,34 +866,67 @@ a cavity, and the locked thirteen bottom out at `woodBrown` — a surface colour
 and nothing else. The no-AO rule is about shadow pooled onto surfaces; a mouth
 is the one place where dark is the subject.
 
+**The honey pot is a third bigger than the other five.** The six ingredients were
+built to one rule — roughly 20 mm each, so that no one of them is the big one —
+and `zonnehoning` is the one that had to break it. It is the only one whose
+subject is a *container*, and a container has to read as having an inside; at
+20 mm the pot, its rim, the pool of honey and the dipper across it were four
+details inside a thumbnail, and all that carried the object was its silhouette.
+The extra third is what makes the honey visible as honey.
+
 ### The portrait
 
-**There is a picture of Nina on the back wall above Otto**, framed in rose, from
-a photograph the owner supplied: a small girl grinning, brown hair swept back
-into a knot with a loose strand at the front, in a lilac t-shirt printed with
-purple daisies that have yellow smiling centres. Tapping it sparkles and she
-says who it is. It fills the one large blank surface left in the room — the back
-wall's right-hand half, which read as blank.
+**There is a photograph of Nina on the back wall above Otto**, framed in rose.
+Tapping it sparkles and she says who it is. It fills the one large blank surface
+left in the room — the back wall's right-hand half, which read as blank.
 
-**It is modelled, not textured, and that is not a shortcut.** Dropping the photo
-onto a plane would have been three lines. It would also have put a rendered,
-smoothly-shaded, occlusion-heavy image inside a room whose entire argument is
-flat facets and no ambient occlusion — which is precisely what
-`references/ingredients/flour-cloud.png` produced, where the one photographic
-thing in the kitchen was the only thing that looked like it came from somewhere
-else, and the owner called it on sight. A reference plate is a brief. This is the
-brief carried out in the room's own vocabulary: eighteen boxes, three stars and
-three icospheres.
+**It is the actual JPEG, not a reconstruction of it.** This was built the other
+way first — the girl rebuilt out of boxes and stars in the room's own faceted
+vocabulary — on the argument that a photograph inside a flat-shaded room is the
+flour-cloud mistake again, the one thing on screen that came from somewhere
+else. The owner overruled it, and the analogy was wrong: the flour cloud was a
+*photographic prop pretending to be part of the room*, whereas this is a
+photograph **being a photograph**. A framed picture on a wall is supposed to look
+like it came from somewhere else — that is what a photograph is for. And a child
+who knows the girl in it is not going to be persuaded by an approximation made of
+boxes.
+
+So the frame stays the room's, faceted rose rails made of the same stuff as the
+door, and what is inside it is the file.
+
+Three things follow from using a real texture, each a constraint the procedural
+props never had:
+
+- **The picture is a `MeshResource.generatePlane`, not a `FacetedMesh` box.**
+  `FacetedMesh` writes positions and normals and no texture coordinates, so a
+  texture on one of its meshes has nothing to map to. `generatePlane` carries
+  UVs, and a photograph is flat anyway.
+- **The frame is sized from the photo**, not the other way round. The texture's
+  pixel dimensions give the aspect and the picture is fitted inside
+  `Layout.portraitPictureMax`, so a landscape photo gives a landscape frame and a
+  portrait one gives a portrait frame. Replacing the file needs no numbers
+  changed.
+- **It is lit, not unlit.** A `PhysicallyBasedMaterial` with the photo as its
+  base colour dims and brightens with the room's key light the way a real print
+  behind glass would. Unlit would be truer to the file and would read as a screen
+  hanging on the wall.
+
+**The photograph is not in the repository, and the app is correct without it.**
+It is a picture of a child; the frame, the wiring and the fallback are committed
+and the file is added locally —
+[`Resources/Assets.xcassets/NinaPortrait.imageset/README.md`](NinaBakeryPOC/Resources/Assets.xcassets/NinaPortrait.imageset/README.md)
+is a one-line instruction. Without it the frame falls back to the modelled girl,
+which is kept for a reason `ModelLibrary` already established: **a missing asset
+must never leave a live tap target with nothing behind it.** An empty frame over
+a working tap is the "every tap does something" rule broken. With the file it is
+her photo; without it, it is a picture of her.
 
 The frame is a shallow shadow-box 12 mm deep — the same depth the door frame
 stands proud of the left wall, and for the same reason: at this camera a casing
-with no visible side reads as paint. Everything inside it is staged at its own
-depth, climbing from the mount at 0.0015 to the eyes at 0.0118, because two
-surfaces at the same z flicker against each other and at this size that would
-look like the picture was broken rather than like a picture. The face ends up
-about 2 mm proud of the rails, which is deliberate: a portrait perfectly flush
-with its own frame is a decal, and in a room whose whole subject is faceted
-relief it should catch the key light like everything else.
+with no visible side reads as paint. The print sits 4 mm behind the front of the
+rails, which is the rebate a picture sits in, and runs 2 mm oversize under them
+on every side, because two coplanar edges at this scale show a hairline of wall
+wherever the rasteriser rounds the wrong way and it would look like a crack.
 
 ## The plank instead of the wall
 

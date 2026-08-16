@@ -61,14 +61,33 @@ import simd
 /// surface is a faint smudge, and the owner read it as "a faint yellow-ish
 /// colour" rather than as a light.
 ///
-/// It is now **bright yellow all the way through**: an amber `#F0AE12` in the
-/// shoulders coming *up* to a saturated `#FFE01F` at the core, rather than
-/// *down* to white. Yellow is the one hue nothing in the kitchen is painted —
-/// the same argument that made the sparkles yellow — so the ring is the only
-/// thing on screen that colour, and the peak band is fully opaque. That is what
-/// a plate sampled on a grey studio backdrop could not tell us: the reference
-/// was right about the *shape* of the falloff and wrong about the value, and the
-/// value is the half that has to survive the room it is standing on.
+/// The second attempt at the colour made it a saturated amber-to-yellow, and
+/// that was **worse**, for a reason worth writing down because it is not
+/// obvious: *saturating a yellow darkens it*. `#F0AE12` sits at 68% luminance
+/// and the kitchen's floor is `blushPink` at 84%, so painting the ring a
+/// stronger yellow painted it **darker than the floor it was lying on**. An
+/// unlit transparent material can only ever blend towards its own colour, so
+/// what that produced was a dim gold stain — "too dark of a yellow", exactly
+/// as reported, and the harder it tried the dimmer it got.
+///
+/// ## Fourth, and the reason this one is different in kind
+///
+/// **The ring emits.** `Palette.lightMaterial` puts `emissiveIntensity` above 1,
+/// which lands the surface *above white* in the HDR buffer before tonemapping —
+/// somewhere no base colour can reach, because a base colour is by definition a
+/// fraction of the light falling on it. That is the difference between a yellow
+/// shape and a light, and every previous attempt was trying to get to the second
+/// using only the tools of the first.
+///
+/// Two things follow from it. The colours are now **hot and pale** rather than
+/// saturated — `#FFD44A` in the shoulders and `#FFF6C0` at the core, both at or
+/// above the floor's luminance, so the ring can only ever brighten what it lies
+/// on. And the **emission is scaled by the same falloff as the opacity**, so the
+/// band's centre line glows hardest and its edges fade into the floor instead of
+/// stopping at one.
+///
+/// If it still reads flat on device, the lever is `emissionPeak` and nothing
+/// else; the geometry and the profile are right.
 @MainActor
 enum Halo {
 
@@ -79,16 +98,26 @@ enum Halo {
         let ring: Entity
     }
 
-    /// **The band colours. Both are bright yellow, and that is the point.**
+    /// **The band colours: hot and pale, not saturated.**
     ///
-    /// The shoulders are an amber and the core is a saturated yellow, so the
-    /// band gets *more* colourful towards the middle instead of washing out to
-    /// the cream the room is already made of. See the note above the type.
-    private static let gold = Palette.hex(0xF0AE12)
-    /// Internal rather than private only because it is this function's own
-    /// default argument, and a default value has to be as visible as the
-    /// function it belongs to.
-    static let core = Palette.hex(0xFFE01F)
+    /// Both sit at or above the floor's own luminance, so the ring can only ever
+    /// brighten what it is lying on — see the note above the type for why the
+    /// saturated version came out darker than the floor. The colour it *reads*
+    /// as yellow comes from the emission, not from these.
+    private static let gold = Palette.hex(0xFFD44A)
+    /// Internal rather than private only because it is `attach`'s own default
+    /// argument, and a default value has to be as visible as the function it
+    /// belongs to. Also the colour of the sparkles lifting off the ring.
+    static let core = Palette.hex(0xFFF6C0)
+
+    /// **How hard the middle of the band glows.** Above 1 is above white, which
+    /// is the only place a thing can be to look like a light rather than like a
+    /// yellow shape. Scaled down across the falloff, so this is the peak and the
+    /// edge of the ring emits nothing.
+    ///
+    /// This is the one number to turn if the halo still does not read as light
+    /// on the device.
+    private static let emissionPeak: Float = 4.5
 
     private static let bandCount = 18
     /// How far the falloff reaches either side of the ring, as a fraction of
@@ -136,8 +165,14 @@ enum Halo {
                                                segments: 24)
             let mesh = FacetedMesh.flatShaded(positions: geometry.positions,
                                               indices: geometry.indices)
-            var material = UnlitMaterial(color: tint(alpha))
-            material.blending = .transparent(opacity: .init(floatLiteral: alpha))
+            // Emission falls off faster than opacity — squared rather than
+            // linear — so the glow is concentrated in the middle of the band
+            // while the band itself keeps its soft edge. A glow as wide as the
+            // geometry reads as a haze over the whole prop; this reads as a
+            // filament with light coming off it.
+            let material = Palette.lightMaterial(tint(alpha), emission: core,
+                                                 intensity: emissionPeak * alpha * alpha,
+                                                 opacity: alpha)
             let model = ModelEntity(mesh: mesh, materials: [material])
             model.name = ringName
             // A hair apart, so no two bands ever z-fight where they meet.
@@ -214,9 +249,8 @@ enum Halo {
         return max(0, (g - edge) / (1 - edge))
     }
 
-    /// Amber in the shoulders, coming up to full yellow at the core. It used to
-    /// mix towards warm white, which is what made the brightest part of the ring
-    /// the part that vanished into a cream room.
+    /// Yellow in the shoulders, hot pale yellow at the core. Both are bright;
+    /// the *emission* is what makes the middle of the band read as the source.
     private static func tint(_ alpha: Float) -> UIColorLike {
         Palette.mix(gold, core, min(1, alpha * 1.25))
     }

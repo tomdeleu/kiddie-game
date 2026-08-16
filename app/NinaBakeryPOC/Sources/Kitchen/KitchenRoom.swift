@@ -403,7 +403,7 @@ final class KitchenRoom {
             return
         }
         guard doorHalo == nil, let marker = doorMarker else { return }
-        doorHalo = Halo.attach(to: marker, radius: 0.032, ticker: ticker,
+        doorHalo = Halo.attach(to: marker, radius: Layout.doorHaloRadius, ticker: ticker,
                                surfaceY: { _ in Layout.floorY })
     }
 
@@ -577,7 +577,11 @@ final class KitchenRoom {
             // loose with four cakes on it.
             target.onTap = { [weak self] in self?.sayName(Line.ditTaartenplank, wobbling: nil) }
         }
-        touch.register("portrait", entity: portrait, radius: 0.036,
+        // 50 mm rather than 36: the frame is now sized from the photograph and
+        // can be up to 88 mm across, so a target measured against the old fixed
+        // frame would have left its corners dead. Nothing is near it — Otto,
+        // the closest other target, is 201 mm away.
+        touch.register("portrait", entity: portrait, radius: 0.050,
                        planeY: Layout.portraitCentre.y) { target in
             target.onTap = { [weak self] in self?.tapPortrait() }
         }
@@ -1852,15 +1856,28 @@ final class KitchenRoom {
         }
     }
 
-    /// The restart button. Throws this round away and starts a fresh one,
-    /// keeping the cakes already on the plank — nothing she has finished is
-    /// ever lost, so pressing it can never be a disaster.
+    /// **The restart button. It starts the whole kitchen over, plank and all.**
+    ///
+    /// It used to keep the cakes already on the plank, on the argument that
+    /// nothing she has finished should ever be lost. That argument was right
+    /// when the plank was only a trophy shelf — and it stopped being right the
+    /// moment three cakes on it became the thing that *finishes the room*
+    /// (owner, 2026-08-16: "when restarting via the button, the shelf must be
+    /// cleared of cakes, you start over again").
+    ///
+    /// Keeping them now would make the button mean two different things
+    /// depending on when it was pressed: on an empty plank, start again; on a
+    /// full one, start again but stay finished, with the door still open behind
+    /// her. A button that has to be explained is a button a 4-year-old cannot
+    /// use. This one has one meaning — **everything back to the beginning** —
+    /// and the room agrees with it: with the shelf empty `roomComplete` goes
+    /// false, so `applyStep` closes the door, puts out its halo, and the kitchen
+    /// is genuinely at the start again rather than at the start of a round.
     func restartRound() {
-        let shelf = state.shelf
         sound.play(.whoosh, volume: 0.6)
         Sparkles.burst(at: Layout.bowlHome + [0, 0.04, 0], in: root, ticker: ticker,
                        colour: Palette.mintLight, count: 10)
-        state = RoundState.fresh(keeping: shelf)
+        state = RoundState.fresh()
         RoundStore.save(state)
         build(flat: flat)
         voice.say(Line.opnieuw)
@@ -2364,9 +2381,9 @@ final class KitchenRoom {
     }
 
     /// Debug panel. The player-facing version is `restartRound`, which also
-    /// says so out loud.
+    /// says so out loud — and clears the plank for the same reason this does.
     func resetRound() {
-        state = RoundStore.reset(keepingShelf: state.shelf)
+        state = RoundStore.reset()
         build(flat: flat)
     }
 
