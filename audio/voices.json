@@ -16,7 +16,7 @@
       "gender": "female",
       "line_estimate": 90,
       "note": "Same voice as before: Gracie was cast young so she reads as a playmate, which is exactly right now that she IS the playmate. Write her lines in the first person - 'ik', 'we' - never as someone instructing a child from outside. She talks to the player the way a 4-year-old narrates her own game.",
-      "_recast": "2026-08-15. These lines used to belong to Luna, a separate fairy helper, and the change was the owner's call. Ten lines named 'Nina' in the second person and were regenerated in the first; the other 64 needed no change because they never named anybody. Every id and filename moved from luna.* to nina.*. What is now unowned is the twelfth friend on the wall, who was Luna - see GAMEPLAY.md."
+      "_recast": "2026-08-15. These lines used to belong to Luna, a separate fairy helper, and the change was the owner's call. Ten lines named 'Nina' in the second person and were regenerated in the first; the other 64 needed no change because they never named anybody. Every id and filename moved from luna.* to nina.*. The twelfth frame that was Luna's is Nina's own as of 2026-08-16 - see the cast list below and GAMEPLAY.md section 1."
     },
     "otto": {
       "name": "Otto de oven",
@@ -47,8 +47,8 @@
         { "id": "roos", "name": "Roos de egel", "wish": "hartjes", "voice_slot": null },
         { "id": "tobi", "name": "Tobi de hond", "wish": "sterretjes", "voice_slot": null },
         { "id": "nel", "name": "Nel de slak", "wish": "twee kleuren door elkaar", "voice_slot": null },
-        { "id": "luna", "name": "Luna de fee", "wish": "geen - vrije keuze, de laatste taart", "voice_slot": null,
-          "_open": "UNOWNED. Luna was the fairy helper and the twelfth friend at once; the helper role is now Nina's, so the last frame on the wall has no character behind it. It needs either a new twelfth friend or a reason for the gold frame to be Nina's own. Decide before the wall is built - it is free to change now and expensive once modelled." }
+        { "id": "nina", "name": "Nina zelf - de gouden lijst", "wish": "geen - de laatste taart is voor de bakkerij", "voice_slot": "nina",
+          "_decided": "2026-08-16, owner. The twelfth frame is Nina's own rather than a new twelfth friend. Nobody comes to the door on the last round and there is nobody to thank her; the bakery is what is being finished and it is hers. So this slot needs NO new casting and NO new character - it is the voice already cast above, and its lines belong to the finale rather than to a guest. Eleven friends need voices, not twelve." }
       ]
     }
   }

@@ -13,6 +13,13 @@ below is still the record of that.
 > thing and needed two fixes on first build; expect similar here, and see
 > [First build](#first-build) for the two places most likely to want one.
 
+> **This room is the reference implementation.** What it established that every
+> later room inherits — the box and the camera, the step machine, the save
+> shape, the halo, the voice contract, targets, carrying, idle, misses, the
+> door — is written down once in [`ROOMS.md`](../ROOMS.md). This file stays the
+> record of *why the kitchen is the way it is*; that one is the contract. When
+> the two disagree, this file is the truth and `ROOMS.md` has drifted.
+
 ## The opening
 
 Three layers, each uncovering the next: **title plate → film → kitchen.** The
@@ -652,8 +659,10 @@ rotation and a sine wave, and at this scale reads better.
 **The voice is hers.** Until 2026-08-15 the speaker was a separate fairy called
 Luna and Nina had no avatar at all; the owner reversed both. Ten lines that
 named Nina in the second person were regenerated in the first, every id and
-filename moved from `luna.*` to `nina.*`, and what that leaves open on the wall
-of frames is recorded in `GAMEPLAY.md` §1.
+filename moved from `luna.*` to `nina.*`. The one thing it left open — the
+twelfth gold frame on the wall, which was Luna's — was closed on 2026-08-16:
+**it is Nina's own**, and the last cake is the one she makes for her finished
+bakery. `GAMEPLAY.md` §1.
 
 ### Starting over
 
