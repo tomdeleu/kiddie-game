@@ -42,6 +42,10 @@
     "nina.speel.bloem": "Occasionally, when the flour sack is thumped.",
     "nina.stil": "The 45-second idle line. Never twice in a row.",
     "nina.klaar": "The cake is on the plank and the round is over.",
+    "nina.plank.gezet": "Second line of the finishing celebration: it is up there with the others. Three variants, one of which is simply being proud of her — the round ends on a person rather than on a fact.",
+    "nina.plank.nogeen": "Third and last: what happens next. Added 2026-08-16 because the round used to reset three quarters of a second after the cake landed, which read as the game throwing her work away rather than putting it up. The rebuild now waits for this line to finish.",
+    "nina.kamer.klaar": "The third cake landed and the kitchen is finished. Replaces nina.plank.nogeen in the closing chain from that cake on, and is also how a finished kitchen greets her when she comes back to it. Points at the door.",
+    "nina.kamer.deur": "Tapping the open door once the kitchen is finished — the room's ending. Promises the next room *soon* rather than *now*, because it does not exist yet and a 4-year-old told she is going somewhere has to be taken there.",
     "nina.keuken.opDePlank": "The round's last step: carry the finished cake up onto the taartenplank. Replaced tapping the doorway.",
     "nina.bron.plankHoog": "Source 0, the upper wall shelf — the highest reach in the room.",
     "nina.bron.plankLaag": "Source 1, the lower wall shelf.",
@@ -193,6 +197,32 @@
       { "index": 70, "file": "nina-klaar-1.mp3", "text": "Wat een prachtige taart hebben we gemaakt!" },
       { "index": 71, "file": "nina-klaar-2.mp3", "text": "Die is echt mooi geworden. Zullen we er nog eentje maken?" },
       { "index": 72, "file": "nina-klaar-3.mp3", "text": "Zet hem maar op de plank, bij de andere taarten." }
+    ]},
+    { "id": "nina.plank.gezet", "character": "nina", "variants": [
+      { "file": "nina-plank-gezet-1.mp3", "seconds": 3.58,
+        "text": "Kijk! Nu staat hij op de plank, netjes bij de andere taarten." },
+      { "file": "nina-plank-gezet-2.mp3", "seconds": 4.15,
+        "text": "Kijk eens hoeveel mooie taarten er al op de plank staan. Allemaal van jou!" },
+      { "file": "nina-plank-gezet-3.mp3", "seconds": 3.66,
+        "text": "Wat heb jij dat goed gedaan, zeg. Ik ben zo trots op jou!" }
+    ]},
+    { "id": "nina.plank.nogeen", "character": "nina", "variants": [
+      { "file": "nina-plank-nogeen-1.mp3", "seconds": 3.19,
+        "text": "Zullen we er nog eentje maken? Ik zet alvast een nieuwe kom klaar." },
+      { "file": "nina-plank-nogeen-2.mp3", "seconds": 3.66,
+        "text": "En nu? Nog een taart natuurlijk! Ik haal een nieuw balletje deeg." }
+    ]},
+    { "id": "nina.kamer.klaar", "character": "nina", "variants": [
+      { "file": "nina-kamer-klaar-1.mp3", "seconds": 5.02,
+        "text": "Kijk eens! Drie taarten op de plank. De keuken is klaar! Tik maar op de deur." },
+      { "file": "nina-kamer-klaar-2.mp3", "seconds": 4.78,
+        "text": "Er staan al drie taarten, wat knap! De deur staat op een kiertje. Tik er maar op." }
+    ]},
+    { "id": "nina.kamer.deur", "character": "nina", "variants": [
+      { "file": "nina-kamer-deur-1.mp3", "seconds": 4.78,
+        "text": "Kijk! Achter de deur is het helemaal licht. Daar gaan we straks samen verder." },
+      { "file": "nina-kamer-deur-2.mp3", "seconds": 5.28,
+        "text": "Oeh, de deur gaat open! Daarachter is nog een kamer. Die komt gauw, hoor." }
     ]},
 
     { "id": "nina.keuken.opdracht", "character": "nina", "variants": [

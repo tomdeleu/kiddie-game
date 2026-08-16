@@ -50,6 +50,15 @@ enum Ingredient: String, Codable, CaseIterable {
     /// Nina's reaction as it lands in the bowl.
     var lineID: String { "nina.ingredient.\(rawValue)" }
 
+    /// **What it is called, said when she taps it instead of dragging it.**
+    ///
+    /// The pair is the whole idea: `lineID` is what an ingredient *does* to the
+    /// cake and fires when it goes in the bowl; this is what it *is*, and fires
+    /// on a tap. Six cases, one id each, derived off the case name so the six
+    /// are spelled once — a typo here is a silent tap, which is the hardest kind
+    /// of bug to notice in a game with no text in it.
+    var nameLineID: String { "nina.dit.\(rawValue)" }
+
     /// The colour of the token she drags. Reads as the fruit, not as the cake.
     var tokenColour: UIColorLike {
         switch self {
@@ -85,6 +94,34 @@ enum CakeColour: String, Codable, CaseIterable {
         case .geel: return Palette.sandyWood
         case .groen: return Palette.sageDeep
         case .wit: return Palette.cream
+        }
+    }
+
+    /// **What the batter turns when this colour goes in**, which is not `base`
+    /// and not `deep` either.
+    ///
+    /// A cake tier is seen against a room; batter is seen against the inside of
+    /// a cream bowl, from across the table, by someone who is four. The job is
+    /// separation from cream, and the two existing values are each wrong for it
+    /// in one case: `geel`'s `deep` is `sandyWood`, which next to cream reads as
+    /// *browner* rather than yellower, and `base` for pink and blue is only a
+    /// step or two off the cream it is replacing.
+    ///
+    /// So this is a third value picked for one job — the most saturated member
+    /// of each family that is still unmistakably that colour. Owner's note,
+    /// 2026-08-16: "the colour change should be quite visible."
+    ///
+    /// White is the honest exception. `wolkenroom` makes a *white* cake, so its
+    /// batter goes to the lightest cream there is and the change is a brightening
+    /// rather than a hue — and `sterrensuiker` changes nothing at all, which is
+    /// the point of it (`GAMEPLAY.md` §5: "no colours" is a real outcome).
+    var batter: UIColorLike {
+        switch self {
+        case .roze: return Palette.blushPinkDeep
+        case .blauw: return Palette.berryBlueDeep
+        case .geel: return Palette.honeyAmber
+        case .groen: return Palette.sageDeep
+        case .wit: return Palette.creamLight
         }
     }
 
@@ -166,9 +203,14 @@ struct CakeSpec: Codable, Equatable {
     /// What the batter looks like right now — the colour of the last coloured
     /// thing she dropped in. It changes under her hands as she fills the bowl,
     /// which is the only feedback that the choice is doing anything.
+    ///
+    /// **Through `CakeColour.batter`, not `base`.** `base` is a tier colour, and
+    /// a tier colour inside a cream bowl seen from across the room is a tint
+    /// rather than a colour — which is why the change sometimes did not land at
+    /// all (owner, 2026-08-16).
     var batterColour: UIColorLike {
         for ingredient in ingredients.reversed() {
-            if let colour = ingredient.colour { return colour.base }
+            if let colour = ingredient.colour { return colour.batter }
         }
         return Palette.cream
     }

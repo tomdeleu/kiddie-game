@@ -147,10 +147,20 @@ enum Layout {
         var spot: SIMD3<Float> {
             switch self {
             // The two shelf spots follow the left wall out to x = −0.211, and
-            // sit at the near end of the longer plank — 38 mm clear of the
+            // each sits at one *end* of its own plank — 38 mm clear of the
             // nearest jar, where they used to be 25 mm from it.
+            //
+            // **They are at opposite ends, and that is the whole reason the
+            // lower shelf is built mirrored.** Both used to be at z = 0.044,
+            // which put the toverbosbes exactly 45 mm above the
+            // regenboogaardbei — one directly on top of the other, which from a
+            // fixed camera is the one arrangement that makes two different
+            // places look like one place with two things in it. They are now
+            // 148 mm apart along the wall: the high one at the near end, the low
+            // one at the far end, and `RoomBuilder.buildShelf(mirrored:)` flips
+            // the lower plank's three jars over to suit.
             case .plankHoog: return SIMD3<Float>(-0.211, 0.164, 0.044)
-            case .plankLaag: return SIMD3<Float>(-0.211, 0.119, 0.044)
+            case .plankLaag: return SIMD3<Float>(-0.211, 0.119, -0.104)
             case .aanrecht: return SIMD3<Float>(-0.034, counterTopY + 0.011, -0.174)
             case .mandje: return basketHome + SIMD3<Float>(0, 0.012, 0)
             case .krat: return crateSpot + SIMD3<Float>(0, 0.017, 0)
@@ -206,18 +216,82 @@ enum Layout {
     /// camera looks down the +X+Z diagonal, so floor to the *left* of the table
     /// is hidden by the table itself and floor to the right is not.
     ///
-    /// It moved out with the table's right edge — 34 mm right and 16 mm
-    /// forward. It had 12 mm of floor between it and that edge and now has 24,
-    /// which is what stops it reading as something shoved under the table.
-    static let crateSpot = SIMD3<Float>(0.132, floorY, 0.058)
+    /// **Moved out into the near-right foreground** (owner's note: it sat too
+    /// close to both the oven and the table). At (0.132, 0.058) it had 24 mm of
+    /// floor between it and the table's right edge and sat tucked into the
+    /// corner where the table's corner and Otto's footprint nearly meet — a
+    /// place with no floor around it, which is what makes a thing read as shoved
+    /// under the furniture rather than standing on the ground. It now has 42 mm
+    /// of clear floor to the table's nearest corner and is a full 190 mm from
+    /// Otto's dome, out where the room is open.
+    ///
+    /// It is also now the right-hand half of a pair: the flour sack stands on
+    /// the near-left floor and this stands on the near-right, so the two of them
+    /// bracket the open foreground instead of both crowding the middle.
+    static let crateSpot = SIMD3<Float>(0.150, floorY, 0.126)
 
-    /// The plank on the back wall the finished cakes stand on. Back against the
-    /// new wall, and 20 mm longer, which widens the four cake slots from 32.5 mm
-    /// to 37.5 — the shrunk cakes are 32 mm across, so they stopped touching.
+    /// The plank on the back wall the finished cakes stand on.
+    ///
+    /// **0.190 m long, up from 0.150** (owner: it should be longer so putting
+    /// something on it is easier). It buys two separate things, and the second
+    /// one is the point of the change:
+    ///
+    /// - the four cake slots go from 37.5 mm to 47.5 mm, and the shrunk cakes
+    ///   are 32 mm across, so they stand apart rather than shoulder to shoulder;
+    /// - **the landing zone gets 40 mm wider**, because `nearPlank` measures
+    ///   half the plank plus `plankSnapRadius` — so the last action of the whole
+    ///   round, which is also the one performed at arm's length against the back
+    ///   wall, is the most forgiving one in the room.
+    ///
+    /// It grew leftwards. The right end stays near x = 0 because past that it
+    /// would start crossing Otto's chimney; the left end reaches −0.190 against
+    /// a wall face at −0.218.
     static let cakePlankY: Float = 0.135
     static let cakePlankCentre = SIMD2<Float>(-0.095, -0.196)
-    static let cakePlankLength: Float = 0.150
+    static let cakePlankLength: Float = 0.190
     static let cakeShelfCapacity = 4
+
+    /// **How many cakes finish the kitchen.**
+    ///
+    /// The room had no end. It looped: bake a cake, put it on the plank, bake
+    /// another, forever, and the only thing that ever changed was which four
+    /// cakes were on the shelf. Three gives the loop a shape — long enough that
+    /// the third one is an achievement, short enough that it is one sitting for
+    /// a 4-year-old at roughly eleven minutes a round.
+    ///
+    /// It is a floor rather than a quota. Nothing stops at three: a fresh round
+    /// still starts, the dough is still on the table, and she can bake a fourth
+    /// if she would rather. What three does is **open the door** —
+    /// `KitchenRoom.roomComplete`.
+    ///
+    /// Below `cakeShelfCapacity` on purpose, so finishing the room never
+    /// depends on the plank having dropped an older cake off the end of itself.
+    static let cakesToFinish = 3
+
+    /// **Nina's portrait, framed, on the back wall above Otto.**
+    ///
+    /// The one picture in the kitchen, and the only thing hanging on the back
+    /// wall's right-hand half — which until now was the only large blank surface
+    /// in the room, and read as blank.
+    ///
+    /// It is built rather than textured, which is the same call
+    /// `references/props/README.md` records for every other prop: a photograph
+    /// mapped onto a plane in a room made of flat-shaded facets is the flour
+    /// cloud all over again — the one thing on screen that came from somewhere
+    /// else. So the photo is the *brief*, and what hangs on the wall is the
+    /// faceted version of it. See `KitchenProps.portrait`.
+    ///
+    /// The height is fixed at both ends: the frame's bottom edge clears the top
+    /// of Otto's chimney rim (0.114) and its top edge clears the wall (0.235).
+    static let portraitCentre = SIMD3<Float>(0.152, 0.175, -half + wallThickness)
+    /// Outer size of the frame, and how far it stands off the plaster.
+    static let portraitSize = SIMD2<Float>(0.070, 0.086)
+    /// Deep enough to be a shallow shadow-box rather than a flat plaque, so
+    /// everything inside it sits *behind* the front of the rails and only the
+    /// face is in relief. It is the same 12 mm the door frame stands proud of
+    /// the left wall, for the same reason: at this camera a casing with no
+    /// visible side reads as paint.
+    static let portraitDepth: Float = 0.012
 
     /// The way out, on the left wall. Leads to the decorating room when it
     /// exists; for now it opens, shows the light on the other side, and swings
@@ -233,7 +307,31 @@ enum Layout {
     /// The x follows the left wall out — it is the wall face plus the 2 mm
     /// `doorFrameZ` stands proud of it, and `doorWallFace` re-derives that
     /// from `half`, so the two cannot drift apart.
-    static let doorwayCentre = SIMD3<Float>(-0.216, floorY, 0.140)
+    ///
+    /// **It moved 32 mm towards the camera, because it could not open.** At
+    /// z = 0.140 the opening ran from z = 0.103 to 0.177 and the table's near
+    /// edge is at z = 0.122, so the two overlapped by 19 mm — and the leaf
+    /// swings *into* the room off the near jamb, which put its outer half
+    /// straight through the table top. Owner's report on the 2026-08-16 build:
+    /// "the door cannot open without being through the table."
+    ///
+    /// The fix is z, not x, and it is bounded on both sides. The whole left wall
+    /// is spoken for — the counter takes z ∈ [−0.213, −0.151], the two
+    /// ingredient shelves take [−0.120, 0.060] and the table takes
+    /// [−0.018, 0.122] — so the only clear run is the near-left corner, and the
+    /// door is 94 mm wide across its frame. Working the swing out gives the
+    /// window: the leaf's worst reach over the table's x-range is 71.8 mm back
+    /// from the hinge (at 14°, not at full open — a nearly-shut door is longer
+    /// in z than an open one), so the centre has to sit above z = 0.157; and the
+    /// frame's outer edge has to stay on the floor, which caps it at 0.183.
+    /// **0.172 sits in the middle of that window**: 15 mm of daylight between
+    /// the swept leaf and the table, and 11 mm between the frame and the floor's
+    /// near edge.
+    ///
+    /// The table did not have to move, and did not. It is the one thing in the
+    /// room seven props are laid out on, and every one of those positions is
+    /// absolute.
+    static let doorwayCentre = SIMD3<Float>(-0.216, floorY, 0.172)
 
     /// The hole in the wall: width, then height. **Taller than Nina**, who is
     /// 0.125 m — a door she could not walk through is a cupboard, and the one
@@ -255,6 +353,26 @@ enum Layout {
     /// The frame's centre, and the leaf's back face — both out in the room.
     static let doorFrameZ: Float = 0.002
     static let doorLeafZ: Float = 0.003
+
+    /// **Where the leaf rests once the kitchen is finished: on the latch, not
+    /// shut.** About 11°, which is the smallest angle that still shows a slice
+    /// of the light behind it at this camera — the point is not to open the
+    /// door, it is to say the door is *openable*, and a door standing ajar says
+    /// that without a word or an arrow. Tapping it takes it the rest of the way
+    /// and lets it fall back to here rather than to shut.
+    static let doorAjarAngle: Float = -0.20
+    /// How far a tap opens it. **35°, not wide open**: past about 45° the leaf's
+    /// face turns out of the key light, which comes over the camera's right
+    /// shoulder, and a door that goes dark as it opens looks like a hole.
+    static let doorOpenAngle: Float = -0.62
+
+    /// Where the ring of light sits when the door is the thing she should go
+    /// for. On the floor at the threshold, a little way out into the room —
+    /// centred on the doorway itself the ring would be half inside the wall,
+    /// which at 43 mm of radius it now clears by 5 mm.
+    static var doorHaloSpot: SIMD3<Float> {
+        SIMD3<Float>(doorwayCentre.x + 0.046, floorY, doorwayCentre.z)
+    }
 
     /// Horizontal distance. Snapping ignores height on purpose: she aims at
     /// where a thing *is on the table*, not at its centre of mass.
@@ -287,6 +405,82 @@ enum Layout {
             return tableTopY
         }
         if within(point, centre: counterCentre, size: counterSize, margin: 0.006) {
+            return counterTopY
+        }
+        return floorY
+    }
+
+    /// **The same ray she is pointing along, read at a different height.**
+    ///
+    /// The camera never moves, so any world point plus the eye is a complete
+    /// description of the ray through it — which means a touch reported on one
+    /// horizontal plane can be re-read on any other with no extra plumbing from
+    /// the gesture. `TouchRouter` hands the room a point on a fixed plane; this
+    /// is what turns it back into "where she is pointing".
+    ///
+    /// It is the whole basis of `KitchenRoom.carry`. See `surfacePointedAt`.
+    @MainActor
+    static func pointOnRay(through anchor: SIMD3<Float>, atHeight y: Float) -> SIMD3<Float> {
+        let eye = CameraRig.eye
+        let along = anchor - eye
+        guard abs(along.y) > 1e-6 else { return anchor }
+        return eye + along * ((y - eye.y) / along.y)
+    }
+
+    /// **What her finger is pointing at**, which is not the same question as
+    /// `surfaceY(at:)` and is the one a drag has to ask.
+    ///
+    /// `surfaceY(at:)` answers "what is underneath this world point" — right for
+    /// settling a prop that has already been put down, and for the halo, both of
+    /// which start from a position. This answers "which surface does the line
+    /// from her eye through her fingertip land on first", and it is a pure
+    /// function of the touch: it does not look at the prop at all.
+    ///
+    /// **That independence is the entire point, and it is what fixes the drag.**
+    /// Carrying used to take the XZ from a plane frozen at pick-up height while
+    /// the prop's own height eased between surfaces, so the prop slid up or down
+    /// the screen away from her fingertip — 68 mm of world height between the
+    /// table and the floor, which at this camera throws the prop most of a
+    /// thumb's width off her finger and reads as it jumping somewhere else
+    /// (owner, 2026-08-16). The obvious repair — re-project on a plane at the
+    /// prop's *current* height — is the thing `KitchenRoom.pickUp` documents as
+    /// a feedback loop, and it is worth knowing why the loop is real: at this
+    /// eye, moving the plane by Δ slides the intersection about 1.63Δ along the
+    /// view direction, so a prop stepping off the table drops 68 mm, which drags
+    /// the mapped point 78 mm back *onto* the table, which lifts it again. It
+    /// oscillates, and that is exactly the judder the cake used to have at the
+    /// plank.
+    ///
+    /// Deciding the surface from the ray alone breaks the loop, because the
+    /// height can no longer feed back into the choice: the surface depends on
+    /// her finger, the prop's height chases the surface, and the prop's XZ is
+    /// read off the same ray at whatever height it has reached. Nothing in that
+    /// chain points backwards, so the prop stays under her fingertip at every
+    /// height and cannot flip between two of them.
+    ///
+    /// It reads better as a rule, too. Pointing at the table means the table;
+    /// pointing at the floor in front of it means the floor.
+    ///
+    /// **And it makes losing a prop behind the table impossible**, which is
+    /// worth spelling out because it falls straight out of the construction. A
+    /// floor point is hidden exactly when the sightline to it crosses the table
+    /// top inside the table's footprint — and that sightline *is* this ray, so
+    /// the crossing is the very point tested on the first line. Any floor she
+    /// could reach the hidden strip through is a ray that hit the table first,
+    /// and got the table. `isOutOfSight` and the float-home in `settle` stay as
+    /// the safety net for the small constant grab offset a carried prop keeps
+    /// off the ray, but they should now essentially never fire.
+    ///
+    /// Tested top-down, which for horizontal planes whose footprints do not nest
+    /// is nearest-camera first.
+    @MainActor
+    static func surfacePointedAt(from anchor: SIMD3<Float>) -> Float {
+        if within(pointOnRay(through: anchor, atHeight: tableTopY),
+                  centre: tableCentre, size: tableSize, margin: 0.006) {
+            return tableTopY
+        }
+        if within(pointOnRay(through: anchor, atHeight: counterTopY),
+                  centre: counterCentre, size: counterSize, margin: 0.006) {
             return counterTopY
         }
         return floorY
@@ -448,8 +642,12 @@ enum RoomBuilder {
 
         root.addChild(buildTable(flat: flat))
         root.addChild(buildCounter(flat: flat))
-        root.addChild(buildShelf(flat: flat, height: 0.150))
-        root.addChild(buildShelf(flat: flat, height: 0.105))
+        // The lower shelf is built mirrored end for end. Its ingredient then
+        // stands at the far end while the upper shelf's stands at the near one,
+        // so the two are 148 mm apart along the wall instead of one directly
+        // above the other — see `Layout.Source.spot`.
+        root.addChild(buildShelf(flat: flat, height: 0.150, mirrored: false))
+        root.addChild(buildShelf(flat: flat, height: 0.105, mirrored: true))
         root.addChild(buildCakePlank(flat: flat))
 
         return root
@@ -504,16 +702,28 @@ enum RoomBuilder {
         return counter
     }
 
-    static func buildShelf(flat: Bool, height: Float) -> Entity {
+    /// One wall shelf: a plank, three jars, and a gap at one end where the
+    /// round's ingredient stands.
+    ///
+    /// `mirrored` flips the contents end for end about the plank's own centre
+    /// (z = −0.030), which moves the gap from the near end to the far one. It
+    /// exists for exactly one reason: the two shelves each hold an ingredient,
+    /// and with both planks laid out the same way those two sat at the same z
+    /// and 45 mm apart in y — one directly above the other, which from a camera
+    /// that never moves is indistinguishable from one place holding two things.
+    /// Mirroring the lower shelf puts them at opposite ends and costs nothing:
+    /// it is the same plank and the same three jars, read backwards.
+    static func buildShelf(flat: Bool, height: Float, mirrored: Bool = false) -> Entity {
         let shelf = Entity()
         shelf.name = "Shelf\(Int(height * 1000))"
         let x = -Layout.half + 0.019
+        let plankCentreZ: Float = -0.030
 
         // 0.180 long, up from 0.150, so the three jars and the ingredient
-        // standing at the near end all get the wider spacing the room gained.
+        // standing at one end all get the wider spacing the room gained.
         let plank = model(.box([0.014, 0.008, 0.180]),
                           Palette.sandyWood, flat: flat, name: "ShelfPlank")
-        plank.position = [x, height, -0.030]
+        plank.position = [x, height, plankCentreZ]
         shelf.addChild(plank)
 
         // Three jars, not six — the style wants fewer, bigger props. 54 mm
@@ -521,7 +731,10 @@ enum RoomBuilder {
         // spacing the spheres very nearly met.
         let jarColours = [Palette.mint, Palette.creamLight, Palette.blushPinkDeep]
         for (i, colour) in jarColours.enumerated() {
-            let z = Float(-0.102) + Float(i) * 0.054
+            let along = Float(-0.102) + Float(i) * 0.054
+            // Reflect about the plank's centre. The jars keep their order, so
+            // the mint one is still the outermost of the three.
+            let z = mirrored ? 2 * plankCentreZ - along : along
             let jar = model(.prism(radius: 0.010, height: 0.022, sides: 8),
                             colour, flat: flat, name: "Jar\(Int(height * 1000))_\(i)")
             jar.position = [x, height + 0.004, z]
@@ -553,7 +766,11 @@ enum RoomBuilder {
         plank.position = [Layout.cakePlankCentre.x, Layout.cakePlankY, Layout.cakePlankCentre.y]
         shelf.addChild(plank)
 
-        for (i, dx) in [Float(-0.064), 0.064].enumerated() {
+        // The brackets follow the ends of the board rather than sitting at a
+        // typed-in offset, so lengthening the plank cannot leave them stranded
+        // in the middle of it.
+        let bracketInset = Layout.cakePlankLength / 2 - 0.013
+        for (i, dx) in [-bracketInset, bracketInset].enumerated() {
             let bracket = model(.box([0.008, 0.020, 0.008]),
                                 Palette.blushPinkDeep, flat: flat, name: "CakePlankBracket\(i)")
             bracket.position = [Layout.cakePlankCentre.x + dx,

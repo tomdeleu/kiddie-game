@@ -26,6 +26,18 @@ enum KitchenProps {
         /// space. Every eye animation tweens back to this, so overlapping
         /// glances can never leave a pupil stranded off-centre.
         let pupilRest: SIMD3<Float>
+        /// **An eyeball's undeformed scale, and the same rule one level up.**
+        ///
+        /// The blink squeezes an eye down its Y axis and restores it after, and
+        /// it used to restore to whatever `eye.scale` happened to be when that
+        /// blink was started. Otto is the most tapped prop in the room and every
+        /// tap blinks him, so a second tap mid-blink captured the *squeezed*
+        /// scale as the new rest pose and gave it back flattened — and the third
+        /// tap flattened that. Poke him half a dozen times and his eyes were
+        /// slits that never opened again (owner, 2026-08-16). It is exactly the
+        /// compounding `Ticker.Pose` was written to stop for `squash`; the eyes
+        /// go through `tween` directly, so they need their own copy of the rule.
+        let eyeRest: SIMD3<Float>
         let chimneyTop: SIMD3<Float>
     }
 
@@ -197,6 +209,7 @@ enum KitchenProps {
 
         return Oven(root: root, dome: dome, doorPivot: doorPivot, door: door,
                     eyes: eyes, pupils: pupils, pupilRest: pupilRest,
+                    eyeRest: SIMD3<Float>(repeating: 1),
                     chimneyTop: Layout.ovenOrigin + SIMD3<Float>(0.028, 0.112, -0.030))
     }
 
@@ -816,6 +829,162 @@ enum KitchenProps {
             pin.addChild(handle)
         }
         return pin
+    }
+
+    // MARK: - The portrait
+
+    /// **Nina, in a frame on the back wall above Otto.**
+    ///
+    /// Built from the photograph the owner supplied on 2026-08-16: a small girl
+    /// grinning, brown hair swept back into a knot with a loose strand at the
+    /// front, in a lilac t-shirt printed with purple daisies that have yellow
+    /// smiling centres.
+    ///
+    /// **It is modelled, not textured, and that decision is not a shortcut.**
+    /// Dropping the photo onto a plane would have been three lines. It would
+    /// also have put a rendered, smoothly-shaded, occlusion-heavy image inside a
+    /// room whose entire argument is flat facets and no ambient occlusion —
+    /// which is precisely the failure `references/ingredients/flour-cloud.png`
+    /// produced, where the one photographic thing in the kitchen was the only
+    /// thing that looked like it came from somewhere else, and the owner called
+    /// it on sight. A reference plate is a brief. This is the brief carried out
+    /// in the room's own vocabulary: boxes, a star, and one icosphere.
+    ///
+    /// Everything is laid out in the frame's local XY plane with +Z out into the
+    /// room, so hanging it is one position and no rotation — the back wall
+    /// already faces +Z. **Every part is staged at its own depth**, climbing
+    /// from the mount at z = 0.0015 to the eyes at 0.0118, because two surfaces
+    /// at the same z flicker against each other and at this size that would read
+    /// as the picture being broken rather than as a picture. Nothing reaches
+    /// back past z = 0, which is the plaster.
+    ///
+    /// The face ends up standing about 2 mm proud of the rails. That is
+    /// deliberate rather than tolerated: a portrait perfectly flush with its own
+    /// frame is a decal, and in a room whose whole subject is faceted relief it
+    /// should catch the key light like everything else does.
+    static func portrait(flat: Bool) -> Entity {
+        let root = Entity()
+        root.name = "Portrait"
+        root.position = Layout.portraitCentre
+
+        let outer = Layout.portraitSize
+        let depth = Layout.portraitDepth
+        let rail: Float = 0.006
+        let inner = SIMD2<Float>(outer.x - rail * 2, outer.y - rail * 2)
+
+        // The frame: four rails, mitre-less — the two uprights run the full
+        // height and the two crossbars fit between them, which is how a
+        // butt-jointed frame is actually made and one fewer thing to line up.
+        for side: Float in [-1, 1] {
+            let upright = RoomBuilder.model(.box([rail, outer.y, depth]),
+                                            Palette.rose, flat: flat,
+                                            name: "PortraitFrameSide")
+            upright.position = [side * (outer.x - rail) / 2, 0, depth / 2]
+            root.addChild(upright)
+
+            let crossbar = RoomBuilder.model(.box([inner.x, rail, depth]),
+                                             Palette.rose, flat: flat,
+                                             name: "PortraitFrameRail")
+            crossbar.position = [0, side * (outer.y - rail) / 2, depth / 2]
+            root.addChild(crossbar)
+        }
+
+        // The mount she is standing on.
+        let backing = RoomBuilder.model(.box([inner.x, inner.y, 0.003]),
+                                        Palette.creamLight, flat: flat,
+                                        name: "PortraitBacking")
+        backing.position = [0, 0, 0.0015]
+        root.addChild(backing)
+
+        // A shoulders-up crop, the way the photograph is framed: the shirt fills
+        // the bottom third and runs off both sides of the mount.
+        let shirt = RoomBuilder.model(.box([0.044, 0.022, 0.006]),
+                                      Palette.lilac, flat: flat, name: "PortraitShirt")
+        shirt.position = [0, -0.026, 0.005]
+        root.addChild(shirt)
+
+        // Three daisies on it. An eight-point star is a daisy at 5 mm across,
+        // and the yellow middle is the detail that makes it one rather than a
+        // snowflake.
+        for (i, spot) in [SIMD2<Float>(-0.014, -0.020), [0.004, -0.028],
+                          [0.019, -0.017]].enumerated() {
+            let petals = RoomBuilder.model(.star(points: 8, outerRadius: 0.0052,
+                                                 innerRadius: 0.0022, thickness: 0.0016),
+                                           Palette.lilacDeep, flat: flat,
+                                           name: "PortraitDaisy\(i)")
+            // `star` is built in the XY plane facing +Z, which is already the
+            // way the frame looks — so unlike the blueberry's crown this one
+            // needs no rotation at all.
+            petals.position = [spot.x, spot.y, 0.0086]
+            root.addChild(petals)
+
+            let heart = RoomBuilder.model(.prism(radius: 0.0019, height: 0.0014, sides: 6),
+                                          Palette.butterYellow, flat: flat,
+                                          name: "PortraitDaisyHeart\(i)")
+            heart.orientation = simd_quatf(angle: .pi / 2, axis: [1, 0, 0])
+            heart.position = [spot.x, spot.y, 0.0099]
+            root.addChild(heart)
+        }
+
+        // Hair first, as the slab everything else sits in front of.
+        let hair = RoomBuilder.model(.box([0.034, 0.034, 0.005]),
+                                     Palette.woodBrown, flat: flat, name: "PortraitHair")
+        hair.position = [0, 0.002, 0.005]
+        root.addChild(hair)
+
+        let head = RoomBuilder.model(.box([0.026, 0.028, 0.008]),
+                                     Palette.sandyWood, flat: flat, name: "PortraitFace")
+        head.position = [0, 0.000, 0.007]
+        root.addChild(head)
+
+        // The fringe swept across the top of the face, and the knot of hair
+        // behind her ear. Both are in the photo and both are what stop the head
+        // reading as a bald block.
+        let fringe = RoomBuilder.model(.box([0.028, 0.008, 0.008]),
+                                       Palette.woodBrown, flat: flat, name: "PortraitFringe")
+        fringe.position = [0.001, 0.014, 0.0072]
+        root.addChild(fringe)
+
+        let knot = RoomBuilder.model(.icosphere(radius: 0.0055, subdivisions: 0),
+                                     Palette.woodBrown, flat: flat, name: "PortraitKnot")
+        knot.position = [-0.017, 0.012, 0.0055]
+        root.addChild(knot)
+
+        for (i, dx) in [Float(-0.0062), 0.0062].enumerated() {
+            let eye = RoomBuilder.model(.icosphere(radius: 0.0024, subdivisions: 0),
+                                        Palette.woodBrown, flat: flat,
+                                        name: "PortraitEye\(i)")
+            eye.position = [dx, 0.003, 0.0118]
+            root.addChild(eye)
+
+            let cheek = RoomBuilder.model(.prism(radius: 0.0040, height: 0.0012, sides: 6),
+                                          Palette.blushPink, flat: flat,
+                                          name: "PortraitCheek\(i)")
+            cheek.orientation = simd_quatf(angle: .pi / 2, axis: [1, 0, 0])
+            cheek.position = [dx * 1.7, -0.004, 0.0116]
+            root.addChild(cheek)
+        }
+
+        // The grin. She is grinning in the photograph with her teeth showing,
+        // and two boxes is the whole of it: a mouth, and a lighter bar along the
+        // top of it. One box on its own reads as a frown at any size.
+        let mouth = RoomBuilder.model(.box([0.0130, 0.0050, 0.0022]),
+                                      Palette.blushPinkDeep, flat: flat,
+                                      name: "PortraitMouth")
+        mouth.position = [0, -0.0092, 0.0116]
+        root.addChild(mouth)
+
+        let teeth = RoomBuilder.model(.box([0.0106, 0.0018, 0.0024]),
+                                      Palette.creamLight, flat: flat,
+                                      name: "PortraitTeeth")
+        teeth.position = [0, -0.0076, 0.0118]
+        root.addChild(teeth)
+
+        // Wall-mounted, like the ingredient shelves and the cake plank: its cast
+        // could only ever print the frame onto the plaster beside it, and it is
+        // grounded by hanging rather than by a shadow.
+        root.excludeFromShadowCasting()
+        return root
     }
 
     struct Doorway {
