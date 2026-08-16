@@ -30,10 +30,12 @@ fresh round. It has never been compiled — it was written in a container with n
 Swift toolchain — and its README names the two places most likely to want a fix
 on first build.
 
-Two deliberate deviations from the design are recorded there: the doorway does
-not lead to the decorating room, which does not exist yet, and the palette
-gained a blue and an amber the locked thirteen do not contain. The round is
-ended by carrying the finished cake up onto the plank.
+Three deliberate deviations from the design are recorded there: the doorway does
+not lead to the decorating room, which does not exist yet; the palette gained a
+blue and an amber the locked thirteen do not contain; and the room box is now
+0.46 m with the camera pulled back 8%, rather than the 0.4 m and the framing
+`POC.md` signed off. The round is ended by carrying the finished cake up onto
+the plank.
 
 **Next**, per [`GAMEPLAY.md`](GAMEPLAY.md) §9: decorating, then the party, then
 the wall of twelve frames. And **test the kitchen with Nina first** — `POC.md`
