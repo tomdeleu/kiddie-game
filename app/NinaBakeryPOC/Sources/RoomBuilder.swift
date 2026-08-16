@@ -460,9 +460,20 @@ enum KitchenLayout {
                            tops: [shelfTopY(0.150), shelfTopY(0.105)])
         ],
         // Inside the counter is inside a solid box, which is worse than hidden.
+        //
+        // **It never fires, and that is the right answer rather than dead
+        // weight.** A drop over the counter's footprint resolves to the counter
+        // *top* through `rects` above, so it lands on the worktop and is never
+        // inside anything — which is exactly how "you cannot drop things below
+        // the back counter" is satisfied. This stays as the backstop for the
+        // day a solid is added that is not also standable.
         solids: [Surfaces.Rect(centre: counterCentre, size: counterSize, y: counterTopY)],
-        // The table is what the fixed camera cannot see past.
-        hider: Surfaces.Rect(centre: tableCentre, size: tableSize, y: tableTopY),
+        occluders: occluders,
+        // **Superseded by `occluders`.** The table used to be the room's one
+        // `hider`, which is the same idea flattened to a single thin plate — and
+        // being single is what let three other things in this room hide props
+        // with nothing to catch it. See `occluders`.
+        hider: nil,
         // The room's own furniture, not round numbers, which is why they moved
         // when it did: `minX` reaches the wall shelves at −0.211, `maxX` reaches
         // past Otto's mouth at 0.152 so the tin can be pushed all the way in,
@@ -477,6 +488,80 @@ enum KitchenLayout {
         minX: -0.215, maxX: 0.190, minZ: -0.205, maxZ: 0.190,
         lift: 0.012
     )
+
+    /// **The three things in this kitchen you can lose something behind.**
+    ///
+    /// Owner, 2026-08-16: things dropped below the table, behind the oven and
+    /// below the back counter cannot be picked up again. All three are the same
+    /// bug, and it is a bug of *arithmetic scope* rather than of behaviour — the
+    /// float-home in `CarryController.settle` was already right, it was just
+    /// being asked about one piece of furniture out of four, and only ever about
+    /// drops that ended on the floor.
+    ///
+    /// Each of these is a solid box the fixed camera cannot see through, and
+    /// every one is derived from the constants above, so a prop moving moves its
+    /// shadow with it:
+    ///
+    /// - **The table**, which was the old `hider` and is the biggest of them.
+    ///   Solid from the floor up rather than a plate at 0.072: the floor under a
+    ///   table is not somewhere a prop can rest anyway — `surfaces.y(at:)` puts
+    ///   it on the table top instead — so the legs cost nothing and the box is
+    ///   simpler than the truth.
+    /// - **The counter**, whose shadow is the strip of floor between it and the
+    ///   table. Most of that strip was already in the table's shadow; the near
+    ///   45 mm of it was not, and that is where Nina stands.
+    /// - **Otto**, and he is the one that mattered. He is 124 mm of dome and
+    ///   arch standing on the floor to the right of the table, where nothing
+    ///   else in the room reaches — so the floor behind him was in nobody's
+    ///   shadow and a tin left there was simply gone. The box is his dome's
+    ///   footprint stretched forward to the lip of his mouth. **His chimney is
+    ///   left out on purpose**: it is 37 mm taller, so its shadow falls further
+    ///   back than the dome's and lands on floor the dome has already claimed.
+    ///   **The mouth is not affected** — a tin dropped at the mouth is snapped
+    ///   into Otto by `KitchenRoom.dropTin` before a settle is ever reached, and
+    ///   a tin dropped *inside* his footprint at any other moment is exactly the
+    ///   drop this is here to undo.
+    /// **Nina is deliberately not on this list**, and she was on it once. She
+    /// stands in the open between the table and the counter, so she does hide a
+    /// patch of floor nothing else hides — a 75 × 50 mm strip in front of the
+    /// counter's left half, measured by sweeping the room at 5 mm. Three things
+    /// outweigh it:
+    ///
+    /// - it is a tenth of the problem. Swept the same way, Otto uniquely hides
+    ///   1024 cells of floor and the table 798; she hides 110.
+    /// - **she costs work surface.** Her hat crosses the sightline to the
+    ///   counter's back-left corner, so putting her on the list makes a
+    ///   20 × 15 mm patch of worktop 13 mm from the sink float things home. Every
+    ///   other surface in the room keeps what is put on it, and one corner that
+    ///   does not is worse than the strip of floor it buys.
+    /// - **she moves.** Squash-and-stretch, a hat a beat behind her, legs — a
+    ///   fixed box is an approximation of furniture and a guess about a person,
+    ///   and a prop half-behind her flickers into view anyway.
+    ///
+    /// **What none of the three shadow is any work surface**, which is the
+    /// property that makes this safe to switch on, and it is measured rather
+    /// than argued: every point of the table top, every point of the counter
+    /// top, the whole near foreground and all thirteen prop home spots come back
+    /// reachable at 2.5 mm. It is not luck either — it is the camera being high.
+    /// Rays to the counter top are already 60 mm behind the table's far edge by
+    /// the time they fall to table height, and rays to the table top never reach
+    /// Otto's z at all, because `ovenOrigin` was moved back until the two shared
+    /// none.
+    static let occluders: [Surfaces.Occluder] = [
+        Surfaces.Occluder(centre: tableCentre, size: tableSize,
+                          bottom: RoomBox.floorY, top: tableTopY),
+        Surfaces.Occluder(centre: counterCentre, size: counterSize,
+                          bottom: RoomBox.floorY, top: counterTopY),
+        // The dome is circular in plan, radius `ovenDomeRadius`; the arch juts
+        // forward out of it as far as `mouthFrontZ`. A box around the pair
+        // over-claims at the two front corners by about 18 mm of floor, which is
+        // floor nothing stands on and she has no reason to reach into.
+        Surfaces.Occluder(
+            centre: SIMD2<Float>(ovenOrigin.x,
+                                 ovenOrigin.z + (mouthFrontZ - ovenDomeRadius) / 2),
+            size: SIMD2<Float>(ovenDomeRadius * 2, ovenDomeRadius + mouthFrontZ),
+            bottom: RoomBox.floorY, top: ovenOrigin.y + ovenDomeHeight),
+    ]
 
     /// **What a prop is standing on at this point in the room.**
     ///
@@ -531,9 +616,17 @@ enum KitchenLayout {
     /// top inside the table's footprint — and that sightline *is* this ray, so
     /// the crossing is the very point tested on the first line. Any floor she
     /// could reach the hidden strip through is a ray that hit the table first,
-    /// and got the table. `isOutOfSight` and the float-home in `settle` stay as
-    /// the safety net for the small constant grab offset a carried prop keeps
-    /// off the ray, but they should now essentially never fire.
+    /// and got the table.
+    ///
+    /// **Behind the table. Not behind anything else** — and reading that
+    /// sentence as "props cannot be lost" is what left the room shipping with
+    /// three places they could be (owner, 2026-08-16). The argument is exactly
+    /// as wide as `rects`, because a *surface* is the only thing this can hand
+    /// back: Otto is not a surface, so no ray ever "hits Otto and gets Otto" —
+    /// it sails through him and lands on the floor behind. `isOutOfSight` is
+    /// what covers the rest of the furniture, and it is not a safety net for a
+    /// rounding error; it is the whole answer for everything that is solid
+    /// without being standable.
     ///
     /// Tested top-down, which for horizontal planes whose footprints do not nest
     /// is nearest-camera first.
@@ -585,24 +678,25 @@ enum KitchenLayout {
     /// **Somewhere she could put a thing and then not get it back.**
     ///
     /// "It stays where you put it" is right up until she puts it where the
-    /// table is in the way. The camera never moves (`CONCEPT.md` §9.4), so
-    /// there is a fixed patch of floor behind the table that is simply not on
-    /// screen — a rolling pin left there is gone, and a 4-year-old has no
-    /// camera control to go and find it. Those drops float back instead.
+    /// furniture is in the way. The camera never moves (`CONCEPT.md` §9.4), so
+    /// behind every solid thing in the room there is a fixed patch that is
+    /// simply not on screen — a rolling pin left there is gone, and a
+    /// 4-year-old has no camera control to go and find it. Those drops float
+    /// back to where she picked them up instead.
     ///
-    /// Only floor-level drops can be lost. Anything on a work surface is above
-    /// the things that would hide it.
+    /// **It used to ask about the table and nothing else**, and about floor
+    /// drops and nothing else, which is how the room shipped with three ways to
+    /// lose a prop: below the table, behind Otto, and below the back counter
+    /// (owner, 2026-08-16). It now asks about all of `occluders`, at the height
+    /// the prop is actually going to come to rest at. The patches are still
+    /// derived rather than typed in, so they stay true if the furniture or the
+    /// camera ever move — when the table grew, its patch grew with it, which is
+    /// the derivation doing its job rather than a regression.
     ///
-    /// The patch is derived rather than typed in, so it stays true if the table
-    /// or the camera ever move: follow the sightline from the eye to the point,
-    /// see where it crosses the height of the table top, and ask whether that
-    /// is over the table. At the committed camera that region is roughly
-    /// x ∈ [−0.215, 0.02], z ∈ [−0.11, 0.06] — the strip of floor between the
-    /// table and the counter, which is where Nina stands.
-    ///
-    /// **It grew with the table**, from a hand-sized patch to that strip, and
-    /// that is the derivation doing its job rather than a regression: a bigger
-    /// table hides more floor behind it, so more floor has to be off limits.
+    /// Swept at 5 mm, that is about 46% of the floor she can drag to, in two
+    /// pieces: the strip behind the table and down the left wall, and the whole
+    /// back-right quadrant behind Otto. Both are places the fixed camera shows
+    /// her nothing at all.
     @MainActor
     static func isOutOfSight(_ point: SIMD3<Float>) -> Bool {
         surfaces.isOutOfSight(point)

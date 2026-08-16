@@ -264,13 +264,20 @@ final class CarryController {
             return
         }
 
+        // **Where it is about to come to rest**, which is not where she let go
+        // of it: a carried prop rides `surfaces.lift` above its surface, and it
+        // is the landing spot she will be looking for afterwards.
+        let resting = SIMD3<Float>(entity.position.x,
+                                   surfaces.y(at: entity.position),
+                                   entity.position.z)
+
         // **Out of sight is the one place a drop is not allowed to stick.** The
-        // camera is fixed, so the floor behind the furniture is a patch she
-        // could put something into and never get back out of — and she has no
-        // way to look round it. It floats back to where she picked it up, which
-        // is the one case the old float-home behaviour was right about.
-        // Everywhere else on the floor is hers.
-        guard !surfaces.isOutOfSight(entity.position) else {
+        // camera is fixed, so behind the furniture is a patch she could put
+        // something into and never get back out of — and she has no way to look
+        // round it. It floats back to where she picked it up, which is the one
+        // case the old float-home behaviour was right about. Everywhere else in
+        // the room is hers.
+        guard !surfaces.isOutOfSight(resting) else {
             sound.play(.whoosh, volume: 0.35)
             ticker.move(entity, to: from, duration: 0.4, arc: 0.014, ease: Ease.out) {
                 [weak self] in
@@ -282,9 +289,6 @@ final class CarryController {
             return
         }
 
-        let resting = SIMD3<Float>(entity.position.x,
-                                   surfaces.y(at: entity.position),
-                                   entity.position.z)
         ticker.move(entity, to: resting, duration: 0.20, arc: 0, ease: Ease.out) {
             [weak self] in
             guard let self else { return }

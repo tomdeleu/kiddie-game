@@ -348,13 +348,37 @@ throws its own colour, which is what says *that* one went in.
 
 **And nothing gets put back** — with one exception. A prop she drags somewhere
 that is not a target settles onto whatever is underneath it and stays there.
-The rolling pin can live on the floor. The exception is the patch of floor
-*behind the table*: the camera never moves, so that is a place she could put
-something and then genuinely not get it back, with no way to look round the
-table. Drops there float home. `Layout.isOutOfSight` derives the patch from the
-camera and the table rather than hardcoding it — at the committed camera it is
-about 235 × 170 mm between the table and the counter, and it grew when the table
-did, which is the derivation working rather than a regression. This replaced a rule where a missed drop floated home and
+The rolling pin can live on the floor. The exception is anywhere the camera
+cannot see: the camera never moves, so behind each solid thing in the room is a
+place she could put something and then genuinely not get it back, with no way to
+look round it. Drops there float home.
+
+`KitchenLayout.occluders` lists the three — **the table, the counter and
+Otto** — as boxes with a height, and `Surfaces.isOutOfSight` asks whether the
+sightline from the eye to the spot the prop is about to *land on* passes through
+any of them. It was one flat plate at table height tested only against
+floor-level drops, which is why the room shipped with three ways to lose a prop
+(owner, 2026-08-16: below the table, behind the oven and below the back counter
+you cannot pick it up again). The floor behind Otto was the worst of them and
+was in nobody's shadow at all: he is 124 mm of dome standing out in the open to
+the right of the table, and swept at 5 mm he alone hides 1024 cells of floor to
+the table's 798.
+
+Two things about it are worth keeping:
+
+- **It is derived, never typed in**, so it stays true when the furniture moves —
+  the table's patch grew when the table did, which is the derivation working
+  rather than a regression.
+- **Nina is deliberately not on the list**, though she hides a real 75 × 50 mm
+  strip of floor in front of the counter. Adding her also puts a 20 × 15 mm patch
+  of *worktop* 13 mm from the sink in her hat's shadow, and every other surface
+  in the room keeps what is put on it. She moves, too — a fixed box describes
+  furniture and guesses at a person. The sweep that found that also confirmed
+  the cost of the three that stayed: every point of both work surfaces, the
+  whole near foreground and all thirteen prop home spots come back reachable at
+  2.5 mm.
+
+This replaced a rule where a missed drop floated home and
 Nina apologised for it, which was wrong twice: it undid the one thing she can
 do with a kitchen full of objects, and it treated every stray drag as a failed
 attempt when most of them are a 4-year-old moving a rolling pin because it is
@@ -726,9 +750,16 @@ table; pointing at the floor in front of it means the floor. And **it makes
 losing a prop behind the table impossible by construction**: a floor point is
 hidden exactly when the sightline to it crosses the table top inside the table's
 footprint, and that sightline *is* this ray — so any route to the hidden strip
-is a ray that hit the table first and got the table. `isOutOfSight` and the
-float-home in `settle` stay as the safety net for the small constant grab offset
-a carried prop keeps off the ray, and should now essentially never fire.
+is a ray that hit the table first and got the table.
+
+**Behind the table, and nothing else** — and the sentence above was read for a
+while as though it said props could not be lost, which is how the room shipped
+with three places they could be. The argument is exactly as wide as `rects`,
+because a *surface* is the only thing this can hand back: Otto is not a surface,
+so no ray ever hits Otto and gets Otto. It goes through him and lands on the
+floor behind. `isOutOfSight` is not a safety net for the small constant grab
+offset a carried prop keeps off the ray — it is the whole answer for everything
+in the room that is solid without being standable.
 
 The camera never moving is what makes this cheap: any world point plus the eye
 is a complete description of the ray through it, so a touch reported on one
@@ -1530,7 +1561,7 @@ x = 0 because past that it starts crossing Otto's chimney.
 | `Engine/TouchRouter.swift` | One finger, two verbs. Targets are generous spheres, not meshes, and each carries the plane its prop is standing on. |
 | `Engine/Sparkles.swift` | Faceted yellow stars that fly out and vanish. The whole reward vocabulary. |
 | `Engine/Halo.swift` | The bright-yellow ring of light on the surface under the prop a step is about — the game's only instruction. |
-| `Engine/Surfaces.swift` | **What is under a point, and what her finger is pointing at.** Two different questions; confusing them cost two failed attempts at the drag. Each room declares its own rectangles. |
+| `Engine/Surfaces.swift` | **What is under a point, what her finger is pointing at, and what she cannot see behind.** The first two are different questions; confusing them cost two failed attempts at the drag. The third is `Occluder` — the solid boxes a drop is not allowed to stick behind. Each room declares its own rectangles and its own occluders. |
 | `Engine/CarryController.swift` | **Carrying, solved once.** Height easing, the ray that keeps a prop under her fingertip, container rims, and the settle rules. Was `KitchenRoom`'s; the kitchen and the garden both use it, and the decorating room does not — it places stickers on a cake rather than carrying props across surfaces. |
 | `Intro/LoadingScreen.swift` | The title plate, and the floor it is held for. |
 | `Intro/IntroMovie.swift` | The opening film: a queue of shots, and two ways out of it. |
@@ -1770,6 +1801,18 @@ long-standing limitation, not a setup problem.
 >
 > The five are kept because they are still the right list for *the SDK moving
 > under the project*, which is the other way this breaks.
+>
+> **Unbuilt since build two: `Surfaces.Occluder` and the kitchen's occluder
+> list.** By that lesson's own reckoning this is a change to watch, because it is
+> both of the two risky edits at once — it adds a `@MainActor` method
+> (`Occluder.hides`, which reads `CameraRig.eye`) and a stored property with a
+> default (`Surfaces.occluders`) that the synthesised memberwise initialiser has
+> to carry, in a struct two rooms construct positionally. If either bites, the
+> fixes are small and known: spell the initialiser out by hand, or mark the
+> nested type's method the way `assertSpacing` had to be. **The geometry itself
+> is not correct-by-construction** — it was swept in Python against the committed
+> camera before being written down, which is how Nina came off the list and how
+> "no work surface is shadowed" became a measurement rather than a claim.
 
 Five places are the most likely to want a fix, and all five are one line:
 

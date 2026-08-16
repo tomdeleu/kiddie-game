@@ -343,18 +343,42 @@ That distinction is load-bearing and cost two failed attempts:
 
 Deciding the surface from the ray alone breaks the loop properly, so the prop's
 XZ can be read off that same ray at whatever height it has eased to. **Nothing
-in the chain points backwards.** It also makes losing a prop behind the table
+in the chain points backwards.** It also makes losing a prop behind a *surface*
 impossible by construction: a hidden floor point is exactly one whose sightline
-crosses the table top, and that sightline *is* this ray.
+crosses that surface, and that sightline *is* this ray.
+
+**That argument is exactly as wide as `rects`, and reading it as "props cannot
+be lost" is a trap the kitchen fell into.** A surface is the only thing the ray
+test can hand back, so it protects you from the table and the counter and from
+nothing else. Anything solid that is *not* standable — an oven, a bush, a
+character — the ray sails straight through, and the prop lands on the floor
+behind it where the fixed camera shows her nothing. De Keuken shipped with three
+of those (owner, 2026-08-16: below the table, behind the oven, below the back
+counter) and 46% of its reachable floor turned out to be in one shadow or
+another.
 
 Two more rules:
 
 - **Nothing gets put back.** A prop dropped somewhere that is not a target
   settles onto whatever is under it and stays. The rolling pin can live on the
-  floor. The single exception is `isOutOfSight` — the patch of floor the fixed
-  camera cannot see behind the furniture, derived from the camera and the table
-  rather than hardcoded — where a drop floats home, because that is a place she
-  could put something and genuinely not get it back.
+  floor. The single exception is `isOutOfSight`, where a drop floats home to
+  where it was picked up, because that is a place she could put something and
+  genuinely not get it back. **List every solid thing in the room in
+  `Surfaces.occluders`** — a box with a height, derived from the furniture's own
+  constants rather than hardcoded — and let that test answer for all of them.
+  Two things it is easy to get wrong, both paid for once:
+  - ask about **where the prop will come to rest**, not where her finger let go.
+    They are `surfaces.lift` apart, and only one of them is the position she
+    will be hunting for afterwards.
+  - **check the answer against the work surfaces before believing it.** Sweep
+    every rect at a few millimetres and confirm nothing on one comes back
+    hidden; a drop that floats off a worktop is a worse bug than the one being
+    fixed. That sweep is what kept Nina off De Keuken's list — she hides a real
+    strip of floor, but her hat also crosses the sightline to a corner of the
+    counter, and she moves.
+- **Occluders are furniture, not cast.** A fixed box is a description of a table
+  and a guess about a character, who squashes, bobs and wobbles. Prefer leaving
+  a character out and documenting the strip they hide.
 - **Every tap is also a zero-length drag.** Without a "barely moved" check,
   poking the berry on the top shelf knocks it to the floor, because that is what
   is under a shelf.
