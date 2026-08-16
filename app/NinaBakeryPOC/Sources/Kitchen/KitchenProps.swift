@@ -303,6 +303,8 @@ enum KitchenProps {
         case .klaver: buildClover(into: root, flat: flat)
         case .wolkenroom: buildCloudCream(into: root, flat: flat)
         case .sterrensuiker: buildSugarStar(into: root, flat: flat)
+        case .maanstof: buildMoonDust(into: root, flat: flat)
+        case .veertje: buildFeather(into: root, flat: flat)
         }
         return root
     }
@@ -520,6 +522,92 @@ enum KitchenProps {
         root.addChild(star)
     }
 
+    /// `maanstof` — moon dust, in the little pouch it is kept in.
+    ///
+    /// Honey taught the lesson this is built on: a substance with no shape of
+    /// its own is read through its container. Dust is the same problem in a
+    /// harder form, so what she picks up is the **pouch** — a soft bag gathered
+    /// at the neck, with a drawstring and a few grains escaping over the top.
+    ///
+    /// Deliberately unlike the honey pot, which is the other container in the
+    /// set: that is a wide rigid jar with a dipper lying across it, and this is
+    /// a tall soft bag pinched shut. At thumbnail size two containers have to
+    /// differ in silhouette or they are the same prop in two colours.
+    private static func buildMoonDust(into root: Entity, flat: Bool) {
+        let bag = RoomBuilder.model(.lathe(profile: [[0.0000, 0.0000],
+                                                     [0.0072, 0.0012],
+                                                     [0.0094, 0.0058],
+                                                     [0.0082, 0.0104],
+                                                     [0.0048, 0.0136]],
+                                           sides: 8),
+                                    Palette.lilac, flat: flat, name: "MaanstofZak")
+        root.addChild(bag)
+
+        // The drawstring, and the gathered cloth standing above it. The same
+        // two-part neck the flour sack uses, at a fifth of the size.
+        let tie = RoomBuilder.model(.lathe(profile: [[0.0050, 0], [0.0058, 0.0020],
+                                                     [0.0050, 0.0040]], sides: 8),
+                                    Palette.lilacDeep, flat: flat, name: "MaanstofKoord")
+        tie.position = [0, 0.0132, 0]
+        root.addChild(tie)
+
+        let gather = RoomBuilder.model(.lathe(profile: [[0.0042, 0], [0.0086, 0.0052]],
+                                              sides: 8),
+                                       Palette.lilac, flat: flat, name: "MaanstofKraag")
+        gather.position = [0, 0.0170, 0]
+        root.addChild(gather)
+
+        // Three grains of it in the air over the neck — the only way to say
+        // *dust* on an object that is otherwise a bag.
+        for (i, spot) in [SIMD2<Float>(-0.0044, 0.0246), [0.0030, 0.0272],
+                          [0.0058, 0.0224]].enumerated() {
+            let grain = RoomBuilder.model(.star(points: 4, outerRadius: 0.0026,
+                                                innerRadius: 0.0009, thickness: 0.0010),
+                                          Palette.creamLight, flat: flat,
+                                          name: "MaanstofKorrel\(i)")
+            grain.orientation = towardsCamera
+            grain.position = [spot.x, spot.y, 0]
+            root.addChild(grain)
+        }
+    }
+
+    /// `veertje` — the toverveertje, which makes a cake rise.
+    ///
+    /// A feather standing on its quill, turned to face the camera like the
+    /// clover and the star. Flat props are cheap and read instantly at
+    /// thumbnail size, which is why a third of the set is built this way.
+    ///
+    /// The blade is one extruded outline rather than a barbed shape: barbs at
+    /// 20 mm would be sub-millimetre teeth, the same argument that gave the
+    /// honey dipper two parts instead of five rings. What sells it as a feather
+    /// is the **asymmetry** — the outline is fuller on one side of the shaft
+    /// than the other, which is true of a real feather and is the one detail a
+    /// symmetrical leaf shape cannot borrow.
+    private static func buildFeather(into root: Entity, flat: Bool) {
+        root.orientation = towardsCamera
+
+        let blade = RoomBuilder.Shape.extrude(outline: [[0.0000, 0.0000],
+                                                        [0.0052, 0.0058],
+                                                        [0.0068, 0.0116],
+                                                        [0.0050, 0.0170],
+                                                        [0.0000, 0.0202],
+                                                        [-0.0038, 0.0166],
+                                                        [-0.0050, 0.0112],
+                                                        [-0.0036, 0.0056]],
+                                              thickness: 0.0016)
+        let vane = RoomBuilder.model(blade, Palette.creamLight, flat: flat,
+                                     name: "VeertjeBlad")
+        vane.position = [0, 0.0062, 0]
+        root.addChild(vane)
+
+        // The shaft, showing above and below the blade. Two prisms would be one
+        // too many — this is a single quill the blade is threaded onto.
+        let quill = RoomBuilder.model(.prism(radius: 0.0012, height: 0.0250, sides: 4),
+                                      Palette.cream, flat: flat, name: "VeertjeSchacht")
+        quill.position = [0, 0.0016, 0.0010]
+        root.addChild(quill)
+    }
+
     static let bowlHeight: Float = 0.026
     static let bowlTopRadius: Float = 0.032
 
@@ -569,65 +657,76 @@ enum KitchenProps {
 
     /// **De pollepel** — the big wooden spoon she stirs with.
     ///
-    /// Modelled from `references/props/spoon.png`. It replaces a whisk, which
-    /// was two prisms — a stick with an upside-down cone on the end — and read
-    /// as neither a whisk nor anything else (owner, 2026-08-16: "looks like
-    /// shit, create a proper big spoon instead").
+    /// Rebuilt from `references/props/spoon-real.png`, a photograph of three
+    /// real wooden spoons, after the first attempt was rejected on sight. The
+    /// generated plate it was modelled from turned out to be the wrong brief: it
+    /// showed a long-handled *ladle* seen at an angle, and what came out of it
+    /// was a shallow dish on a stick.
     ///
-    /// The plate is worth following closely because a spoon is one of the few
-    /// kitchen objects a 4-year-old can already draw, which means she knows when
-    /// it is wrong. Three things carry it:
+    /// The photograph settles three things the plate got backwards, and the
+    /// first is the one that was really wrong:
     ///
-    /// - **The scoop is hollow.** `FacetedMesh.bowl` gives a real rim and a real
-    ///   inside, and that is the whole difference between a spoon and a lollipop.
-    ///   Nine sides, so the rim is visibly polygonal at 28 mm across.
-    /// - **The handle tapers**, thicker where it meets the scoop and narrower at
-    ///   the tip, which is what the plate shows and what stops it reading as a
-    ///   dowel.
-    /// - **It is chunky.** The scoop is 28 mm across on a 32 mm bowl — near
-    ///   enough to fill it, the way a real mixing spoon does, and far bigger
-    ///   than the whisk's 22 mm head.
+    /// - **The handle is narrow at the bowl and thick at the far end.** The
+    ///   first version tapered the other way, thick where it met the scoop and
+    ///   drawn to a point at the tip, which is the silhouette of a trowel. A
+    ///   real spoon is turned the opposite way round: a slim neck under the bowl
+    ///   opening out to a chunky end you can get a fist around. That single
+    ///   inversion is most of the difference.
+    /// - **The bowl is round and deep, and its rim is thick.** In the reference
+    ///   it is very nearly a hemisphere with a heavy lip, not a saucer. More
+    ///   rings and a smaller bottom radius round the outside off; the wall goes
+    ///   to 2.8 mm so the rim reads as carved rather than pressed.
+    /// - **There is a neck.** The bowl does not sit straight on the handle —
+    ///   there is a short waisted section between them, and it is what makes the
+    ///   two parts read as one turned object rather than as two prims stuck
+    ///   together.
     ///
     /// **Built standing on its scoop with the handle straight up**, which is the
     /// convention the whisk used and the reason nothing in `KitchenRoom` had to
     /// change: stirring stands it in the bowl as-is, and resting it on the table
     /// is the same single rotation about X that laid the whisk down.
-    ///
-    /// The plate's hanging hole in the tip is not modelled. There are no
-    /// booleans in `FacetedMesh`, and at 4 mm across the hole would be two
-    /// pixels — a smudge, which is the same argument that gave the honey dipper
-    /// two parts instead of the plate's five rings.
     static func spoon(flat: Bool) -> Entity {
         let spoon = Entity()
         spoon.name = "Spoon"
 
-        // The scoop. Cream rather than the plate's wood: the table is
+        // The bowl. Cream rather than the reference's beech: the table is
         // `sandyWood`, and a wooden spoon lying on a wooden table is a spoon
         // nobody can see. The handle keeps the wood, so the object still reads
-        // as one — this is the same split the whisk used, and the one part of
-        // it worth keeping.
-        let scoop = RoomBuilder.model(.bowl(bottomRadius: 0.0092, topRadius: 0.0140,
-                                            height: 0.0110, wallThickness: 0.0022,
-                                            floorThickness: 0.0026, sides: 9, rings: 2),
+        // as one piece — the same split the whisk used, and the one part of it
+        // worth keeping.
+        let scoop = RoomBuilder.model(.bowl(bottomRadius: 0.0062, topRadius: 0.0155,
+                                            height: 0.0120, wallThickness: 0.0028,
+                                            floorThickness: 0.0030, sides: 10, rings: 3),
                                       Palette.cream, flat: flat, name: "SpoonScoop")
         spoon.addChild(scoop)
 
-        // The handle, tapering upward out of the scoop. It starts inside the
-        // scoop's wall rather than on top of it, so there is no seam where the
-        // two meet however the light falls.
-        let handle = RoomBuilder.model(.taperedPrism(bottomRadius: 0.0050,
-                                                     topRadius: 0.0034,
-                                                     height: 0.0440, sides: 6),
+        // The neck, under the bowl. Short, and narrower than either thing it
+        // joins, which is what a waist is.
+        let neck = RoomBuilder.model(.taperedPrism(bottomRadius: 0.0034,
+                                                   topRadius: 0.0050,
+                                                   height: 0.0075, sides: 6),
+                                     Palette.sandyWood, flat: flat, name: "SpoonNeck")
+        neck.position = [0, 0.0030, 0]
+        spoon.addChild(neck)
+
+        // The handle, **opening out as it leaves the bowl** — see above. It
+        // starts inside the neck rather than on top of it, so there is no seam
+        // wherever the light falls.
+        let handle = RoomBuilder.model(.taperedPrism(bottomRadius: 0.0034,
+                                                     topRadius: 0.0062,
+                                                     height: 0.0400, sides: 6),
                                        Palette.sandyWood, flat: flat, name: "SpoonHandle")
-        handle.position = [0, 0.0072, 0]
+        handle.position = [0, 0.0090, 0]
         spoon.addChild(handle)
 
-        // The flared tip. In the plate it is where the hanging hole is; here it
-        // is simply what stops the handle ending in a point.
-        let tip = RoomBuilder.model(.prism(radius: 0.0044, height: 0.0060, sides: 6),
-                                    Palette.sandyWood, flat: flat, name: "SpoonTip")
-        tip.position = [0, 0.0496, 0]
-        spoon.addChild(tip)
+        // The end you hold. Blunt and slightly proud of the handle, the way a
+        // turned spoon finishes — a handle that simply stops reads as broken off.
+        let butt = RoomBuilder.model(.taperedPrism(bottomRadius: 0.0064,
+                                                   topRadius: 0.0058,
+                                                   height: 0.0060, sides: 6),
+                                     Palette.sandyWood, flat: flat, name: "SpoonButt")
+        butt.position = [0, 0.0486, 0]
+        spoon.addChild(butt)
 
         return spoon
     }

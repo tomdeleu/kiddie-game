@@ -1078,7 +1078,53 @@ final class KitchenRoom {
                 return plankHeight
             }
         }
+        if let rim = containerRim(from: anchor, carrying: entity) { return rim }
         return Layout.surfacePointedAt(from: anchor)
+    }
+
+    /// **The rim of a container she is holding something over.**
+    ///
+    /// `Layout.surfacePointedAt` knows about the room's three flat surfaces, and
+    /// a bowl standing on the table is not one of them — so a berry carried over
+    /// the mixing bowl rode at table height, which is 26 mm *below* the bowl's
+    /// rim. It went straight through the side of it (owner, 2026-08-16: "when
+    /// dragging to the mixing bowl it should automatically position right above
+    /// the bowl instead of clipping it").
+    ///
+    /// The containers answer for themselves here rather than being added to
+    /// `Layout`, because unlike the table and the counter they **move**: she can
+    /// pick the bowl up and put it anywhere, so their footprints are a fact
+    /// about the current state of the room and not about its plan.
+    ///
+    /// Tallest wins, and the carried prop never rides on itself — otherwise
+    /// picking up the bowl would launch it up its own rim, every frame.
+    ///
+    /// This is safe for every drop in the game because **every snap test is
+    /// XZ-only**: `dropToken`, `dropBowl` and `dropTin` all measure horizontal
+    /// distance, so riding higher cannot make a drop harder to land. It only
+    /// changes what she sees on the way there.
+    private func containerRim(from anchor: SIMD3<Float>, carrying entity: Entity) -> Float? {
+        var best: Float?
+        for (container, height, radius) in containers where container !== entity {
+            guard container.isEnabled, container.parent != nil else { continue }
+            let top = container.position.y + height
+            let over = Layout.pointOnRay(through: anchor, atHeight: top)
+            guard Layout.distanceXZ(over, container.position) <= radius else { continue }
+            if best == nil || top > best! { best = top }
+        }
+        return best
+    }
+
+    /// Everything with an inside, and how high its rim stands above its own
+    /// origin. Read every frame of a drag, so it is a computed list of what
+    /// exists rather than a stored one that a rebuild could leave dangling.
+    private var containers: [(Entity, Float, Float)] {
+        var found: [(Entity, Float, Float)] = []
+        if let bowl { found.append((bowl, KitchenProps.bowlHeight, KitchenProps.bowlTopRadius)) }
+        if let tin = tin?.root, tin.isEnabled { found.append((tin, 0.013, 0.024)) }
+        if let basket { found.append((basket, 0.014, 0.024)) }
+        if let crate { found.append((crate, 0.022, 0.027)) }
+        return found
     }
 
     /// What a prop that is standing somewhere is standing *on*. Position-based,
@@ -1318,11 +1364,24 @@ final class KitchenRoom {
     }
 
     private func bowlTouchEnded(_ world: SIMD3<Float>) {
-        guard state.step != .roeren else {
-            stirLastAngle = nil
-            stirLastPoint = nil
-            return
-        }
+        stirLastAngle = nil
+        stirLastPoint = nil
+        guard state.step != .roeren else { return }
+        // **Only a drop if the bowl was actually picked up on this touch**, and
+        // this is the fix for a failure that arrived unprompted.
+        //
+        // The stir finishes *under her finger*: the last degree of the third
+        // turn sets `state.step` to `.gieten` mid-drag, and she is still holding
+        // the bowl's target when it does. The rest of that same gesture then ran
+        // down the pouring path — and because stirring never picks the bowl up,
+        // the bowl was still sitting at its home position 70 mm from the tin, so
+        // letting go counted as a failed pour. Nina said "oeps" a second after
+        // congratulating her on the batter, and the miss counter started
+        // climbing towards a reminder she had done nothing to earn.
+        //
+        // `carried` is the honest test: a drag that began as a stir never set
+        // it, so there is nothing to drop and nothing to fail.
+        guard carried === bowl else { return }
         dropBowl(at: world)
     }
 

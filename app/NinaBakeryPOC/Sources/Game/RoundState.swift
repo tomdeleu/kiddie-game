@@ -97,24 +97,34 @@ struct RoundState: Codable {
     /// as dealing rather than as `prefix(5)` because it stays correct if either
     /// number ever moves.
     ///
-    /// ## What this costs, and it is not nothing
+    /// ## What it cost, and what got it back
     ///
-    /// **Every cake is now a regenboogtaart.** Five of the six ingredients means
-    /// at least four coloured ones in every bowl, and `CakeSpec.kind` calls
-    /// three or more colours a rainbow — so `.effen` and `.gemengd`, the
-    /// one-colour and two-colour cakes `GAMEPLAY.md` §5 describes, have become
-    /// unreachable, and with them the lines Nina has for each colour.
+    /// Dealing five distinct ingredients out of **six** meant at least four
+    /// coloured ones in every bowl, and `CakeSpec.kind` calls three colours or
+    /// more a rainbow — so `.effen` and `.gemengd`, the one-colour and
+    /// two-colour cakes in `GAMEPLAY.md` §5, became unreachable overnight, and
+    /// Nina's per-colour lines with them. Ingredient variety had been bought
+    /// with cake variety.
     ///
-    /// That is a straight trade of *ingredient* variety for *cake* variety, and
-    /// it was made deliberately on the owner's call: being sent to two of the
-    /// five places for the same berry is a thing she notices every round, and
-    /// which of four cake shapes she got is not.
+    /// **Two more colourless ingredients** — `maanstof` and `veertje` — change
+    /// the arithmetic rather than working around it. The deck is now five
+    /// coloured and three colourless, and five draws from that gives:
     ///
-    /// It is worth undoing when the garden lands, because the garden is what
-    /// fills `basket` and can fill it with an interesting *three* rather than an
-    /// exhaustive five. Until then the lever is `Layout.ingredientsPerRound`:
-    /// at three, dealing still guarantees no repeats and the colour count is
-    /// free to be one, two or three again.
+    /// | colours drawn | chance | cake |
+    /// |---|---|---|
+    /// | 2 | 17.9% | `gemengd` — two colours, marbled |
+    /// | 3 | 53.6% | `regenboog` |
+    /// | 4 | 26.8% | `regenboog` |
+    /// | 5 | 1.8% | `regenboog` |
+    ///
+    /// So a two-colour cake is back, about one round in six. **`.effen` is
+    /// still out of reach** and honestly cannot be bought this way: one colour
+    /// from five draws needs four colourless ingredients in the hand, which
+    /// needs at least four in the deck, which is most of it. The remaining
+    /// lever is `Layout.ingredientsPerRound` — at three, the colour count is
+    /// free to be one, two or three and every cake in §5 comes back. That is
+    /// the change to make when the garden lands and starts choosing what goes
+    /// in the basket, because an interesting three beats an exhaustive five.
     static func fresh(keeping shelf: [CakeSpec] = []) -> RoundState {
         var state = RoundState()
         var deck: [Ingredient] = []

@@ -50,6 +50,14 @@
       { "file": "nina-dit-sterrensuiker-1.mp3", "seconds": 4.78,
         "text": "Dit is sterrensuiker. Allemaal kleine glinsterende sterretjes." }
     ]},
+    { "id": "nina.dit.maanstof", "character": "nina", "variants": [
+      { "file": "nina-dit-maanstof-1.mp3", "seconds": 4.15,
+        "text": "Dit is maanstof. Glinsterend stof, helemaal van de maan." }
+    ]},
+    { "id": "nina.dit.veertje", "character": "nina", "variants": [
+      { "file": "nina-dit-veertje-1.mp3", "seconds": 4.08,
+        "text": "Dit is een toverveertje. Zo licht als een echt veertje!" }
+    ]},
 
     { "id": "nina.dit.deegroller", "character": "nina", "variants": [
       { "file": "nina-dit-deegroller-1.mp3", "seconds": 3.74,
