@@ -187,6 +187,17 @@ These were argued through and settled. Reopen only if the user asks.
   moodboard sources carry explicit *no-AI* terms, so they must never be used as
   image-generation references.
 
+## Always ask which room
+
+**Before changing anything, ask which room it is for — if not already
+provided.** Every request to change
+behaviour, geometry, voice, timing or look applies to **one named room** unless
+the user has explicitly said otherwise. Never apply a change across several
+rooms — or to shared code that several rooms use — without asking for
+confirmation first and getting it. If the room is not already provided, ask; do
+not infer it from what is open, from what was changed last, or from what seems
+consistent.
+
 ## Non-negotiable: she is four
 
 Every screen obeys these. Full table in `CONCEPT.md` §5.
