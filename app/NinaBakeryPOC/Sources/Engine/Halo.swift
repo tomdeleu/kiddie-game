@@ -108,7 +108,7 @@ enum Halo {
     /// Internal rather than private only because it is `attach`'s own default
     /// argument, and a default value has to be as visible as the function it
     /// belongs to. Also the colour of the sparkles lifting off the ring.
-    static let core = Palette.hex(0xFFF6C0)
+    nonisolated static let core = Palette.hex(0xFFF6C0)
 
     /// **How hard the middle of the band glows.** Above 1 is above white, which
     /// is the only place a thing can be to look like a light rather than like a

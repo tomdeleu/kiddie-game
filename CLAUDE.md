@@ -33,9 +33,11 @@ the plank, fresh round. The garden: sow five seeds, sweep the can across the bed
 three times, tap the ripe plants into the basket. **The garden's basket is what
 the kitchen bakes** — `harvest.json` is the handover.
 
-**Switch rooms by triple-tapping the top-right corner** and using the picker at
-the top of the developer strip. It is behind the parent gate on purpose; a
-visible teleport button is the most pressable thing that could be on that screen.
+**Switch rooms by tapping the small grey wrench in the top-right corner** and
+using the picker at the top of the developer strip. The strip itself stays off
+screen until asked for — a visible teleport button is the most pressable thing
+that could be on that screen — but the way in is now visible, because the
+triple-tap it replaced sat under the film and could not be tapped at all.
 
 Neither room has ever been compiled — both were written in a container with no
 Swift toolchain — and `app/README.md` names the five places most likely to want a

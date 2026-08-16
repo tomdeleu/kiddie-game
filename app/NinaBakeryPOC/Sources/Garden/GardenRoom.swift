@@ -706,31 +706,36 @@ final class GardenRoom: GameRoom {
 
     private func takeCan(at world: SIMD3<Float>) {
         guard let can else { return }
+        // `WateringCan` is a value, so the ticker closures hold its entities
+        // rather than it — the entities are what they have to be able to let go
+        // of.
+        let canRoot = can.root
+        let stream = can.stream
         wateredThisPass.removeAll()
         wateredThisDrag = false
         canTravel = 0
         canLastPoint = world
-        carrier.pickUp(can.root, at: world)
+        carrier.pickUp(canRoot, at: world)
 
         // The can tips as it is lifted and the water starts. Growth is driven by
         // her hand and never by a clock (`GAMEPLAY.md` §7), so the stream is
         // *feedback* rather than a timer — it says the can is pouring, and where.
-        ticker.tween(0.28, ease: Ease.out, step: { [weak can] t in
-            can?.root.orientation = simd_quatf(angle: -0.42 * t, axis: [0, 0, 1])
+        ticker.tween(0.28, ease: Ease.out, step: { [weak canRoot] t in
+            canRoot?.orientation = simd_quatf(angle: -0.42 * t, axis: [0, 0, 1])
         })
-        can.stream.isEnabled = true
-        can.stream.scale = [1, 0.05, 1]
-        ticker.tween(0.30, ease: Ease.out, step: { [weak can] t in
-            can?.stream.scale = [1, 0.05 + 0.95 * t, 1]
+        stream.isEnabled = true
+        stream.scale = [1, 0.05, 1]
+        ticker.tween(0.30, ease: Ease.out, step: { [weak stream] t in
+            stream?.scale = [1, 0.05 + 0.95 * t, 1]
         })
         // The stream turns about its own axis so its six facets travel, which is
         // the whole of what makes it read as running rather than as a blue
         // stick — the tap's lesson, `app/README.md`.
         var spin: Float = 0
-        wateringJob = ticker.add { [weak can] dt in
-            guard let can, can.stream.isEnabled else { return false }
+        wateringJob = ticker.add { [weak stream] dt in
+            guard let stream, stream.isEnabled else { return false }
             spin += dt * 6.2
-            can.stream.orientation = simd_quatf(angle: spin, axis: [0, 1, 0])
+            stream.orientation = simd_quatf(angle: spin, axis: [0, 1, 0])
             return true
         }
     }
@@ -832,10 +837,11 @@ final class GardenRoom: GameRoom {
         ticker.cancel(wateringJob)
         wateringJob = nil
         can.stream.isEnabled = false
-        ticker.tween(0.25, ease: Ease.out, step: { [weak can] t in
-            can?.root.orientation = simd_quatf(angle: -0.42 * (1 - t), axis: [0, 0, 1])
-        }, done: { [weak can] in
-            can?.root.orientation = simd_quatf(angle: 0, axis: [0, 0, 1])
+        let canRoot = can.root
+        ticker.tween(0.25, ease: Ease.out, step: { [weak canRoot] t in
+            canRoot?.orientation = simd_quatf(angle: -0.42 * (1 - t), axis: [0, 0, 1])
+        }, done: { [weak canRoot] in
+            canRoot?.orientation = simd_quatf(angle: 0, axis: [0, 0, 1])
         })
         // Never a miss. Sweeping the can is the step, and a sweep that grew
         // nothing is a sweep that missed the bed — which is a thing she can see

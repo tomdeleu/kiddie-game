@@ -155,7 +155,7 @@ final class Ticker {
     /// until the prop has settled, then forgotten — so a prop the game itself
     /// rescales later (a cake shrinking onto the plank) picks up its new rest
     /// pose the next time it is touched.
-    private final class Pose {
+    @MainActor private final class Pose {
         weak var entity: Entity?
         let scale: SIMD3<Float>
         let orientation: simd_quatf

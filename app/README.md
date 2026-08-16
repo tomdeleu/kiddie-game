@@ -33,11 +33,21 @@ below is still the record of that.
 | **De Keuken** | `GAMEPLAY.md` §6.3 | Roll, fill, stir, pour, bake, and carry the cake onto the plank |
 | **De Tuin** | `GAMEPLAY.md` §6.2 | Plant, water, pick — five ingredients into the basket |
 
-**Switching between them is behind the developer panel**: triple-tap the
-top-right corner and use the room picker at the top of the strip. It is not on
-screen, and that is `CONCEPT.md` §5's parent gate doing exactly the job it was
-written for — a visible row of buttons that teleports her out of the room she is
-playing is the most pressable thing that could be put on this screen.
+**Switching between them is behind the developer panel**: tap the small grey
+wrench in the top-right corner and use the room picker at the top of the strip.
+The picker itself is still not on screen until it is asked for, and that is
+`CONCEPT.md` §5's parent gate doing the job it was written for — a visible row of
+buttons that teleports her out of the room she is playing is the most pressable
+thing that could be put on this screen.
+
+**The wrench replaced a triple-tap on an invisible corner** (owner, 2026-08-16).
+The gesture cost no pixels and did not work: the hotspot sat *under* the film and
+the loading plate in the `ZStack`, so for the whole opening — the one stretch
+where a grown-up most wants the room picker — there was nothing there to tap, and
+being invisible, no way to tell that from a missed corner. The developer layer is
+now the last thing in the stack and the way in is 28 pt of grey glyph you can
+see. Small and dull against 72 pt of saturated `FacetButton` for the two controls
+that are hers, in the one corner neither of them uses.
 
 **The garden feeds the kitchen.** Filling the basket writes it to
 `harvest.json`, and the next round the kitchen starts bakes *what she actually
@@ -162,8 +172,8 @@ Two ways, both doing the same thing:
   [`FacetButton`](#the-button), the game's one control.
 - **A tap anywhere else.** Kept, because it is what she will do.
 
-It is bottom-right on purpose: top-right is where the developer panel's hidden
-triple-tap lives.
+It is bottom-right on purpose: top-right is where the developer panel's wrench
+lives.
 
 Skipping does not cost her the greeting — Nina says hello either way. The room
 is built and lit behind the film while it plays, so tapping through two seconds
@@ -1703,10 +1713,13 @@ a room without playing the game up to it. That was fine to do without while
 there was one room and is useless with six: checking a touch radius in the
 garden should not be a five-minute walk.
 
-It stays behind the triple-tap rather than on screen, and the picker is exactly
-the control that gate was written about. A visible row of buttons that teleports
-her out of the room she is playing is the most pressable thing that could be put
-on this screen; three taps in a corner costs a grown-up nothing.
+The strip stays off screen until it is asked for, and the picker is exactly the
+control that gate was written about: a visible row of buttons that teleports her
+out of the room she is playing is the most pressable thing that could be put on
+this screen. What opens it is now a small grey wrench rather than three taps on
+an invisible corner — the gesture was unreachable under the film and there was no
+way to see that it was. `developerButton` in `ContentView.swift` has the whole
+argument.
 
 Under it: the room's own two or three lines — the kitchen prints its step, its
 bowl and its plank, the garden prints its step, its bed and its basket — and
