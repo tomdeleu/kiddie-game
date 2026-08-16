@@ -829,8 +829,129 @@ rather than a billboard.
 ## De Tuin — the garden
 
 `GAMEPLAY.md` §6.2, built 2026-08-16 against [`ROOMS.md`](../ROOMS.md) rather
-than by writing it. Same box, same chair, same touch radii — the room did not
-need more floor, and the whole game is one continuous place.
+than by writing it. Same chair, same floor plan size — the whole game is one
+continuous place.
+
+### It has a fence, not walls
+
+**The one place this room breaks the art direction.** It shipped as a room box
+with two plaster walls, because `references/REFERENCES.md` §1 gives every room
+two walls and a floor. Owner's call on seeing it: *"it's a bit strange that the
+garden has a wall around it."* It was — a garden indoors, and the kind of wrong
+that only shows once the room is standing.
+
+So the walls came out and a **picket fence** stands where they stood: an L along
+the back and left edges, meeting at the far corner, with a **gate** in the left
+run. **The rule's purpose survives intact** — the fence is on the two far edges,
+the two near sides are still open, and nothing new has entered a sightline. What
+changed is only what the boundary is made of.
+
+Three things follow, and two of them came from the plate rather than from a
+decision:
+
+- **The grey backdrop shows above it**, and that is right rather than tolerated:
+  it is `Palette.backdropGrey`, the same grey every reference plate is shot on,
+  so the room now reads as the diorama the plates already look like.
+- **The ground went green.** With no walls, the floor is most of the frame.
+  `references/garden/roombox-v2.png` — generated to answer only "what does this
+  look like without walls" — came back with a pale mint lawn and a cream *path*,
+  where the room had a cream floor. It is right: cream ground under a cream
+  fence is one colour.
+- **The fence casts, where the walls did not.** Architecture was excluded because
+  a wall's shadow falls on another wall and reads as a stain. What a fence casts
+  onto is the ground, which is the grounding this room's lighting wanted in the
+  first place. About forty small casters — worth an eye on device, one line to
+  undo.
+
+### The gate says it twice, not three times
+
+`ROOMS.md` §9 has the way out saying the same thing three ways: the leaf off the
+latch, a ring at the threshold, and **light behind it**. The kitchen's light is a
+plate inside the wall opening. A gate in a picket fence has no wall to hold one,
+and she can already see straight through it — so the garden's says it twice, on
+the owner's call. `Props.Doorway.glow` became optional to say so; a hidden entity
+nobody ever assigns to is dead geometry that looks live.
+
+What partly stands in for it emits nothing: **the sandy path leading out through
+the gate**. Ground people have walked on is the one way left to say *there is
+somewhere to go*.
+
+**The gate stands where the door stood**, and `Props.gate` returns the same
+`Props.Doorway` struct the door does — so every line of the ajar-swing-ring
+behaviour is untouched.
+
+### The jars stand on a potting bench
+
+They hung on two wall shelves. With the walls gone they moved onto a bench:
+worktop with a low backboard, four jars on it, four more on a shelf below.
+
+**The lower shelf sticks out in front of the worktop, and that is the whole
+design.** This camera looks down at about 34°, so it sees under an overhang by
+roughly one and a half times the drop — a jar on a shelf 42 mm below the top,
+sitting *under* the top, is cut in half by its own bench.
+`references/garden/potting-bench.png` solves it by projecting the shelf forward
+so the lower row stands clear of the front edge, and the row is **staggered half
+a spacing** as well, so no jar is ever directly under another. It is the
+kitchen's mirrored-shelf bug rotated a quarter turn.
+
+The jars became **plant pots** rather than the straight-sided prisms they were —
+tapered, with a knobbed lid. Two rooms whose containers differ only in colour
+would be one room twice.
+
+### A target's real size is measured on the screen, not on the ground
+
+The thing this change turned up, and it is worth more than the change.
+
+`TouchRouter.hitTest` measures the **perpendicular distance from a target's
+centre to the camera ray** — which is screen separation. A row running along X or
+Z is tilted about 37° away from the screen, so it keeps only **0.798** of its
+spacing. The garden's flowers at 32 mm centres were giving each flower a **55 pt**
+band, less than half `CONCEPT.md` §5's ~120 pt, and every "no two touch spheres
+overlap" sum in this project up to now had been done in XZ, where it looks fine.
+
+Two corrections came out of it, and one piece of knowledge:
+
+- **The flowers went to 46 mm** — 77 pt, which is what fits in that corner.
+- **The butterfly and the bee moved.** A thing 85 mm in the air and 130 mm nearer
+  the camera lands on nearly the same screen point as a thing on the ground
+  behind it, which is how the butterfly's home came to sit on top of two of the
+  bed's five holes. Tapping a ripe plant and getting a butterfly is the required
+  action losing to a toy.
+- **A row along the X−Z diagonal keeps 1.000 of its spacing**, because that
+  direction is exactly screen-horizontal. Free, and worth knowing for the next
+  room that needs a long row.
+
+Overlap between **like things in a row** — five holes, eight jars, five flowers —
+is intended and stays: `TouchRouter` picks the nearest centre, so each owns an
+equal band and an imprecise tap always lands on the nearest one. Overlap between
+**unlike** things is the bug, because the wrong kind of answer can win.
+
+Two toy-to-toy pairs are still a few millimetres short (the molehill and a
+puddle, the basket and a puddle). Both resolve by nearest-wins and both answer
+with a word, so they are left alone.
+
+### Two naming lines had nothing to play them
+
+Found by tightening the script↔Swift check so that a constant's own declaration
+no longer counts as a reference to it. Three real gaps:
+
+- **The five toys said their play-chatter and never their name**, which breaks
+  `GAMEPLAY.md` §3 outright — *every prop in every room says what it is when
+  tapped*. `sayToy` fixes it with the flour sack's own rule: mostly the name, one
+  time in three the joke.
+- **A seed she put down on the grass answered nothing at all.** It is created
+  mid-drag, so it never went through `registerTargets` — a dead prop, which
+  `GAMEPLAY.md` §7 says reads as a broken iPad. Strays now answer a tap and can
+  be picked up again.
+- **The bench and the bed have no naming target and cannot have one**: both are
+  large props entirely covered by smaller ones, and nearest-wins means a marker
+  on either loses every tap it is offered. Their words fold into what stands on
+  them — an empty hole says *zaaibak* one time in three, a jar says *werkbank*
+  one time in four.
+
+One line in the kitchen still has nothing to play it, `nina.keuken.pakGlimmend`
+— a generic "take the glowing one" that predates all of this and was never wired
+up. Left alone.
 
 | Step | She does | It answers with |
 |---|---|---|

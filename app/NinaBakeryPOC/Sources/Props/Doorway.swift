@@ -14,17 +14,30 @@ import simd
 /// walk through is a cupboard).
 enum Props {
 
+    /// **A way out**, whether it is a door in a wall or a gate in a fence.
+    ///
+    /// Both builders return this, which is what lets a room's door behaviour —
+    /// ajar when the room is finished, the swing, the ring at the threshold — be
+    /// written once and used by both.
     struct Doorway {
         let root: Entity
         /// **The thing that moves.** The leaf, its
-        /// panels and its knob all hang under this, so opening the door is one
+        /// panels and its knob all hang under this, so opening it is one
         /// rotation about Y — `CONCEPT.md` §9.7's animation budget, spent the
         /// same way Otto's mouth spends it.
         let hinge: Entity
         /// The next room, seen through the opening. Flat against the wall
         /// behind the leaf, so it is only visible while the door stands open —
         /// which is what makes opening it worth doing.
-        let glow: ModelEntity
+        ///
+        /// **Optional, because a gate has no wall to hold one.** `ROOMS.md` §9
+        /// asks the way out to say the same thing three ways, and the garden's
+        /// says it twice: the light behind it was dropped on the owner's call,
+        /// since you can already see straight through a picket fence and there
+        /// is nothing behind it to light. Nil rather than a hidden entity
+        /// nobody assigns to — dead geometry that looks live is worse than an
+        /// optional.
+        let glow: ModelEntity?
     }
 
     /// The way out. `GAMEPLAY.md` §6: the door always works, and it is never
@@ -146,5 +159,108 @@ enum Props {
         root.excludeFromShadowCasting()
 
         return Doorway(root: root, hinge: hinge, glow: glow)
+    }
+
+    // MARK: - The gate
+
+    /// **The garden's way out: a gate in the fence.**
+    ///
+    /// From `references/garden/fence-gate.png`: a leaf of five pickets on two
+    /// rails with one **diagonal cross-brace**, hung on two strap hinges between
+    /// two taller posts, with a latch on the swinging edge. The posts and the
+    /// pickets are the fence's own — `GardenRoomBuilder.addRun` leaves the gap
+    /// and builds the posts, and this builds only what swings.
+    ///
+    /// **The brace is not decoration.** It is the one part of the plate that
+    /// makes a gate read as a gate rather than as a piece of fence that fell
+    /// over: five vertical boards and two horizontals are a fence, and a
+    /// diagonal across them is a thing that opens.
+    ///
+    /// It returns the same `Doorway` as `doorway(flat:centre:)`, so
+    /// `GardenRoom`'s ajar-swing-ring behaviour is untouched. Its `glow` is nil
+    /// — see the field.
+    ///
+    /// **No lintel.** A gate's opening is the full-height gap between its posts,
+    /// so `CONCEPT.md`'s "a door she could not walk through is a cupboard" is
+    /// satisfied by construction rather than by making the leaf taller than she
+    /// is.
+    static func gate(flat: Bool, centre: SIMD3<Float>) -> Doorway {
+        let root = Entity()
+        root.name = "Gate"
+        root.position = centre
+        // Same local frame as the door: built in XY and extruded along Z, then
+        // turned so local +X runs towards the back of the room and local +Z out
+        // into it.
+        root.orientation = simd_quatf(angle: .pi / 2, axis: [0, 1, 0])
+
+        let opening = GardenLayout.gateOpening
+        let height = GardenLayout.fenceHeight
+        let thickness: Float = 0.007
+
+        // **Hinged on the near side**, local −X, which is the corner of the room
+        // nearest the camera — the same choice the door documents at length, and
+        // for the same reason: hinging on the far side swings the leaf away, it
+        // turns edge-on at this camera, and it reads as a stick standing in a
+        // hole.
+        let hinge = Entity()
+        hinge.name = "GateHinge"
+        hinge.position = [-opening / 2, 0, 0]
+        root.addChild(hinge)
+
+        // Five pickets across the opening, with the pointed tops the fence has.
+        let picketCount = 5
+        let picketWidth = opening / Float(picketCount) * 0.72
+        for i in 0..<picketCount {
+            let along = (Float(i) + 0.5) / Float(picketCount) * opening
+            let board = model(.box([picketWidth, height, thickness]),
+                              Palette.cream, flat: flat, name: "GatePicket\(i)")
+            board.position = [along, height / 2, 0]
+            hinge.addChild(board)
+
+            let point = model(.lathe(profile: [[picketWidth * 0.72, 0], [0, 0.0060]],
+                                     sides: 4),
+                              Palette.cream, flat: flat, name: "GatePoint\(i)")
+            point.orientation = simd_quatf(angle: .pi / 4, axis: [0, 1, 0])
+            point.position = [along, height, 0]
+            hinge.addChild(point)
+        }
+
+        // Two rails behind them, and the brace across.
+        for fraction in GardenLayout.fenceRails {
+            let rail = model(.box([opening - 0.004, 0.008, 0.006]),
+                             Palette.creamLight, flat: flat, name: "GateRail")
+            rail.position = [opening / 2, height * fraction, -thickness / 2 - 0.003]
+            hinge.addChild(rail)
+        }
+
+        let low = height * GardenLayout.fenceRails[0]
+        let high = height * GardenLayout.fenceRails[1]
+        let rise = high - low
+        let brace = model(.box([sqrt(opening * opening + rise * rise) - 0.006,
+                                0.007, 0.006]),
+                          Palette.sandyWood, flat: flat, name: "GateBrace")
+        brace.orientation = simd_quatf(angle: atan2(rise, opening), axis: [0, 0, 1])
+        brace.position = [opening / 2, (low + high) / 2, -thickness / 2 - 0.003]
+        hinge.addChild(brace)
+
+        // Two strap hinges on the hanging edge, which is the detail that says
+        // which side opens before she has touched it.
+        for fraction in GardenLayout.fenceRails {
+            let strap = model(.box([opening * 0.34, 0.005, 0.004]),
+                              Palette.blushPinkDeep, flat: flat, name: "GateStrap")
+            strap.position = [opening * 0.17, height * fraction, thickness / 2 + 0.002]
+            hinge.addChild(strap)
+        }
+
+        // And a latch on the other, at the height a hand goes for.
+        let latch = model(.box([0.010, 0.005, 0.004]),
+                          Palette.blushPinkDeep, flat: flat, name: "GateLatch")
+        latch.position = [opening - 0.004, high, thickness / 2 + 0.002]
+        hinge.addChild(latch)
+
+        // Everything here stands clear of the ground and casts onto it, which is
+        // the grounding the fence gets too — there is no wall left for a shadow
+        // to smear across.
+        return Doorway(root: root, hinge: hinge, glow: nil)
     }
 }

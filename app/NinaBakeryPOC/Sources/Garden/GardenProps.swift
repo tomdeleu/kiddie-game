@@ -37,22 +37,40 @@ enum GardenProps {
     /// plate cannot answer a question about the room it is not standing in, and
     /// the studio plate reached for glass because it had no room to be legible
     /// in.
+    /// **It is a flower pot, not a kitchen jar** —
+    /// `references/garden/potting-bench.png` draws them as tapered pots with
+    /// domed knobbed lids, and that is worth taking rather than reusing the
+    /// straight-sided prism the kitchen's shelf jars are. The kitchen's jars are
+    /// kitchen jars; the garden's are plant pots, and two rooms whose containers
+    /// differ only in colour would be one room twice.
     static func seedJar(_ ingredient: Ingredient, flat: Bool) -> Entity {
         let root = Entity()
         root.name = "SeedJar_\(ingredient.rawValue)"
 
-        let body = RoomBuilder.model(.prism(radius: 0.0092, height: 0.020, sides: 8),
+        let body = RoomBuilder.model(.taperedPrism(bottomRadius: 0.0072,
+                                                   topRadius: 0.0098,
+                                                   height: 0.018, sides: 8),
                                      ingredient.tokenColour, flat: flat, name: "JarBody")
         root.addChild(body)
 
-        // A lid a shade wider than the jar, so its rim catches the key light
-        // and the two read as separate parts. Cream on every one of them — with
-        // eight jars in a row the lid is what makes them a set and the body is
+        // A lid a shade wider than the pot's mouth, so its rim catches the key
+        // light and the two read as separate parts. Cream on every one of them —
+        // with eight in a row the lid is what makes them a set and the body is
         // what makes them different.
-        let lid = RoomBuilder.model(.prism(radius: 0.0104, height: 0.0052, sides: 8),
+        let lid = RoomBuilder.model(.lathe(profile: [[0.0110, 0],
+                                                      [0.0106, 0.0026],
+                                                      [0.0072, 0.0050],
+                                                      [0, 0.0058]],
+                                            sides: 8),
                                     Palette.creamLight, flat: flat, name: "JarLid")
-        lid.position = [0, 0.020, 0]
+        lid.position = [0, 0.018, 0]
         root.addChild(lid)
+
+        // The knob, which is what makes it a lid rather than a cap.
+        let knob = RoomBuilder.model(.prism(radius: 0.0022, height: 0.0032, sides: 6),
+                                     Palette.creamLight, flat: flat, name: "JarKnob")
+        knob.position = [0, 0.0236, 0]
+        root.addChild(knob)
 
         return root
     }

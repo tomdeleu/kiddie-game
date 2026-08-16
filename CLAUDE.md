@@ -20,9 +20,10 @@ timers, nothing counted anywhere. A round is ~11–12 minutes.
 
 **Status: two rooms built.** The proof of concept is answered and [`app/`](app/)
 holds **De Keuken** — the full kitchen round, seven toys, Nina herself behind
-the table — and **De Tuin**, the garden: eight seed jars, five holes, a watering
-can that grows whatever it sweeps over, six more toys. 192 Dutch line variants
-across 107 line ids. No other room exists.
+the table — and **De Tuin**, the garden: eight seed jars on a potting bench,
+five holes, a watering can that grows whatever it sweeps over, six more toys,
+and a picket fence with a gate in it where its walls used to be. 196 Dutch line
+variants across 109 line ids. No other room exists.
 
 ## → Start here: [`app/README.md`](app/README.md)
 
@@ -47,8 +48,10 @@ the room box is 0.46 m with the camera pulled back 8%, rather than the 0.4 m and
 the framing `POC.md` signed off; and **the ten Blender props carry ambient
 occlusion**, which nothing else does — see below. The garden's: **eight seeds
 rather than `GAMEPLAY.md` §5's six**, because the kitchen deals eight; a full
-basket completes it in both modes; and the way out is the kitchen's door in the
-kitchen's place rather than a gate.
+basket completes it in both modes; **it has a fence instead of the two walls
+`references/REFERENCES.md` §1 locks**, standing exactly where the plaster stood;
+and its gate says `ROOMS.md` §9's three things twice, because a picket fence has
+nothing behind it to light.
 
 **Next**, per [`GAMEPLAY.md`](GAMEPLAY.md) §9: decorating, then the party, then
 the wall of twelve frames. And **test both rooms with Nina first** — `POC.md`

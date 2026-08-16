@@ -41,6 +41,51 @@ text out explicitly: no lettering, no numbers, no labels, no markings.
 | `garden-tree.png` | `5f33d95f-bcd1-4192-984b-481907562f26` | A **cluster** of a dozen overlapping balls on a straight tapered trunk — not one ball |
 | `puddle.png` | `692a809d-e733-420f-adea-e3a0a5edfe7d` | An octagonal pool lying flat, with **concentric stepped rings** inside it |
 
+### The three that replaced the walls
+
+The garden shipped with two plaster walls, because `../REFERENCES.md` §1 gives
+every room a room box. Owner's call afterwards: *"it's a bit strange that the
+garden has a wall around it."* It was — a garden indoors. These are the plates
+for what replaced them.
+
+| File | Job ID | What the model took from it |
+|---|---|---|
+| `fence-gate.png` | `1b2d0355-ad41-4e02-b927-5bcce35f18f6` | A run of picket fence broken by **two taller square posts with flat pyramid caps**, and a gate leaf of five pickets on two rails with **one diagonal cross-brace**, two strap hinges and a latch |
+| `potting-bench.png` | `e7bb0f4d-d791-400e-93a5-2847d7c6e863` | Four square legs, a worktop with a **low backboard**, and a lower shelf that **projects forward of the worktop** so both rows of pots are visible from above |
+| `roombox-v2.png` | `c595699f-574c-4f65-bc9a-8f369ee12e98` | The whole garden with no walls: the fence as an **L on the two far edges**, the gate in the left run, the bench against it, a **mint lawn** and a **sandy path at the gate** |
+
+**The brace is the plate's real contribution.** Five vertical boards and two
+horizontals are a piece of fence; a diagonal across them is a thing that opens.
+It is the one detail that makes the gate read as a gate at 80 mm wide, and it
+cost one rotated box.
+
+**The bench's projecting shelf is the other.** The obvious build is a shelf
+directly under the worktop, and it does not work: this camera looks down at
+about 34°, so it can see under an overhang by roughly one and a half times the
+drop, and a pot on a shelf 42 mm below the top would be cut in half by its own
+bench. The plate pushes the shelf forward so the lower row stands clear of the
+front edge. It is the kitchen's mirrored-shelf problem rotated a quarter turn.
+
+## The room-box plate overruled the studio plates. Again.
+
+Three times now in this one room, which makes it a rule rather than an anecdote.
+
+- **The seed jar** came back as glass; `roombox.png` drew it opaque and tinted.
+- **The watering can** came back blush; `roombox.png` put a mint one in a rose
+  garden.
+- **The ground and the fence** are the third and the biggest.
+  `roombox-v2.png` — asked only for "a garden with a fence instead of walls" —
+  came back with a **pale mint lawn**, a **cream fence** and a **sandy path**,
+  where the room had a cream floor and a rose fence. It is right on all three:
+  with the walls gone the ground became most of the frame, cream ground under a
+  cream fence is one colour, and the path is what gives the gate somewhere to
+  lead now that it has no lit doorway behind it.
+
+Every one of those is a question about **what a prop is standing next to**, which
+a studio shot on a grey backdrop cannot be asked. So: *ask for the room box a
+second time, with the room's own contents in it, and let it win.*
+
+
 The door is not here. It is the kitchen's, reused unchanged —
 `Sources/Props/Doorway.swift`, from `../props/door.png` — because `ROOMS.md` §9's
 three cues were argued once and the way out being where it was last time is

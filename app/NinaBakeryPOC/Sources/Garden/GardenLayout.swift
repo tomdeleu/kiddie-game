@@ -22,16 +22,51 @@ enum GardenLayout {
 
     static let roomSize: Float = Layout.roomSize
     static let half: Float = Layout.half
-    static let wallHeight: Float = Layout.wallHeight
-    static let wallThickness: Float = Layout.wallThickness
     static let slabThickness: Float = Layout.slabThickness
     static let floorY: Float = Layout.floorY
 
-    /// The inner face of each wall — everything that hangs on one is measured
-    /// off this rather than off `half`, so a change to the wall's thickness
-    /// cannot leave a shelf floating.
-    static var wallFaceX: Float { -half + wallThickness }
-    static var wallFaceZ: Float { -half + wallThickness }
+    // MARK: - The fence, where the walls were
+
+    /// **This room has no walls.** Owner's call, 2026-08-16: *"it's a bit
+    /// strange that the garden has a wall around it."* It was, and it is the
+    /// kind of wrong that only shows once the room is standing — a garden
+    /// indoors.
+    ///
+    /// `references/REFERENCES.md` §1 locks "two walls and a floor" for every
+    /// room, so this is a deviation and it is recorded in `app/README.md`. What
+    /// matters is that **the rule's purpose survives it exactly**: the fence
+    /// stands on the two far edges, precisely where the plaster stood, so the
+    /// two near sides are still open, no wall ever comes between the camera and
+    /// a prop, and nothing new has entered a sightline.
+    ///
+    /// The grey backdrop now shows above it, and that is right rather than
+    /// merely tolerable — it is `Palette.backdropGrey`, the same grey every
+    /// reference plate is shot on, so the room reads as the diorama the plates
+    /// already look like.
+    ///
+    /// **The centreline of each run**, from `references/garden/roombox-v2.png`:
+    /// an L meeting at the far corner, back run along X and left run along Z.
+    static let fenceLineX: Float = -0.212
+    static let fenceLineZ: Float = -0.212
+
+    /// Picket top, and the taller posts that carry the rails.
+    ///
+    /// 70 mm is a bit over half Nina's height (0.125), which is what a garden
+    /// fence is. It also clears the bed's rim at 0.050 and sits level with the
+    /// potting bench's worktop at 0.072, so the bench top reads against the
+    /// backdrop rather than against a row of pickets.
+    static let fenceHeight: Float = 0.070
+    static let fencePostHeight: Float = 0.086
+    static let fencePostSize: Float = 0.016
+    static let fencePicket = SIMD2<Float>(0.008, 0.013)
+    /// Centre to centre, so the gap between two pickets is 11 mm — wide enough
+    /// to see the backdrop through, which is what makes it a fence rather than
+    /// a low wall.
+    static let fencePicketSpacing: Float = 0.019
+    /// Rails, as a fraction of the picket height. Behind the pickets.
+    static let fenceRails: [Float] = [0.30, 0.72]
+    /// Posts along a run, roughly every six pickets.
+    static let fencePostSpacing: Float = 0.114
 
     // MARK: - The bed
 
@@ -115,41 +150,76 @@ enum GardenLayout {
     /// instead of a travel count.
     static let waterReleaseRadius: Float = 0.046
 
-    // MARK: - The seed shelves
+    // MARK: - The potting bench
 
-    /// **Two shelves of four jars, on the left wall.**
+    /// **The eight seed jars stand on a bench now, not on the wall.**
     ///
-    /// Eight, one per `Ingredient` — `GAMEPLAY.md` §5 says six, and the kitchen
-    /// shipped eight. Growing six of the eight the kitchen deals would leave a
-    /// hole in the round the moment the garden fills the basket, so the shelf is
-    /// the enum. See `app/README.md` for the deviation.
+    /// They hung on two wall shelves, and the walls have gone. Owner's call on
+    /// what replaces them: a potting bench —
+    /// `references/garden/potting-bench.png` — four legs, a worktop with a low
+    /// backboard, and a second shelf under it.
     ///
-    /// Mirrored from the kitchen's shelves in construction but not in contents:
-    /// there is no ingredient standing at one end here, because every jar *is*
-    /// an ingredient.
-    static let shelfDepth: Float = 0.032
-    static var shelfX: Float { wallFaceX + shelfDepth / 2 }
-    static let shelfLength: Float = 0.224
-    static let shelfCentreZ: Float = -0.030
-    static let shelfHeights: [Float] = [0.150, 0.105]
-    /// The top face of a plank, which is what a jar stands on. **Derived, never
-    /// typed** — the kitchen's ingredients hovered 10 mm above their plank for
-    /// weeks because two places wrote the number down and disagreed.
-    static func shelfTopY(_ height: Float) -> Float { height + 0.004 }
+    /// Eight, one per `Ingredient`. `GAMEPLAY.md` §5 says six and the kitchen
+    /// deals eight; growing six of the eight would leave a hole in the round the
+    /// moment the basket is handed over, so the bench is the enum. See
+    /// `app/README.md` for the deviation.
+    ///
+    /// It runs along Z in front of the left fence, which is where the shelves
+    /// were — so nothing about *where she looks for a seed* has changed, only
+    /// how far down.
+    static let benchCentre = SIMD2<Float>(-0.178, -0.030)
+    /// The worktop: depth across (x), length along (z).
+    static let benchTopSize = SIMD2<Float>(0.048, 0.230)
+    /// **The kitchen's table height**, deliberately. The surface she works at is
+    /// then the same height in both rooms, which is one less thing for a
+    /// 4-year-old's hands to relearn.
+    static let benchTopY: Float = 0.072
+    static let benchBoard: Float = 0.008
+    /// A low upstand along the worktop's back edge. It stops the top row of jars
+    /// reading as floating against the backdrop, which with no wall behind them
+    /// is a real risk rather than a decoration.
+    static let benchBackboard: Float = 0.018
+    static let benchLegSize: Float = 0.012
 
-    /// Where jar *i* stands. Four to a plank at 52 mm centres, which keeps their
-    /// 24 mm touch spheres from meeting — the kitchen's counter toys are the
-    /// cautionary tale, where 50 mm centres and 32 mm spheres made every tap a
-    /// tie-break rather than a choice.
-    static let jarSpacing: Float = 0.052
+    /// **The lower shelf sticks out in front of the worktop**, and that is the
+    /// whole reason the bench works.
+    ///
+    /// The camera looks down at about 34°, so you can see under an overhang by
+    /// roughly 1.5× the drop — and a jar on a shelf 42 mm below a worktop, sitting
+    /// *under* that worktop, has its top 9 mm below the overhang and is cut in
+    /// half. `potting-bench.png` solves it by projecting the shelf forward, and
+    /// the jars on it stand **clear of the worktop's front edge**.
+    ///
+    /// It is the kitchen's mirrored-shelf bug rotated a quarter turn: two things
+    /// at the same place on screen, one above the other, read as one place with
+    /// two things in it.
+    static let benchShelfY: Float = 0.030
+    static let benchShelfSize = SIMD2<Float>(0.062, 0.230)
+    /// Centre of the lower shelf, pushed forward of the worktop's centre.
+    static var benchShelfX: Float { benchCentre.x + 0.014 }
+    /// The front face of the worktop — what the lower jars have to stand clear of.
+    static var benchTopFrontX: Float { benchCentre.x + benchTopSize.x / 2 }
+
+    /// Where jar *i* stands. Four on the worktop, four on the shelf below.
+    ///
+    /// **54 mm centres**, so their 26 mm touch spheres do not meet — the kitchen's
+    /// counter toys are the cautionary tale, where 50 mm centres and 32 mm
+    /// spheres made every tap a tie-break rather than a choice.
+    ///
+    /// **And the lower row is staggered half a spacing**, so no jar is ever
+    /// directly under another. The projection above already separates the two
+    /// rows; the stagger means they are separated twice, by different axes,
+    /// which is what makes eight jars read as eight rather than as four with
+    /// shadows.
+    static let jarSpacing: Float = 0.054
     static func jarSpot(_ index: Int) -> SIMD3<Float> {
-        let perShelf = 4
-        let shelf = min(index / perShelf, shelfHeights.count - 1)
-        let along = index % perShelf
-        let first = shelfCentreZ - jarSpacing * Float(perShelf - 1) / 2
-        return SIMD3<Float>(shelfX,
-                            shelfTopY(shelfHeights[shelf]),
-                            first + jarSpacing * Float(along))
+        let perRow = 4
+        let lower = index >= perRow
+        let along = Float(index % perRow) - Float(perRow - 1) / 2
+        let stagger: Float = lower ? jarSpacing / 2 : 0
+        return SIMD3<Float>(lower ? benchTopFrontX + 0.008 : benchCentre.x,
+                            (lower ? benchShelfY : benchTopY) + benchBoard,
+                            benchCentre.y + jarSpacing * along + stagger)
     }
 
     // MARK: - Home positions
@@ -158,8 +228,8 @@ enum GardenLayout {
     /// the kitchen: the one prop in front of everything, which is what gives the
     /// shot a foreground.
     ///
-    /// x = −0.090 rather than further left because the door's leaf sweeps
-    /// x ∈ [−0.216, −0.142] as it opens; this clears that by 52 mm.
+    /// x = −0.090 rather than further left because the gate's leaf sweeps
+    /// x ∈ [−0.212, −0.166] as it opens; this clears that by 76 mm.
     static let canHome = SIMD3<Float>(-0.090, floorY, 0.150)
 
     /// **The basket, on the near-right floor**, bracketing the open foreground
@@ -176,80 +246,131 @@ enum GardenLayout {
     /// floor. **Low to high, left to right**, because they chime in a scale and
     /// a scale that runs the wrong way is a scale nobody hears as one.
     ///
-    /// Placed at x = −0.150: 36 mm clear of the shelves' front face so they are
-    /// not read against the jars, and their far end stops at z = 0.098, which is
-    /// 49 mm short of the nearest the door's leaf ever reaches.
-    static let flowerX: Float = -0.150
-    static let flowerFirstZ: Float = -0.030
-    static let flowerSpacing: Float = 0.032
+    /// **They moved to the right-hand floor when the bench arrived**, because the
+    /// bench's lower shelf now reaches x = −0.134 and they were at −0.150. The
+    /// strip the deleted right-hand fence run left empty is the natural home:
+    /// 35 mm clear of the bed's right end, 96 mm from the basket, and **nothing
+    /// to their right at all**, so five stems on the floor cannot get in front
+    /// of anything.
+    /// **46 mm apart, up from 32.**
+    ///
+    /// A target's real size is its **perpendicular distance to the camera ray**,
+    /// not its distance on the ground — `TouchRouter.hitTest` measures the
+    /// former. A row running along X or Z is tilted about 37° away from the
+    /// screen, so it keeps only **0.798** of its spacing as separation on
+    /// screen: the old 32 mm row gave each flower a 55 pt band, less than half
+    /// `CONCEPT.md` §5's ~120 pt. 46 mm gives 77 pt, which is what fits beside
+    /// everything else in this corner.
+    ///
+    /// (A row along the **X−Z diagonal** would keep 1.000 of its spacing, since
+    /// that direction is exactly screen-horizontal. Worth knowing for the next
+    /// room that needs a long row — `ROOMS.md` §5.)
+    static let flowerX: Float = 0.185
+    static let flowerFirstZ: Float = -0.150
+    static let flowerSpacing: Float = 0.046
     static let flowerCount = 5
     static func flowerSpot(_ index: Int) -> SIMD3<Float> {
         SIMD3<Float>(flowerX, floorY, flowerFirstZ + flowerSpacing * Float(index))
     }
 
-    static let molehillSpot = SIMD3<Float>(0.040, floorY, 0.155)
-    static let puddleSpots = [SIMD3<Float>(-0.020, floorY, 0.060),
-                              SIMD3<Float>(0.115, floorY, 0.035)]
-    /// Both fliers hover; y is their resting height above the ground.
-    static let butterflyHome = SIMD3<Float>(0.090, floorY + 0.085, 0.055)
-    static let beeHome = SIMD3<Float>(flowerX, floorY + 0.052, 0.034)
+    static let molehillSpot = SIMD3<Float>(0.040, floorY, 0.160)
+    static let puddleSpots = [SIMD3<Float>(-0.030, floorY, 0.070),
+                              SIMD3<Float>(0.100, floorY, 0.018)]
 
-    /// The back-left corner, which is the one part of the floor nothing else
-    /// wants: too far to reach comfortably and behind the bed from the camera.
-    static let treeSpot = SIMD3<Float>(-0.160, floorY, -0.168)
-    static let bushSpots = [SIMD3<Float>(-0.088, floorY, -0.186),
-                            SIMD3<Float>(-0.186, floorY, -0.108)]
-
-    /// A short run of picket fence along the **far-right open edge**, which is
-    /// the one edge it can stand on without crossing a sightline.
+    /// **Both fliers hover, and both had to move.**
     ///
-    /// `references/REFERENCES.md` §1 puts the room box's two open sides where
-    /// her hands come in, and `plates/05-garden-roombox.png` draws a fence
-    /// across the near one — which would put a row of pickets between the camera
-    /// and the bed. The far-right edge gives the room the same boundary, seen
-    /// nearly end-on, with nothing behind it to hide.
-    static let fenceX: Float = 0.205
-    static let fenceZ = SIMD2<Float>(-0.190, -0.020)
-    static let fenceHeight: Float = 0.034
+    /// A thing 85 mm in the air and 130 mm nearer the camera lands on almost the
+    /// same *screen* point as a thing on the ground behind it — which is how the
+    /// butterfly's old home came to sit on top of two of the bed's five holes.
+    /// Tapping a ripe plant and getting a butterfly is the required action
+    /// losing to a toy, so they are placed by perpendicular separation like
+    /// everything else: the butterfly out in the near-left foreground, the bee
+    /// over the far end of the flower row it visits.
+    static let butterflyHome = SIMD3<Float>(0.060, floorY + 0.055, 0.075)
+    static let beeHome = SIMD3<Float>(0.215, floorY + 0.045, -0.185)
+
+    /// **Along the back fence**, which is where the bench pushed them.
+    ///
+    /// They stood in the back-left corner; the bench now occupies that ground,
+    /// so the tree and the bushes spread along the back run instead — behind the
+    /// bed from the camera, which is the one part of the floor nothing else
+    /// wants. The tree overhangs the fence and that is right rather than a
+    /// clash: a tree leaning over a garden fence is what a tree does.
+    static let treeSpot = SIMD3<Float>(-0.115, floorY, -0.172)
+    static let bushSpots = [SIMD3<Float>(-0.020, floorY, -0.192),
+                            SIMD3<Float>(0.170, floorY, -0.185)]
+
+    /// **The sandy path at the gate**, from `references/garden/roombox-v2.png`.
+    ///
+    /// It earns its place beyond the plate. `ROOMS.md` §9 says the way out says
+    /// the same thing three ways, and the garden's now says it twice — a gate in
+    /// a fence has no wall behind it to hold a lit plate. A patch of worn path
+    /// leading out through the gate says *there is somewhere to go* in the one
+    /// way left, which is by being the ground people have walked on. It emits
+    /// nothing and it is one flat polygon.
+    static let pathCentre = SIMD2<Float>(-0.150, 0.150)
+    static let pathRadius: Float = 0.062
 
     // MARK: - The way out
 
-    /// **The same door, in the same place as the kitchen's.**
+    /// **A gate in the fence, standing where the door stood.**
     ///
-    /// Not laziness: the way out being where it was last time is worth more to a
-    /// 4-year-old than a gate would be, and `ROOMS.md` §9's three cues — the
-    /// leaf off the latch, the light behind it, the ring at the threshold — are
-    /// already correct and already argued. `Props.doorway` is the shared build.
-    static let doorwayCentre = SIMD3<Float>(-0.216, floorY, 0.172)
+    /// The kitchen's door hung on a wall, and there is no wall. What has not
+    /// changed is *where*: the way out being in the same place as last time is
+    /// worth more to a 4-year-old than variety is, and the swing window against
+    /// the can was already worked out for this end of this run.
+    ///
+    /// `Props.gate` builds it and returns the very same `Props.Doorway` struct
+    /// the door does, so every line of `GardenRoom`'s door behaviour — ajar when
+    /// the basket is full, the swing, the ring at the threshold — is untouched.
+    static let gateCentre = SIMD3<Float>(fenceLineX, floorY, 0.160)
+    /// The clear gap between the two gate posts, which is what the leaf fills.
+    /// **No lintel**: a gate's opening is full height, so "a door she could not
+    /// walk through is a cupboard" is satisfied by construction rather than by
+    /// making it 140 mm tall.
+    static let gateOpening: Float = 0.080
 
     // MARK: - Surfaces
 
     /// **What the garden is made of, for `CarryController`.**
     ///
-    /// Two entries and no more: the ground, and the bed. A seed carried over the
-    /// bed rides at the **rim**, not at the soil — the rim is what it would
-    /// otherwise clip, and every snap test in the room is XZ-only so riding
-    /// higher cannot make a drop harder to land (`CarryController.containerRim`
-    /// has the argument in full).
+    /// Two surfaces and the ground. A seed carried over the bed rides at the
+    /// **rim**, not at the soil — the rim is what it would otherwise clip, and
+    /// every snap test in the room is XZ-only so riding higher cannot make a
+    /// drop harder to land (`CarryController.containerRim` has the argument in
+    /// full). The bench's worktop is a real surface too, so a seed crosses it
+    /// rather than passing through it — and so she can genuinely put the
+    /// watering can down on the bench.
     ///
-    /// The bed is also the `hider`: it is the only thing in the room tall enough
-    /// to put floor out of sight of a camera that never moves, so the strip
-    /// behind it is the one place a drop floats home from.
+    /// The bed stays the `hider`. The bench hides floor behind it as well, but
+    /// that floor is already outside `clampToPlayArea`, so nothing can be lost
+    /// there.
     static let surfaces = Surfaces(
         floorY: floorY,
+        // Nearest-camera first, which along the +X+Z diagonal means the larger
+        // x + z: the bed at −0.045, then the bench at −0.208. Their footprints
+        // do not overlap, so this is documentation rather than arbitration.
         rects: [
-            Surfaces.Rect(centre: bedCentre, size: bedSize, y: bedRimY)
+            Surfaces.Rect(centre: bedCentre, size: bedSize, y: bedRimY),
+            Surfaces.Rect(centre: benchCentre, size: benchTopSize,
+                          y: benchTopY + benchBoard),
         ],
+        // **The lower shelf only.** The worktop is a `Rect` above, and it must
+        // not also be a shelf or the two would answer the same question twice.
+        // `Surfaces.shelfY` only matches within 32 mm above a top and the
+        // worktop sits 42 mm higher, so a jar on the bench can never be mistaken
+        // for a jar on the shelf.
         shelves: [
-            Surfaces.Shelf(x: shelfX, depth: shelfDepth, centreZ: shelfCentreZ,
-                           halfSpan: shelfLength / 2,
-                           tops: shelfHeights.map(shelfTopY))
+            Surfaces.Shelf(x: benchShelfX, depth: benchShelfSize.x,
+                           centreZ: benchCentre.y,
+                           halfSpan: benchShelfSize.y / 2,
+                           tops: [benchShelfY + benchBoard])
         ],
         solids: [],
         hider: Surfaces.Rect(centre: bedCentre, size: bedSize, y: bedRimY),
-        // The room's own furniture: `minX` reaches the shelves, `maxX` the
-        // fence, `minZ` the bushes against the back wall, `maxZ` the open floor
-        // where the can and the basket stand.
+        // The room's own furniture: `minX` reaches the bench, `maxX` the
+        // flowers, `minZ` the bushes against the back fence, `maxZ` the open
+        // ground where the can and the basket stand.
         minX: -0.205, maxX: 0.200, minZ: -0.200, maxZ: 0.200,
         lift: Layout.carryLift
     )

@@ -391,6 +391,12 @@ enum Line {
         static let plantje = "nina.dit.plantje"
         static let mandje = "nina.dit.mandje"     // the kitchen's, reused
         static let hek = "nina.dit.hek"
+        /// The gate in the fence. **Not `ditDeur`**, which the garden borrowed
+        /// while its way out was the kitchen's door: that line says *"daarachter
+        /// is nog een kamer"*, and there is no room behind a garden gate.
+        static let poort = "nina.dit.poort"
+        /// The potting bench the seed jars stand on, since the walls went.
+        static let werkbank = "nina.dit.werkbank"
         static let bloemen = "nina.dit.bloemen"
         static let molshoop = "nina.dit.molshoop"
         static let vlinder = "nina.dit.vlinder"

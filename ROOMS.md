@@ -236,6 +236,31 @@ press that travels less than **24 pt** (`tapSlop`) is a tap.
   registrations are written in points and the world-space number is derived.
 - **Nearest centre wins**, so a big generous target never swallows a small one
   sitting on top of it.
+- **A target's real size is measured on the screen, not on the ground**, and this
+  is the one every layout in the project got wrong until the garden's second
+  pass. `hitTest` measures the **perpendicular distance from a centre to the
+  camera ray**, so what matters is separation *across the view*, not in XZ.
+  A row running along X or Z is tilted about 37° away from the screen and keeps
+  only **0.798** of its spacing; a row along the **X−Z diagonal** is exactly
+  screen-horizontal and keeps **1.000** of it. The garden's flowers at 32 mm
+  centres were giving each a 55 pt band against `CONCEPT.md` §5's ~120 pt, and
+  the sum in XZ had looked fine.
+  **And height counts as separation too, in the wrong direction**: a prop 85 mm
+  in the air and 130 mm nearer the camera lands on nearly the same screen point
+  as one on the ground behind it, which is how the garden's butterfly came to
+  sit on top of two of the bed's five holes. Check a layout by perpendicular
+  distance, and check the fliers.
+- **Overlap between like things in a row is intended; overlap between unlike
+  things is a bug.** Five holes, eight jars, five flowers: nearest-wins gives
+  each an equal band and an imprecise tap always lands on the nearest one, which
+  is exactly what a generous row should do. What must not overlap is two targets
+  that would give *different kinds of answer* — a toy taking the tap meant for a
+  required action is the failure that matters.
+- **Some props cannot have a naming target at all.** A large prop entirely
+  covered by smaller ones — a bench under eight jars, a bed under five holes —
+  loses every tap it is ever offered, wherever the marker is put. Fold its word
+  into the things standing on it instead, at the flour sack's ratio: mostly the
+  thing under her finger, now and then the thing it is standing on.
 - **Entity-targeted gestures are deliberately not used.** `targetedToAnyEntity()`
   needs a `CollisionComponent` per prop and hits exactly the mesh; owning the ray
   keeps the generosity a number in one file rather than a shape on every entity.
@@ -390,7 +415,17 @@ replaces.**
 
 ### The door says it three ways at once
 
-None of them a word or an arrow, because she cannot read one:
+None of them a word or an arrow, because she cannot read one.
+
+> **A room with no wall behind its way out says it twice.** De Tuin's exit is a
+> gate in a picket fence: there is nothing behind it to light, and she can see
+> straight through it already. It keeps the leaf off the latch and the ring at
+> the threshold, and drops the middle one — owner's call, and
+> `Props.Doorway.glow` is `Optional` to say so rather than being a hidden entity
+> nobody assigns to. What partly stands in for it emits nothing at all: **a worn
+> sandy path leading out through the gate**, which is how ground says somebody
+> goes this way. Take the third cue as *required wherever it is possible*, not as
+> a count.
 
 - **the leaf comes off the latch** and rests ajar at 11° — the smallest angle
   that still shows a slice of the light behind it at this camera. The point is

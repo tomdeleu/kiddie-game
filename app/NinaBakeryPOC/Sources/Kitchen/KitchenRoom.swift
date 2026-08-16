@@ -426,7 +426,9 @@ final class KitchenRoom: GameRoom {
         // The next room, seen through the gap. Lit rather than merely painted:
         // it is a butter-yellow plate deep inside the frame with a leaf across
         // most of it, and unlit it reads as the inside of a cupboard.
-        doorway.glow.model?.materials = [
+        // Optional since the garden's gate has no wall to hold a lit plate —
+        // see `Props.Doorway.glow`. The kitchen always has one.
+        doorway.glow?.model?.materials = [
             done ? Palette.glowMaterial(Palette.butterYellow, intensity: 1.8)
                  : Palette.material(Palette.butterYellow)
         ]

@@ -5,14 +5,19 @@ import simd
 /// De Tuin — the garden, `GAMEPLAY.md` §6.2.
 ///
 /// **Required: plant, water, pick — five ingredients into the basket.** Eight
-/// seed jars on two wall shelves, five holes in a raised bed, a watering can
-/// that grows whatever it sweeps over, and ripe plants that hop into the
-/// basket. Six toys that gate nothing.
+/// seed jars on a potting bench, five holes in a raised bed, a watering can that
+/// grows whatever it sweeps over, and ripe plants that hop into the basket. Six
+/// toys that gate nothing.
 ///
-/// Built to the contract De Keuken wrote down (`ROOMS.md`): same box, same
-/// chair, same step machine, same halo, same voice rules, same carrying — which
-/// is now `CarryController` rather than two hundred lines copied out of
-/// `KitchenRoom`.
+/// **It has a fence, not walls.** `references/REFERENCES.md` §1 gives every room
+/// two walls and a floor; this one has a picket fence standing exactly where the
+/// plaster stood, on the owner's call, because a garden with walls around it is
+/// a garden indoors. The rule's purpose is untouched — the two near sides are
+/// still open and nothing new is in a sightline. `app/README.md` records it.
+///
+/// Built to the contract De Keuken wrote down (`ROOMS.md`): same chair, same
+/// step machine, same halo, same voice rules, same carrying — which is
+/// `CarryController` rather than two hundred lines copied out of `KitchenRoom`.
 ///
 /// Three things here are worth naming because the obvious implementation is the
 /// wrong one:
@@ -76,6 +81,11 @@ final class GardenRoom: GameRoom {
     /// Seeds she dropped somewhere that was not a hole. They stay where she put
     /// them (`ROOMS.md` §6) and they are cleared on a rebuild.
     private var strays: [Entity] = []
+    /// Names the strays' touch targets apart. A stray picked up and put down
+    /// again gets a fresh one and the old is left disabled with a nil weak
+    /// entity, which `TouchRouter.hitTest` skips — bounded by how often she does
+    /// it, and cleared outright by the next `build`.
+    private var strayTargets = 0
 
     /// **Which holes this sweep of the can has already watered.**
     ///
@@ -168,6 +178,7 @@ final class GardenRoom: GameRoom {
         puddles.removeAll()
         basketTokens.removeAll()
         strays.removeAll()
+        strayTargets = 0
         carriedSeed = nil
 
         root.addChild(GardenRoomBuilder.build(flat: flat))
@@ -177,7 +188,7 @@ final class GardenRoom: GameRoom {
         buildCan()
         buildBasket()
         buildToys()
-        buildDoorway()
+        buildGate()
 
         registerTargets()
         applyStep(animated: false)
@@ -283,28 +294,32 @@ final class GardenRoom: GameRoom {
         }
     }
 
-    private func buildDoorway() {
-        let node = Props.doorway(flat: flat, centre: GardenLayout.doorwayCentre)
+    /// **The gate**, which is what this room has instead of a door.
+    ///
+    /// `Props.gate` returns the same `Props.Doorway` the kitchen's door does, so
+    /// everything downstream — `refreshDoorInvitation`, `swingDoor`, `endRoom`,
+    /// the touch target, the halo — is unchanged.
+    private func buildGate() {
+        let node = Props.gate(flat: flat, centre: GardenLayout.gateCentre)
         root.addChild(node.root)
         doorway = node
 
         let marker = Entity()
-        marker.name = "DoorHaloSpot"
-        marker.position = SIMD3<Float>(GardenLayout.doorwayCentre.x + Layout.doorFrameZ,
+        marker.name = "GateHaloSpot"
+        marker.position = SIMD3<Float>(GardenLayout.gateCentre.x + 0.004,
                                        GardenLayout.floorY,
-                                       GardenLayout.doorwayCentre.z)
+                                       GardenLayout.gateCentre.z)
         root.addChild(marker)
         doorMarker = marker
 
-        // At the middle of the leaf, not at the doorway's origin — which is on
-        // the floor, so a sphere there covers the bottom of the door and nothing
-        // else. A 4-year-old aims at the middle of a door; the kitchen paid for
-        // finding that out.
+        // At the middle of the leaf, not at the gate's origin — which is on the
+        // ground, so a sphere there covers the bottom of it and nothing else. A
+        // 4-year-old aims at the middle; the kitchen paid for finding that out.
         let hit = Entity()
-        hit.name = "DoorTouchSpot"
-        hit.position = SIMD3<Float>(GardenLayout.doorwayCentre.x + 0.010,
-                                    GardenLayout.floorY + Layout.doorOpening.y / 2,
-                                    GardenLayout.doorwayCentre.z)
+        hit.name = "GateTouchSpot"
+        hit.position = SIMD3<Float>(GardenLayout.gateCentre.x + 0.010,
+                                    GardenLayout.floorY + GardenLayout.fenceHeight / 2,
+                                    GardenLayout.gateCentre.z)
         root.addChild(hit)
         doorTouchSpot = hit
     }
@@ -328,9 +343,14 @@ final class GardenRoom: GameRoom {
                 target.onDragEnded = { [weak self] world in self?.dropSeed(at: world) }
                 // A jar names its *ingredient*, through the same line the
                 // kitchen says when she taps the berry — so the word she learns
-                // here is the word she hears there.
+                // here is the word she hears there. One tap in four names the
+                // bench instead, which is the only place `werkbank` can be
+                // said: the bench is covered in these eight jars, so a target of
+                // its own would never win one.
                 target.onTap = { [weak self] in
-                    self?.sayName(ingredient.nameLineID, wobbling: jar)
+                    self?.sayName(Int.random(in: 0..<4) == 0 ? Line.Dit.werkbank
+                                                             : ingredient.nameLineID,
+                                  wobbling: jar)
                 }
             }
         }
@@ -417,19 +437,30 @@ final class GardenRoom: GameRoom {
                 }
             }
         }
-        touch.register("fence", entity: nil, radius: 0.040,
-                       planeY: GardenLayout.floorY) { target in
-            target.onTap = { [weak self] in self?.sayName(Line.Dit.hek, wobbling: nil) }
-        }
-        // The fence has no single entity, so its target hangs on a marker at the
-        // middle of the run.
+        // **The fence has no single entity to hang a target on**, so it gets a
+        // marker at a clear stretch of the back run. Small on purpose — 22 mm
+        // rather than the 30 a prop gets: it is a bonus word rather than a
+        // gameplay target, and every neighbour it might lose a tap to answers
+        // with a word of its own.
+        //
+        // **The bench and the bed do not get one, and that is not an
+        // oversight.** Both are large props entirely covered by smaller targets
+        // — eight jars, five holes — and `TouchRouter` picks the nearest centre,
+        // so a marker anywhere on either of them loses every tap it would ever
+        // be offered. Their words are folded into the things standing on them
+        // instead: see `tapPlot` for `zaaibak` and the jar targets for
+        // `werkbank`. Same trick as `sayToy`, and the same one the kitchen's
+        // flour sack has always used.
         let fenceMarker = Entity()
         fenceMarker.name = "FenceSpot"
-        fenceMarker.position = [GardenLayout.fenceX,
+        fenceMarker.position = [0.100,
                                 GardenLayout.floorY + GardenLayout.fenceHeight / 2,
-                                (GardenLayout.fenceZ.x + GardenLayout.fenceZ.y) / 2]
+                                GardenLayout.fenceLineZ]
         root.addChild(fenceMarker)
-        touch.target(named: "fence")?.entity = fenceMarker
+        touch.register("fence", entity: fenceMarker, radius: 0.022,
+                       planeY: fenceMarker.position.y) { target in
+            target.onTap = { [weak self] in self?.sayName(Line.Dit.hek, wobbling: nil) }
+        }
     }
 
     /// **A tap said what the thing is.** `.low` priority, so a name can never
@@ -534,10 +565,19 @@ final class GardenRoom: GameRoom {
         if doorSwing == nil {
             doorway.hinge.orientation = simd_quatf(angle: doorRest, axis: [0, 1, 0])
         }
-        doorway.glow.model?.materials = [
-            done ? Palette.glowMaterial(Palette.butterYellow, intensity: 1.8)
-                 : Palette.material(Palette.butterYellow)
-        ]
+
+        // **The third cue is deliberately missing here**, and `doorway.glow` is
+        // nil to say so rather than being switched off.
+        //
+        // `ROOMS.md` §9 has the way out saying the same thing three ways: the
+        // leaf off the latch, a ring at the threshold, and light behind it. The
+        // kitchen's light is a plate inside the wall opening. A gate in a picket
+        // fence has no wall to hold one, and she can already see straight
+        // through it — so the garden says it twice, on the owner's call.
+        //
+        // What partly stands in for it is not lit at all: the sandy path leading
+        // out through the gate (`GardenLayout.pathCentre`). Ground people have
+        // walked on is the one way left to say *there is somewhere to go*.
 
         guard done else {
             Halo.remove(doorHalo, ticker: ticker)
@@ -593,6 +633,7 @@ final class GardenRoom: GameRoom {
             // the ground; nothing is undone and nobody apologises. `ROOMS.md` §6.
             refreshInteractivity()
             strays.append(seed)
+            registerStray(seed, ingredient)
             carrier.settle(seed, missed: state.step == .zaaien)
             return
         }
@@ -601,6 +642,38 @@ final class GardenRoom: GameRoom {
         seed.removeFromParent()
         plant(ingredient, in: hit.index)
         refreshInteractivity()
+    }
+
+    /// **A seed she put down somewhere is still a thing she can touch.**
+    ///
+    /// Without this it is not: a stray is created mid-drag, so it never went
+    /// through `registerTargets`, and a seed lying on the grass answered
+    /// nothing at all. `GAMEPLAY.md` §7 is blunt about it — *every tap does
+    /// something; if it is on screen, it responds* — and a dead prop is the one
+    /// thing that reads as a broken iPad.
+    ///
+    /// It can be picked up again and it says what it is, which is also the only
+    /// place `nina.dit.zaadje` gets to play.
+    private func registerStray(_ seed: Entity, _ ingredient: Ingredient) {
+        let name = "stray\(strayTargets)"
+        strayTargets += 1
+        touch.register(name, entity: seed, radius: 0.024,
+                       planeY: GardenLayout.floorY) { target in
+            target.tracksEntity = true
+            target.onDragBegan = { [weak self, weak seed] world in
+                guard let self, let seed, self.carriedSeed == nil else { return }
+                self.carriedSeed = (ingredient, seed)
+                self.strays.removeAll { $0 === seed }
+                target.enabled = false
+                self.refreshInteractivity()
+                self.carrier.pickUp(seed, at: world)
+            }
+            target.onDragMoved = { [weak self] world in self?.carrier.move(to: world) }
+            target.onDragEnded = { [weak self] world in self?.dropSeed(at: world) }
+            target.onTap = { [weak self, weak seed] in
+                self?.sayName(Line.Dit.zaadje, wobbling: seed)
+            }
+        }
     }
 
     private func plant(_ ingredient: Ingredient, in index: Int) {
@@ -833,8 +906,15 @@ final class GardenRoom: GameRoom {
         guard state.plots.indices.contains(index) else { return }
         let plot = state.plots[index]
         guard plot.isRipe, let seed = plot.seed else {
-            sayName(plot.isEmpty ? Line.Dit.gat : Line.Dit.plantje,
-                    wobbling: plants[index])
+            // An empty hole is also the one part of the bed with nothing
+            // standing in it, so it is where the bed gets named — mostly "a
+            // hole in the earth", one time in three "the seed tray". Both are
+            // true of what her finger is on, and the tray has no target of its
+            // own for the reason `registerToyTargets` gives.
+            let line = plot.isEmpty
+                ? (Int.random(in: 0..<3) == 0 ? Line.Dit.zaaibak : Line.Dit.gat)
+                : Line.Dit.plantje
+            sayName(line, wobbling: plants[index])
             return
         }
         pick(seed, from: index)
@@ -920,7 +1000,7 @@ final class GardenRoom: GameRoom {
         sound.play(.whoosh)
         guard gardenComplete else {
             swingDoor(doorway)
-            voice.say(Line.ditDeur, priority: .low)
+            voice.say(Line.Dit.poort, priority: .low)
             return
         }
         endRoom(doorway)
@@ -946,7 +1026,7 @@ final class GardenRoom: GameRoom {
         HarvestStore.put(state.basket)
         voice.sayWhenQuiet(Line.Tuin.kamerDeur)
 
-        let threshold = doorMarker?.position ?? GardenLayout.doorwayCentre
+        let threshold = doorMarker?.position ?? GardenLayout.gateCentre
         for (i, delay) in [Float(0.45), 1.5].enumerated() {
             ticker.after(delay) { [weak self] in
                 guard let self else { return }
@@ -984,6 +1064,22 @@ final class GardenRoom: GameRoom {
 
     // MARK: - Toys
 
+    /// **A toy says its name, and now and then says something silly instead.**
+    ///
+    /// `GAMEPLAY.md` §3 is unconditional — *every prop in every room says what
+    /// it is when tapped* — and the garden's six toys were breaking it: each
+    /// answered with its `Speel` chatter and never with its `Dit` name, so five
+    /// Dutch words she could have learned were sitting in the script with
+    /// nothing able to play them.
+    ///
+    /// The kitchen already had the answer and it is the flour sack: mostly the
+    /// name, one time in three the joke. The name is the part that teaches, so
+    /// it gets the majority; the chatter is what stops the sixth poke being the
+    /// first one again.
+    private func sayToy(_ name: String, _ chatter: String) {
+        voice.say(Int.random(in: 0..<3) == 0 ? chatter : name, priority: .low)
+    }
+
     /// **The flowers chime in a scale, low to high.**
     ///
     /// One `SoundKit.ding` at five rates — a pentatonic run, so any order she
@@ -1000,7 +1096,7 @@ final class GardenRoom: GameRoom {
         Sparkles.burst(at: flowers[index].position + [0, 0.034, 0], in: root,
                        ticker: ticker, colour: Palette.butterYellow,
                        count: 4, size: 0.0018, speed: 0.04, life: 0.5)
-        voice.say(Line.Speel.bloemen, priority: .low)
+        sayToy(Line.Dit.bloemen, Line.Speel.bloemen)
     }
 
     /// Mo pops out, looks about, and goes back down.
@@ -1026,21 +1122,21 @@ final class GardenRoom: GameRoom {
             mole.position = down + (up - down) * amount
         }, done: { [weak mole] in mole?.position = down })
 
-        voice.say(Line.Speel.mol, priority: .low)
+        sayToy(Line.Dit.molshoop, Line.Speel.mol)
     }
 
     private func tapButterfly() {
         guard let butterfly else { return }
         ticker.squash(butterfly, amount: 0.22, duration: 0.4)
         sound.play(.sparkle, volume: 0.35, rate: 1.3)
-        voice.say(Line.Speel.vlinder, priority: .low)
+        sayToy(Line.Dit.vlinder, Line.Speel.vlinder)
     }
 
     private func tapBee() {
         guard let bee else { return }
         sound.playVaried(.buzz)
         ticker.wiggle(bee, angle: 0.35, duration: 0.7)
-        voice.say(Line.Speel.bij, priority: .low)
+        sayToy(Line.Dit.bij, Line.Speel.bij)
     }
 
     private func tapPuddle(_ index: Int) {
@@ -1052,7 +1148,7 @@ final class GardenRoom: GameRoom {
         Sparkles.burst(at: pool.position + [0, 0.006, 0], in: root, ticker: ticker,
                        colour: Palette.berryBlue, count: 9, size: 0.0022,
                        speed: 0.075, life: 0.65)
-        voice.say(Line.Speel.plas, priority: .low)
+        sayToy(Line.Dit.plas, Line.Speel.plas)
     }
 
     /// **The butterfly follows her finger and the bee hovers over the flowers.**
