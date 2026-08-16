@@ -12,6 +12,14 @@ where a number appears, it is the number in the file, and the file is named.
 Swift toolchain, so treat every constant as correct-by-construction and check it
 on first build — `app/README.md`, "First build".
 
+> **De Tuin is built, and it is the first room built *against* this file rather
+> than out of it.** Where it needed something this contract described as living
+> inside `KitchenRoom`, that thing moved: §5's targets and §6's carrying are now
+> `Engine/Surfaces.swift` and `Engine/CarryController.swift`, the door is
+> `Props/Doorway.swift`, and a room is a `GameRoom` the developer panel can
+> switch between. Nothing in the *rules* changed; the addresses did, and they
+> are updated below.
+
 ---
 
 ## 0. The shape of the thing
@@ -112,6 +120,14 @@ whole instruction.** `Engine/Halo.swift`.
   **journey**, which lights the thing to pick up and the place it goes; and a
   room with **two right answers**, which the finished kitchen has (carry on
   baking, or leave). Never light two things for emphasis.
+- **A journey with an interchangeable source is not a journey.** The garden's
+  sowing step looks like one — pick a seed up, put it in a hole — and it gets a
+  single halo, on the hole. Its two ends are not the same kind of thing: the
+  destination is a fact, and the source is **her choice between eight equally
+  right answers**. Lighting one jar says that jar is the one, which is false;
+  lighting all eight is not an instruction. The rule generalises: **light the end
+  that is a fact, and let the idle shimmer cover the end that is a choice** —
+  which is also, exactly, where `GAMEPLAY.md` §6.2 puts the wish hint.
 - **It disables nothing.** Every other prop still answers a tap while it is on.
 
 ### Do not re-derive the colour
@@ -243,19 +259,31 @@ are world-space spheres satisfying a rule about the *screen*.
 ## 6. Carrying things
 
 The hardest part of the kitchen, and it is solved — inherit it rather than
-rediscovering it.
+rediscovering it. **It is `Engine/CarryController.swift` and
+`Engine/Surfaces.swift` now**, parameterised by each room's own rectangles,
+because the garden needed every line of it and copying it would have been
+copying the two bugs below as well.
 
 A carried prop **rides just above whatever is underneath it** — table, counter,
 floor — easing there over about a third of a second rather than snapping. Pick a
 berry off the top shelf and it swoops down as she brings it to the bowl.
 
-The whole model is two functions in `Layout`:
+The whole model is two functions on `Surfaces`, and a room supplies its own:
 
-- **`surfaceY(at:)`** — four rectangles, tested nearest-camera first. What is
+- **`y(at:)`** — the room's rectangles, tested nearest-camera first. What is
   under a point.
-- **`surfacePointedAt(from:)`** — what the ray from her eye through her fingertip
+- **`pointedAt(from:)`** — what the ray from her eye through her fingertip
   lands on first. **This is the one that decides the surface during a drag**, and
   it is a pure function of the touch that never looks at the prop.
+
+**A room's one-off exceptions hang off the controller, and there are two hooks
+because they are two different questions.** `pointedExtra` answers for a drag
+(the kitchen's cake plank, reachable by one prop on one step); `restingExtra`
+answers for the halo, which follows a prop rather than a finger. The garden needs
+both and they disagree: its bed is a surface at its **rim** for a carried seed,
+because the rim is what a seed would clip, and at its **soil** for the halo,
+because the holes are sunk 10 mm below the rim and a ring floating over a hole is
+a ring pointing at nothing.
 
 That distinction is load-bearing and cost two failed attempts:
 
@@ -405,10 +433,22 @@ it can and add cases only for genuinely new events.
 
 A checklist, in the order it is worth doing:
 
-1. **A `Layout` block** — every position in one table. Almost every bug in a room
-   like this is two files disagreeing about where the table top is.
+0. **Conformance to `GameRoom`** (`Sources/Game/GameRoom.swift`) and a case in
+   `RoomID`, so it appears in the developer panel's room picker and can be
+   visited without playing the game up to it. Seven small methods, of which only
+   `teardown()` has a trap: **a `Ticker` job a torn-down room still holds keeps
+   animating a detached entity forever, and nothing on screen says so.** Every
+   job id, every `Halo.Handle` and every touch target goes in it — which is the
+   same list a rebuild already needs, so write it once and call it from both.
+1. **A `Layout` block** — every position in one table, plus the room's own
+   `Surfaces`. Almost every bug in a room like this is two files disagreeing
+   about where the table top is.
 2. **A step enum and a `Codable` state struct**, versioned, with `RoundStore`'s
-   load/save/reset shape.
+   load/save/reset shape. **The step may be derived** — the garden's is a pure
+   function of its bed, stored so the room can be entered cold and recomputed
+   after every action so it can never disagree with what is on screen. A step
+   that can be computed and is also stored independently is a second place for
+   the truth to live.
 3. **Props**, in `FacetedMesh` primitives. **Check Kenney's Food Kit and
    Furniture Kit first** — do not model what 340 CC0 models already provide. They
    arrive flat-shaded and hard-edged, which is the target shading model; they
@@ -433,6 +473,11 @@ A checklist, in the order it is worth doing:
   texture load returns nil, and the asset is silently absent. Nothing raises.
 - **A missing asset must never leave a live tap target with nothing behind it.**
   `ModelLibrary` establishes the fallback rule; the portrait follows it.
+- **Every element of a script's `lines` array must be a real line.** `VoiceBank`
+  decodes them with a non-optional `{id, character, variants}` model, so one
+  `{"_section": "…"}` marker slipped in for readability makes the **whole file**
+  fail to decode — silently, into a room where every line in it is mute. Section
+  notes go in `_why`.
 - **`scaledToFill()` does not crop.** It reports its overflowed size as its
   layout size. A full-bleed view needs a `GeometryReader`, an explicit `frame`
   and `clipped()`, all three.

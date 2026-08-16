@@ -13,7 +13,9 @@
     "_comment": "Owner's ask, 2026-08-16: 'make sure we have a small voice over telling what an ingredient / item is when you tap it instead of dragging it. teaches things like this.' It splits the game's two verbs cleanly for the first time — a DRAG is the round, a TAP is the room explaining itself — and it turns the eighteen props that previously answered a tap with a wobble and a sound into eighteen Dutch words.",
     "one_variant_each": "Every other line id in the game has two or three variants and never plays the same one twice running, because a character who repeats herself does not sound like a person. These are the exception and it is deliberate: a name is a thing you learn by hearing it the same way twice. Repetition is the feature.",
     "shape": "Name first, then one short thing about it. Never longer than two clauses — she is four, and a tap she has to sit through is a tap she stops making. The longest here is 4.9 s and most are near 3.",
-    "priority": "They are all said at .low priority, which VoiceBank drops outright if anyone is already speaking. A naming line must never talk over the step instruction it would be explaining."
+    "priority": "They are all said at .low priority, which VoiceBank drops outright if anyone is already speaking. A naming line must never talk over the step instruction it would be explaining.",
+    "de_tuin": "Thirteen more added 2026-08-16 for the garden — zaadje, zaaibak, gat, gieter, plantje, hek, bloemen, molshoop, vlinder, bij, plas, boom, struik. The eight seed jars are deliberately NOT among them: a jar of aardbei seeds is named through nina.dit.aardbei, the same line the kitchen says when she taps the berry itself, so the word she learns in the garden is the word she hears in the kitchen. nina.dit.mandje and nina.dit.potje are reused unchanged.",
+    "no_comment_objects_in_lines": "Every element of `lines` must be a real {id, character, variants} object. VoiceBank decodes the array with a non-optional model, so a single `{\"_section\": \"...\"}` marker slipped in for readability makes the WHOLE file fail to decode — and it fails silently, into a room where every naming line is mute. Section notes go here in `_why`, never in `lines`."
   },
 
   "characters": {
@@ -118,6 +120,59 @@
     { "id": "nina.dit.portret", "character": "nina", "variants": [
       { "file": "nina-dit-portret-1.mp3", "seconds": 3.27,
         "text": "Kijk, dat ben ik! In een mooi lijstje aan de muur." }
+    ]},
+
+    { "id": "nina.dit.zaadje", "character": "nina", "variants": [
+      { "file": "nina-dit-zaadje-1.mp3",
+        "text": "Dit is een zaadje. Daar groeit een heel plantje uit!" }
+    ]},
+    { "id": "nina.dit.zaaibak", "character": "nina", "variants": [
+      { "file": "nina-dit-zaaibak-1.mp3",
+        "text": "Dit is de zaaibak. Hier stop ik alle zaadjes in." }
+    ]},
+    { "id": "nina.dit.gat", "character": "nina", "variants": [
+      { "file": "nina-dit-gat-1.mp3",
+        "text": "Dit is een gaatje in de aarde. Daar mag een zaadje in." }
+    ]},
+    { "id": "nina.dit.gieter", "character": "nina", "variants": [
+      { "file": "nina-dit-gieter-1.mp3",
+        "text": "Dit is de gieter. Daarmee geef ik de plantjes water." }
+    ]},
+    { "id": "nina.dit.plantje", "character": "nina", "variants": [
+      { "file": "nina-dit-plantje-1.mp3",
+        "text": "Dit is een plantje. Bij elke keer water wordt het groter." }
+    ]},
+    { "id": "nina.dit.hek", "character": "nina", "variants": [
+      { "file": "nina-dit-hek-1.mp3",
+        "text": "Dit is het hekje. Dat staat om mijn tuintje heen." }
+    ]},
+    { "id": "nina.dit.bloemen", "character": "nina", "variants": [
+      { "file": "nina-dit-bloemen-1.mp3",
+        "text": "Dit zijn bloemen. Elke bloem maakt zijn eigen toontje." }
+    ]},
+    { "id": "nina.dit.molshoop", "character": "nina", "variants": [
+      { "file": "nina-dit-molshoop-1.mp3",
+        "text": "Dit is een molshoop. Daar woont Mo de mol in." }
+    ]},
+    { "id": "nina.dit.vlinder", "character": "nina", "variants": [
+      { "file": "nina-dit-vlinder-1.mp3",
+        "text": "Dit is een vlinder. Kijk eens hoe mooi hij fladdert." }
+    ]},
+    { "id": "nina.dit.bij", "character": "nina", "variants": [
+      { "file": "nina-dit-bij-1.mp3",
+        "text": "Dit is een bij. Die zoekt honing bij de bloemetjes." }
+    ]},
+    { "id": "nina.dit.plas", "character": "nina", "variants": [
+      { "file": "nina-dit-plas-1.mp3",
+        "text": "Dit is een plas water. Lekker om in te spetteren!" }
+    ]},
+    { "id": "nina.dit.boom", "character": "nina", "variants": [
+      { "file": "nina-dit-boom-1.mp3",
+        "text": "Dit is een boom. Die staat lekker in de hoek." }
+    ]},
+    { "id": "nina.dit.struik", "character": "nina", "variants": [
+      { "file": "nina-dit-struik-1.mp3",
+        "text": "Dit is een struik. Zo zacht en zo groen." }
     ]}
   ]
 }

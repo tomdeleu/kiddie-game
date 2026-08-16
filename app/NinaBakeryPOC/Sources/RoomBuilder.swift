@@ -430,38 +430,76 @@ enum Layout {
     /// Horizontal distance. Snapping ignores height on purpose: she aims at
     /// where a thing *is on the table*, not at its centre of mass.
     static func distanceXZ(_ a: SIMD3<Float>, _ b: SIMD3<Float>) -> Float {
-        simd_length(SIMD2<Float>(a.x - b.x, a.z - b.z))
+        Surfaces.distanceXZ(a, b)
     }
 
     // MARK: - Height
+
+    /// **The kitchen's own surfaces**, handed to `CarryController`.
+    ///
+    /// This section used to *be* the height model, and it lived here because
+    /// there was one room. There are two now, so the model moved to
+    /// `Engine/Surfaces.swift` and this is the kitchen's instance of it — the
+    /// same four rectangles, the same two shelves, the same bounds, declared
+    /// off the constants above so nothing can drift.
+    ///
+    /// **Everything below this is a one-line forward**, deliberately: every call
+    /// site in `KitchenRoom` keeps the name it has always used, so moving the
+    /// model could not change the room's behaviour.
+    ///
+    /// **The cake plank is not in here.** It hangs on the wall directly above
+    /// the back of the counter, so as a surface it would shadow the counter and
+    /// fling the sink brush shelf-high. It is a snap target instead — see
+    /// `nearPlank` — and only the cake ever uses it, through
+    /// `CarryController.pointedExtra`.
+    static let surfaces = Surfaces(
+        floorY: floorY,
+        // Nearest-camera first, so the table wins over the counter where their
+        // footprints meet.
+        rects: [
+            Surfaces.Rect(centre: tableCentre, size: tableSize, y: tableTopY),
+            Surfaces.Rect(centre: counterCentre, size: counterSize, y: counterTopY),
+        ],
+        // Both planks, as one run down the left wall. Registered the moment the
+        // shelves were built is the rule; they were not, and for two of the five
+        // fetching steps the halo landed on the floor 150 mm below the berry it
+        // was pointing at.
+        shelves: [
+            Surfaces.Shelf(x: shelfX, depth: shelfDepth, centreZ: -0.030,
+                           halfSpan: 0.090,
+                           tops: [shelfTopY(0.150), shelfTopY(0.105)])
+        ],
+        // Inside the counter is inside a solid box, which is worse than hidden.
+        solids: [Surfaces.Rect(centre: counterCentre, size: counterSize, y: counterTopY)],
+        // The table is what the fixed camera cannot see past.
+        hider: Surfaces.Rect(centre: tableCentre, size: tableSize, y: tableTopY),
+        // The room's own furniture, not round numbers, which is why they moved
+        // when it did: `minX` reaches the wall shelves at −0.211, `maxX` reaches
+        // past Otto's mouth at 0.152 so the tin can be pushed all the way in,
+        // `minZ` reaches the cake plank at −0.196, and `maxZ` is the open floor
+        // in front of the table.
+        //
+        // **The near edge grew** when props stopped floating home. A prop
+        // released nowhere in particular now lands on whatever is under it, and
+        // the floor strip in front of the table is both the most visible floor
+        // there is and the only place a thing can be set down without something
+        // else already being there.
+        minX: -0.215, maxX: 0.190, minZ: -0.205, maxZ: 0.190,
+        lift: 0.012
+    )
 
     /// **What a prop is standing on at this point in the room.**
     ///
     /// Everything used to be carried at one height — the table top — whatever
     /// it was over, which is why the room read as a painted backdrop: a prop
     /// dragged off the table stayed at table height and simply floated. The
-    /// fix is not a physics engine; it is knowing what is underneath. Four
-    /// surfaces answer for the whole room, tested nearest-camera first so the
-    /// table wins over the counter where their footprints meet.
+    /// fix is not a physics engine; it is knowing what is underneath.
     ///
-    /// `KitchenRoom.carry` eases the carried prop towards this plus a small
-    /// lift, and the drag plane follows it down. So dragging the rolling pin
-    /// off the table and onto the floor *lowers* it, over about a third of a
-    /// second, and it stays under her finger the whole way.
-    ///
-    /// **The cake plank is deliberately not in here.** It hangs on the wall
-    /// directly above the back of the counter, so as a surface it would shadow
-    /// the counter and fling the sink brush shelf-high. It is a snap target
-    /// instead — see `nearPlank` — and only the cake ever uses it.
-    static func surfaceY(at point: SIMD3<Float>) -> Float {
-        if within(point, centre: tableCentre, size: tableSize, margin: 0.006) {
-            return tableTopY
-        }
-        if within(point, centre: counterCentre, size: counterSize, margin: 0.006) {
-            return counterTopY
-        }
-        return floorY
-    }
+    /// `CarryController` eases the carried prop towards this plus a small lift,
+    /// and the drag plane follows it down. So dragging the rolling pin off the
+    /// table and onto the floor *lowers* it, over about a third of a second, and
+    /// it stays under her finger the whole way.
+    static func surfaceY(at point: SIMD3<Float>) -> Float { surfaces.y(at: point) }
 
     /// **The same ray she is pointing along, read at a different height.**
     ///
@@ -471,13 +509,10 @@ enum Layout {
     /// the gesture. `TouchRouter` hands the room a point on a fixed plane; this
     /// is what turns it back into "where she is pointing".
     ///
-    /// It is the whole basis of `KitchenRoom.carry`. See `surfacePointedAt`.
+    /// It is the whole basis of `CarryController`. See `surfacePointedAt`.
     @MainActor
     static func pointOnRay(through anchor: SIMD3<Float>, atHeight y: Float) -> SIMD3<Float> {
-        let eye = CameraRig.eye
-        let along = anchor - eye
-        guard abs(along.y) > 1e-6 else { return anchor }
-        return eye + along * ((y - eye.y) / along.y)
+        Surfaces.pointOnRay(through: anchor, atHeight: y)
     }
 
     /// **What her finger is pointing at**, which is not the same question as
@@ -496,8 +531,8 @@ enum Layout {
     /// table and the floor, which at this camera throws the prop most of a
     /// thumb's width off her finger and reads as it jumping somewhere else
     /// (owner, 2026-08-16). The obvious repair — re-project on a plane at the
-    /// prop's *current* height — is the thing `KitchenRoom.pickUp` documents as
-    /// a feedback loop, and it is worth knowing why the loop is real: at this
+    /// prop's *current* height — is the thing `CarryController.pickUp` documents
+    /// as a feedback loop, and it is worth knowing why the loop is real: at this
     /// eye, moving the plane by Δ slides the intersection about 1.63Δ along the
     /// view direction, so a prop stepping off the table drops 68 mm, which drags
     /// the mapped point 78 mm back *onto* the table, which lifts it again. It
@@ -528,15 +563,7 @@ enum Layout {
     /// is nearest-camera first.
     @MainActor
     static func surfacePointedAt(from anchor: SIMD3<Float>) -> Float {
-        if within(pointOnRay(through: anchor, atHeight: tableTopY),
-                  centre: tableCentre, size: tableSize, margin: 0.006) {
-            return tableTopY
-        }
-        if within(pointOnRay(through: anchor, atHeight: counterTopY),
-                  centre: counterCentre, size: counterSize, margin: 0.006) {
-            return counterTopY
-        }
-        return floorY
+        surfaces.pointedAt(from: anchor)
     }
 
     /// **The shelf a prop is standing on, if it is standing on one.**
@@ -556,13 +583,7 @@ enum Layout {
     /// actually up at shelf level, so the moment she lifts one off, the ring
     /// stops following the shelf and goes back to answering for the room.
     static func shelfSurfaceY(at point: SIMD3<Float>) -> Float? {
-        guard abs(point.x - shelfX) <= shelfDepth / 2 + 0.008,
-              abs(point.z - (-0.030)) <= 0.090 + 0.008 else { return nil }
-        for height in [Float(0.150), 0.105] {
-            let top = shelfTopY(height)
-            if point.y > top - 0.005 && point.y < top + 0.032 { return top }
-        }
-        return nil
+        surfaces.shelfY(at: point)
     }
 
     /// Whether a point is close enough to the plank to count as putting a cake
@@ -585,17 +606,9 @@ enum Layout {
             && abs(point.z - cakePlankCentre.y) <= plankSnapRadius
     }
 
-    /// True where `point` is over a rectangle, grown by `margin` so a prop set
-    /// down right on an edge lands on the surface rather than beside it.
-    private static func within(_ point: SIMD3<Float>, centre: SIMD2<Float>,
-                               size: SIMD2<Float>, margin: Float) -> Bool {
-        abs(point.x - centre.x) <= size.x / 2 + margin
-            && abs(point.z - centre.y) <= size.y / 2 + margin
-    }
-
     /// How far above whatever it is standing on a carried prop floats. Small,
     /// but not nothing: it is what says *held* rather than *shoved*.
-    static let carryLift: Float = 0.012
+    static var carryLift: Float { surfaces.lift }
 
     /// **Somewhere she could put a thing and then not get it back.**
     ///
@@ -620,16 +633,7 @@ enum Layout {
     /// table hides more floor behind it, so more floor has to be off limits.
     @MainActor
     static func isOutOfSight(_ point: SIMD3<Float>) -> Bool {
-        guard surfaceY(at: point) <= floorY + 0.001 else { return false }
-        // Inside the counter is inside a solid box, which is worse than hidden.
-        if within(point, centre: counterCentre, size: counterSize, margin: 0.004) {
-            return true
-        }
-        let eye = CameraRig.eye
-        let t = (tableTopY - eye.y) / (floorY - eye.y)
-        let crossing = SIMD3<Float>(eye.x + (point.x - eye.x) * t, tableTopY,
-                                    eye.z + (point.z - eye.z) * t)
-        return within(crossing, centre: tableCentre, size: tableSize, margin: 0.004)
+        surfaces.isOutOfSight(point)
     }
 
     /// How far a carried prop may travel.
@@ -661,11 +665,7 @@ enum Layout {
     /// the way in, `minZ` reaches the cake plank at −0.196, and `maxZ` is the
     /// open floor in front of the table.
     static func clampToPlayArea(_ p: SIMD3<Float>) -> SIMD3<Float> {
-        let minX: Float = -0.215
-        let maxX: Float = 0.190
-        let minZ: Float = -0.205
-        let maxZ: Float = 0.190
-        return SIMD3<Float>(min(max(p.x, minX), maxX), p.y, min(max(p.z, minZ), maxZ))
+        surfaces.clamp(p)
     }
 }
 
@@ -888,6 +888,11 @@ enum RoomBuilder {
         case lathe(profile: [SIMD2<Float>], sides: Int)
         case extrude(outline: [SIMD2<Float>], thickness: Float)
         case star(points: Int, outerRadius: Float, innerRadius: Float, thickness: Float)
+        /// A flat ring lying in XZ. `FacetedMesh` has had it since the halo was
+        /// built; it reaches the `Shape` enum now because the garden's watering
+        /// can and harvest basket both want a rim, and a rim is what says a
+        /// vessel has an inside.
+        case annulus(innerRadius: Float, outerRadius: Float, segments: Int)
 
         var geometry: FacetedMesh.Geometry {
             switch self {
@@ -918,6 +923,9 @@ enum RoomBuilder {
             case .star(let points, let outer, let inner, let thickness):
                 return FacetedMesh.star(points: points, outerRadius: outer,
                                         innerRadius: inner, thickness: thickness)
+            case .annulus(let inner, let outer, let segments):
+                return FacetedMesh.annulus(innerRadius: inner, outerRadius: outer,
+                                           segments: segments)
             }
         }
     }

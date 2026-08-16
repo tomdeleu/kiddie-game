@@ -1,7 +1,7 @@
-# Nina's Toverbakkerij — De Keuken
+# Nina's Toverbakkerij — De Keuken en De Tuin
 
-The kitchen, whole. Gameplay, graphics and Dutch voice, in one RealityKit app
-that runs on the iPad.
+Two rooms. Gameplay, graphics and Dutch voice, in one RealityKit app that runs
+on the iPad.
 
 It grew out of the Step 0 proof of concept, whose question — *does the faceted
 pastel low-poly direction survive real-time rendering without baked ambient
@@ -13,12 +13,36 @@ below is still the record of that.
 > thing and needed two fixes on first build; expect similar here, and see
 > [First build](#first-build) for the two places most likely to want one.
 
-> **This room is the reference implementation.** What it established that every
+> **De Keuken is the reference implementation.** What it established that every
 > later room inherits — the box and the camera, the step machine, the save
 > shape, the halo, the voice contract, targets, carrying, idle, misses, the
 > door — is written down once in [`ROOMS.md`](../ROOMS.md). This file stays the
 > record of *why the kitchen is the way it is*; that one is the contract. When
 > the two disagree, this file is the truth and `ROOMS.md` has drifted.
+
+> **De Tuin is the second room**, and it is the first thing built against that
+> contract rather than by writing it. What it cost is [below](#de-tuin--the-garden);
+> the short version is that most of it was assembly, and the two things that
+> were not — extracting the carry engine and the room switcher — are what the
+> next four rooms get for free.
+
+## The rooms
+
+| | | |
+|---|---|---|
+| **De Keuken** | `GAMEPLAY.md` §6.3 | Roll, fill, stir, pour, bake, and carry the cake onto the plank |
+| **De Tuin** | `GAMEPLAY.md` §6.2 | Plant, water, pick — five ingredients into the basket |
+
+**Switching between them is behind the developer panel**: triple-tap the
+top-right corner and use the room picker at the top of the strip. It is not on
+screen, and that is `CONCEPT.md` §5's parent gate doing exactly the job it was
+written for — a visible row of buttons that teleports her out of the room she is
+playing is the most pressable thing that could be put on this screen.
+
+**The garden feeds the kitchen.** Filling the basket writes it to
+`harvest.json`, and the next round the kitchen starts bakes *what she actually
+grew* rather than five dealt off a shuffled deck. She never sees the handover;
+she sees five familiar things waiting in the kitchen's five places.
 
 ## The opening
 
@@ -802,6 +826,193 @@ The clover and the star are flat-fronted, so they are turned 45° to face the
 camera. The camera never moves (`CONCEPT.md` §9.4), so that is a constant
 rather than a billboard.
 
+## De Tuin — the garden
+
+`GAMEPLAY.md` §6.2, built 2026-08-16 against [`ROOMS.md`](../ROOMS.md) rather
+than by writing it. Same box, same chair, same touch radii — the room did not
+need more floor, and the whole game is one continuous place.
+
+| Step | She does | It answers with |
+|---|---|---|
+| `zaaien` | Drags a seed from one of **eight jars** into one of **five holes** | A plop, sparkles in the seed's colour, a mound of turned earth, and Nina saying it is in the ground |
+| `gieten` | Sweeps the watering can across the bed | The can tips, water runs from its rose, and **every plant it passes over grows one stage** |
+| `plukken` | Taps a ripe plant | The fruit flies into the basket while the plant folds back into the earth, and Nina names the colour it will give the cake |
+| `klaar` | — | The basket is full, the door is ajar and lit, and the harvest is written for the kitchen |
+
+**The step is derived from the bed, not stored independently of it.** Any hole
+empty and the basket short → sow; anything planted and unripe → water; anything
+ripe → pick; basket full → done. It is saved so the room can be entered at any
+step cold, and recomputed after every action so it can never disagree with what
+is actually growing. Nothing is gated by it: she can water a half-sown bed, pick
+before the bed is full, and leave whenever she likes. It only decides what glows
+and what Nina says next.
+
+The one clause in it that is easy to get wrong: *stop asking her to sow once the
+basket plus what is in the ground can reach five*. Without it, harvesting the
+fourth plant empties a hole and the room turns round and asks for a sixth seed.
+
+### The halo never lights a seed jar
+
+This is the room's one interesting cue decision, and it looks like a mistake
+until it does not.
+
+Sowing looks like a **journey** — pick a seed up, put it in a hole — and a
+journey is one of `ROOMS.md` §3's two sanctioned reasons to light two things at
+once. It is not one, because the two ends are not the same kind of thing. The
+destination is a fact: *that hole is empty*. The source is **her choice between
+eight equally right answers**. Lighting one jar says that jar is the one, which
+is false; lighting all eight is not an instruction.
+
+So the bed carries the whole cue, Nina says where the seeds are, and the **idle
+shimmer** picks a jar if she stands still. Which is exactly the split
+`GAMEPLAY.md` §6.2 already describes for the wish hint — *"this is
+`Ticker.shimmer`, the idle cue, not the halo"* — so when the friends arrive and
+a colour wish wants the matching jar to shimmer, the mechanism is already there
+and it is one line.
+
+### A pass of the can, and why it needs two radii
+
+`GAMEPLAY.md` §6.2: one sweep across the bed advances every plant under it,
+three sweeps and the bed is ripe. The rule is unchanged from a single plant — a
+pass grows a plant a stage — it is only that a pass can cross five of them, which
+is the whole reason the five holes are a **row along X** rather than a block. A
+row is one left-to-right sweep, and a block would ask her to trace a shape.
+
+A hole is marked watered when the can's rose comes within 30 mm and unmarked only
+once it has left 46 mm. **The gap between the two is what makes it a pass.** With
+one radius, a hand holding still over one plant would pump it to ripe, and a
+4-year-old's finger jittering across the boundary would do the same thing more
+slowly. It is the rolling pin's rule (`KitchenRoom.roll`) with two thresholds
+instead of a travel count.
+
+**It is measured from the rose, not from the can.** They are 45 mm apart, which
+is more than the 42 mm between one hole and the next — watering from where the
+handle is would water the wrong plant.
+
+### Picking is a tap, and that is the one exception
+
+Everywhere else in the game, **drag to play, tap to learn the word**. Here a
+tap on a *ripe* plant picks it, which is `GAMEPLAY.md` §6.2's own instruction:
+"tap the ripe plant and it hops into the basket."
+
+The split is stated rather than hidden: **a ripe plant's tap picks it; an unripe
+one, or an empty hole, says what it is.** It survives because five taps is a
+cheap middle of a round and the room already has eight drags in it — and because
+what she hears on picking is `nina.ingredient.*`, the kitchen's own line naming
+the colour that ingredient will give the cake. That is exactly what she wants to
+know at the moment she picks it, and it means the word she learns in the garden
+is the word she hears in the kitchen.
+
+The fruit flies and the plant does not. She picked a strawberry, not a
+strawberry plant.
+
+### The toys
+
+Six, none of which gate anything:
+
+- **Five flowers that chime in a scale**, low to high, left to right. It is one
+  `SoundKit.ding` at five rates — a **major pentatonic** run, so there is no
+  semitone in it and no order she can tap them in that sounds like a mistake.
+  Their heights step up down the row, so the scale is visible before it is
+  audible. A whole musical toy for one array, and a quiet rehearsal for the
+  party's six instrument pads.
+- **Mo the mole**, who pops out of his hill fast, looks about, and goes back down
+  slowly.
+- **A butterfly that follows her finger** — the one thing in the game that
+  answers a touch which was not aimed at it. It needed `TouchRouter.onMoved`,
+  because a target big enough to catch every drag would eat every other drag in
+  the room. It follows *slowly*: a butterfly that arrives is a cursor.
+- **A bee** that hums when chased.
+- **Two puddles** that splash.
+- **A rainbow**, which is the one worth describing. `GAMEPLAY.md` §6.2 says
+  waving the can in the air makes one, and it is discovered rather than
+  explained: a long swing of the can that watered nothing is exactly what a
+  4-year-old does with a watering can before she works out what it is for, and
+  answering that with a rainbow is worth more than answering it with nothing.
+  Both conditions matter — without the travel it would fire every time she put
+  the can down, and without *watered nothing* it would fire on the sweep that
+  ripens the bed, which already has an answer.
+
+  **Its seven bands are the room's own palette in rainbow order**, not spectrum
+  colours. A real rainbow in a room of six pastels is the flour-cloud mistake
+  again: the one thing on screen that came from somewhere else.
+
+### Deviations from `GAMEPLAY.md`
+
+**Eight seeds, not six.** §5 lists six; the kitchen shipped eight, because
+`maanstof` and `veertje` were added to get the cake-colour arithmetic back. A
+garden that grows six of the eight the kitchen deals would leave a hole the
+moment the basket is wired through — so the shelf is `Ingredient.allCases`, two
+shelves of four. Owner's call, 2026-08-16.
+
+**A full basket is the completion rule in both modes.** `GAMEPLAY.md` §3 gives a
+visit its own rule, distinct from the round's — three cakes against one, in the
+kitchen. The garden has no honest second helping: a sixth ingredient has nowhere
+to go, and picking with a full basket is not a thing. So it is one rule, and the
+flag only decides what the door *does*.
+
+**The door is the kitchen's door, in the kitchen's place.** Not a gate. The way
+out being where it was last time is worth more to a 4-year-old than variety, and
+`ROOMS.md` §9's three cues were argued once already.
+
+**Tapping it is a ceremony, not a transition** — the bakery hub does not exist,
+so there is nowhere to be taken, and a 4-year-old told she is going somewhere and
+then not taken there has been lied to. What it *does* do is real: it writes the
+basket. `GardenRoom.endRoom` is the one function the hub replaces, exactly as
+`KitchenRoom.endRoom` is the one the decorating room replaces.
+
+### What the second room cost, and what it bought
+
+Two things were built that are not the garden, and they are most of the reason
+the third room will be cheaper than this one.
+
+**`Engine/CarryController.swift` and `Engine/Surfaces.swift`.** Dragging a seed
+into a hole and sweeping a can across a bed *is* the kitchen's carrying model —
+the height easing, the ray that keeps a prop under her fingertip, the container
+rims, the settle rules, the one patch of floor a drop is not allowed to stick
+in. `ROOMS.md` §6 says inherit it rather than rediscover it, and it was welded
+into `Layout` and `KitchenRoom`. It is now two files parameterised by each room's
+own rectangles, and **every call site in `KitchenRoom` is spelled exactly as it
+was**: `Layout.surfaceY`, `Layout.surfacePointedAt`, `Layout.isOutOfSight` and
+the rest are one-line forwards onto `Layout.surfaces`, and `pickUp`, `carry`,
+`settle`, `endCarry` and `surfaceUnder` are one-line wrappers. Moving the hardest
+code in the project should not also be a rename of twenty call sites.
+
+The two questions it keeps apart — *what is under this point* and *what is her
+finger pointing at* — are the thing that cost two failed attempts, and the
+garden immediately needed the distinction for a reason the kitchen never had: the
+bed is a surface at its **rim** for a carried seed and at its **soil** for the
+halo, because the holes are sunk 10 mm below the rim. One exception each, and
+they are different exceptions. `CarryController.pointedExtra` and `restingExtra`
+are exactly that pair.
+
+**`Game/GameRoom.swift` and the room picker.** `GameScene` used to hold a
+`KitchenRoom`; it holds a `GameRoom` now, and `go(to:)` is the one entry point —
+save, tear down, stop the voice, build, greet. Stopping the voice is not
+tidiness: `VoiceBank` holds at most one pending line, and Nina saying "put the
+tin in Otto" over a garden is worse than silence.
+
+`teardown()` is the part to be careful with. **A `Ticker` job a torn-down room
+still holds keeps animating a detached entity forever, and nothing on screen says
+so.** The kitchen already had the complete list — `cancelEverything()`, because
+`build` needs it on every rebuild — so leaving is that list plus the touch targets
+and the entity tree.
+
+### What it owes
+
+Nothing structural. The three things it is short of are content and are cheap:
+
+- **The bed is five holes because the basket is five.** `GAMEPLAY.md` §10 leaves
+  "three rather than five" open and wants it decided before the friends are
+  built. `GardenLayout.plotCount` follows `Layout.ingredientsPerRound`, so that
+  decision is still one constant and the bed follows it. `GardenStore.load`
+  already migrates a save whose bed is the wrong length.
+- **The wish hint** — a colour wish shimmering its matching jar — is one line
+  once the friends exist, because the shimmer is already the jars' cue.
+- **`GAMEPLAY.md` §6.2 lists a bee, a butterfly, a mole, puddles and flowers.**
+  All six are in. The next one or two are free (`ROOMS.md` §8: add one every time
+  you touch a room).
+
 ## Deliberate deviations from the design
 
 **There is ambient occlusion on the ten Blender props, and nowhere else.**
@@ -1135,15 +1346,25 @@ x = 0 because past that it starts crossing Otto's chimney.
 | `Engine/TouchRouter.swift` | One finger, two verbs. Targets are generous spheres, not meshes, and each carries the plane its prop is standing on. |
 | `Engine/Sparkles.swift` | Faceted yellow stars that fly out and vanish. The whole reward vocabulary. |
 | `Engine/Halo.swift` | The bright-yellow ring of light on the surface under the prop a step is about — the game's only instruction. |
+| `Engine/Surfaces.swift` | **What is under a point, and what her finger is pointing at.** Two different questions; confusing them cost two failed attempts at the drag. Each room declares its own rectangles. |
+| `Engine/CarryController.swift` | **Carrying, solved once.** Height easing, the ray that keeps a prop under her fingertip, container rims, and the settle rules. Was `KitchenRoom`'s; both rooms use it. |
 | `Intro/LoadingScreen.swift` | The title plate, and the floor it is held for. |
 | `Intro/IntroMovie.swift` | The opening film: a queue of shots, and two ways out of it. |
-| `Audio/SoundKit.swift` | All thirteen sound effects, synthesised at launch. |
-| `Audio/VoiceBank.swift` | Nina and Otto, driven by `script-keuken.json` and `script-namen.json`. Also `sayWhenQuiet` and `whenQuiet`, which are why nobody gets talked over. |
-| `Game/CakeSpec.swift` | Six ingredients → colour, effects, and what Nina says about them. |
-| `Game/RoundState.swift` | The round, and the JSON it is saved to. |
-| `Kitchen/KitchenProps.swift` | Otto, the bowl, the batter, the tin, the cake, the six ingredients, the toys, the door, the portrait. |
-| `Kitchen/KitchenRoom.swift` | The room: assembly, the state machine, the toys, the nudges. |
-| `RoomBuilder.swift` | The shell and the furniture, plus `Layout` — every position in the room, in one table. |
+| `Audio/SoundKit.swift` | All fifteen sound effects, synthesised at launch. |
+| `Audio/VoiceBank.swift` | Nina and Otto, driven by every bundled `script-*.json`. Also `sayWhenQuiet` and `whenQuiet`, which are why nobody gets talked over. |
+| `Game/GameRoom.swift` | What a room is, seen from outside, and the `RoomID` the developer panel switches between. |
+| `Game/CakeSpec.swift` | Eight ingredients → colour, effects, and what Nina says about them. |
+| `Game/RoundState.swift` | The kitchen's round, and the JSON it is saved to. Reads `Harvest` first, then deals. |
+| `Game/Harvest.swift` | The one thing that crosses between the garden and the kitchen: the basket she picked, in her order. |
+| `Props/Doorway.swift` | The way out. Shared, because `ROOMS.md` §9's three cues are a rule about rooms rather than about one. |
+| `Kitchen/KitchenProps.swift` | Otto, the bowl, the batter, the tin, the cake, the eight ingredients, the toys, the portrait. |
+| `Kitchen/KitchenRoom.swift` | The kitchen: assembly, the state machine, the toys, the nudges. |
+| `Garden/GardenLayout.swift` | Every position in the garden, in one table, plus its `Surfaces`. |
+| `Garden/GardenState.swift` | Five holes, the basket, and the step derived from them. `tuin.json`. |
+| `Garden/GardenRoomBuilder.swift` | The garden shell: ground, walls, the bed, the seed shelves, the fence, the tree. |
+| `Garden/GardenProps.swift` | Seed jars and seeds, the four plant stages, the can, the basket, and the six toys. |
+| `Garden/GardenRoom.swift` | The garden: sowing, watering, picking, the halo, the toys, the door. |
+| `RoomBuilder.swift` | The kitchen shell and furniture, plus `Layout` — every position in it, in one table. |
 | `FacetedMesh.swift` | **The core of the look.** Flat-shaded primitive builders — `lathe`, `extrude`, `star` and `annulus` are what the ingredients and the halo are made of — plus the smooth variant for A/B. |
 | `Palette.swift` | The locked colours, the four added ones, the glow and water materials, and `shade` for the 2D UI. |
 | `UI/FacetButton.swift` | **The button.** One faceted octagon, every control in the game. |
@@ -1356,10 +1577,21 @@ Five places are the most likely to want a fix, and all five are one line:
 **Triple-tap the top-right corner.** Hidden on purpose: `CONCEPT.md` §5 asks for
 a parent gate she will not find, and a visible gear is a thing she will press.
 
-It shows the step, what is in the bowl, the stir percentage, and **which voice
-line just played** — during a session with Nina that is the difference between
-"she ignored it" and "she never heard it". Plus a new round, a mute, and the
-whole POC lighting panel underneath.
+**At the top of it is the room picker** — Keuken / Tuin — which is how you visit
+a room without playing the game up to it. That was fine to do without while
+there was one room and is useless with six: checking a touch radius in the
+garden should not be a five-minute walk.
+
+It stays behind the triple-tap rather than on screen, and the picker is exactly
+the control that gate was written about. A visible row of buttons that teleports
+her out of the room she is playing is the most pressable thing that could be put
+on this screen; three taps in a corner costs a grown-up nothing.
+
+Under it: the room's own two or three lines — the kitchen prints its step, its
+bowl and its plank, the garden prints its step, its bed and its basket — and
+**which voice line just played**, which during a session with Nina is the
+difference between "she ignored it" and "she never heard it". Plus a new round, a
+mute, and the whole POC lighting panel underneath.
 
 ## Approved lighting
 
@@ -1408,32 +1640,54 @@ with **Copy settings** before overwriting.
 
 ## Audio
 
-**Voice is real.** 142 Dutch lines, generated with `text2speech_v2` /
-`elevenlabs` and bundled as mp3s — the app never calls an API. Nina is Gracie;
-Otto is provisionally Barrett, and `audio/auditions/README.md` explains how to
-swap him for four credits and no code.
+**Voice is real.** 192 Dutch line variants across 107 ids, generated with
+`text2speech_v2` / `elevenlabs` and bundled as mp3s — the app never calls an API.
+Nina is Gracie; Otto is provisionally Barrett, and `audio/auditions/README.md`
+explains how to swap him for four credits and no code.
 
-The 30 added on 2026-08-16 — 9 credits — are the 21 naming lines in
-`script-namen.json`, the 5 that make the end of a round a moment rather than a
-cut, the 4 that finish the room and open the door, and 2 for the spoon that replaced
-the whisk — the naming line, and the one `roeren` variant that named the tool — and 6 for
-the two new ingredients. `VoiceBank` loads every bundled `script-*.json` and merges them, so a whole
-new layer of speech is a new file and no Swift change; the same is true of the
-next room.
+The 52 added for the garden — about 16 credits — are `script-tuin.json`'s 27
+round lines and 12 toy lines, plus 13 naming lines appended to
+`script-namen.json`. **`VoiceBank` loads every bundled `script-*.json` and merges
+them**, so the whole garden was a new file and no Swift change beyond the
+constants in `Line.Tuin`.
 
-**Sound effects are synthesised.** Thirteen of them, rendered to PCM at launch
-by `SoundKit`. `CONCEPT.md` §7.4 records that the connector cannot supply SFX;
-Freesound or a bought pack is still the plan, and until then these are honest
-placeholders. Swapping one in is a filename in `Sound.fileName`.
+Four things it reuses rather than duplicating, and the reuse is the point:
+`nina.oeps` for a drag that did not land, `nina.stil` for the alternating idle
+nudge, `nina.ingredient.*` when she picks something — the line that already names
+the colour that ingredient will give the cake, which is exactly what she wants to
+know at that moment — and `nina.dit.<ingredient>` when she taps a seed jar. **The
+word she learns in the garden is the word she hears in the kitchen.**
+
+> **One trap, and it is silent.** `VoiceBank` decodes `lines` with a
+> non-optional `{id, character, variants}` model, so a single `{"_section":
+> "..."}` marker slipped into that array for readability makes the *whole file*
+> fail to decode — and it fails into a room where every naming line is mute, with
+> nothing raising. Section notes go in `_why`. It nearly shipped once.
+
+**Sound effects are synthesised.** Fifteen of them now, rendered to PCM at launch
+by `SoundKit`. The garden added exactly two — `buzz` and `dig` — because
+`ROOMS.md` §10 says reuse the existing cases and add one only for a genuinely new
+event. Planting is a `plop`, watering is `water`, ripening is a `sparkle`, and
+the five chiming flowers are `ding` at five rates, which buys a whole musical
+scale for nothing. `CONCEPT.md` §7.4 records that the connector cannot supply
+SFX; a CC0 pack is still the plan, and swapping one in is a filename in
+`Sound.fileName`.
 
 **Music is absent**, as agreed. `GAMEPLAY.md` §10 still has it open.
 
-## What this room may not conclude
+## What these two rooms may not conclude
 
-Whether the *game* is fun. There is one room, no friend at the door, no wish, no
-party, and no wall. What it can answer is whether she can drive it: whether the
-snap radius and the target sizes are right, whether stirring works with her
-hand, and whether she taps Otto again.
+Whether the *game* is fun. There is no bakery, no friend at the door, no wish, no
+party, and no wall — and with two rooms and no hub, the connection between them
+is a JSON file rather than something she experiences. What they can answer is
+whether she can drive it: whether the snap radius and the target sizes are right,
+whether stirring works with her hand, whether she can sweep a watering can across
+five plants, and whether she taps Otto again.
+
+**The garden inherited every one of the kitchen's touch numbers on the argument
+that the box and the chair have not moved.** That is a calculation, not an
+observation, and it is now riding on two rooms instead of one — so the afternoon
+with Nina is worth more than it was, not less.
 
 `POC.md` has the testing protocol, and it still applies: her iPad, Guided Access
 on, you not helping and not narrating.

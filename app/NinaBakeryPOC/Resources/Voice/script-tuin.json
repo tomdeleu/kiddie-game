@@ -1,0 +1,135 @@
+{
+  "_comment": "De Tuin's complete voice-over script. This file is BOTH the durable production record (CONCEPT.md §7.3) AND the runtime manifest — it is bundled into the app and read by VoiceBank.swift, which maps line id -> variant files. VoiceBank loads every bundled script-*.json and merges them, so this is a new file rather than an edit to the kitchen's. Adding a line means adding it here and generating its mp3; no Swift change is needed beyond the constant in Line.Tuin.",
+  "_provider": "higgsfield",
+  "_model": "text2speech_v2",
+  "_variant": "elevenlabs",
+  "_cost_per_line_credits": 0.3,
+  "_generated": "2026-08-16 — the garden",
+  "_files": "app/NinaBakeryPOC/Resources/Voice/",
+  "language": "nl",
+
+  "characters": {
+    "nina": {
+      "name": "Nina",
+      "voice_type": "preset",
+      "voice_id": "09878754-f20b-5330-9790-58a8027ab5b2",
+      "preset_name": "Gracie"
+    }
+  },
+
+  "_line_ids": {
+    "_comment": "What the game calls, and when. Every id here is referenced from Line.Tuin or Line.Speel in VoiceBank.swift; every id in those enums exists here. A typo is a silent tap, which in a game with no text is the hardest kind of bug to notice.",
+    "nina.tuin.hallo": "On entering the garden.",
+    "nina.tuin.opdracht": "What we are doing today, said once at the top of a round.",
+    "nina.tuin.zaaien": "Nudge: take a seed from a jar and put it in a hole.",
+    "nina.tuin.gezaaid": "Reaction: a seed went in the ground.",
+    "nina.tuin.gieten": "Nudge: sweep the watering can across the bed.",
+    "nina.tuin.groeit": "Halfway. Encouragement, never correction — the kitchen's roerenGoedZo.",
+    "nina.tuin.rijp": "Nudge: something is ripe, tap it.",
+    "nina.tuin.mandjeVol": "The basket is full.",
+    "nina.tuin.opnieuw": "The restart button.",
+    "nina.kamer.tuinKlaar": "The garden is finished — the gate is open.",
+    "nina.kamer.tuinDeur": "Tapping the open door. Promises the bakery SOON, never NOW.",
+    "nina.speel.*": "The six toys. Chatter, not instruction, all at .low priority.",
+    "_reused": "nina.oeps (a drag that did not land), nina.stil (the alternating idle nudge), nina.ingredient.* (what a picked ingredient will do to the cake) and nina.dit.<ingredient> (a tap on a seed jar) all come from the kitchen's scripts unchanged. That reuse is the point: the word she learns in the garden is the word she hears in the kitchen."
+  },
+
+  "_why": {
+    "first_person": "ROOMS.md §4: 'ik', 'we', never someone instructing a child from outside. Nina narrates her own game.",
+    "variants": "Three or four on anything she hears often, and VoiceBank never plays the same variant twice running. The naming lines in script-namen.json are the deliberate exception.",
+    "length": "Gracie reads Dutch at 15–17 characters a second, so a line's duration is predictable from its character count. Nothing here is timed to a picture, so the budget is only 'short enough that she does not walk away' — the longest is under five seconds.",
+    "geen_geplukt_lijn": "Picking answers with nina.ingredient.* — the kitchen's own line, which names the colour that ingredient will give the cake. That is exactly what she wants to know at the moment she picks it, and a separate 'geplukt!' in front of it would be two lines for one tap."
+  },
+
+  "lines": [
+    { "id": "nina.tuin.hallo", "character": "nina", "variants": [
+      { "file": "nina-tuin-hallo-1.mp3", "text": "Hoi! Welkom in mijn tovertuin!" },
+      { "file": "nina-tuin-hallo-2.mp3", "text": "Kijk, mijn tuintje! Hier groeien alle toverdingetjes." },
+      { "file": "nina-tuin-hallo-3.mp3", "text": "Daar ben je weer! Zullen we samen tuinieren?" },
+      { "file": "nina-tuin-hallo-4.mp3", "text": "Hallo! Wat fijn, we gaan iets laten groeien." }
+    ]},
+
+    { "id": "nina.tuin.opdracht", "character": "nina", "variants": [
+      { "file": "nina-tuin-opdracht-1.mp3", "text": "We zaaien de zaadjes, we geven ze water, en dan plukken we alles in mijn mandje." },
+      { "file": "nina-tuin-opdracht-2.mp3", "text": "Eerst zaaien, dan water geven, en daarna plukken we ze allemaal voor het mandje." }
+    ]},
+
+    { "id": "nina.tuin.zaaien", "character": "nina", "variants": [
+      { "file": "nina-tuin-zaaien-1.mp3", "text": "Pak maar een zaadje uit een potje en stop het in een gaatje." },
+      { "file": "nina-tuin-zaaien-2.mp3", "text": "Kies zelf welk zaadje je wil! Sleep het naar een leeg gaatje." },
+      { "file": "nina-tuin-zaaien-3.mp3", "text": "Er is nog een leeg gaatje. Welk zaadje doen we daarin?" }
+    ]},
+
+    { "id": "nina.tuin.gezaaid", "character": "nina", "variants": [
+      { "file": "nina-tuin-gezaaid-1.mp3", "text": "Zo, die zit lekker in de grond!" },
+      { "file": "nina-tuin-gezaaid-2.mp3", "text": "Goed gedaan! Nu moet hij nog groeien." },
+      { "file": "nina-tuin-gezaaid-3.mp3", "text": "Hoppa, in de aarde. Slaap lekker, zaadje!" }
+    ]},
+
+    { "id": "nina.tuin.gieten", "character": "nina", "variants": [
+      { "file": "nina-tuin-gieten-1.mp3", "text": "Neem de gieter en ga er langzaam overheen. Alles wat je passeert groeit een beetje!" },
+      { "file": "nina-tuin-gieten-2.mp3", "text": "Water geven! Sleep de gieter heen en weer over de bak." },
+      { "file": "nina-tuin-gieten-3.mp3", "text": "Ze hebben dorst. Zwaai de gieter maar over alle plantjes." }
+    ]},
+
+    { "id": "nina.tuin.groeit", "character": "nina", "variants": [
+      { "file": "nina-tuin-groeit-1.mp3", "text": "Kijk, hij wordt al groter!" },
+      { "file": "nina-tuin-groeit-2.mp3", "text": "Oh, ik zie al een knopje. Nog eventjes!" },
+      { "file": "nina-tuin-groeit-3.mp3", "text": "Hij groeit zo hard, wat knap van jou." }
+    ]},
+
+    { "id": "nina.tuin.rijp", "character": "nina", "variants": [
+      { "file": "nina-tuin-rijp-1.mp3", "text": "Die is rijp! Tik er maar op, dan springt hij in het mandje." },
+      { "file": "nina-tuin-rijp-2.mp3", "text": "Oh kijk, die is helemaal klaar. Even aantikken!" },
+      { "file": "nina-tuin-rijp-3.mp3", "text": "Klaar om te plukken! Geef er maar een tikje op." }
+    ]},
+
+    { "id": "nina.tuin.mandjeVol", "character": "nina", "variants": [
+      { "file": "nina-tuin-mandjeVol-1.mp3", "text": "Mijn mandje zit helemaal vol! Wat hebben we veel geplukt." },
+      { "file": "nina-tuin-mandjeVol-2.mp3", "text": "Kijk nou eens, het mandje is vol. Allemaal door jou!" }
+    ]},
+
+    { "id": "nina.tuin.opnieuw", "character": "nina", "variants": [
+      { "file": "nina-tuin-opnieuw-1.mp3", "text": "We beginnen gewoon opnieuw. Een lege bak, en alle zaadjes weer in de potjes!" }
+    ]},
+
+    { "id": "nina.kamer.tuinKlaar", "character": "nina", "variants": [
+      { "file": "nina-kamer-tuinKlaar-1.mp3", "text": "Het mandje is vol, de tuin is klaar. Tik maar op de deur!" },
+      { "file": "nina-kamer-tuinKlaar-2.mp3", "text": "We hebben alles, hoor. Als je wil mag je op de deur tikken." }
+    ]},
+
+    { "id": "nina.kamer.tuinDeur", "character": "nina", "variants": [
+      { "file": "nina-kamer-tuinDeur-1.mp3", "text": "Hier gaan we straks naar mijn bakkerij, met het hele mandje. Die komt gauw, hoor!" }
+    ]},
+
+    { "id": "nina.speel.vlinder", "character": "nina", "variants": [
+      { "file": "nina-speel-vlinder-1.mp3", "text": "Hihi, de vlinder volgt je vinger!" },
+      { "file": "nina-speel-vlinder-2.mp3", "text": "Dag vlindertje! Hij vindt jou heel leuk." }
+    ]},
+
+    { "id": "nina.speel.bij", "character": "nina", "variants": [
+      { "file": "nina-speel-bij-1.mp3", "text": "Zzzz! De bij zoekt bloemetjes." },
+      { "file": "nina-speel-bij-2.mp3", "text": "Hoor je hem brommen? Dat is mijn bij." }
+    ]},
+
+    { "id": "nina.speel.mol", "character": "nina", "variants": [
+      { "file": "nina-speel-mol-1.mp3", "text": "Daar is Mo! Hij woont onder de grond." },
+      { "file": "nina-speel-mol-2.mp3", "text": "Kiekeboe! Mo komt even kijken." }
+    ]},
+
+    { "id": "nina.speel.bloemen", "character": "nina", "variants": [
+      { "file": "nina-speel-bloemen-1.mp3", "text": "Elke bloem maakt een ander toontje!" },
+      { "file": "nina-speel-bloemen-2.mp3", "text": "Tingelingeling! Tik ze allemaal maar aan." }
+    ]},
+
+    { "id": "nina.speel.plas", "character": "nina", "variants": [
+      { "file": "nina-speel-plas-1.mp3", "text": "Plons! Lekker in de plas." },
+      { "file": "nina-speel-plas-2.mp3", "text": "Spetter spetter! Wat een natte boel." }
+    ]},
+
+    { "id": "nina.speel.regenboog", "character": "nina", "variants": [
+      { "file": "nina-speel-regenboog-1.mp3", "text": "Kijk! Als je zwaait met de gieter komt er een regenboog." },
+      { "file": "nina-speel-regenboog-2.mp3", "text": "Oooh, een regenboog! Die maak jij met het water." }
+    ]}
+  ]
+}

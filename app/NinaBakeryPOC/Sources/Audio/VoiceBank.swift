@@ -331,4 +331,73 @@ enum Line {
     static let ditDeur = "nina.dit.deur"
     static let ditTaart = "nina.dit.taart"
     static let ditPortret = "nina.dit.portret"
+
+    // MARK: - De Tuin
+
+    /// **The garden's round**, `script-tuin.json`.
+    ///
+    /// Same contract as the kitchen's (`ROOMS.md` §4): every constant here
+    /// exists in the script and every id in the script is referenced from here.
+    /// A typo is a silent tap, which in a game with no text is the hardest kind
+    /// of bug to notice.
+    ///
+    /// Three of the kitchen's are reused rather than duplicated, because they
+    /// say nothing about a kitchen: `oeps` when a drag does not land, `stil` for
+    /// the alternating idle nudge, and `nina.ingredient.*` — which already names
+    /// the colour each ingredient will give the cake, and is therefore exactly
+    /// the right thing to hear as she picks one.
+    enum Tuin {
+        static let hallo = "nina.tuin.hallo"
+        /// What we are doing today, said once at the top of a round.
+        static let opdracht = "nina.tuin.opdracht"
+        static let zaaien = "nina.tuin.zaaien"
+        static let gezaaid = "nina.tuin.gezaaid"
+        static let gieten = "nina.tuin.gieten"
+        /// Halfway. Encouragement, never correction.
+        static let groeit = "nina.tuin.groeit"
+        static let rijp = "nina.tuin.rijp"
+        static let mandjeVol = "nina.tuin.mandjeVol"
+        static let opnieuw = "nina.tuin.opnieuw"
+        /// The garden is finished — tap the gate. The garden's own half of
+        /// `nina.kamer.klaar`, which names the kitchen.
+        static let kamerKlaar = "nina.kamer.tuinKlaar"
+        /// Tapping the open door. Promises the next room *soon*, never *now*.
+        static let kamerDeur = "nina.kamer.tuinDeur"
+    }
+
+    /// The toys. Two variants each — enough that the sixth poke is not the first
+    /// one again, and they are chatter rather than instruction.
+    enum Speel {
+        static let vlinder = "nina.speel.vlinder"
+        static let bij = "nina.speel.bij"
+        static let mol = "nina.speel.mol"
+        static let bloemen = "nina.speel.bloemen"
+        static let plas = "nina.speel.plas"
+        static let regenboog = "nina.speel.regenboog"
+    }
+
+    /// The garden's slice of `script-namen.json`. One variant each, deliberately
+    /// — a name is a thing you learn by hearing it the same way twice.
+    ///
+    /// The eight seed names are not here: a jar of `aardbei` seeds is named
+    /// through `Ingredient.nameLineID`, the same line the kitchen says when she
+    /// taps the berry, so the word she learns in the garden is the word she
+    /// hears in the kitchen.
+    enum Dit {
+        static let zaadje = "nina.dit.zaadje"
+        static let zaaibak = "nina.dit.zaaibak"
+        static let gat = "nina.dit.gat"
+        static let gieter = "nina.dit.gieter"
+        static let plantje = "nina.dit.plantje"
+        static let mandje = "nina.dit.mandje"     // the kitchen's, reused
+        static let hek = "nina.dit.hek"
+        static let bloemen = "nina.dit.bloemen"
+        static let molshoop = "nina.dit.molshoop"
+        static let vlinder = "nina.dit.vlinder"
+        static let bij = "nina.dit.bij"
+        static let plas = "nina.dit.plas"
+        static let boom = "nina.dit.boom"
+        static let struik = "nina.dit.struik"
+        static let potje = "nina.dit.potje"       // the kitchen's, reused
+    }
 }

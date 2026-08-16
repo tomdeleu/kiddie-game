@@ -80,7 +80,7 @@ struct ContentView: View {
         .ignoresSafeArea()
         .onChange(of: scenePhase) { _, phase in
             // The round survives the iPad being taken away mid-stir.
-            if phase != .active { scene.kitchen?.save() }
+            if phase != .active { scene.room?.save() }
         }
     }
 
@@ -220,7 +220,7 @@ struct ContentView: View {
                             // without reading anything.
                             tone: .rose,
                             diameter: FacetSize.chrome) {
-                    scene.kitchen?.restartRound()
+                    scene.room?.restartRound()
                 }
                 .padding(32)
                 Spacer()
@@ -234,7 +234,7 @@ struct ContentView: View {
         ZStack(alignment: .topTrailing) {
             if showDeveloperPanel {
                 VStack(alignment: .trailing, spacing: 8) {
-                    KitchenDebugStrip(scene: scene, settings: settings) {
+                    RoomDebugStrip(scene: scene, settings: settings) {
                         showDeveloperPanel = false
                     }
                     DebugPanel(settings: settings,
@@ -277,7 +277,10 @@ final class GameScene: ObservableObject {
 
     private(set) var touch: TouchRouter!
     private(set) var voice: VoiceBank!
-    private(set) var kitchen: KitchenRoom?
+
+    /// **The room she is in**, rather than *the kitchen*. There are two now.
+    @Published private(set) var roomID: RoomID = .keuken
+    private(set) var room: GameRoom?
 
     private var builtFlat: Bool?
     private var started = false
@@ -303,18 +306,63 @@ final class GameScene: ObservableObject {
         voice.load()
         ticker.start()
 
-        let room = KitchenRoom(ticker: ticker, touch: touch, voice: voice,
-                               sound: sound, settings: settings)
-        kitchen = room
-        sceneRoot.addChild(room.root)
-        room.build(flat: settings.flatShading)
+        self.settings = settings
+        let built = install(roomID, settings: settings)
         builtFlat = settings.flatShading
 
         // A beat before she is greeted, so the room is on screen first.
         if greeting {
-            ticker.after(0.9) { [weak room] in room?.greet() }
+            ticker.after(0.9) { [weak built] in built?.greet() }
         }
     }
+
+    /// **Go to another room.**
+    ///
+    /// One entry point, so the order can only be got right: save what she was
+    /// doing, take the old room down — every `Ticker` job, every touch target,
+    /// the entity tree — stop anyone mid-sentence, then build the new one and
+    /// greet her in it.
+    ///
+    /// Stopping the voice is not tidiness. Nina saying "put the tin in Otto"
+    /// over a garden is worse than silence, and `VoiceBank` holds at most one
+    /// pending line which would otherwise arrive after the room had changed
+    /// underneath it.
+    func go(to id: RoomID) {
+        guard started, id != roomID, let settings else { return }
+        voice.stop()
+        room?.teardown()
+        room = nil
+        roomID = id
+        let built = install(id, settings: settings)
+        builtFlat = settings.flatShading
+        ticker.after(0.5) { [weak built] in built?.greet() }
+    }
+
+    @discardableResult
+    private func install(_ id: RoomID, settings: LightingSettings) -> GameRoom {
+        let built: GameRoom
+        switch id {
+        case .keuken:
+            built = KitchenRoom(ticker: ticker, touch: touch, voice: voice,
+                                sound: sound, settings: settings)
+        case .tuin:
+            built = GardenRoom(ticker: ticker, touch: touch, voice: voice,
+                               sound: sound, settings: settings)
+        }
+        room = built
+        sceneRoot.addChild(built.root)
+        built.build(flat: settings.flatShading)
+        // The lights belong to the scene, not to the room, but a room that has
+        // just been built has never been through `apply` — without this its
+        // props keep the default material response until the next SwiftUI
+        // update, which on a still screen may be a while.
+        rig.apply(settings, to: sceneRoot)
+        return built
+    }
+
+    /// Held so `go(to:)` can build a room without being handed them again. It
+    /// is the same object `ContentView` owns — `LightingSettings` is a class.
+    private var settings: LightingSettings?
 
     /// Nina's narration over the opening film's first shot. The second shot's
     /// line is fired by the cut — see `ContentView.introShotFinished`.
@@ -334,7 +382,7 @@ final class GameScene: ObservableObject {
             waited += dt
             guard waited > delay else { return true }
             guard !self.voice.isSpeaking || waited > timeout else { return true }
-            self.kitchen?.greet()
+            self.room?.greet()
             return false
         }
     }
@@ -342,19 +390,26 @@ final class GameScene: ObservableObject {
     /// Called on every SwiftUI update. Only the flat/smooth toggle rebuilds
     /// anything; the rest is lights and shadows, which are cheap.
     func update(settings: LightingSettings) {
+        self.settings = settings
         if let builtFlat, builtFlat != settings.flatShading {
-            kitchen?.build(flat: settings.flatShading)
+            room?.build(flat: settings.flatShading)
             self.builtFlat = settings.flatShading
         }
         rig.apply(settings, to: sceneRoot)
-        kitchen?.refreshContactShadows(settings: settings)
+        room?.refreshContactShadows(settings: settings)
     }
 }
 
 /// The game half of the debug overlay. The lighting half is `DebugPanel`,
 /// unchanged from the POC.
+///
+/// **It is behind the triple-tap and it stays there.** `CONCEPT.md` §5 asks for
+/// a parent gate she will not find, and the room picker is exactly the control
+/// that argument was written about: a visible row of buttons that teleports her
+/// out of the room she is playing is the most pressable thing that could be put
+/// on this screen. Three taps in the top-right corner costs a grown-up nothing.
 @MainActor
-struct KitchenDebugStrip: View {
+struct RoomDebugStrip: View {
     @ObservedObject var scene: GameScene
     @ObservedObject var settings: LightingSettings
     var onClose: () -> Void
@@ -364,7 +419,7 @@ struct KitchenDebugStrip: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("KITCHEN")
+                Text("ROOM")
                     .font(.caption2.weight(.semibold))
                     .foregroundStyle(.secondary)
                 Spacer()
@@ -373,13 +428,23 @@ struct KitchenDebugStrip: View {
                     .controlSize(.small)
             }
 
-            if let kitchen = scene.kitchen {
-                Text("Step: \(kitchen.state.step.rawValue)")
-                Text("Bowl: \(kitchen.state.inBowl.map(\.rawValue).joined(separator: ", "))")
-                    .foregroundStyle(.secondary)
+            // **Visit any room, without playing the game up to it.** The whole
+            // reason `GameRoom` exists: with one room the only way in was the
+            // front door, and with six that is a five-minute walk to check a
+            // touch radius.
+            Picker("Room", selection: Binding(
+                get: { scene.roomID },
+                set: { scene.go(to: $0) }
+            )) {
+                ForEach(RoomID.allCases) { Text($0.title).tag($0) }
+            }
+            .pickerStyle(.segmented)
+
+            ForEach(Array((scene.room?.debugLines ?? []).enumerated()), id: \.offset) {
+                index, line in
+                Text(line)
+                    .foregroundStyle(index == 0 ? .primary : .secondary)
                     .fixedSize(horizontal: false, vertical: true)
-                Text("Stir: \(Int(kitchen.state.stir * 100))%  ·  Shelf: \(kitchen.state.shelf.count)")
-                    .foregroundStyle(.secondary)
             }
 
             // Which line just played. During a session with Nina this is the
@@ -390,7 +455,7 @@ struct KitchenDebugStrip: View {
                 .fixedSize(horizontal: false, vertical: true)
 
             HStack {
-                Button("New round") { scene.kitchen?.resetRound() }
+                Button("New round") { scene.room?.resetRound() }
                 Toggle("Mute", isOn: $muted)
                     .onChange(of: muted) { _, value in scene.sound.enabled = !value }
             }

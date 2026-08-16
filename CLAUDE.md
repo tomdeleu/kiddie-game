@@ -18,35 +18,49 @@ a frame on the bakery wall.
 a real toverbakkerij. That is the only progression — no scores, no stars, no
 timers, nothing counted anywhere. A round is ~11–12 minutes.
 
-**Status: one room built.** The proof of concept is answered and
-[`app/`](app/) now holds **De Keuken** — the full kitchen round, seven toys, Nina
-herself behind the table, and 104 Dutch voice lines. No other room exists.
+**Status: two rooms built.** The proof of concept is answered and [`app/`](app/)
+holds **De Keuken** — the full kitchen round, seven toys, Nina herself behind
+the table — and **De Tuin**, the garden: eight seed jars, five holes, a watering
+can that grows whatever it sweeps over, six more toys. 192 Dutch line variants
+across 107 line ids. No other room exists.
 
 ## → Start here: [`app/README.md`](app/README.md)
 
-The kitchen is playable end to end: roll the base, fetch five ingredients from
-five places, stir, pour, into Otto, tap, cake, carry it up onto the plank,
-fresh round. It has never been compiled — it was written in a container with no
-Swift toolchain — and its README names the two places most likely to want a fix
-on first build.
+Both rooms are playable end to end. The kitchen: roll the base, fetch five
+ingredients from five places, stir, pour, into Otto, tap, cake, carry it up onto
+the plank, fresh round. The garden: sow five seeds, sweep the can across the bed
+three times, tap the ripe plants into the basket. **The garden's basket is what
+the kitchen bakes** — `harvest.json` is the handover.
 
-Four deliberate deviations from the design are recorded there: the doorway does
-not lead to the decorating room, which does not exist yet; the palette gained a
-blue and an amber the locked thirteen do not contain; the room box is now
-0.46 m with the camera pulled back 8%, rather than the 0.4 m and the framing
-`POC.md` signed off; and **the ten Blender props carry ambient occlusion**,
-which nothing else does — see below. The round is ended by carrying the finished cake
-up onto the plank.
+**Switch rooms by triple-tapping the top-right corner** and using the picker at
+the top of the developer strip. It is behind the parent gate on purpose; a
+visible teleport button is the most pressable thing that could be on that screen.
+
+Neither room has ever been compiled — both were written in a container with no
+Swift toolchain — and `app/README.md` names the five places most likely to want a
+fix on first build.
+
+Deliberate deviations from the design are recorded there. The kitchen's: the
+doorway does not lead to the decorating room, which does not exist yet; the
+palette gained a blue, an amber and a lilac the locked thirteen do not contain;
+the room box is 0.46 m with the camera pulled back 8%, rather than the 0.4 m and
+the framing `POC.md` signed off; and **the ten Blender props carry ambient
+occlusion**, which nothing else does — see below. The garden's: **eight seeds
+rather than `GAMEPLAY.md` §5's six**, because the kitchen deals eight; a full
+basket completes it in both modes; and the way out is the kitchen's door in the
+kitchen's place rather than a gate.
 
 **Next**, per [`GAMEPLAY.md`](GAMEPLAY.md) §9: decorating, then the party, then
-the wall of twelve frames. And **test the kitchen with Nina first** — `POC.md`
-has the protocol, and what it says about the snap radius and target sizes is
-the thing worth knowing before another room is built on the same numbers.
+the wall of twelve frames. And **test both rooms with Nina first** — `POC.md`
+has the protocol. The garden inherited every one of the kitchen's touch radii on
+the argument that the box and the chair have not moved, which is a calculation
+rather than an observation and now rides on two rooms instead of one.
 
 **Before writing a room, read [`ROOMS.md`](ROOMS.md).** It is the contract the
-kitchen established — the box and the camera, the step machine, the halo, the
-voice rules, targets, carrying, idle, misses, the door — written down once so
-the next room does not have to be reverse-engineered out of `KitchenRoom.swift`.
+kitchen established and the garden was the first to be built against — the box
+and the camera, the step machine, the halo, the voice rules, targets, carrying,
+idle, misses, the door — written down once so the next room does not have to be
+reverse-engineered out of `KitchenRoom.swift`.
 
 [`POC.md`](POC.md) stays as the record of why the look is what it is, and its
 palette and pass criteria are still the standard every new room is held to.
@@ -55,7 +69,7 @@ palette and pass criteria are still the standard every new room is held to.
 
 | Path | What |
 |---|---|
-| [`app/`](app/) | **The app.** De Keuken, whole: the round, the toys, Nina, Otto, the lighting panel. Written but never compiled — see its README. |
+| [`app/`](app/) | **The app.** De Keuken and De Tuin, whole: the rounds, the toys, Nina, Otto, the room switcher, the lighting panel. Written but never compiled — see its README. |
 | [`models/`](models/) | **Props modelled in Blender**, as Python that rebuilds them. Ten so far — the flour sack, the toverbosbes, the crate, the toverklaver, the toverveertje, the maanstof pouch, the sink, the spoon, the cake and the scale, the only props not built in code. Its README has the rules, the export settings, and the test a prop has to pass to belong there. |
 | [`GAMEPLAY.md`](GAMEPLAY.md) | **Storyline and gameplay in detail.** The wall, the eleven friends and their wishes, the cake rules, what each room requires versus what is optional, the timing budget. Reconciled with the built kitchen on 2026-08-16. |
 | [`ROOMS.md`](ROOMS.md) | **How to build a room.** The contract De Keuken established: the box, the camera, the step machine, the halo, the voice rules, touch, carrying, idle, misses, the door — and the traps that have already been paid for once. Read before writing a room. |
@@ -68,7 +82,8 @@ palette and pass criteria are still the standard every new room is held to.
 | [`references/buttons/`](references/buttons/) | **The button.** Every UI control is one faceted octagon — the plate it came from, the nine candidates, and the measurements the SwiftUI implementation is built on. |
 | [`references/loading-screen/`](references/loading-screen/) | The title plate that opens the app, its eighteen candidates, and the script that pads it to 16:9. |
 | [`references/props/`](references/props/) | Prop concept plates, and why `generate_3d` is not usable for this style. |
-| [`references/ingredients/`](references/ingredients/) | The six ingredients, the flour sack and the flour cloud — the plates the models were built from. |
+| [`references/ingredients/`](references/ingredients/) | The eight ingredients, the flour sack and the flour cloud — the plates the models were built from. |
+| [`references/garden/`](references/garden/) | **De Tuin's twenty-two plates** — the bed, the can, the basket, four plant stages, eight ripe plants and six toys. Its README has the job IDs and the two plates the room box overruled. |
 | [`references/moodboard/`](references/moodboard/) | Provenance + licences. Gathered for two retired directions — not the current look. |
 | [`references/FETCHING-ASSETS.md`](references/FETCHING-ASSETS.md) | How to get outside material onto disk here, and what fails. |
 | [`audio/voices.json`](audio/voices.json) | Voice casting. Read before generating any line. |
