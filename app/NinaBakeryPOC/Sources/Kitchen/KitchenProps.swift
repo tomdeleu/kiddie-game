@@ -365,7 +365,27 @@ enum KitchenProps {
 
     /// `zonnehoning` — a pot rather than a lump. The plate made the case: honey
     /// has no shape of its own, so the readable object is the jar it is in.
-    private static func buildHoneyPot(into root: Entity, flat: Bool) {
+    ///
+    /// **A third bigger than the other five** (owner, 2026-08-16). That breaks
+    /// the rule the six were built to — roughly 20 mm each, so no one of them is
+    /// the big one — and it breaks it for a good reason: this is the only one
+    /// whose subject is a *container*, and a container has to read as having an
+    /// inside. At 20 mm the pot, its rim, the pool of honey in it and the dipper
+    /// lying across it were four details inside a thumbnail, and what carried
+    /// the object was its silhouette alone. The extra third is what makes the
+    /// honey visible as honey.
+    ///
+    /// The scale is on an intermediate entity rather than folded into twenty
+    /// numbers, and rather than onto the token's own root. Off the root it would
+    /// be the base pose `Ticker.squash` captures and restores, which is fine
+    /// until something else assumes an ingredient's root is unit scale; here it
+    /// is contained in the one prop that wants it.
+    private static func buildHoneyPot(into token: Entity, flat: Bool) {
+        let root = Entity()
+        root.name = "HoningSchaal"
+        root.scale = SIMD3<Float>(repeating: 1.33)
+        token.addChild(root)
+
         let body = RoomBuilder.model(.lathe(profile: [[0.0068, 0],
                                                       [0.0092, 0.0060],
                                                       [0.0100, 0.0110],
@@ -835,46 +855,133 @@ enum KitchenProps {
 
     /// **Nina, in a frame on the back wall above Otto.**
     ///
-    /// Built from the photograph the owner supplied on 2026-08-16: a small girl
-    /// grinning, brown hair swept back into a knot with a loose strand at the
-    /// front, in a lilac t-shirt printed with purple daisies that have yellow
-    /// smiling centres.
+    /// The photograph the owner supplied on 2026-08-16, hung on the wall.
     ///
-    /// **It is modelled, not textured, and that decision is not a shortcut.**
-    /// Dropping the photo onto a plane would have been three lines. It would
-    /// also have put a rendered, smoothly-shaded, occlusion-heavy image inside a
-    /// room whose entire argument is flat facets and no ambient occlusion —
-    /// which is precisely the failure `references/ingredients/flour-cloud.png`
-    /// produced, where the one photographic thing in the kitchen was the only
-    /// thing that looked like it came from somewhere else, and the owner called
-    /// it on sight. A reference plate is a brief. This is the brief carried out
-    /// in the room's own vocabulary: boxes, a star, and one icosphere.
+    /// **It is the actual JPEG, not a reconstruction of it.** This was built the
+    /// other way first — the girl rebuilt out of boxes and stars in the room's
+    /// own faceted vocabulary — on the argument that a photograph inside a
+    /// flat-shaded room is the flour-cloud mistake again, the one thing on
+    /// screen that came from somewhere else. The owner overruled it, and on
+    /// reflection the analogy was wrong: the flour cloud was a *photographic
+    /// prop pretending to be part of the room*, whereas this is a photograph
+    /// **being a photograph**. A framed picture on a wall is supposed to look
+    /// like it came from somewhere else. That is what a photograph is for, and a
+    /// child who knows the girl in it is not going to be persuaded by an
+    /// approximation made of boxes.
+    ///
+    /// So the frame stays the room's — faceted rose rails, made of the same
+    /// stuff as the door — and what is inside it is the file.
+    ///
+    /// Three things follow from using a real texture, and each of them is a
+    /// constraint the procedural props never had:
+    ///
+    /// - **The picture is a `MeshResource.generatePlane`, not a `FacetedMesh`
+    ///   box.** `FacetedMesh` writes positions and normals and no texture
+    ///   coordinates, so a texture on one of its meshes has nothing to map to.
+    ///   `generatePlane` carries UVs, and a photograph is flat anyway.
+    /// - **The frame is sized from the photo**, not the other way round. The
+    ///   texture's pixel dimensions give the aspect and the picture is fitted
+    ///   inside `Layout.portraitPictureMax`, so replacing the file with one of a
+    ///   different shape needs no numbers changed here.
+    /// - **It is lit, not unlit.** A `PhysicallyBasedMaterial` with the photo as
+    ///   its base colour dims and brightens with the room's key light the way a
+    ///   real print behind glass would. Unlit would be truer to the file and
+    ///   would read as a screen hanging on the wall.
+    ///
+    /// If the file is not in the bundle this falls back to the modelled girl
+    /// rather than to an empty frame — see `modelledSitter`. That is not
+    /// politeness: the frame answers a tap, and `ModelLibrary` sets the
+    /// precedent that a missing asset must never leave a live tap target with
+    /// nothing behind it.
     ///
     /// Everything is laid out in the frame's local XY plane with +Z out into the
     /// room, so hanging it is one position and no rotation — the back wall
-    /// already faces +Z. **Every part is staged at its own depth**, climbing
-    /// from the mount at z = 0.0015 to the eyes at 0.0118, because two surfaces
-    /// at the same z flicker against each other and at this size that would read
-    /// as the picture being broken rather than as a picture. Nothing reaches
-    /// back past z = 0, which is the plaster.
-    ///
-    /// The face ends up standing about 2 mm proud of the rails. That is
-    /// deliberate rather than tolerated: a portrait perfectly flush with its own
-    /// frame is a decal, and in a room whose whole subject is faceted relief it
-    /// should catch the key light like everything else does.
+    /// already faces +Z.
     static func portrait(flat: Bool) -> Entity {
         let root = Entity()
         root.name = "Portrait"
         root.position = Layout.portraitCentre
 
-        let outer = Layout.portraitSize
-        let depth = Layout.portraitDepth
-        let rail: Float = 0.006
-        let inner = SIMD2<Float>(outer.x - rail * 2, outer.y - rail * 2)
+        if let photo = photograph() {
+            let picture = fit(photo)
+            addFrame(to: root, around: picture, flat: flat)
+            addPhotograph(photo, size: picture, to: root)
+        } else {
+            let picture = Layout.portraitFallbackPicture
+            addFrame(to: root, around: picture, flat: flat)
+            addMount(to: root, size: picture, flat: flat)
+            addModelledSitter(to: root, flat: flat)
+        }
 
-        // The frame: four rails, mitre-less — the two uprights run the full
-        // height and the two crossbars fit between them, which is how a
-        // butt-jointed frame is actually made and one fewer thing to line up.
+        // Wall-mounted, like the ingredient shelves and the cake plank: its cast
+        // could only ever print the frame onto the plaster beside it, and it is
+        // grounded by hanging rather than by a shadow. It has to stay last — it
+        // walks the children that exist when it is called.
+        root.excludeFromShadowCasting()
+        return root
+    }
+
+    /// The photograph, out of the asset catalog.
+    ///
+    /// Two names tried, for the same reason `ModelLibrary` looks in two places:
+    /// whether the file arrives as an asset-catalog image set or as a loose
+    /// resource is a packaging detail this code should not depend on.
+    ///
+    /// **`nil` is a real outcome.** The repository ships the frame and the
+    /// wiring; the photograph is somebody's child and is added locally. See
+    /// `Resources/Assets.xcassets/NinaPortrait.imageset/README.md`.
+    private static func photograph() -> TextureResource? {
+        for name in ["NinaPortrait", "nina-portrait"] {
+            if let texture = try? TextureResource.load(named: name) { return texture }
+        }
+        return nil
+    }
+
+    /// Fit the photo inside `portraitPictureMax`, keeping its aspect. Whichever
+    /// side runs out first sets the scale, so neither a tall photo nor a wide
+    /// one is ever cropped or squashed.
+    private static func fit(_ photo: TextureResource) -> SIMD2<Float> {
+        let box = Layout.portraitPictureMax
+        let aspect = Float(photo.width) / Float(max(1, photo.height))
+        let wide = SIMD2<Float>(box.x, box.x / max(aspect, 0.0001))
+        return wide.y <= box.y ? wide : SIMD2<Float>(box.y * aspect, box.y)
+    }
+
+    /// The photograph itself, on a plane with real texture coordinates.
+    private static func addPhotograph(_ photo: TextureResource, size: SIMD2<Float>,
+                                      to root: Entity) {
+        // 2 mm oversize on each side, so the print runs under the rails rather
+        // than meeting them edge to edge. Two coplanar edges at this scale is a
+        // hairline of wall showing through wherever the rasteriser rounds the
+        // wrong way, and it would look like a crack in the picture.
+        let mesh = MeshResource.generatePlane(width: size.x + 0.004,
+                                              height: size.y + 0.004)
+        var material = PhysicallyBasedMaterial()
+        material.baseColor = .init(tint: .white, texture: .init(photo))
+        // Matte, like everything else in the room, and barely specular: a print
+        // is not a mirror, and a highlight travelling across a child's face as
+        // the halo breathes nearby would be the one thing nobody could ignore.
+        material.roughness = .init(floatLiteral: 0.85)
+        material.metallic = .init(floatLiteral: 0.0)
+        material.specular = .init(floatLiteral: 0.05)
+
+        let print = ModelEntity(mesh: mesh, materials: [material])
+        print.name = "PortraitPhoto"
+        // Behind the front of the rails by 4 mm, which is the rebate a picture
+        // sits in. Proud of the plaster by 8, so nothing z-fights the wall.
+        print.position = [0, 0, 0.008]
+        root.addChild(print)
+    }
+
+    /// The frame: four rails, mitre-less — the two uprights run the full height
+    /// and the two crossbars fit between them, which is how a butt-jointed frame
+    /// is actually made and one fewer thing to line up.
+    private static func addFrame(to root: Entity, around picture: SIMD2<Float>,
+                                 flat: Bool) {
+        let rail = Layout.portraitRail
+        let depth = Layout.portraitDepth
+        let outer = SIMD2<Float>(picture.x + rail * 2, picture.y + rail * 2)
+
         for side: Float in [-1, 1] {
             let upright = RoomBuilder.model(.box([rail, outer.y, depth]),
                                             Palette.rose, flat: flat,
@@ -882,20 +989,40 @@ enum KitchenProps {
             upright.position = [side * (outer.x - rail) / 2, 0, depth / 2]
             root.addChild(upright)
 
-            let crossbar = RoomBuilder.model(.box([inner.x, rail, depth]),
+            let crossbar = RoomBuilder.model(.box([picture.x, rail, depth]),
                                              Palette.rose, flat: flat,
                                              name: "PortraitFrameRail")
             crossbar.position = [0, side * (outer.y - rail) / 2, depth / 2]
             root.addChild(crossbar)
         }
+    }
 
-        // The mount she is standing on.
-        let backing = RoomBuilder.model(.box([inner.x, inner.y, 0.003]),
+    /// The mount behind the sitter. Only the modelled fallback needs it — the
+    /// photograph covers its own opening.
+    private static func addMount(to root: Entity, size: SIMD2<Float>, flat: Bool) {
+        let backing = RoomBuilder.model(.box([size.x, size.y, 0.003]),
                                         Palette.creamLight, flat: flat,
                                         name: "PortraitBacking")
         backing.position = [0, 0, 0.0015]
         root.addChild(backing)
+    }
 
+    /// **The girl, rebuilt out of the room's own vocabulary.**
+    ///
+    /// The frame's occupant when the photograph is not in the bundle. It was the
+    /// shipping version for about an hour and is kept because an empty frame
+    /// over a live tap target is worse than an approximate one, and because it
+    /// is the only thing in the app that shows what the faceted style does with
+    /// a human face.
+    ///
+    /// Laid out for a `Layout.portraitFallbackPicture` opening, and **every part
+    /// is staged at its own depth**, climbing from the mount at z = 0.0015 to
+    /// the eyes at 0.0118: two surfaces at the same z flicker against each other
+    /// and at this size that would read as the picture being broken rather than
+    /// as a picture. Nothing reaches back past z = 0, which is the plaster. The
+    /// face ends up about 2 mm proud of the rails, which is deliberate — a
+    /// portrait perfectly flush with its own frame is a decal.
+    private static func addModelledSitter(to root: Entity, flat: Bool) {
         // A shoulders-up crop, the way the photograph is framed: the shirt fills
         // the bottom third and runs off both sides of the mount.
         let shirt = RoomBuilder.model(.box([0.044, 0.022, 0.006]),
@@ -980,11 +1107,6 @@ enum KitchenProps {
         teeth.position = [0, -0.0076, 0.0118]
         root.addChild(teeth)
 
-        // Wall-mounted, like the ingredient shelves and the cake plank: its cast
-        // could only ever print the frame onto the plaster beside it, and it is
-        // grounded by hanging rather than by a shadow.
-        root.excludeFromShadowCasting()
-        return root
     }
 
     struct Doorway {

@@ -204,6 +204,43 @@ extension Palette {
         return m
     }
 
+    /// **A surface that is a light, rather than a surface that is lit.**
+    ///
+    /// The distinction is the whole of why the halo took four goes. An
+    /// `UnlitMaterial` with transparent blending *replaces* what is under it in
+    /// proportion to its alpha, so the brightest it can ever be is its own
+    /// colour — and the kitchen's floor is `blushPink`, which is already at 84%
+    /// luminance. Any saturated yellow is **darker than that**. Painting the ring
+    /// a stronger yellow to make it more visible therefore made it dimmer, and
+    /// what it read as was a stain (owner, 2026-08-16: "too dark of a yellow, it
+    /// must look like it's giving off light").
+    ///
+    /// Emission is what fixes that, because `emissiveIntensity` above 1 puts the
+    /// surface *above white* in the HDR buffer before tonemapping — a place a
+    /// base colour cannot reach by definition. So the ring is now painted a hot
+    /// pale yellow and emits on top of it, and the emission is scaled down
+    /// across the falloff so the band's centre line glows and its edges fade
+    /// into the floor rather than ending.
+    ///
+    /// Same construction as `glowMaterial`, plus the transparency the falloff
+    /// needs; kept separate because that one is for a *prop* that glows a
+    /// little, and this is for something that is not a prop at all.
+    static func lightMaterial(_ colour: UIColorLike, emission: UIColorLike,
+                              intensity: Float, opacity: Float) -> RealityKit.Material {
+        var m = PhysicallyBasedMaterial()
+        m.baseColor = .init(tint: colour)
+        // Fully rough and non-specular: a pool of light has no highlight of its
+        // own, and a glancing specular on a ring lying flat on the floor would
+        // travel across it as a bright arc every time the ring breathes.
+        m.roughness = .init(floatLiteral: 1.0)
+        m.metallic = .init(floatLiteral: 0.0)
+        m.specular = .init(floatLiteral: 0.0)
+        m.emissiveColor = .init(color: emission)
+        m.emissiveIntensity = intensity
+        m.blending = .transparent(opacity: .init(floatLiteral: opacity))
+        return m
+    }
+
     /// Water, and only water.
     ///
     /// `references/REFERENCES.md` asks for no transparency anywhere, and this

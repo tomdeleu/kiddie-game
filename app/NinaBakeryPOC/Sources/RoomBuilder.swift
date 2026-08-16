@@ -285,7 +285,19 @@ enum Layout {
     /// of Otto's chimney rim (0.114) and its top edge clears the wall (0.235).
     static let portraitCentre = SIMD3<Float>(0.152, 0.175, -half + wallThickness)
     /// Outer size of the frame, and how far it stands off the plaster.
-    static let portraitSize = SIMD2<Float>(0.070, 0.086)
+    /// **The box the picture fits inside**, rather than a fixed picture size.
+    ///
+    /// The photograph decides its own shape: `KitchenProps.portrait` reads the
+    /// texture's pixel dimensions and fits it in here preserving its aspect, so
+    /// dropping in a landscape photo gives a landscape frame and a portrait one
+    /// gives a portrait frame, both at about the same visual weight on the wall.
+    /// Nothing has to be re-measured when the file changes.
+    static let portraitPictureMax = SIMD2<Float>(0.076, 0.076)
+    /// The picture size the *modelled* fallback is laid out for — it is a face
+    /// built to fit an opening, not a photo that can be any shape.
+    static let portraitFallbackPicture = SIMD2<Float>(0.058, 0.074)
+    /// Width of the frame's rails.
+    static let portraitRail: Float = 0.006
     /// Deep enough to be a shallow shadow-box rather than a flat plaque, so
     /// everything inside it sits *behind* the front of the rails and only the
     /// face is in relief. It is the same 12 mm the door frame stands proud of
@@ -366,13 +378,27 @@ enum Layout {
     /// shoulder, and a door that goes dark as it opens looks like a hole.
     static let doorOpenAngle: Float = -0.62
 
-    /// Where the ring of light sits when the door is the thing she should go
-    /// for. On the floor at the threshold, a little way out into the room —
-    /// centred on the doorway itself the ring would be half inside the wall,
-    /// which at 43 mm of radius it now clears by 5 mm.
+    /// **Where the ring of light sits when the door is what she should go for.**
+    ///
+    /// On the floor *at the threshold*, and the exact x is the whole of what
+    /// makes it read as belonging to the door. It sat at +0.046 with a 43 mm
+    /// radius, which put the ring wholly out on the open floor with a gap
+    /// between it and the frame — a disc of light near a door rather than light
+    /// coming from one, and it looked it.
+    ///
+    /// It is now tucked in: 40 mm out with a 38 mm radius, so the ring's inner
+    /// edge reaches x = −0.214 and passes **under the jambs**, whose front faces
+    /// are at −0.206. Light spilling out from beneath a door is a thing she has
+    /// seen; a ring on the floor near a door is not. The wall's inner face is at
+    /// −0.218, so it still clears the plaster by 4 mm — which is the constraint
+    /// that sets how close it can get, because a ring that reaches into the wall
+    /// is a ring with a bite taken out of it.
     static var doorHaloSpot: SIMD3<Float> {
-        SIMD3<Float>(doorwayCentre.x + 0.046, floorY, doorwayCentre.z)
+        SIMD3<Float>(doorwayCentre.x + 0.040, floorY, doorwayCentre.z)
     }
+    /// Passed to `Halo.attach`, which multiplies it by 1.35 — so this is 38 mm
+    /// of ring. Paired with `doorHaloSpot`; move one and check the other.
+    static let doorHaloRadius: Float = 0.028
 
     /// Horizontal distance. Snapping ignores height on purpose: she aims at
     /// where a thing *is on the table*, not at its centre of mass.
