@@ -169,6 +169,81 @@ struct CakeSpec: Codable, Equatable {
 
     var ingredients: [Ingredient] = []
 
+    // MARK: - What the decorating room adds
+    //
+    // **Every one of these is `Optional`, and that is not a style choice.**
+    //
+    // `CakeSpec` had no `version` field before this, and Swift's synthesised
+    // `init(from:)` does *not* fall back to a memberwise default for a missing
+    // key — it throws `keyNotFound`. Every cake already sitting in the `shelf`
+    // array of somebody's `keuken.json` was written without these keys, so a
+    // non-optional field here would fail to decode all of them, `RoomStore.load`
+    // would fall back to `.fresh()`, and her plank would silently empty.
+    //
+    // `GAMEPLAY.md` §8 is blunt about the stakes: "getting this wrong costs a
+    // child her wall." `RoundState.used` is the pattern, accessors and all.
+
+    /// Bumped when the shape changes in a way a reader needs to know about.
+    /// Absent means 1 — the kitchen-only build.
+    var version: Int?
+
+    var stickers: [Sticker]?
+    var strokes: [Stroke]?
+
+    var specVersion: Int { version ?? 1 }
+    /// **Read through these, never through the optionals.** Same reason
+    /// `RoundState.usedSlots` exists.
+    var placed: [Sticker] { stickers ?? [] }
+    var piped: [Stroke] { strokes ?? [] }
+
+    var isDecorated: Bool { !placed.isEmpty || !piped.isEmpty }
+
+    /// **The counts the wishes are made of** (`GAMEPLAY.md` §4).
+    ///
+    /// They live here rather than in the decorating room because §4 is explicit
+    /// that matching is evaluated **once, at the party**, and that nothing else
+    /// in the game looks at it — not the garden's hint, not the kitchen, and not
+    /// the decorating room. The room fills the array; only the party reads it.
+    func count(of kind: StickerKind) -> Int {
+        placed.filter { $0.kind == kind }.count
+    }
+
+    /// Mo's wish is *three candles*, and it is **placed, not lit**. Lighting one
+    /// is a toy; making the wish depend on it would smuggle a required action
+    /// into the one room that must never ask her for anything.
+    var litCandles: Int {
+        placed.filter { $0.kind == .kaarsje && $0.lit == true }.count
+    }
+
+    /// **A cake nobody baked**, for a room entered on a visit rather than
+    /// mid-round.
+    ///
+    /// `GAMEPLAY.md` §6.4 left it open whether the decorating room has a visit
+    /// mode at all, on the grounds that decorating with no cake in front of her
+    /// is not a thing. The owner's call (2026-08-16) is that it does, and that
+    /// the answer to the missing cake is to deal one rather than to refuse her
+    /// the room.
+    ///
+    /// Dealt off a shuffled deck, the same rule as `RoundState.fresh` and for
+    /// the same reason: five independent rolls of a six-sided die come up all
+    /// different only about 9% of the time, and a visit cake that is two of the
+    /// same berry is a duller cake than the room deserves.
+    ///
+    /// Five is spelled here rather than read off `KitchenLayout` on purpose:
+    /// this struct is the one thing that crosses rooms (`ROOMS.md` §2) and must
+    /// not depend on any of them. The lever that will change the real number is
+    /// `KitchenLayout.ingredientsPerRound`, when the garden lands and starts
+    /// filling the basket with an interesting three rather than an exhaustive
+    /// five — and this default should follow it then.
+    static func dealt(_ count: Int = 5) -> CakeSpec {
+        var deck: [Ingredient] = []
+        let picks = (0..<count).map { _ -> Ingredient in
+            if deck.isEmpty { deck = Ingredient.allCases.shuffled() }
+            return deck.removeLast()
+        }
+        return CakeSpec(ingredients: picks)
+    }
+
     /// Distinct colours, in the order she added them. Order matters: the tiers
     /// are painted from it, so two identical baskets stirred in a different
     /// order still look like her cake.
