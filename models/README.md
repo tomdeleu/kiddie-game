@@ -11,7 +11,7 @@ This folder is for the shapes that vocabulary cannot reach.
 | | |
 |---|---|
 | `lowpoly.py` | The shared rules: flat shading, palette colours, ring/bridge/tube/box builders, the AO bake, and the export. A prop script is then only its shape. |
-| `flour-sack.py`, `bosbes.py`, `crate.py`, `klaver.py`, `sink.py`, `cake.py` | The six props. Run one to rebuild and re-export it. |
+| `flour-sack.py`, `bosbes.py`, `crate.py`, `klaver.py`, `sink.py`, `cake.py`, `scale.py`, `veertje.py`, `maanstof.py`, `spoon.py` | The ten props. Run one to rebuild and re-export it. |
 | `*.blend` | The same things, openable. **Not the source of truth** — a convenience for looking at and for nudging a number before it goes back into the `.py`. |
 | → `app/NinaBakeryPOC/Resources/Models/*.usdz` | What ships. |
 
@@ -24,6 +24,10 @@ blender --background --python models/crate.py
 blender --background --python models/klaver.py
 blender --background --python models/sink.py
 blender --background --python models/cake.py
+blender --background --python models/scale.py
+blender --background --python models/veertje.py
+blender --background --python models/maanstof.py
+blender --background --python models/spoon.py
 ```
 
 Each writes its USDZ and saves its `.blend`. Add `-- --no-save` to export
@@ -37,8 +41,8 @@ is a prop that can only be changed by the person with Blender open.
 ## What is here, and why each one earned it
 
 A prop belongs here when the plate asks for something the code cannot say — or,
-when what the plate asks for was never built at all. All six were chosen on that
-test, not because modelling is nicer.
+when what the plate asks for was never built at all. All ten were chosen on
+that test, not because modelling is nicer.
 
 **One prop is deliberately half here and half in code**: the sink. Its tap is
 modelled; its water is not. `models/sink.py` has the argument, and it is the
@@ -182,6 +186,117 @@ vertex is a point, and neither icing nor a pearl comes to a point**:
 - The pearls were pyramids. They are now squashed and six-sided rather than
   tall and four-sided.
 
+### The scale
+
+The code version is a box, a disc and a tilted prism: three parts standing near
+each other rather than one object. The plate says what a scale needs, and none
+of it is subtle — a dial that is **a fat coin on a neck** rather than a disc
+leaning on the base, nearly as wide as the pan and carrying the whole
+silhouette; a **pan with a rim**, deep enough to hold something; and a
+**plinth**, which is what stops a box reading as a box.
+
+It is the second prop with a front and a back, so it uses the tap's rule: the
+dial goes at positive Y in Blender to stand at the back, and faces −Y to look
+out into the room. It is built with no turn applied, because the camera looks
+down the +X+Z diagonal and a prop facing +Z is already being seen
+three-quarter — the plate's own angle.
+
+**It is also the first modelled prop with a moving part**, and that turned up
+two things worth keeping:
+
+- The pan bounces by moving along Y, and everything inside a loaded prop hangs
+  under the exporter's up-axis rotation, where local Y is the world's Z. An
+  unpivoted pan slides sideways through the base rather than dipping.
+  `ModelLibrary.pivot` hangs the part on an upright holder to fix it.
+- That pivot has to take the part's **baked-occlusion siblings** with it. The
+  bake splits crevice faces into `…Shade1` / `…Shade2` meshes, so moving only
+  the mesh you asked for bounces the pan and leaves its shading hanging in the
+  air where the pan used to be.
+
+### The toverveertje
+
+The clover's gap again, for the clover's reason: **the fold**. A vane rises from
+its shaft on both sides, and a flat extrusion has one front face and one tone.
+
+Two decisions here come from the code rather than from the plate, which is
+worth stating because it is the general rule: **a plate is a brief, not an
+instruction.** The plate came back with barbs notched into the vane — at 20 mm
+those are sub-millimetre teeth — and with a near-symmetrical blade, where a
+feather's vane is fuller on one side of its shaft. `KitchenProps` already
+argued both; the model keeps them.
+
+It took three goes, and the two failures were the same failure: **it kept
+reading as a leaf on a stick.** What fixed it was proportion rather than
+detail — the vane belongs in the upper two thirds with bare quill below, and
+the shaft has to sit *in front of* the crease where you can see it, not inside
+the fold where it disappears. It is still the weakest of the ten; a next pass
+would give the vane a slight sweep rather than a straight axis.
+
+### The maanstof pouch
+
+Moon dust is read through its pouch, which is the lesson the honey pot taught:
+a substance with no shape of its own is read through its container. So the prop
+is cloth, and cloth is where the vocabulary stops — the same two things the
+flour sack needed, at a quarter of the size.
+
+**Its real job is not looking like the flour sack.** At thumbnail size two
+props of one family have to differ in silhouette or they are one prop in two
+colours. The sack is squat, settled and wide with corners splayed on the floor;
+the pouch is round-bellied and narrow-necked, gathered high rather than low, and
+the cloth above its cord stands in **uneven** points where the sack's collar is
+an even pleated crown — three lengths cycling rather than two alternating.
+
+### The spoon
+
+A **scoop**, from a photograph the owner supplied of three turned wooden ones,
+by way of `references/props/spoon.png` — that shape in the game's look. A deep
+round bowl with a thin rim, and one straight handle leaving the rim
+horizontally, widening a little to a flat cut end. No waist, no neck, no butt
+cap: nothing tapers into anything.
+
+Two things the code cannot do, and one it got wrong:
+
+- **A round scoop.** `FacetedMesh.bowl` is the vocabulary's only double-walled
+  primitive and its walls are straight, so the code spoon's bowl is a tapered
+  cup where the reference is a round hollow. Its rim is a fat band; this one's
+  is a 1.5 mm edge.
+- **One continuous handle**, rather than a tapered prism with a separate butt
+  piece seamed onto its end.
+- **The handle came out of the middle of the bowl.** In the code version the
+  neck sits at y = 0.003 and the handle at 0.009, inside a cavity whose floor is
+  0.003 and whose rim is 0.012 — the handle rises straight through the bowl, and
+  the prop reads as a goblet.
+
+#### The two poses, and why the root is rotated
+
+This is the only prop the room orients two ways, and it is what made the first
+attempt hard. `KitchenRoom.refreshLayout` lays the spoon on the table by tipping
+it 81.8° about the game's X, and stands it in the bowl to stir with **identity**
+— so the pose that gets no rotation is the upright one. That is why the code
+version is built standing, and it is why a first pass that simply reshaped the
+bowl and hung the handle off its back never looked like the picture: it was
+being authored in the pose nobody draws.
+
+The fix is to model it lying, exactly as the reference draws it, and give the
+**root minus the room's tip**. The room's rotation cancels it, so the resting
+pose is the modelled one and the stirring pose is that same spoon stood on its
+handle. Authoring matches the picture and the game keeps both poses.
+
+Two consequences worth knowing before doing this to another prop:
+
+- A turn of θ about the game's X is a turn of **+θ about Blender's X**. Getting
+  that sign backwards renders the prop upside down and costs an iteration.
+- The room parks the spoon 6 mm clear of the table, which the standing build
+  needs because its bowl swings below its own origin when tipped. A prop
+  modelled lying is already on zero, so it would hover; the parts are dropped
+  6 mm **inside the root**, where the inverse tip puts that offset in the
+  resting frame and keeps it vertical.
+
+It is also the one prop where the occlusion bake wanted a *longer* reach than
+the rest — 5.5 mm. At 2.5 and 4 it found nothing, which is the honest answer for
+a shape this open: the handle leaves the rim along a tangent instead of burying
+itself in the bowl, so there is barely a crevice to find.
+
 ## Ambient occlusion, on these props
 
 It started on the berry. Standing the crown up cost something: the crown and
@@ -207,6 +322,10 @@ What it finds, at the settings each prop is exported with:
 | Clover | 4–6 per petal | the hub where four petals crowd together |
 | Sink | 3 on the tap, 5 on the handle neck | where the spout leaves the post, and under the handle |
 | Cake | 120 on the icing, 22 + 122 on the pearls | under every drip, and between the beads |
+| Scale | 3 on the base, 3 on the dial, 12 on the pan | where the dial meets its neck, under the pan's rim, along the plinth's step |
+| Feather | 10 on the vane | the crease, either side of the shaft |
+| Pouch | 15 on the bag, 40 on the cord, 6 on the cloth | under the cord, and where the open cloth folds into it |
+| Spoon | 3 on the scoop, 3 on the handle | the one shallow join, where the handle leaves the rim |
 
 **The cake's tiers are never shaded**, only the trimmings — they are repainted
 every round from `CakeSpec.tierColours`, and a tier a step darker would read as

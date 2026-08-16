@@ -804,7 +804,7 @@ rather than a billboard.
 
 ## Deliberate deviations from the design
 
-**There is ambient occlusion on the six Blender props, and nowhere else.**
+**There is ambient occlusion on the ten Blender props, and nowhere else.**
 `references/REFERENCES.md` bans it outright — the facets are supposed to do the
 shading and corners are supposed to stay light — and that holds everywhere a
 facet can answer the question. The modelled props are where it cannot: the berry's crown
@@ -1213,10 +1213,11 @@ control in the app.
 
 ### Props modelled in Blender
 
-**Six props are not built in code: the flour sack, the toverbosbes, the crate,
-the toverklaver, the sink and the cake.** All are USDZ files in
-`Resources/Models/`, modelled by the scripts in
-[`models/`](../models/README.md) and loaded by `ModelLibrary`.
+**Ten props are not built in code**: the flour sack, the toverbosbes, the
+crate, the toverklaver, the toverveertje, the maanstof pouch, the sink, the
+spoon, the cake and the scale. All are USDZ files in `Resources/Models/`,
+modelled by the scripts in [`models/`](../models/README.md) and loaded by
+`ModelLibrary`.
 
 They are a trial of a second authoring route, and each was picked on the same
 test — the prop where the `FacetedMesh` vocabulary visibly runs out against its
@@ -1252,7 +1253,27 @@ plate, not the prop that would be fun to model.
   are separate meshes, the stretch is a Y-scale on the upright wrapper and the
   glow is a material swap.
 
-All six carry the game's only ambient occlusion — see the deviations above.
+- **The scale**: a dial that is a fat coin on a neck rather than a disc leaning
+  on the base, a pan with a rim, and a plinth. It is the first modelled prop
+  with a **moving part** — the pan bounces when tapped — which is what
+  `ModelLibrary.pivot` exists for.
+
+- **The feather**: the clover's problem again — a vane rises from its shaft on
+  both sides, and a flat extrusion has one front face. It took three goes and
+  is the weakest of the ten; what fixed it was proportion, not detail.
+- **The maanstof pouch**: cloth, at a quarter of the flour sack's size, and its
+  real job is not looking like a small flour sack. Round-bellied and
+  narrow-necked against the sack's squat settled shape, with uneven points of
+  open cloth where the sack has an even pleated crown.
+- **The spoon**: a round scoop with a thin rim instead of a tapered cup, and
+  one straight handle off the rim instead of a prism with a butt piece seamed
+  on. The real fix is that the code version's handle rises through the middle
+  of the cavity, which reads as a goblet. It is the only prop the room poses two
+  ways — lying on the table, standing in the bowl to stir — so it is modelled
+  lying, as the reference draws it, with the **inverse of the room's tip on its
+  root** so both poses still come out right.
+
+All ten carry the game's only ambient occlusion — see the deviations above.
 
 What the route costs is a round trip through a file, and what it buys is shapes
 that have to be built vertex by vertex. `models/README.md` has the rules a

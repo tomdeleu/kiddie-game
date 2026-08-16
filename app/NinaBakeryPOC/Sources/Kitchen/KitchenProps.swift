@@ -554,7 +554,27 @@ enum KitchenProps {
     /// set: that is a wide rigid jar with a dipper lying across it, and this is
     /// a tall soft bag pinched shut. At thumbnail size two containers have to
     /// differ in silhouette or they are the same prop in two colours.
+    ///
+    /// **Modelled in Blender**, `models/maanstof.py`. Cloth, which is where the
+    /// vocabulary stops — the same two things the flour sack needed, at a
+    /// quarter of the size: gather folds pinching into the cord, and cloth
+    /// standing open above it. The model's job is also to keep it from reading
+    /// as a small flour sack: round-bellied and narrow-necked against the
+    /// sack's squat settled shape, and its open cloth stands in **uneven**
+    /// points where the sack's collar is an even pleated crown.
     private static func buildMoonDust(into root: Entity, flat: Bool) {
+        if flat, let modelled = ModelLibrary.load(
+                "maanstof",
+                tint: ["Maanstof": Palette.lilac,
+                       "MaanstofKoord": Palette.lilacDeep]) {
+            root.addChild(modelled)
+            return
+        }
+        buildProceduralMoonDust(into: root, flat: flat)
+    }
+
+    /// The code-built pouch. See `buildMoonDust(into:flat:)`.
+    private static func buildProceduralMoonDust(into root: Entity, flat: Bool) {
         let bag = RoomBuilder.model(.lathe(profile: [[0.0000, 0.0000],
                                                      [0.0072, 0.0012],
                                                      [0.0094, 0.0058],
@@ -604,7 +624,26 @@ enum KitchenProps {
     /// is the **asymmetry** — the outline is fuller on one side of the shaft
     /// than the other, which is true of a real feather and is the one detail a
     /// symmetrical leaf shape cannot borrow.
+    ///
+    /// **Modelled in Blender**, `models/veertje.py` — the clover's gap again:
+    /// `extrude` gives a flat slab with one front face and one tone, and a
+    /// vane rises from its shaft on both sides. Two decisions survive from
+    /// here rather than from the plate: **no barbs** (sub-millimetre teeth at
+    /// this size), and **the asymmetry**, which the plate came back without.
     private static func buildFeather(into root: Entity, flat: Bool) {
+        if flat, let modelled = ModelLibrary.load(
+                "veertje",
+                tint: ["Veertje": Palette.creamLight,
+                       "VeertjeSchacht": Palette.cream]) {
+            root.orientation = towardsCamera
+            root.addChild(modelled)
+            return
+        }
+        buildProceduralFeather(into: root, flat: flat)
+    }
+
+    /// The code-built feather. See `buildFeather(into:flat:)`.
+    private static func buildProceduralFeather(into root: Entity, flat: Bool) {
         root.orientation = towardsCamera
 
         let blade = RoomBuilder.Shape.extrude(outline: [[0.0000, 0.0000],
@@ -706,7 +745,38 @@ enum KitchenProps {
     /// convention the whisk used and the reason nothing in `KitchenRoom` had to
     /// change: stirring stands it in the bowl as-is, and resting it on the table
     /// is the same single rotation about X that laid the whisk down.
+    /// **Modelled in Blender**, `models/spoon.py`, from the owner's photograph
+    /// of three turned wooden scoops and the plate made from it,
+    /// `references/props/spoon.png`.
+    ///
+    /// Two things the code version cannot do and one it gets wrong:
+    ///
+    /// - **A round scoop.** `FacetedMesh.bowl` is the vocabulary's only
+    ///   double-walled primitive and its walls are straight, so the bowl below
+    ///   is a tapered cup where the reference is a deep round hollow.
+    /// - **One continuous handle**, flaring from the waist to a flat cut end,
+    ///   rather than a tapered prism with a separate butt piece seamed onto it.
+    /// - **The handle came out of the middle of the bowl.** Below, the neck sits
+    ///   at y = 0.003 and the handle at 0.009, inside a cavity whose floor is
+    ///   0.003 and whose rim is 0.012 — so the handle rises *through* the bowl
+    ///   and the prop reads as a goblet. The model roots it on the back of the
+    ///   bowl and leans it outward, which is where a scoop's handle goes.
+    ///
+    /// The room still tips it 81.8° about X onto the table, and the bowl is
+    /// still on the origin, so `Layout`'s "the bowl and the spoon 1 mm apart"
+    /// stays true.
     static func spoon(flat: Bool) -> Entity {
+        if flat, let modelled = ModelLibrary.load("spoon",
+                                                  tint: ["Spoon": Palette.sandyWood,
+                                                         "SpoonScoop": Palette.cream]) {
+            modelled.name = "Spoon"
+            return modelled
+        }
+        return proceduralSpoon(flat: flat)
+    }
+
+    /// The code-built spoon. See `spoon(flat:)`.
+    static func proceduralSpoon(flat: Bool) -> Entity {
         let spoon = Entity()
         spoon.name = "Spoon"
 
@@ -1157,7 +1227,40 @@ enum KitchenProps {
         let pan: Entity
     }
 
+    /// **Modelled in Blender**, `models/scale.py`, from
+    /// `references/props/scale-a.png`.
+    ///
+    /// The code version below is a box, a disc and a tilted prism, and it reads
+    /// as three parts standing near each other rather than as one object. The
+    /// plate says what a scale actually needs: a dial that is **a fat coin on a
+    /// neck** rather than a disc leaning on the base — it is nearly as wide as
+    /// the pan and it carries the whole silhouette — a **pan with a rim** she
+    /// could put flour in, and a **plinth**, which is what stops a box reading
+    /// as a box.
+    ///
+    /// **The pan comes back on an upright pivot.** `KitchenRoom.tapScale`
+    /// bounces it with `pan.position -= [0, bounce, 0]`, and everything inside
+    /// a loaded prop hangs under the exporter's up-axis rotation, where local Y
+    /// is the world's Z — so an unpivoted pan would slide sideways through the
+    /// base instead of dipping. `ModelLibrary.pivot` is that fix, and it takes
+    /// the pan's baked-occlusion pieces along with it.
     static func scale(flat: Bool) -> Scale {
+        if flat, let modelled = ModelLibrary.load(
+                "scale",
+                tint: ["Scale": Palette.mint,
+                       "ScaleDial": Palette.creamLight,
+                       "ScaleDialFace": Palette.cream,
+                       "ScaleNeedle": Palette.sageDeep,
+                       "ScalePan": Palette.butterYellow]),
+           let pan = ModelLibrary.pivot("ScalePan", in: modelled) {
+            modelled.name = "Scale"
+            return Scale(root: modelled, pan: pan)
+        }
+        return proceduralScale(flat: flat)
+    }
+
+    /// The code-built scale. See `scale(flat:)`.
+    static func proceduralScale(flat: Bool) -> Scale {
         let root = Entity()
         root.name = "Scale"
 

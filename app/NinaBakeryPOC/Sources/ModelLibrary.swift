@@ -106,6 +106,55 @@ enum ModelLibrary {
         }
     }
 
+    /// Put one part of a loaded prop on its own **upright** pivot, and hand the
+    /// pivot back.
+    ///
+    /// **For any part the game animates.** Everything a loaded prop contains
+    /// hangs under the exporter's Z-up-to-Y-up rotation, so a child's local Y
+    /// is the world's Z — and the room drives its props by nudging Y.
+    /// `KitchenRoom.tapScale` bounces the scale's pan with
+    /// `pan.position -= [0, bounce, 0]`; on a rotated parent that slides the pan
+    /// sideways through the base instead.
+    ///
+    /// The pivot is a plain entity, parented to the wrapper and therefore
+    /// world-aligned, sitting where the part sits. The part keeps its place —
+    /// `setParent(_:preservingWorldTransform:)` does the arithmetic — and every
+    /// tween in the room can then treat it like any hand-built entity.
+    ///
+    /// **It takes the part's shaded pieces with it.** The occlusion bake splits
+    /// a mesh's crevice faces into siblings called `…Shade1` / `…Shade2`, so a
+    /// pivot that moved only the mesh it was asked for would bounce the scale's
+    /// pan and leave the shading behind, hanging in the air where the pan was.
+    ///
+    /// Returns `nil` if the prop has no such mesh, which is a caller's cue to
+    /// fall back to the code-built version rather than animate nothing.
+    static func pivot(_ name: String, in wrapper: Entity) -> Entity? {
+        var family: [ModelEntity] = []
+        collect(name, in: wrapper, into: &family)
+        guard let first = family.first else { return nil }
+
+        let holder = Entity()
+        holder.name = name + "Pivot"
+        holder.position = first.position(relativeTo: wrapper)
+        wrapper.addChild(holder)
+        for part in family {
+            part.setParent(holder, preservingWorldTransform: true)
+        }
+        return holder
+    }
+
+    /// Every mesh belonging to one named part, its shaded pieces included.
+    private static func collect(_ name: String, in entity: Entity,
+                                into found: inout [ModelEntity]) {
+        if let model = entity as? ModelEntity, model.model != nil,
+           occlusion(in: model.name).base == name {
+            found.append(model)
+        }
+        for child in entity.children {
+            collect(name, in: child, into: &found)
+        }
+    }
+
     /// The first `ModelEntity` under `entity` with this name.
     ///
     /// **Not `findEntity(named:)`.** A USD prop arrives as an `Xform` wrapping a

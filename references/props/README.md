@@ -17,6 +17,9 @@ against the scene reference `../plates/01-cottage-exterior.png`. They are
 | `crate-b.png` | `158315de-d943-4831-b8ae-cb02d16c8cfa` | The same crate, airier: more rails, thinner boards |
 | `sink-tap.png` | `72d1dced-caae-4bb2-8fb1-4c09e7c5f3ea` | **Square post, spout mitred down over the basin, octagonal handle**, and a basin with a real rim |
 | `cake.png` | `f0e0d4f7-bf18-450c-94ab-af6e13ed86c3` | **Icing dripping over each tier, a ring of pearls, a cherry with a stem** |
+| `scale-a.png` | `53dfc7fa-35be-45b9-a8a9-d47bbac1cf48` | **A fat coin dial on a neck, a pan with a rim, a plinth** — the one that was modelled |
+| `scale-b.png` | `5a44cc65-ee11-4471-8ca4-56001c8bdb35` | The same scale, slighter: smaller dial, smaller pan, a longer body |
+| `spoon.png` | `44b854e8-bbee-4e06-b523-cb86367c40ea` | **A deep round bowl with a thin rim, one straight handle off the rim widening to a flat cut end** — the owner's photograph, put into the game's look |
 
 All `flux_2` / `pro` / `1k`, prompt and seed on the job record. The style prompt
 is in [`../REFERENCES.md`](../REFERENCES.md) §3.
@@ -54,6 +57,29 @@ parts, which is what a plate is for:
   its cherry. It came back with two tiers where the game needs three; three is
   what `CakeSpec.tierColours` paints, so the model takes the construction and
   not the count — the same call the door made about its four panels.
+- **`scale-a.png`** and **`scale-b.png`** disagree about weight, and A wins for
+  being bolder: a dial nearly as wide as the pan, a pan deep enough to hold
+  something, and a plinth. B's parts are all a size smaller, which is the same
+  fine-detail trap the crate's B variant fell into.
+
+**`spoon.png` is the first plate made from a reference the owner supplied** —
+a photograph of three turned wooden scoops. The prompt describes that shape and
+the plate puts it in the game's look, so what the model works from is on-style
+and on-file rather than a photograph of real beech. The photograph itself is
+not in the repo; `models/spoon.py` carries the shape.
+
+**It is the second plate for this prop, and the first was thrown away.** That
+one drew the spoon standing on end, handle down and bowl up, because the prompt
+asked for it that way — and a prop drawn in a pose the game never shows is a
+prop you model by inference. This one asks for the three-quarter view the room
+actually sees, with both the hollow and the whole handle visible, and the model
+came out of it directly. Only this render is kept; asking for the pose the game
+uses is the lesson.
+
+Note what was asked *out* of these prompts as much as what was asked in: no
+numbers, no lettering, no dial markings. `CONCEPT.md` §5 forbids text she has
+to read, and a plate that comes back with a numbered dial is a plate that
+invites a modeller to put text in the room.
 
 ## The door — two plates, because the leaf colour is a room decision
 

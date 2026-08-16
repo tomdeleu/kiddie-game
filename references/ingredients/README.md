@@ -1,12 +1,27 @@
 # Ingredient and toy plates
 
-Modelling references for the six ingredients, the flour sack and the flour
+Modelling references for the eight ingredients, the flour sack and the flour
 cloud. Generated in the locked faceted style against the scene reference
 `../plates/01-cottage-exterior.png`, and read directly into
 [`app/NinaBakeryPOC/Sources/Kitchen/KitchenProps.swift`](../../app/NinaBakeryPOC/Sources/Kitchen/KitchenProps.swift).
 
 Same rule as [`../props/README.md`](../props/README.md): **generate images for
 reference, model the geometry.** Nothing here ships.
+
+Four of these now feed a Blender script in [`../../models/`](../../models/)
+rather than `FacetedMesh` code — `bosbes`, `klaver`, `veertje` and `maanstof`.
+The test for which route a plate takes is in `models/README.md`.
+
+**Two notes on generating these**, both learned on `maanstof`:
+
+- **The style reference can take over the frame.** The first moon-dust plate
+  came back as the whole cottage scene with a pouch standing beside it, because
+  the scenes reference *is* a cottage. The fix was to drop the reference for
+  that one prompt and spell the framing out instead: one single object, studio
+  shot, no scenery, nothing else in frame.
+- **Ask for what the room forbids to be left out.** No numbers, no lettering,
+  no markings. `CONCEPT.md` §5 rules out text she has to read, and a plate that
+  comes back with a labelled dial or a printed sack invites it back in.
 
 | File | Job ID | What the model took from it |
 |---|---|---|
@@ -18,6 +33,8 @@ reference, model the geometry.** Nothing here ships.
 | `sterrensuiker.png` | `a263ffa0-157f-402c-b40d-6d843415aec7` | Five-point star with a raised centre ridge — two shallow pyramids, not an extrusion |
 | `flour-sack.png` | `6ab4baec-55e5-4e2d-ac42-dcf661e6fe7a` | Widest a third of the way up, gathered into a band, cloth fanning open above it, two corners splayed on the floor |
 | `flour-cloud.png` | `7c14918b-701f-4408-bd6f-912d2ae764f0` | A cluster of big overlapping lobes ringed by small satellites — not a spray |
+| `veertje.png` | `0a7e189b-09d6-4ee5-9c34-841e42168152` | A vane rising from its shaft on both sides — the **fold**, which is all the model took |
+| `maanstof.png` | `361035b1-7636-44c9-b8ae-e7234e8555c2` | Round-bellied pouch, cord at a narrow neck, cloth standing open above it in uneven points |
 
 All `flux_2` / `pro` / `1k` / 1:1, one credit each, generated 2026-08-15. The
 prompt on every one of them is the four style phrases from `CLAUDE.md` — flat
