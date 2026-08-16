@@ -1,3 +1,4 @@
+import CoreGraphics
 import simd
 
 /// **Where everything in the decorating room is.**
