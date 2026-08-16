@@ -79,13 +79,49 @@ struct RoundState: Codable {
     /// actually about: three drags of an ingredient, and the middle of the
     /// round was over. Five spreads the fetching across the whole room without
     /// adding a rule, since every one of them is the same verb she already
-    /// knows. `GAMEPLAY.md` §5's cake rules are unchanged and need no floor or
-    /// ceiling on the count — five ingredients simply make a rainbow cake more
-    /// likely, which is the good outcome.
+    /// knows.
+    ///
+    /// ## Dealt from a shuffled deck, not rolled five times
+    ///
+    /// Each slot used to take its own `randomElement()`, which is five
+    /// independent rolls of a six-sided die: the chance that all five came up
+    /// different was only about 9%, so a round with two toverbosbessen and no
+    /// toverklaver anywhere was the *normal* outcome rather than bad luck
+    /// (owner, 2026-08-16). The room has five places to visit and it was
+    /// routinely sending her to two of them for the same thing.
+    ///
+    /// Dealing takes cards off a shuffled deck and only reshuffles when the deck
+    /// runs out, so a repeat is impossible until every type has been seen once.
+    /// With six ingredients and five slots the deck never runs out, so in
+    /// practice every round is five different things — but the rule is written
+    /// as dealing rather than as `prefix(5)` because it stays correct if either
+    /// number ever moves.
+    ///
+    /// ## What this costs, and it is not nothing
+    ///
+    /// **Every cake is now a regenboogtaart.** Five of the six ingredients means
+    /// at least four coloured ones in every bowl, and `CakeSpec.kind` calls
+    /// three or more colours a rainbow — so `.effen` and `.gemengd`, the
+    /// one-colour and two-colour cakes `GAMEPLAY.md` §5 describes, have become
+    /// unreachable, and with them the lines Nina has for each colour.
+    ///
+    /// That is a straight trade of *ingredient* variety for *cake* variety, and
+    /// it was made deliberately on the owner's call: being sent to two of the
+    /// five places for the same berry is a thing she notices every round, and
+    /// which of four cake shapes she got is not.
+    ///
+    /// It is worth undoing when the garden lands, because the garden is what
+    /// fills `basket` and can fill it with an interesting *three* rather than an
+    /// exhaustive five. Until then the lever is `Layout.ingredientsPerRound`:
+    /// at three, dealing still guarantees no repeats and the colour count is
+    /// free to be one, two or three again.
     static func fresh(keeping shelf: [CakeSpec] = []) -> RoundState {
         var state = RoundState()
-        state.basket = (0..<Layout.ingredientsPerRound)
-            .map { _ in Ingredient.allCases.randomElement() ?? .aardbei }
+        var deck: [Ingredient] = []
+        state.basket = (0..<Layout.ingredientsPerRound).map { _ in
+            if deck.isEmpty { deck = Ingredient.allCases.shuffled() }
+            return deck.removeLast()
+        }
         state.used = []
         state.shelf = shelf
         return state

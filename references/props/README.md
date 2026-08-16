@@ -13,12 +13,30 @@ against the scene reference `../plates/01-cottage-exterior.png`. They are
 | `jar.png` | `4bf27563-db0c-4ec6-b1f3-c2db51516f05` | 8-sided prism with a flat lid |
 | `door.png` | `48e60b5b-983a-41ed-93c3-e9d7ab81b72b` | Rose frame, panelled leaf, one round knob — seven boxes and a prism |
 | `door-wood.png` | `85ea4c38-3e24-4ad1-9574-2677572a784c` | The same door with a sandy-wood leaf, which is the colour that shipped |
+| `crate-a.png` | `02a7fdf5-806d-4945-9d21-7affb52f6e8d` | **Four corner posts, three board bands, an inner floor** — the one that was modelled |
+| `crate-b.png` | `158315de-d943-4831-b8ae-cb02d16c8cfa` | The same crate, airier: more rails, thinner boards |
 
 All `flux_2` / `pro` / `1k`, prompt and seed on the job record. The style prompt
 is in [`../REFERENCES.md`](../REFERENCES.md) §3.
 
 The useful thing about these plates is that they name their own facet counts.
 "~8 sides × 4 rings" is directly the arguments to `FacetedMesh.dome`.
+
+## The crate — the first plate that fed a Blender model rather than code
+
+Both variants came back on one prompt, and they differ in exactly one way:
+how many boards. `crate-a.png` has three chunky bands and reads instantly;
+`crate-b.png` has more, thinner rails and reads as fine detail, which
+[`../REFERENCES.md`](../REFERENCES.md) §1 says fights the style at this size.
+**A is the model**, and B is kept because the disagreement is the useful part
+of generating two.
+
+Unlike every plate above it, this one was not built into `FacetedMesh` code —
+it went to `models/crate.py`. The reason is in the plate itself: it names four
+corner posts with boards spanning between them and gaps you can see through,
+and there is no profile, lathe or tapered prism that says *joinery*. The prop it
+replaced was a four-sided `bowl` with a ring on top, which reads as a plastic
+tub. See [`../../models/README.md`](../../models/README.md).
 
 ## The door — two plates, because the leaf colour is a room decision
 

@@ -77,14 +77,14 @@ enum Layout {
     //
     // **Spread across the whole top, in three clusters rather than one heap.**
     // The seven centres used to sit inside a 0.154 × 0.076 m patch of a
-    // 0.210 × 0.115 m table, with the bowl and the whisk 1 mm apart and the tin
+    // 0.210 × 0.115 m table, with the bowl and the spoon 1 mm apart and the tin
     // and the cake spot 2 mm; they now cover 0.222 × 0.088 of a 0.280 × 0.140
     // table and **no two are closer than 12 mm**. That number is the whole
     // point of the change — it is the difference between props that touch and
     // props that stand next to each other.
     //
     // The clusters are the round's three jobs, left to right: **roll** (dough
-    // and pin, with the basket over them), **mix** (whisk and bowl, in the
+    // and pin, with the basket over them), **mix** (spoon and bowl, in the
     // middle where the stirring happens), **bake** (tin and the cake it comes
     // back as, on the side nearest Otto). Reading the table left to right is
     // now reading the recipe, which the heap could not say.
@@ -94,7 +94,7 @@ enum Layout {
     /// Beside the bowl rather than in front of it. On the old table it sat
     /// between the bowl and the cake spot, which is the one bit of top that
     /// needs to be clear when Otto hands a cake back.
-    static let whiskHome = SIMD3<Float>(-0.092, tableTopY, 0.026)
+    static let spoonHome = SIMD3<Float>(-0.092, tableTopY, 0.026)
     static let tinHome = SIMD3<Float>(0.052, tableTopY, 0.090)
     /// Lies along X from here, so its left end is what has to stay on the
     /// table: the barrel and handles run from −0.044 to +0.030 of this, which
@@ -121,6 +121,30 @@ enum Layout {
     /// a sliver of it instead of covering its near half. Further left is not
     /// better — past about −0.150 she starts crossing the lower wall shelf.
     static let bakerSpot = SIMD3<Float>(-0.145, floorY, -0.072)
+
+    /// **The two wall shelves.**
+    ///
+    /// `shelfX` puts the plank's *back* face exactly on the wall's inner face,
+    /// so the depth grows forwards into the room and the shelf never floats off
+    /// the plaster however deep it gets.
+    ///
+    /// The depth is set by what has to stand on it, not by what looks like a
+    /// shelf from the side. The widest thing is the honey pot with its dipper at
+    /// about 31 mm across, so 36 mm leaves a couple of millimetres at the back
+    /// and clears the front. At 14 mm — the depth this was for a long time —
+    /// every jar and every ingredient overhung the board and pushed into the
+    /// wall behind it.
+    static let shelfDepth: Float = 0.036
+    static var shelfX: Float { -half + wallThickness + shelfDepth / 2 }
+
+    /// The top face of a shelf plank, which is what everything on it stands on.
+    ///
+    /// **Derived rather than typed**, because it was typed twice and the two
+    /// disagreed: the jars sat at `height + 0.004`, which is the top, and the
+    /// ingredients at `height + 0.014`, which is 10 mm above it. They had been
+    /// hovering over the plank since the shelves were built, which is hard to
+    /// see against a wall and impossible to miss once you know.
+    static func shelfTopY(_ height: Float) -> Float { height + 0.004 }
 
     /// **The five places an ingredient can come from, in order.**
     ///
@@ -159,8 +183,8 @@ enum Layout {
             // 148 mm apart along the wall: the high one at the near end, the low
             // one at the far end, and `RoomBuilder.buildShelf(mirrored:)` flips
             // the lower plank's three jars over to suit.
-            case .plankHoog: return SIMD3<Float>(-0.211, 0.164, 0.044)
-            case .plankLaag: return SIMD3<Float>(-0.211, 0.119, -0.104)
+            case .plankHoog: return SIMD3<Float>(shelfX, shelfTopY(0.150), 0.044)
+            case .plankLaag: return SIMD3<Float>(shelfX, shelfTopY(0.105), -0.104)
             case .aanrecht: return SIMD3<Float>(-0.034, counterTopY + 0.011, -0.174)
             case .mandje: return basketHome + SIMD3<Float>(0, 0.012, 0)
             case .krat: return crateSpot + SIMD3<Float>(0, 0.017, 0)
@@ -378,27 +402,30 @@ enum Layout {
     /// shoulder, and a door that goes dark as it opens looks like a hole.
     static let doorOpenAngle: Float = -0.62
 
-    /// **Where the ring of light sits when the door is what she should go for.**
+    /// **Directly below the middle of the doorframe**, which is the only place
+    /// it reads as the door's.
     ///
-    /// On the floor *at the threshold*, and the exact x is the whole of what
-    /// makes it read as belonging to the door. It sat at +0.046 with a 43 mm
-    /// radius, which put the ring wholly out on the open floor with a gap
-    /// between it and the frame — a disc of light near a door rather than light
-    /// coming from one, and it looked it.
+    /// It has been out in the room twice — first 46 mm from the wall, then 40 —
+    /// on the reasoning that a ring must not reach into the plaster, and both
+    /// times it read as *a disc of light near a door* rather than as light
+    /// coming from one. From a camera on the +X+Z diagonal, a point 40 mm out
+    /// from the wall is also visibly down and to the right of the door it
+    /// belongs to, so it looked mispositioned as well as detached.
     ///
-    /// It is now tucked in: 40 mm out with a 38 mm radius, so the ring's inner
-    /// edge reaches x = −0.214 and passes **under the jambs**, whose front faces
-    /// are at −0.206. Light spilling out from beneath a door is a thing she has
-    /// seen; a ring on the floor near a door is not. The wall's inner face is at
-    /// −0.218, so it still clears the plaster by 4 mm — which is the constraint
-    /// that sets how close it can get, because a ring that reaches into the wall
-    /// is a ring with a bite taken out of it.
+    /// It now sits on the frame's own centre plane, so the ring is concentric
+    /// with the doorway. **Its back half is inside the wall and that is fine** —
+    /// the wall is a solid box from y = 0 up, so the buried part is simply
+    /// occluded, with no z-fighting, and what is left is a bright crescent
+    /// hugging the threshold. Which is what light through a doorway actually
+    /// looks like: the thing that was wrong was never the clipping, it was
+    /// pulling the ring away from the door to avoid it.
     static var doorHaloSpot: SIMD3<Float> {
-        SIMD3<Float>(doorwayCentre.x + 0.040, floorY, doorwayCentre.z)
+        SIMD3<Float>(doorwayCentre.x + doorFrameZ, floorY, doorwayCentre.z)
     }
-    /// Passed to `Halo.attach`, which multiplies it by 1.35 — so this is 38 mm
-    /// of ring. Paired with `doorHaloSpot`; move one and check the other.
-    static let doorHaloRadius: Float = 0.028
+    /// Passed to `Halo.attach`, which multiplies it by 1.10 — so this is 35 mm
+    /// of ring, of which the front ~60% clears the wall and shows. Slightly
+    /// larger than the prop halos on purpose: half of it is behind plaster.
+    static let doorHaloRadius: Float = 0.032
 
     /// Horizontal distance. Snapping ignores height on purpose: she aims at
     /// where a thing *is on the table*, not at its centre of mass.
@@ -510,6 +537,32 @@ enum Layout {
             return counterTopY
         }
         return floorY
+    }
+
+    /// **The shelf a prop is standing on, if it is standing on one.**
+    ///
+    /// Deliberately *not* part of `surfaceY(at:)`, for the same reason the cake
+    /// plank is not: these are wall furniture hanging over open floor, and a
+    /// surface lookup that returned them would fling anything dragged near the
+    /// left wall up to shelf height.
+    ///
+    /// What needs them is the halo, which asks what a prop is *standing on* in
+    /// order to lay its ring there — and for the two ingredients that wait on
+    /// the shelves it was answering "the floor", putting the ring 150 mm below
+    /// the berry it was pointing at. For two of the five fetching steps the only
+    /// instruction in the game was pointing at the wrong place.
+    ///
+    /// Height is what makes it safe to ask: a prop only matches while it is
+    /// actually up at shelf level, so the moment she lifts one off, the ring
+    /// stops following the shelf and goes back to answering for the room.
+    static func shelfSurfaceY(at point: SIMD3<Float>) -> Float? {
+        guard abs(point.x - shelfX) <= shelfDepth / 2 + 0.008,
+              abs(point.z - (-0.030)) <= 0.090 + 0.008 else { return nil }
+        for height in [Float(0.150), 0.105] {
+            let top = shelfTopY(height)
+            if point.y > top - 0.005 && point.y < top + 0.032 { return top }
+        }
+        return nil
     }
 
     /// Whether a point is close enough to the plank to count as putting a cake
@@ -742,12 +795,20 @@ enum RoomBuilder {
     static func buildShelf(flat: Bool, height: Float, mirrored: Bool = false) -> Entity {
         let shelf = Entity()
         shelf.name = "Shelf\(Int(height * 1000))"
-        let x = -Layout.half + 0.019
+        let x = Layout.shelfX
         let plankCentreZ: Float = -0.030
 
         // 0.180 long, up from 0.150, so the three jars and the ingredient
         // standing at one end all get the wider spacing the room gained.
-        let plank = model(.box([0.014, 0.008, 0.180]),
+        //
+        // **And 0.036 deep, up from 0.014** — the plank was narrower than the
+        // things standing on it. A jar is 20 mm across and the honey pot 31 mm
+        // with its dipper, on a 14 mm board whose back edge was already flush
+        // with the plaster, so they hung off the front *and* pushed into the
+        // wall (owner, 2026-08-16: "ingredients clip the wall"). The depth is
+        // now set by the widest prop that can stand here rather than by what
+        // looked like a shelf in elevation.
+        let plank = model(.box([Layout.shelfDepth, 0.008, 0.180]),
                           Palette.sandyWood, flat: flat, name: "ShelfPlank")
         plank.position = [x, height, plankCentreZ]
         shelf.addChild(plank)
@@ -763,12 +824,12 @@ enum RoomBuilder {
             let z = mirrored ? 2 * plankCentreZ - along : along
             let jar = model(.prism(radius: 0.010, height: 0.022, sides: 8),
                             colour, flat: flat, name: "Jar\(Int(height * 1000))_\(i)")
-            jar.position = [x, height + 0.004, z]
+            jar.position = [x, Layout.shelfTopY(height), z]
             shelf.addChild(jar)
 
             let lid = model(.prism(radius: 0.011, height: 0.005, sides: 8),
                             Palette.rose, flat: flat, name: "JarLid\(Int(height * 1000))_\(i)")
-            lid.position = [x, height + 0.026, z]
+            lid.position = [x, Layout.shelfTopY(height) + 0.022, z]
             shelf.addChild(lid)
         }
         // Wall-mounted, centimetres from the plaster: the shadow a shelf and

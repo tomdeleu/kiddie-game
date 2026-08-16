@@ -319,7 +319,7 @@ enum Line {
     static let ditDeegroller = "nina.dit.deegroller"
     static let ditDeeg = "nina.dit.deeg"
     static let ditKom = "nina.dit.kom"
-    static let ditGarde = "nina.dit.garde"
+    static let ditLepel = "nina.dit.lepel"
     static let ditVorm = "nina.dit.vorm"
     static let ditBloem = "nina.dit.bloem"
     static let ditKraan = "nina.dit.kraan"

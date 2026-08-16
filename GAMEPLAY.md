@@ -296,10 +296,37 @@ Two consequences, both real:
   the bed advances every plant under it by a stage. Three sweeps ripens the
   whole bed, exactly as three passes ripened one plant. The rule is unchanged —
   a pass grows a plant a stage — it is only that a pass can cross five plants.
-- **Rainbow cakes get much more likely**, because three distinct colours out of
-  five picks is common where out of three it was the jackpot. That is the good
-  outcome and it needs no compensation. If it turns out to make every cake a
-  rainbow, the lever is the seed *jars*, not the count.
+- **Every cake is now a rainbow cake, and that is a real loss.** Not "more
+  likely" — *every* one. Five picks out of six ingredients means at least four
+  coloured ones in every bowl, so three or more distinct colours is guaranteed
+  and `.effen` and `.gemengd` — the one-colour and two-colour cakes in the table
+  below — have become unreachable, along with the lines Nina has for each
+  colour.
+
+  It went that way for a reason unrelated to the count. The kitchen used to roll
+  each slot independently, which gave about a **9%** chance of five different
+  ingredients: two toverbosbessen and no toverklaver anywhere was the normal
+  round, and the room was routinely sending her to two of its five places for
+  the same thing. Dealing off a shuffled deck fixed that and took the cake
+  variety with it. The trade was made deliberately — being sent twice for the
+  same berry is a thing she notices every round, and which of four cake shapes
+  she got is not.
+
+  **It should be undone when the garden lands**, because the garden is what will
+  fill the basket, and it can fill it with an interesting *three* rather than an
+  exhaustive five. Dealing still guarantees no repeats at three, and one, two and
+  three colours all become reachable again. The lever is
+  `Layout.ingredientsPerRound`.
+
+- **Four of the eleven wishes go automatic in the meantime.** Bella's *roze*,
+  Bas's *geel*, Bram's *groen* and Bo's *blauw* all match when the cake's colour
+  includes theirs, and a rainbow includes nearly everything; Nel's *twee kleuren
+  door elkaar* matches too. Nothing breaks — §4 is explicit that a wish cannot
+  be got wrong and that the celebration does not differ — but the wish stops
+  being an answer to *"what shall I make today?"* if today's cake was going to
+  match anyway. That is the strongest argument for putting the count back to
+  three when the garden fills the basket, and it is worth deciding **before** the
+  friends are built rather than after.
 
 Colour resolves by how many *different* colours went in, whatever the count:
 
@@ -309,6 +336,9 @@ Colour resolves by how many *different* colours went in, whatever the count:
 | One | That colour, deep and strong |
 | Two | **Swirled**, both colours marbled together |
 | Three or more | **Rainbow** |
+
+**Three of those four rows are currently unreachable**, for the dealing reason
+above. The rule is right and stays; what is wrong is the basket it is being fed.
 
 Effects stack on top of colour and on each other: sparkle from star sugar, glow
 from honey, height from cloud cream. A tall glowing sparkling rainbow cake is
@@ -408,7 +438,7 @@ The round, as shipped, is seven steps:
 |---|---|---|
 | `uitrollen` | Rolls the ball of dough flat with the pin | It spreads, puffs flour, drops into the tin as a base |
 | `vullen` | Fetches five ingredients, one from each of five places | A plop, sparkles in the ingredient's own colour, the batter changing, and Nina naming what it will do |
-| `roeren` | Stirs with a finger | The whisk follows her hand; the batter comes up to colour |
+| `roeren` | Stirs with a finger | The wooden spoon follows her hand; the batter comes up to colour |
 | `gieten` | Drags the bowl onto the tin | It tips, pours, goes back where it lives |
 | `inOven` | Drags the tin to Otto | It slides in, the door shuts, Otto is delighted |
 | `bakken` | Taps Otto | Four seconds of puffing, a rising ping, the cake in her colours |
@@ -676,7 +706,7 @@ Getting this wrong costs a child her wall.
 about it. After that:
 
 1. ~~**Kitchen**~~ — **built**. See [`app/README.md`](app/README.md). The basket
-   is five random seeds until the garden fills it, the finished cake goes on a
+   is five ingredients dealt off a shuffled deck until the garden fills it, the finished cake goes on a
    plank on the back wall instead of into a frame, and the door ends the room
    instead of leading anywhere.
 2. **Test the kitchen with Nina.** `POC.md` has the protocol. What it says about
@@ -716,6 +746,9 @@ completed, because until the wall exists there is no reason for a second round.
   file at a time, and `SoundKit` already prefers a bundled file over the synth.
 - **What opens the app**, now that the film and the wall both claim the first
   screen — §2.
+- **Whether the basket goes back to three when the garden fills it** — §5. Five
+  dealt from six makes every cake a rainbow and four of the eleven wishes
+  automatic. Decide before the friends are built.
 - **Whether decorating has a visit mode at all** — §6.4.
 - **Whether hanging the frame is something she does or something that happens** —
   §6.6.

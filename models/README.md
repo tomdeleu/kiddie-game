@@ -10,8 +10,8 @@ This folder is for the shapes that vocabulary cannot reach.
 
 | | |
 |---|---|
-| `lowpoly.py` | The shared rules: flat shading, palette colours, ring/bridge/tube builders, and the export. A prop script is then only its shape. |
-| `flour-sack.py`, `bosbes.py` | The two props. Run one to rebuild and re-export it. |
+| `lowpoly.py` | The shared rules: flat shading, palette colours, ring/bridge/tube/box builders, the AO bake, and the export. A prop script is then only its shape. |
+| `flour-sack.py`, `bosbes.py`, `crate.py` | The three props. Run one to rebuild and re-export it. |
 | `*.blend` | The same things, openable. **Not the source of truth** — a convenience for looking at and for nudging a number before it goes back into the `.py`. |
 | → `app/NinaBakeryPOC/Resources/Models/*.usdz` | What ships. |
 
@@ -20,6 +20,7 @@ This folder is for the shapes that vocabulary cannot reach.
 ```
 blender --background --python models/flour-sack.py
 blender --background --python models/bosbes.py
+blender --background --python models/crate.py
 ```
 
 Each writes its USDZ and saves its `.blend`. Add `-- --no-save` to export
@@ -32,8 +33,9 @@ is a prop that can only be changed by the person with Blender open.
 
 ## What is here, and why each one earned it
 
-A prop belongs here when the plate asks for something the code cannot say. Both
-of these were chosen on that test, not because modelling is nicer.
+A prop belongs here when the plate asks for something the code cannot say — or,
+in the crate's case, when what the plate asks for was never built at all. All
+three were chosen on that test, not because modelling is nicer.
 
 ### The flour sack
 
@@ -76,15 +78,46 @@ between each pair, and that is where "pointy" comes from.
 
 Same two fallbacks as the sack: `KitchenProps.buildProceduralBlueberry`.
 
-## Ambient occlusion, on these two props only
+### The crate
+
+**A different reason from the other two.** The sack and the berry were shapes
+the `FacetedMesh` vocabulary could not say. The crate is a shape nobody built:
+the code version is a four-sided `bowl` with a lathe ring on top — a tapered
+tub with a rim, which reads as a plastic bucket — and no tuning of three
+numbers turns a solid tub into something made of boards.
+
+A crate is *joinery*: four corner posts, boards spanning between them, and gaps
+you can see through. That is a dozen boxes, and boxes are exactly what
+`lowpoly.add_box` makes cheap. Several of them go into one bmesh and still form
+a closed mesh, so the whole crate is two objects — `CrateBoards` in cream and
+`CratePosts` in sandy wood, which is how `references/props/crate-a.png` paints
+it.
+
+**It is built axis-aligned, and the Swift side drops its 45° turn to match.**
+The old crate is a 4-sided prism, whose vertices sit on the axes and whose faces
+therefore run diagonally, so it had to be spun to put a flat face square to the
+room. A box needs no correction: the fixed camera looks down the +X+Z diagonal,
+so an axis-aligned crate already shows two sides and the corner post between
+them — the plate's own view. Turning it as well would put a flat side to the
+camera and lose the inside.
+
+It is bigger than what it replaced — 46 mm across the flats where the tub was
+37 — so `KitchenRoom` widens its contact shadow to match. The token that waits
+in it is placed by `Layout` at 17 mm and needed no change.
+
+This is also the first plate in `references/props/` that fed a model rather
+than code, and it was generated for the job: two variants, one prompt, and they
+disagreed only about how many boards. The chunkier one won.
+
+## Ambient occlusion, on these three props only
 
 It started on the berry. Standing the crown up cost something: the crown and
 the globe stopped being one silhouette, and nothing in the renderer said the
 two shapes touch. The facets cannot answer it — the crater floor and the
 crown's underside face the same way as everything around them, so they come
-back the same tone. The sack has the same problem in three places: under the
-fanned collar, into the groove of the tie, and where the corners tuck under the
-bulge.
+back the same tone. The sack has the same problem under its fanned collar, and
+the crate has it worst of the three: every board butts into a post, and a
+crate whose joints are invisible is a printed picture of a crate.
 
 `lowpoly.bake_ao_facets` casts rays over each face's hemisphere against the
 whole prop, and moves the faces that are actually in the crevice into their own
@@ -97,6 +130,7 @@ What it finds, at the settings each prop is exported with:
 |---|---|---|
 | Berry | 12 faces one step, 3 two steps, 5 on the crown | the crater ring, and the crown's hull underneath |
 | Sack | 21 on the tie, 36 on the collar | the tie's top half under the collar's overhang, and the collar's inner faces |
+| Crate | 16 + 16 on the boards, 8 + 12 on the frame | every butt joint, the inside faces, and under the top rail |
 
 The sack's body and corners come back **unshaded**, which is the right answer:
 a slumped bag is convex nearly everywhere, and the two faces that did measure
@@ -110,11 +144,13 @@ against it:
 - **It is baked to facets, not to a texture.** No UVs, no lightmap, no runtime
   cost — the result is still one flat tone per face, which is what the whole
   style is made of. `app/LIGHTMAPS.md` is the texture route, and it is not this.
-- **Its reach is short**: 2.2 mm on the berry, 6 mm on the sack, which is the
-  same *proportion* of a prop five times the size. Contact shading where two
+- **Its reach is short**: 2.2 mm on the berry, 4 mm on the crate, 6 mm on the
+  sack — roughly the same *proportion* of each prop. Contact shading where two
   parts meet, not the all-over darkening that got the clay direction rejected.
-- **It is on these two props**, because these two needed it. Nothing built by
-  `FacetedMesh` has any, and the rule stands there.
+  On the crate the 4 mm is chosen against the board depth of 6 mm, so it stays
+  inside the joints and never reaches out onto the flat of a board.
+- **It is on these three props**, because these three needed it. Nothing built
+  by `FacetedMesh` has any, and the rule stands there.
 
 ### The three things that make it behave
 

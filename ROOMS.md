@@ -99,6 +99,14 @@ whole instruction.** `Engine/Halo.swift`.
   prop's XZ on whatever surface is beneath it. That is what keeps it on the
   table while the prop is lifted off it, and most of what makes a held thing
   look held.
+- **Every surface a prop can stand on must be known to the surface lookup, or
+  the instruction points at the wrong place.** `surfaceY` knew about the table,
+  the counter and the floor, so for the two ingredients on the wall shelves the
+  halo landed on the floor **150 mm below the berry it was pointing at** — the
+  game's only instruction, aimed at nothing, for two of the five fetching steps.
+  `Layout.shelfSurfaceY` answers for the shelves and is height-gated so it can
+  only ever match a prop actually up there. Add a room's surfaces to the lookup
+  the moment you add the surface, not the moment something falls through it.
 - **Exactly one thing is lit.** Two lit things is not an instruction. There are
   two sanctioned exceptions and both are true statements about the room: a
   **journey**, which lights the thing to pick up and the place it goes; and a
@@ -119,6 +127,16 @@ core), both at or above the floor's own luminance, so the ring can only ever
 brighten what it lies on. Emission falls off with the square of the profile
 while opacity falls off linearly, so the centre glows and the edges fade into
 the floor.
+
+**And once it emitted, it had to get smaller** — which is the part that
+generalises. Its proportions were tuned while it was *dim*, and a faint thing
+needs area to be found at all: the band was 0.34 of the radius either side and
+the ring a third wider than the prop it marked. A light does not need that. Band
+down to **0.18**, ring down to **1.10** of the prop, so it sits just proud of
+what it points at instead of hooping it. **Any cue that is retuned from dim to
+bright wants less of everything, not the same amount brighter.** The sparkles
+took up the slack: same colour as the ring, a third bigger, three at a time, and
+emitting — `Sparkles.burst`'s `glow` parameter, which is off everywhere else.
 
 The trap it kept falling into: **saturating a yellow darkens it.** A stronger
 yellow was painted *darker* than the cream floor it was lying on, and the harder
@@ -206,7 +224,7 @@ press that travels less than **24 pt** (`tapSlop`) is a tap.
   needs a `CollisionComponent` per prop and hits exactly the mesh; owning the ray
   keeps the generosity a number in one file rather than a shape on every entity.
 - **A target can be switched off, and sometimes must be.** Two cases from the
-  kitchen, both of which will recur: the whisk is disabled during stirring
+  kitchen, both of which will recur: the spoon is disabled during stirring
   because it stands in the middle of the bowl and would win half the touches
   meant to make batter; the basket is disabled until its ingredient has gone
   because the token sits 12 mm above it, which from a fixed camera is the same
@@ -351,10 +369,17 @@ None of them a word or an arrow, because she cannot read one:
   not to open the door; it is to say the door is *openable*.
 - **the light behind it turns on**, emissive, so that slice is worth seeing.
   Unlit it read as the inside of a cupboard.
-- **a ring lands on the floor at the threshold**, 40 mm out with a 38 mm radius,
-  which tucks its inner edge *under the jambs*. Light spilling from beneath a
-  door is a thing she has seen; a disc of light near a door is not. Six
-  millimetres further out and it was the second thing.
+- **a ring lands on the floor at the threshold, concentric with the doorway** —
+  and **its back half is inside the wall on purpose**. The wall is solid, so the
+  buried part is simply occluded and what shows is a bright crescent hugging the
+  threshold, which is what light through a doorway looks like. This one was got
+  wrong twice in the same direction, 46 mm out and then 40, both times on the
+  reasoning that a ring must not reach into the plaster; both times it read as
+  *a disc of light near a door* rather than as light coming from one, and on the
+  +X+Z diagonal it also sat visibly down and right of the door it belonged to.
+  **The clipping was never the problem — pulling the cue off its object to avoid
+  the clipping was.** Worth remembering for any cue that belongs to something
+  standing against a wall.
 
 **Never promise a room that does not exist.** With nowhere to go, the kitchen's
 ending is a ceremony — the leaf swings wide, light spills over the threshold, and
@@ -422,3 +447,11 @@ A checklist, in the order it is worth doing:
   baked to the facets, not to a texture — `models/README.md`.
 - **Judge a cue on the device, not on a plate.** Three cues in, all three looked
   fine as renders and two of them failed on the iPad.
+- **Size a surface from the widest thing that stands on it**, not from what
+  looks right in elevation. The wall shelves were 14 mm deep under a 31 mm honey
+  pot, so its contents overhung the front and pushed into the plaster at once.
+- **A prop's resting height must be derived, never hand-typed.** The shelf
+  ingredients hovered 10 mm above their plank from the day the shelves were
+  built, because the jars took the plank's top and the ingredients took a
+  number somebody wrote down. Against a wall it is nearly invisible, and
+  impossible to unsee afterwards.
