@@ -63,9 +63,9 @@
       { "file": "nina-dit-kom-1.mp3", "seconds": 3.11,
         "text": "Dit is de mengkom. Daar gaat alles in wat we mengen." }
     ]},
-    { "id": "nina.dit.garde", "character": "nina", "variants": [
-      { "file": "nina-dit-garde-1.mp3", "seconds": 3.34,
-        "text": "Dit is de garde. Daarmee roer je het beslag door elkaar." }
+    { "id": "nina.dit.lepel", "character": "nina", "variants": [
+      { "file": "nina-dit-lepel-1.mp3", "seconds": 4.55,
+        "text": "Dit is de pollepel. Dat is een grote houten lepel om mee te roeren." }
     ]},
     { "id": "nina.dit.vorm", "character": "nina", "variants": [
       { "file": "nina-dit-vorm-1.mp3", "seconds": 3.03,
