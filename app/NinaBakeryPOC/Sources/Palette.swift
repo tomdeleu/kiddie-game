@@ -88,12 +88,13 @@ enum Palette {
     /// standing rule — `references/REFERENCES.md` bans occlusion outright,
     /// because the facets are supposed to do the shading and corners are
     /// supposed to stay light. That rule holds everywhere a facet can answer
-    /// the question. The three props modelled in Blender are where it cannot:
-    /// the berry's crown stands up off its globe, the flour sack's collar fans
-    /// out over its tie, and every one of the crate's boards butts into a corner
-    /// post — and in all of those joins the surfaces face the same way as
+    /// the question. The props modelled in Blender are where it cannot: a crown
+    /// standing off a globe, a collar fanning over a tie, a board butting into a
+    /// corner post, four clover petals crowding one hub, icing hanging over a
+    /// cake tier — in all of those joins the surfaces face the same way as
     /// everything around them, so they come back the same tone and nothing says
-    /// the two shapes touch. Nothing `FacetedMesh` builds uses this.
+    /// the two shapes touch. Nothing `FacetedMesh` builds uses this, and neither
+    /// do the cake's tiers, which are repainted every round.
     ///
     /// It is not a lightmap and it costs nothing at runtime. `bake_ao_facets`
     /// in `models/lowpoly.py` measures the occlusion at model time and splits

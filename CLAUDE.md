@@ -34,7 +34,7 @@ Four deliberate deviations from the design are recorded there: the doorway does
 not lead to the decorating room, which does not exist yet; the palette gained a
 blue and an amber the locked thirteen do not contain; the room box is now
 0.46 m with the camera pulled back 8%, rather than the 0.4 m and the framing
-`POC.md` signed off; and **the three Blender props carry ambient occlusion**,
+`POC.md` signed off; and **the six Blender props carry ambient occlusion**,
 which nothing else does — see below. The round is ended by carrying the finished cake
 up onto the plank.
 
@@ -51,7 +51,7 @@ palette and pass criteria are still the standard every new room is held to.
 | Path | What |
 |---|---|
 | [`app/`](app/) | **The app.** De Keuken, whole: the round, the toys, Nina, Otto, the lighting panel. Written but never compiled — see its README. |
-| [`models/`](models/) | **Props modelled in Blender**, as Python that rebuilds them. Three so far — the flour sack, the toverbosbes and the crate, the only props not built in code. Its README has the rules, the export settings, and the test a prop has to pass to belong there. |
+| [`models/`](models/) | **Props modelled in Blender**, as Python that rebuilds them. Six so far — the flour sack, the toverbosbes, the crate, the toverklaver, the sink and the cake, the only props not built in code. Its README has the rules, the export settings, and the test a prop has to pass to belong there. |
 | [`GAMEPLAY.md`](GAMEPLAY.md) | **Storyline and gameplay in detail.** The wall, the twelve friends and their wishes, the cake rules, what each room requires versus what is optional, the timing budget. |
 | [`POC.md`](POC.md) | Step 0 proof of concept — answered. Kept for the palette, the geometry specs and the pass criteria. |
 | [`audio/`](audio/) | The voice script, the casting, the auditions, and the re-fetch script. |
@@ -150,12 +150,13 @@ These were argued through and settled. Reopen only if the user asks.
   from the facet normals, and corners stay light. Every room is an open corner
   room box (two walls + floor) on a slim base slab, at a fixed isometric angle.
   Full spec in `references/REFERENCES.md`.
-  **The three Blender props break the AO rule, on the owner's call,
-  2026-08-16**: the toverbosbes, the flour sack and the crate, where a crown
-  standing off a globe, a collar fanning over a tie and a board butting into a
-  post are joins no facet can shade. It is baked to the facets, not to a
-  texture, and reaches 2.2–6 mm. `models/README.md` has the argument; the rule
-  holds everywhere else, including everything `FacetedMesh` builds.
+  **The six Blender props break the AO rule, on the owner's call, 2026-08-16**:
+  a crown standing off a globe, a collar fanning over a tie, a board butting
+  into a post, four petals crowding a hub, a spout leaving its post and icing
+  hanging over a tier are all joins no facet can shade. It is baked to the
+  facets, not to a texture, and reaches 2.2–6 mm. `models/README.md` has the
+  argument; the rule holds everywhere else, including everything `FacetedMesh`
+  builds.
   **Every image generation must pass the matching locked style reference**
   alongside the prompt — scenes `64f0893e-073a-4065-b363-f87687ced11d`
   (`references/plates/01-cottage-exterior.png`), characters

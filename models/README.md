@@ -11,7 +11,7 @@ This folder is for the shapes that vocabulary cannot reach.
 | | |
 |---|---|
 | `lowpoly.py` | The shared rules: flat shading, palette colours, ring/bridge/tube/box builders, the AO bake, and the export. A prop script is then only its shape. |
-| `flour-sack.py`, `bosbes.py`, `crate.py` | The three props. Run one to rebuild and re-export it. |
+| `flour-sack.py`, `bosbes.py`, `crate.py`, `klaver.py`, `sink.py`, `cake.py` | The six props. Run one to rebuild and re-export it. |
 | `*.blend` | The same things, openable. **Not the source of truth** — a convenience for looking at and for nudging a number before it goes back into the `.py`. |
 | → `app/NinaBakeryPOC/Resources/Models/*.usdz` | What ships. |
 
@@ -21,6 +21,9 @@ This folder is for the shapes that vocabulary cannot reach.
 blender --background --python models/flour-sack.py
 blender --background --python models/bosbes.py
 blender --background --python models/crate.py
+blender --background --python models/klaver.py
+blender --background --python models/sink.py
+blender --background --python models/cake.py
 ```
 
 Each writes its USDZ and saves its `.blend`. Add `-- --no-save` to export
@@ -34,8 +37,12 @@ is a prop that can only be changed by the person with Blender open.
 ## What is here, and why each one earned it
 
 A prop belongs here when the plate asks for something the code cannot say — or,
-in the crate's case, when what the plate asks for was never built at all. All
-three were chosen on that test, not because modelling is nicer.
+when what the plate asks for was never built at all. All six were chosen on that
+test, not because modelling is nicer.
+
+**One prop is deliberately half here and half in code**: the sink. Its tap is
+modelled; its water is not. `models/sink.py` has the argument, and it is the
+clearest statement of where the boundary of this folder is.
 
 ### The flour sack
 
@@ -109,15 +116,81 @@ This is also the first plate in `references/props/` that fed a model rather
 than code, and it was generated for the job: two variants, one prompt, and they
 disagreed only about how many boards. The chunkier one won.
 
-## Ambient occlusion, on these three props only
+### The toverklaver
+
+`references/ingredients/klaver.png` asks for one thing the code cannot do: **the
+fold**. `FacetedMesh.extrude` makes a flat slab — one front face, one tone,
+however many sides the outline has — and every petal in the plate is creased
+along its midline, so its two halves catch the light differently. That crease is
+the difference between leaves and four stickers on a stick.
+
+The code version compensates by painting alternate petals `sage` and `sageDeep`,
+which is a tint standing in for a shape. With a real fold the facets do that
+job, so the model is **one colour** — which is also what the plate shows.
+
+**Four petals, not the plate's five.** That decision is already recorded on
+`KitchenProps.buildClover`: a four-leaf clover is the lucky one, the right note
+for the ingredient with *tover* in its name. A plate is the brief for the shape,
+not for the count.
+
+One thing it caught: the stem has to sit **behind** the petals. The crease
+stands proud towards the viewer and the petal edges sit on zero, so a stem on
+the axis draws a stripe down the front of the two lower leaves.
+
+### The sink, and where this folder stops
+
+**The tap is modelled and the water is not**, and that split is the most useful
+thing in this file. The tap earned the trip — the plate has a square post, a
+spout mitred down over the basin and a chunky handle, against a code version
+that is two prisms meeting at a right angle. The water did not:
+
+- It is **animated by scaling one axis** — the stream grows down its own Y, the
+  pool rises up its own Y. An imported prop hangs under the exporter's
+  Z-up-to-Y-up rotation, so a child's local Y is not the world's, and driving
+  those off a model would bury an axis-swap inside an animation.
+- It is the **one transparent surface in the game**, and the palette is
+  re-applied on load as opaque matte.
+- **There is no facet the lathe cannot already make.** A stream's look is its
+  material and its motion.
+
+That last one is the test, and it is the test every prop here has to pass.
+
+The tap is also the first modelled prop with a front and a back, which is how
+**Blender +Y is the game's −Z** got established: the exporter's rotation maps
+(x, y, z) to (x, z, −y), so the first tap came out standing between its own
+basin and the camera.
+
+### The cake
+
+The payoff object — what the round is for, what goes on the plank, what ends up
+in a frame. The code version is three prisms and a ball. The plate names three
+things that turn a stack of discs into a cake, none of them a profile a lathe
+can spin: **icing dripping over each tier**, a **ring of pearls** where one tier
+stands on the next, and a **cherry with a stem**.
+
+Everything the round varies still varies, which is the constraint the model was
+built to: the tiers are separate meshes so `CakeSpec.tierColours` still paints
+one, two or three colours; the trimmings are separate so they stay cream
+whatever the tiers do; `isTall` is a Y-scale on the upright wrapper; and `glows`
+swaps the material function rather than the mesh.
+
+Two shapes took a second go, both for the same reason — **a single deepest
+vertex is a point, and neither icing nor a pearl comes to a point**:
+
+- The drip hem was a sawtooth. It is now four segments per scallop on a
+  `sin ** 0.6` curve, which fattens the belly of each drip and pinches its neck.
+- The pearls were pyramids. They are now squashed and six-sided rather than
+  tall and four-sided.
+
+## Ambient occlusion, on these props
 
 It started on the berry. Standing the crown up cost something: the crown and
 the globe stopped being one silhouette, and nothing in the renderer said the
 two shapes touch. The facets cannot answer it — the crater floor and the
 crown's underside face the same way as everything around them, so they come
-back the same tone. The sack has the same problem under its fanned collar, and
-the crate has it worst of the three: every board butts into a post, and a
-crate whose joints are invisible is a printed picture of a crate.
+back the same tone. The same join turns up on every prop here: under the sack's
+fanned collar, in every one of the crate's butt joints, at the clover's hub,
+inside the basin, and under each ring of icing.
 
 `lowpoly.bake_ao_facets` casts rays over each face's hemisphere against the
 whole prop, and moves the faces that are actually in the crevice into their own
@@ -131,6 +204,15 @@ What it finds, at the settings each prop is exported with:
 | Berry | 12 faces one step, 3 two steps, 5 on the crown | the crater ring, and the crown's hull underneath |
 | Sack | 21 on the tie, 36 on the collar | the tie's top half under the collar's overhang, and the collar's inner faces |
 | Crate | 16 + 16 on the boards, 8 + 12 on the frame | every butt joint, the inside faces, and under the top rail |
+| Clover | 4–6 per petal | the hub where four petals crowd together |
+| Sink | 3 on the tap, 5 on the handle neck | where the spout leaves the post, and under the handle |
+| Cake | 120 on the icing, 22 + 122 on the pearls | under every drip, and between the beads |
+
+**The cake's tiers are never shaded**, only the trimmings — they are repainted
+every round from `CakeSpec.tierColours`, and a tier a step darker would read as
+a colour she did not choose. That is what `occluders` is for: the tiers cast
+into the bake without receiving from it. The first cake bake put 11 of the top
+tier's 12 faces in shadow, because a tier sits inside its own icing skirt.
 
 The sack's body and corners come back **unshaded**, which is the right answer:
 a slumped bag is convex nearly everywhere, and the two faces that did measure
@@ -144,13 +226,13 @@ against it:
 - **It is baked to facets, not to a texture.** No UVs, no lightmap, no runtime
   cost — the result is still one flat tone per face, which is what the whole
   style is made of. `app/LIGHTMAPS.md` is the texture route, and it is not this.
-- **Its reach is short**: 2.2 mm on the berry, 4 mm on the crate, 6 mm on the
-  sack — roughly the same *proportion* of each prop. Contact shading where two
-  parts meet, not the all-over darkening that got the clay direction rejected.
-  On the crate the 4 mm is chosen against the board depth of 6 mm, so it stays
-  inside the joints and never reaches out onto the flat of a board.
-- **It is on these three props**, because these three needed it. Nothing built
-  by `FacetedMesh` has any, and the rule stands there.
+- **Its reach is short**: 2.2 mm on the berry and the cake, 2.5 mm on the
+  clover, 3 mm on the sink, 4 mm on the crate, 6 mm on the sack — roughly the
+  same *proportion* of each prop, and always chosen against the size of the part
+  it must stay inside. On the crate the 4 mm is set against a 6 mm board depth,
+  so it never reaches out onto the flat of a board.
+- **It is on the modelled props only.** Nothing built by `FacetedMesh` has any,
+  and the rule stands there.
 
 ### The three things that make it behave
 

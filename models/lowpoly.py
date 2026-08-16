@@ -154,7 +154,7 @@ def _basis(n):
 
 
 def bake_ao_facets(objects, thresholds=(0.12, 0.30), distance=0.005, samples=48,
-                   min_faces=3):
+                   min_faces=3, occluders=None):
     """Bake ambient occlusion **into the facets**, and split by how dark.
 
     Every face gets rays cast over its hemisphere against the whole prop; the
@@ -177,10 +177,17 @@ def bake_ao_facets(objects, thresholds=(0.12, 0.30), distance=0.005, samples=48,
     `min_faces` demotes a level that catches fewer faces than that into the one
     below. One facet a step darker than everything around it does not read as
     occlusion, it reads as a blemish on the model.
+
+    `occluders` separates *what casts* from *what receives*: pass the whole prop
+    to be measured against, and only the parts that may be shaded as `objects`.
+    The cake needs it — its tiers are repainted every round from
+    `CakeSpec.tierColours`, and a tier that came back a step darker would read
+    as a different colour, which is the one visual signal the game actually
+    carries. So the tiers occlude the icing and are never shaded themselves.
     """
     deps = bpy.context.evaluated_depsgraph_get()
     verts, polys = [], []
-    for ob in objects:
+    for ob in (occluders or objects):
         ev = ob.evaluated_get(deps)
         me = ev.to_mesh()
         offset = len(verts)
@@ -222,14 +229,21 @@ def bake_ao_facets(objects, thresholds=(0.12, 0.30), distance=0.005, samples=48,
                 buckets.setdefault(level - 1, []).extend(buckets.pop(level))
             level -= 1
 
-        # **A part where every face lands in the same shaded bucket has learned
-        # nothing.** Occlusion is contrast within a part; shading all of it is
-        # just painting the part a darker colour, which is the all-over
-        # darkening this is explicitly not for. The flour sack's tie sits under
-        # the collar's overhang and came back uniformly dark — correct as
-        # physics, wrong as a tie.
-        if len(buckets) == 1 and 0 not in buckets:
-            buckets = {0: next(iter(buckets.values()))}
+        # **A part with no unshaded face has learned nothing about itself.**
+        # Occlusion is contrast *within* a part; when every face is shaded, the
+        # result is just the part painted a darker colour, which is the all-over
+        # darkening this is explicitly not for. Rather than throw the
+        # measurement away, slide the whole part down until its lightest faces
+        # are unshaded — that keeps whatever contrast it did find.
+        #
+        # Two real cases: the flour sack's tie, which sits under the collar's
+        # overhang and came back uniformly dark (correct as physics, wrong as a
+        # tie), and the tap's handle neck, which is buried between the post and
+        # the cap and came back with no unshaded face at all — leaving an object
+        # with zero faces in it.
+        if buckets and 0 not in buckets:
+            floor = min(buckets)
+            buckets = {level - floor: faces for level, faces in buckets.items()}
 
         produced.extend(_split_levels(ob, buckets))
     return produced

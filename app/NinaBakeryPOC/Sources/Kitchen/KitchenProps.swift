@@ -452,7 +452,28 @@ enum KitchenProps {
     /// Four, not three. The plate came back with four and it is better: a
     /// four-leaf clover is the lucky one, which is the right note for the one
     /// ingredient with *tover* in its name.
+    ///
+    /// **Modelled in Blender**, `models/klaver.py` — and what the code version
+    /// cannot do is the fold. `FacetedMesh.extrude` makes a flat slab: one
+    /// front face, one tone, however many sides the outline has. Every petal in
+    /// the plate is creased along its midline, so its two halves catch the
+    /// light differently, and that crease is the difference between leaves and
+    /// four stickers on a stick. The code version compensates by painting
+    /// alternate petals `sage` and `sageDeep` — a tint standing in for a shape.
+    /// With a real fold the facets do it, so the model is one colour.
     private static func buildClover(into root: Entity, flat: Bool) {
+        if flat, let modelled = ModelLibrary.load("klaver",
+                                                  tint: ["Klaver": Palette.sage,
+                                                         "KlaverSteel": Palette.sageDeep]) {
+            root.orientation = towardsCamera
+            root.addChild(modelled)
+            return
+        }
+        buildProceduralClover(into: root, flat: flat)
+    }
+
+    /// The code-built clover. See `buildClover(into:flat:)`.
+    private static func buildProceduralClover(into root: Entity, flat: Bool) {
         root.orientation = towardsCamera
 
         // A heart, tip at the bottom. Not convex — but every vertex is visible
@@ -663,7 +684,59 @@ enum KitchenProps {
     /// makes "two colours swirled" and "three colours rainbow" visible rather
     /// than a claim in a design document. Everything else about a cake variant
     /// is a tint, a scale and a particle flag (`GAMEPLAY.md` §5).
+    /// **Modelled in Blender**, `models/cake.py`, from `references/props/cake.png`.
+    ///
+    /// This is the payoff object — it is what the round is for, what goes up on
+    /// the plank, and what ends up in a frame on the wall — and the code
+    /// version below is three plain prisms and a ball: a stack of coloured
+    /// discs, correct and completely unceremonious. The plate names the three
+    /// things that turn a stack into a cake, and none of them is a profile a
+    /// lathe can spin: **icing that drips over each tier's edge**, a **ring of
+    /// pearls** where one tier stands on the next, and a **cherry with a stem**.
+    ///
+    /// **Every variation the round asks for still works**, which is the whole
+    /// constraint the model was built to:
+    ///
+    /// - Each tier is its own mesh, so `spec.tierColours` still paints one, two
+    ///   or three colours — the thing that makes "swirled" and "rainbow"
+    ///   visible rather than a claim in a design document.
+    /// - The icing, pearls and cherry are separate meshes, so they stay cream
+    ///   and rose whatever the tiers do.
+    /// - `isTall` is a Y-scale on the wrapper. `ModelLibrary` hands back an
+    ///   upright wrapper precisely so that works: 1.5 on its Y is the same
+    ///   stretch the code version applies to each tier's height.
+    /// - `glows` swaps the material function, not the mesh.
+    ///
+    /// **The tiers carry no baked occlusion**, deliberately — see
+    /// `models/cake.py`. A tier a step darker would read as a colour she did
+    /// not choose, and tier colour is the one visual signal this game carries.
     static func cake(_ spec: CakeSpec, flat: Bool) -> Entity {
+        if flat {
+            let colours = spec.tierColours(3)
+            var tint: [String: UIColorLike] = ["CakeIcing": Palette.creamLight,
+                                               "CakePearls": Palette.creamLight,
+                                               "CakeCherry": Palette.rose,
+                                               "CakeStalk": Palette.sageDeep]
+            for tier in 0..<3 {
+                tint["CakeTier\(tier)"] = colours[min(tier, colours.count - 1)]
+            }
+            let surface: (UIColorLike) -> RealityKit.Material = spec.glows
+                ? { Palette.glowMaterial($0, intensity: 0.35) }
+                : { Palette.material($0) }
+
+            if let modelled = ModelLibrary.load("cake", tint: tint, material: surface) {
+                modelled.name = "Cake"
+                if spec.isTall {
+                    modelled.scale = [1, 1.5, 1]
+                }
+                return modelled
+            }
+        }
+        return proceduralCake(spec, flat: flat)
+    }
+
+    /// The code-built cake. See `cake(_:flat:)`.
+    static func proceduralCake(_ spec: CakeSpec, flat: Bool) -> Entity {
         let cake = Entity()
         cake.name = "Cake"
 
@@ -861,7 +934,47 @@ enum KitchenProps {
     /// transparency anywhere — is that the stream and the pool are slightly
     /// see-through. Opaque water in a pastel palette reads as painted plastic,
     /// and this is the only place in the room that does it.
+    /// **The tap is modelled in Blender and the water is not**, which is the
+    /// one prop in this file that is deliberately half and half.
+    ///
+    /// The tap earned the trip: `references/props/sink-tap.png` has a square
+    /// post, a spout that leaves it and turns down over the basin at a hard
+    /// mitred angle, and a chunky faceted handle. The code version below is a
+    /// 5-sided prism standing up and a second one rotated 90° for a spout —
+    /// two sticks meeting at a right angle, with nothing on top.
+    ///
+    /// The water stays here, for three reasons that all point the same way:
+    ///
+    /// - **It is animated by scaling one axis.** The stream grows down its own
+    ///   Y to open; the pool rises up its own Y as it fills. An imported prop
+    ///   hangs under the exporter's Z-up-to-Y-up rotation, so a child's local Y
+    ///   is not the world's — driving those two off a model would hide an
+    ///   axis-swap inside an animation. `ModelLibrary` returns an upright
+    ///   wrapper to keep that trap out of the codebase; this would walk back in.
+    /// - **It is the one transparent surface in the game.** `waterMaterial` is
+    ///   the deliberate exception to "no transparency"; the palette is
+    ///   re-applied on load as opaque matte.
+    /// - **There is no facet the lathe cannot make here.** A stream's look is
+    ///   its material and its motion, which is the test a prop has to pass to
+    ///   be in `models/` at all.
     static func sink(flat: Bool) -> Sink {
+        if flat, let modelled = ModelLibrary.load("sink",
+                                                  tint: ["Sink": Palette.mintLight,
+                                                         "Tap": Palette.sage,
+                                                         "TapHandleCap": Palette.mint]),
+           let basin = ModelLibrary.mesh("SinkBasin", in: modelled) {
+            modelled.name = "Sink"
+            let water = self.water(flat: flat)
+            modelled.addChild(water.stream)
+            modelled.addChild(water.pool)
+            return Sink(root: modelled, basin: basin, stream: water.stream,
+                        pool: water.pool, splash: water.splash)
+        }
+        return proceduralSink(flat: flat)
+    }
+
+    /// The code-built sink. See `sink(flat:)`.
+    static func proceduralSink(flat: Bool) -> Sink {
         let root = Entity()
         root.name = "Sink"
 
@@ -882,6 +995,21 @@ enum KitchenProps {
         spout.orientation = simd_quatf(angle: .pi / 2, axis: [1, 0, 0])
         root.addChild(spout)
 
+        let water = self.water(flat: flat)
+        root.addChild(water.stream)
+        root.addChild(water.pool)
+        return Sink(root: root, basin: basin, stream: water.stream,
+                    pool: water.pool, splash: water.splash)
+    }
+
+    /// The running water: one stream and one pool, built in code for both the
+    /// modelled tap and the code one. See `sink(flat:)` for why it lives here.
+    ///
+    /// The heights are the modelled tap's: the nozzle lets go at y = 0.0325 and
+    /// the basin floor is at 0.0045 with a rim at 0.0130, which is a little
+    /// lower and a lot wider than the prism tap it replaced.
+    private static func water(flat: Bool) -> (stream: ModelEntity, pool: ModelEntity,
+                                              splash: SIMD3<Float>) {
         // Built hanging from y = 0 downwards, so growing it down the Y axis is
         // the tap opening. The profile is read bottom-to-top by `lathe`, hence
         // the negative heights in ascending order.
@@ -896,31 +1024,32 @@ enum KitchenProps {
                                    flat: flat),
             materials: [Palette.waterMaterial(Palette.berryBlue)])
         stream.name = "TapStream"
-        stream.position = [0, 0.0400, -0.002]
+        // Where the modelled nozzle lets go, on the basin's axis. It ends a
+        // little under the pool's surface rather than above it: water arriving
+        // *in* the water is what it looks like, and a stream that stops short
+        // reads as a floating icicle.
+        stream.position = [0, 0.0325, -0.002]
         stream.scale = [1, 0.001, 1]
         stream.isEnabled = false
-        root.addChild(stream)
 
-        // The basin floor is at y = 0.003 and the rim at 0.012; the pool lives
-        // between them and is scaled up the Y axis as it fills. It is a lathe
-        // rather than a prism because the basin's inner wall is tapered — a
-        // straight-sided cylinder wide enough to touch the rim pokes out
-        // through the wall down at the floor.
+        // The modelled basin's floor is at y = 0.0045 and its rim at 0.0130;
+        // the pool lives between them and is scaled up the Y axis as it fills.
+        // It is a lathe rather than a prism because the basin's inner wall is
+        // tapered — a straight-sided cylinder wide enough to touch the rim pokes
+        // out through the wall down at the floor.
         let pool = ModelEntity(
-            mesh: FacetedMesh.mesh(FacetedMesh.lathe(profile: [[0.0128, 0],
-                                                               [0.0152, 0.0040],
-                                                               [0.0166, 0.0075]],
-                                                     sides: 8),
+            mesh: FacetedMesh.mesh(FacetedMesh.lathe(profile: [[0.0130, 0],
+                                                               [0.0152, 0.0030],
+                                                               [0.0172, 0.0072]],
+                                                     sides: 12),
                                    flat: flat),
             materials: [Palette.waterMaterial(Palette.berryBlue, opacity: 0.72)])
         pool.name = "TapPool"
-        pool.position = [0, 0.0032, 0]
+        pool.position = [0, 0.0046, 0]
         pool.scale = [1, 0.001, 1]
         pool.isEnabled = false
-        root.addChild(pool)
 
-        return Sink(root: root, basin: basin, stream: stream, pool: pool,
-                    splash: SIMD3<Float>(0, 0.0105, -0.002))
+        return (stream, pool, SIMD3<Float>(0, 0.0112, -0.002))
     }
 
     struct Scale {

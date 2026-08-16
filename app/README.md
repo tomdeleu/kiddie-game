@@ -769,23 +769,27 @@ rather than a billboard.
 
 ## Deliberate deviations from the design
 
-**There is ambient occlusion on the three Blender props, and nowhere else.**
+**There is ambient occlusion on the six Blender props, and nowhere else.**
 `references/REFERENCES.md` bans it outright — the facets are supposed to do the
 shading and corners are supposed to stay light — and that holds everywhere a
-facet can answer the question. These three are where it cannot: the berry's crown
-stands up off the globe, the sack's collar fans out over its tie, and every one
-of the crate's boards butts into a corner post — and in all of those joins the
-surfaces face the same way as everything around them, so they come back the
-same tone and nothing says the two shapes touch. Owner's call, on seeing the
-standing crown, and extended to the sack and the crate.
+facet can answer the question. The modelled props are where it cannot: the berry's crown
+stands up off the globe, the sack's collar fans out over its tie, every one of
+the crate's boards butts into a corner post, four clover petals crowd into one
+hub, and icing hangs over the edge of every cake tier — and in all of those
+joins the surfaces face the same way as everything around them, so they come
+back the same tone and nothing says the two shapes touch. Owner's call, on
+seeing the standing crown, and extended to each prop after it.
 
 It is baked **to the facets, not to a texture** — `bake_ao_facets` in
 `models/lowpoly.py` measures the occlusion at model time and splits the faces
 in the crevice into their own mesh, which `Palette.occluded` paints a step
 darker. So there are still no UVs, no lightmap and no runtime cost, and the
-occlusion is still one flat tone on a facet. Its reach is 2.2 mm on the berry,
-4 mm on the crate and 6 mm on the sack: contact shading where two parts meet,
-not the all-over darkening the clay direction was rejected for. Everything built by `FacetedMesh`
+occlusion is still one flat tone on a facet. Its reach runs from 2.2 mm on the
+berry to 6 mm on the sack, always sized against the part it has to stay inside:
+contact shading where two parts meet, not the all-over darkening the clay
+direction was rejected for. **The cake's tiers are exempt entirely** — they are
+repainted every round, and a tier a step darker would read as a colour she did
+not choose. Everything built by `FacetedMesh`
 has none. `models/README.md` has the argument in full and the three rules that
 keep the bake honest, and `LIGHTMAPS.md` is still the untaken texture route.
 
@@ -1138,8 +1142,9 @@ control in the app.
 
 ### Props modelled in Blender
 
-**Three props are not built in code: the flour sack, the toverbosbes and the
-crate.** All are USDZ files in `Resources/Models/`, modelled by the scripts in
+**Six props are not built in code: the flour sack, the toverbosbes, the crate,
+the toverklaver, the sink and the cake.** All are USDZ files in
+`Resources/Models/`, modelled by the scripts in
 [`models/`](../models/README.md) and loaded by `ModelLibrary`.
 
 They are a trial of a second authoring route, and each was picked on the same
@@ -1161,7 +1166,22 @@ plate, not the prop that would be fun to model.
   top, which is a tapered tub, and a tub cannot be tuned into joinery. Its plate
   was generated for the job: `references/props/crate-a.png`.
 
-All three carry the game's only ambient occlusion — see the deviations above.
+- **The clover**: petals with a real crease down each one. A flat extrusion has
+  one front face and one tone, so the code version stands in for the fold by
+  painting alternate petals two greens.
+- **The sink**: a tap with a square post, a spout mitred down over the basin and
+  a chunky handle, against two prisms meeting at a right angle. **Its water is
+  still built in code** — it is animated by scaling one axis, it is the one
+  transparent surface in the game, and there is no facet the lathe cannot make.
+  `models/sink.py` has the full argument, and it is the clearest statement of
+  where the modelling route stops.
+- **The cake**: the payoff object, and the one with the most to lose. It gains
+  icing that drips over each tier, a ring of pearls, and a stem on its cherry —
+  while `tierColours`, `isTall` and `glows` all still work, because the tiers
+  are separate meshes, the stretch is a Y-scale on the upright wrapper and the
+  glow is a material swap.
+
+All six carry the game's only ambient occlusion — see the deviations above.
 
 What the route costs is a round trip through a file, and what it buys is shapes
 that have to be built vertex by vertex. `models/README.md` has the rules a

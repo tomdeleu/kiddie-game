@@ -15,6 +15,8 @@ against the scene reference `../plates/01-cottage-exterior.png`. They are
 | `door-wood.png` | `85ea4c38-3e24-4ad1-9574-2677572a784c` | The same door with a sandy-wood leaf, which is the colour that shipped |
 | `crate-a.png` | `02a7fdf5-806d-4945-9d21-7affb52f6e8d` | **Four corner posts, three board bands, an inner floor** — the one that was modelled |
 | `crate-b.png` | `158315de-d943-4831-b8ae-cb02d16c8cfa` | The same crate, airier: more rails, thinner boards |
+| `sink-tap.png` | `72d1dced-caae-4bb2-8fb1-4c09e7c5f3ea` | **Square post, spout mitred down over the basin, octagonal handle**, and a basin with a real rim |
+| `cake.png` | `f0e0d4f7-bf18-450c-94ab-af6e13ed86c3` | **Icing dripping over each tier, a ring of pearls, a cherry with a stem** |
 
 All `flux_2` / `pro` / `1k`, prompt and seed on the job record. The style prompt
 is in [`../REFERENCES.md`](../REFERENCES.md) §3.
@@ -37,6 +39,21 @@ corner posts with boards spanning between them and gaps you can see through,
 and there is no profile, lathe or tapered prism that says *joinery*. The prop it
 replaced was a four-sided `bowl` with a ring on top, which reads as a plastic
 tub. See [`../../models/README.md`](../../models/README.md).
+
+## The sink and the cake — plates generated to be modelled
+
+Both were made the same way and for the same reason, and both name their own
+parts, which is what a plate is for:
+
+- **`sink-tap.png`** gives the tap a square post, a spout that leaves it and
+  turns down over the basin at a hard mitred angle, and a chunky faceted
+  handle. It also draws the water — a faceted stream and a pool — but **only
+  the tap and basin were modelled**; `KitchenProps.sink` still builds the water
+  in code, and `models/sink.py` says why at length.
+- **`cake.png`** gives the payoff object its icing, its pearls and a stem on
+  its cherry. It came back with two tiers where the game needs three; three is
+  what `CakeSpec.tierColours` paints, so the model takes the construction and
+  not the count — the same call the door made about its four panels.
 
 ## The door — two plates, because the leaf colour is a room decision
 

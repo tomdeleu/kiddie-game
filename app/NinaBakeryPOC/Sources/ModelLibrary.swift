@@ -49,7 +49,14 @@ enum ModelLibrary {
     ///
     /// - Parameter tint: mesh name → palette colour. Matched by prefix, longest
     ///   first, so `BosbesCrown` can differ from `Bosbes`.
-    static func load(_ name: String, tint: [String: UIColorLike] = [:]) -> Entity? {
+    /// - Parameter material: how a colour becomes a surface. The default is the
+    ///   room's matte one; the cake passes `Palette.glowMaterial` when the round
+    ///   asked for a cake that glows, which is a material change and not a mesh
+    ///   change — so one model covers both.
+    static func load(_ name: String,
+                     tint: [String: UIColorLike] = [:],
+                     material: @escaping (UIColorLike) -> RealityKit.Material
+                        = { Palette.material($0) }) -> Entity? {
         let source: Entity
         if let cached = cache[name] {
             source = cached
@@ -64,7 +71,7 @@ enum ModelLibrary {
         let model = source.clone(recursive: true)
         if !tint.isEmpty {
             let rules = tint.sorted { $0.key.count > $1.key.count }
-            apply(rules, to: model)
+            apply(rules, to: model, material: material)
         }
         model.name = name + "Model"
 
@@ -83,18 +90,36 @@ enum ModelLibrary {
             ?? Bundle.main.url(forResource: name, withExtension: "usdz")
     }
 
-    private static func apply(_ rules: [(key: String, value: UIColorLike)], to entity: Entity) {
+    private static func apply(_ rules: [(key: String, value: UIColorLike)],
+                              to entity: Entity,
+                              material: (UIColorLike) -> RealityKit.Material) {
         if let model = entity as? ModelEntity, model.model != nil {
             let (base, steps) = occlusion(in: entity.name)
             if let rule = rules.first(where: { base.hasPrefix($0.key) }) {
-                let material = Palette.material(Palette.occluded(rule.value, steps: steps))
-                model.model?.materials = Array(repeating: material,
+                let surface = material(Palette.occluded(rule.value, steps: steps))
+                model.model?.materials = Array(repeating: surface,
                                                count: max(1, model.model?.materials.count ?? 1))
             }
         }
         for child in entity.children {
-            apply(rules, to: child)
+            apply(rules, to: child, material: material)
         }
+    }
+
+    /// The first `ModelEntity` under `entity` with this name.
+    ///
+    /// **Not `findEntity(named:)`.** A USD prop arrives as an `Xform` wrapping a
+    /// `Mesh`, and the exporter gives both the same name — so the built-in
+    /// search finds the `Xform` first and a cast to `ModelEntity` fails on a
+    /// prop that is perfectly present. The sink needs its basin this way.
+    static func mesh(_ name: String, in entity: Entity) -> ModelEntity? {
+        if let model = entity as? ModelEntity, model.model != nil, model.name == name {
+            return model
+        }
+        for child in entity.children {
+            if let found = mesh(name, in: child) { return found }
+        }
+        return nil
     }
 
     /// Split a mesh name into its prop name and how occluded it is.
