@@ -1327,7 +1327,7 @@ final class KitchenRoom: GameRoom {
         let tinBatter = tin.batter
         let above = tinRoot.position + [0, 0.030, 0]
 
-        ticker.move(bowl, to: above, duration: 0.3, arc: 0.01) { [weak self] in
+        ticker.move(bowl, to: above, duration: 0.3, arc: 0.01, done: { [weak self] in
             guard let self else { return }
             self.sound.play(.pour)
 
@@ -1338,7 +1338,7 @@ final class KitchenRoom: GameRoom {
             }, done: { [weak self] in
                 self?.runPour(from: above, into: tinRoot, batter: tinBatter, tipped: tipped)
             })
-        }
+        })
     }
 
     /// The pour itself, once the bowl is over the tin and tilted.
@@ -1446,7 +1446,7 @@ final class KitchenRoom: GameRoom {
         // oven, and hiding it is what makes the door opening worth watching.
         let mouth = Layout.ovenMouth
         let tinRoot = tin.root
-        ticker.move(tinRoot, to: mouth, duration: 0.3, arc: 0.01) { [weak self] in
+        ticker.move(tinRoot, to: mouth, duration: 0.3, arc: 0.01, done: { [weak self] in
             guard let self else { return }
             self.sound.play(.whoosh, volume: 0.7)
             ContactShadows.removeFrom(tinRoot)
@@ -1466,7 +1466,7 @@ final class KitchenRoom: GameRoom {
                     self.voice.say(Line.klopOpOtto, priority: .low)
                 }
             })
-        }
+        })
     }
 
     // MARK: - Step 5: baking
