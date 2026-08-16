@@ -39,7 +39,7 @@ final class TouchRouter {
         /// Added to the prop's height when `tracksEntity` recomputes the plane.
         /// The bowl is the reason it exists: stirring has to happen on the
         /// plane of its *rim*, two centimetres above where the bowl sits, or
-        /// the circle her finger draws lands nowhere near the whisk.
+        /// the circle her finger draws lands nowhere near the spoon.
         var planeOffset: Float = 0
         var enabled = true
         // Spelled `@MainActor` because that is what they are: closures formed

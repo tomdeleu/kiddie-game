@@ -120,13 +120,24 @@ enum Halo {
     private static let emissionPeak: Float = 4.5
 
     private static let bandCount = 18
-    /// How far the falloff reaches either side of the ring, as a fraction of
-    /// the ring's radius. The reference's band is soft over about this much.
-    private static let spread: Float = 0.34
-    /// Gaussian width, again as a fraction of the radius. Widened from 0.155
-    /// with the colour change: a fatter shoulder means more of the ring sits
-    /// near full opacity, which is brightness bought without a harder edge.
-    private static let sigma: Float = 0.170
+    /// **How thick the band is**, as a fraction of the ring's radius, measured
+    /// either side of it — so the whole band is `2 × spread × radius` across.
+    ///
+    /// It was 0.34, which made the band two thirds of the radius: on the bowl,
+    /// 31 mm of glow around a 46 mm ring. That was tuned while the ring was
+    /// *dim* and needed area to be noticed at all. Now that it emits, the area
+    /// is what makes it heavy — a light does not have to be wide to be seen, and
+    /// a wide one buries the prop it is pointing at (owner, 2026-08-16: "very
+    /// big and thick").
+    ///
+    /// At 0.18 the same bowl gets a 13 mm band: a bright line on the table
+    /// rather than a pool. `sigma` comes down with it, keeping their ratio near
+    /// 2.1 so the Gaussian still reaches zero at the band's edge instead of
+    /// stopping at a step.
+    private static let spread: Float = 0.18
+    /// Gaussian width, again as a fraction of the radius. Tied to `spread` —
+    /// move one and move the other.
+    private static let sigma: Float = 0.085
 
     /// Light up the surface around a prop, and keep it lit until `remove`.
     ///
@@ -145,7 +156,13 @@ enum Halo {
 
         guard let parent = entity.parent else { return nil }
 
-        let radius = min(0.080, max(0.020, size * 1.35))
+        // **1.10, down from 1.35, and the clamps came down with it.** The ring
+        // used to be drawn a third wider than the prop it was marking, which
+        // was right while it was dim — a faint thing needs size to be found.
+        // Emitting, that same margin reads as a hoop thrown around the prop
+        // rather than as light at its foot, and it is what made the cue feel
+        // big. Just proud of the prop is enough now.
+        let radius = min(0.062, max(0.016, size * 1.10))
         let ring = Entity()
         ring.name = ringName
 
@@ -212,12 +229,20 @@ enum Halo {
                 // Off the ring itself, not the top of the prop: the cue is down
                 // here now, and stars lifting out of the light is what ties the
                 // two halves of it together.
+                //
+                // **They are the ring's own colour and they emit like it.** Same
+                // `core` yellow by default, a third bigger than a normal
+                // sparkle, three at a time rather than two, and lit from within
+                // — an unlit star against the pale floor is the same losing
+                // arithmetic the ring itself had. The ring got thinner in the
+                // same pass, so the stars are what keeps it from getting
+                // quieter overall.
                 let a = Float.random(in: 0..<(2 * .pi))
                 let r = radius * Float.random(in: 0.85...1.1)
                 Sparkles.burst(at: ring.position + [cos(a) * r, 0.004, sin(a) * r],
                                in: parentOf(ring), ticker: ticker, colour: colour,
-                               count: 2, size: 0.0026, speed: 0.035,
-                               gravity: -0.02, life: 1.0)
+                               count: 3, size: 0.0034, speed: 0.035,
+                               gravity: -0.02, life: 1.0, glow: emissionPeak * 0.6)
             }
             return true
         }

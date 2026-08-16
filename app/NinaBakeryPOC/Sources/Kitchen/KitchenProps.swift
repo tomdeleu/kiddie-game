@@ -236,8 +236,35 @@ enum KitchenProps {
     // MARK: - The dough
 
     /// The ball of dough, before the rolling pin gets to it.
+    ///
+    /// **Slumped, not spherical.** It was a subdivided icosphere, which is a
+    /// ball — and a ball of dough left on a table is not a ball for very long
+    /// (owner, 2026-08-16: "too much of a perfect sphere, it should be a bit
+    /// more blobby on the table"). Dough has almost no structure: it spreads
+    /// under its own weight, so it is widest low down, flattens where it meets
+    /// the wood, and domes softly over the top.
+    ///
+    /// That is a lathe profile, and the second half of the fix is the **seven**
+    /// sides. A lathe is radially symmetric, so a high side count would give a
+    /// smooth circular lump — a ball again, just a squashed one. Seven is few
+    /// enough that the plan view is visibly irregular, which is what reads as
+    /// *hand-formed* rather than *moulded*, and it is an odd number so no two
+    /// facets are parallel across it.
+    ///
+    /// **The origin is on the table, not at the centre.** A lathe starts at its
+    /// base, where the icosphere started at its middle — which is why the old
+    /// one had to be lifted 12 mm by hand, and why flattening it needed that
+    /// offset animated too. Sitting on its base, it stays planted for free when
+    /// `KitchenRoom.shapeDough` squashes it.
     static func doughBall(flat: Bool) -> ModelEntity {
-        RoomBuilder.model(.icosphere(radius: 0.014, subdivisions: 1),
+        RoomBuilder.model(.lathe(profile: [[0.0000, 0.0000],
+                                           [0.0092, 0.0006],
+                                           [0.0142, 0.0034],
+                                           [0.0150, 0.0068],
+                                           [0.0131, 0.0105],
+                                           [0.0088, 0.0132],
+                                           [0.0000, 0.0148]],
+                                 sides: 7),
                           Palette.cream, flat: flat, name: "Dough")
     }
 
@@ -510,24 +537,99 @@ enum KitchenProps {
                           colour, flat: flat, name: "Batter")
     }
 
-    static func whisk(flat: Bool) -> Entity {
-        let whisk = Entity()
-        whisk.name = "Whisk"
+    /// **The batter falling out of the bowl into the tin.**
+    ///
+    /// The pour used to be a cut: the bowl tipped, the batter in it was removed
+    /// on the same frame, and the batter in the tin started growing. Both ends
+    /// of the action were animated and the action itself was not there — the
+    /// batter teleported (owner, 2026-08-16: "we must see some pouring action").
+    ///
+    /// Built hanging from y = 0 downwards, so growing it down the Y axis is the
+    /// pour starting — the same construction as the tap's stream in `sink`, and
+    /// for the same reason: it means one scale drives it, and the top stays
+    /// pinned to the lip it is coming from.
+    ///
+    /// The profile is the one falling liquid actually has. It leaves the rim
+    /// narrow, swells where it picks up speed, and pulls in again as it lands.
+    /// A straight cylinder is what the tap was before it was rebuilt, and it
+    /// read as a stick.
+    ///
+    /// Six sides, so the facets are big enough to see turning — `KitchenRoom`
+    /// spins it while it runs, which is most of what makes a fixed shape read as
+    /// moving.
+    static func pourStream(colour: UIColorLike, length: Float, flat: Bool) -> ModelEntity {
+        RoomBuilder.model(.lathe(profile: [[0.0032, -length],
+                                           [0.0052, -length * 0.68],
+                                           [0.0058, -length * 0.38],
+                                           [0.0044, -length * 0.14],
+                                           [0.0038, 0]],
+                                 sides: 6),
+                          colour, flat: flat, name: "PourStream")
+    }
 
-        let handle = RoomBuilder.model(.prism(radius: 0.004, height: 0.036, sides: 6),
-                                       Palette.sandyWood, flat: flat, name: "WhiskHandle")
-        handle.position = [0, 0.014, 0]
-        whisk.addChild(handle)
+    /// **De pollepel** — the big wooden spoon she stirs with.
+    ///
+    /// Modelled from `references/props/spoon.png`. It replaces a whisk, which
+    /// was two prisms — a stick with an upside-down cone on the end — and read
+    /// as neither a whisk nor anything else (owner, 2026-08-16: "looks like
+    /// shit, create a proper big spoon instead").
+    ///
+    /// The plate is worth following closely because a spoon is one of the few
+    /// kitchen objects a 4-year-old can already draw, which means she knows when
+    /// it is wrong. Three things carry it:
+    ///
+    /// - **The scoop is hollow.** `FacetedMesh.bowl` gives a real rim and a real
+    ///   inside, and that is the whole difference between a spoon and a lollipop.
+    ///   Nine sides, so the rim is visibly polygonal at 28 mm across.
+    /// - **The handle tapers**, thicker where it meets the scoop and narrower at
+    ///   the tip, which is what the plate shows and what stops it reading as a
+    ///   dowel.
+    /// - **It is chunky.** The scoop is 28 mm across on a 32 mm bowl — near
+    ///   enough to fill it, the way a real mixing spoon does, and far bigger
+    ///   than the whisk's 22 mm head.
+    ///
+    /// **Built standing on its scoop with the handle straight up**, which is the
+    /// convention the whisk used and the reason nothing in `KitchenRoom` had to
+    /// change: stirring stands it in the bowl as-is, and resting it on the table
+    /// is the same single rotation about X that laid the whisk down.
+    ///
+    /// The plate's hanging hole in the tip is not modelled. There are no
+    /// booleans in `FacetedMesh`, and at 4 mm across the hole would be two
+    /// pixels — a smudge, which is the same argument that gave the honey dipper
+    /// two parts instead of the plate's five rings.
+    static func spoon(flat: Bool) -> Entity {
+        let spoon = Entity()
+        spoon.name = "Spoon"
 
-        // The head, upside down: wide at the top, narrow where it meets the
-        // batter. A closed solid, because an open cone has no inside.
-        let head = RoomBuilder.model(.taperedPrism(bottomRadius: 0.004, topRadius: 0.011,
-                                                   height: 0.016, sides: 6),
-                                     Palette.creamLight, flat: flat, name: "WhiskHead")
-        head.position = [0, -0.002, 0]
-        whisk.addChild(head)
+        // The scoop. Cream rather than the plate's wood: the table is
+        // `sandyWood`, and a wooden spoon lying on a wooden table is a spoon
+        // nobody can see. The handle keeps the wood, so the object still reads
+        // as one — this is the same split the whisk used, and the one part of
+        // it worth keeping.
+        let scoop = RoomBuilder.model(.bowl(bottomRadius: 0.0092, topRadius: 0.0140,
+                                            height: 0.0110, wallThickness: 0.0022,
+                                            floorThickness: 0.0026, sides: 9, rings: 2),
+                                      Palette.cream, flat: flat, name: "SpoonScoop")
+        spoon.addChild(scoop)
 
-        return whisk
+        // The handle, tapering upward out of the scoop. It starts inside the
+        // scoop's wall rather than on top of it, so there is no seam where the
+        // two meet however the light falls.
+        let handle = RoomBuilder.model(.taperedPrism(bottomRadius: 0.0050,
+                                                     topRadius: 0.0034,
+                                                     height: 0.0440, sides: 6),
+                                       Palette.sandyWood, flat: flat, name: "SpoonHandle")
+        handle.position = [0, 0.0072, 0]
+        spoon.addChild(handle)
+
+        // The flared tip. In the plate it is where the hanging hole is; here it
+        // is simply what stops the handle ending in a point.
+        let tip = RoomBuilder.model(.prism(radius: 0.0044, height: 0.0060, sides: 6),
+                                    Palette.sandyWood, flat: flat, name: "SpoonTip")
+        tip.position = [0, 0.0496, 0]
+        spoon.addChild(tip)
+
+        return spoon
     }
 
     struct Tin {

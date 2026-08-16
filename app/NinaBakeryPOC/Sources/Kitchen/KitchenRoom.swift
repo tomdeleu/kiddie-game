@@ -44,7 +44,7 @@ final class KitchenRoom {
     private var oven: KitchenProps.Oven?
     private var bowl: ModelEntity?
     private var bowlBatter: ModelEntity?
-    private var whisk: Entity?
+    private var spoon: Entity?
     private var tin: KitchenProps.Tin?
     private var basket: ModelEntity?
     private var tokens: [(ingredient: Ingredient, entity: Entity, home: SIMD3<Float>)] = []
@@ -163,7 +163,7 @@ final class KitchenRoom {
     /// she aims by eye, so what matters is how big it is on screen. It is now
     /// about a quarter of the longer table rather than a third of the old one,
     /// and it is still comfortably the largest thing on the top: the nearest
-    /// two home positions to the bowl are the whisk at 70 mm and the cake spot
+    /// two home positions to the bowl are the spoon at 70 mm and the cake spot
     /// at 71 mm, so nothing sits inside it by accident.
     private let snapRadius: Float = 0.067
 
@@ -259,10 +259,13 @@ final class KitchenRoom {
 
         // The dough she rolls out before any of that.
         let ball = KitchenProps.doughBall(flat: flat)
-        ball.position = Layout.doughSpot + [0, 0.012, 0]
+        // Straight on the table: the blob's origin is its base — see
+        // `KitchenProps.doughBall` — where the old sphere's was its centre and
+        // had to be lifted by half its height.
+        ball.position = Layout.doughSpot
         root.addChild(ball)
         dough = ball
-        ContactShadows.attach(to: ball, radius: 0.014, settings: settings)
+        ContactShadows.attach(to: ball, radius: 0.016, settings: settings)
 
         let bowlNode = KitchenProps.mixingBowl(flat: flat)
         bowlNode.position = Layout.bowlHome
@@ -271,12 +274,12 @@ final class KitchenRoom {
         ContactShadows.attach(to: bowlNode, radius: 0.030, settings: settings)
         refreshBowlBatter(animated: false)
 
-        let whiskNode = KitchenProps.whisk(flat: flat)
-        whiskNode.position = Layout.whiskHome + [0, 0.006, 0]
+        let spoonNode = KitchenProps.spoon(flat: flat)
+        spoonNode.position = Layout.spoonHome + [0, 0.006, 0]
         // Resting on the table it lies over; standing in the bowl it is upright.
-        whiskNode.orientation = simd_quatf(angle: .pi / 2.2, axis: [1, 0, 0])
-        root.addChild(whiskNode)
-        whisk = whiskNode
+        spoonNode.orientation = simd_quatf(angle: .pi / 2.2, axis: [1, 0, 0])
+        root.addChild(spoonNode)
+        spoon = spoonNode
 
         let tinNode = KitchenProps.tin(flat: flat)
         tinNode.root.position = Layout.tinHome
@@ -470,30 +473,30 @@ final class KitchenRoom {
             target.onTap = { [weak self] in self?.sayName(Line.ditKom, wobbling: self?.bowl) }
         }
 
-        // **The whisk is a target now, and it is switched off while she stirs.**
+        // **The spoon is a target now, and it is switched off while she stirs.**
         // During `roeren` it stands in the middle of the bowl, so leaving it
         // live would put a 26 mm sphere in the one place her finger has to land
         // to make batter — and `TouchRouter` picks the *nearest* centre, not the
         // biggest target, so it would win about half the time.
-        touch.register("whisk", entity: whisk, radius: 0.026,
+        touch.register("spoon", entity: spoon, radius: 0.026,
                        planeY: Layout.tableTopY) { target in
             target.tracksEntity = true
             // Draggable like every other loose prop, and for the reason
-            // `refreshInteractivity` gives for not locking things: a whisk she
+            // `refreshInteractivity` gives for not locking things: a spoon she
             // can see and cannot pick up is a locked door with a nice sound on
             // it. The one thing that still owns its position is the stirring
             // step, which stands it in the bowl and puts it back after — that is
             // the action, not the room tidying up after her.
             target.onDragBegan = { [weak self] world in
-                guard let self, let whisk = self.whisk else { return }
-                self.pickUp(whisk, at: world)
+                guard let self, let spoon = self.spoon else { return }
+                self.pickUp(spoon, at: world)
             }
             target.onDragMoved = { [weak self] world in self?.carry(to: world) }
             target.onDragEnded = { [weak self] _ in
-                guard let self, let whisk = self.whisk else { return }
-                self.settle(whisk, missed: false)
+                guard let self, let spoon = self.spoon else { return }
+                self.settle(spoon, missed: false)
             }
-            target.onTap = { [weak self] in self?.sayName(Line.ditGarde, wobbling: self?.whisk) }
+            target.onTap = { [weak self] in self?.sayName(Line.ditLepel, wobbling: self?.spoon) }
         }
 
         touch.register("tin", entity: tin?.root, radius: 0.037,
@@ -700,10 +703,10 @@ final class KitchenRoom {
         touch.target(named: "cake")?.entity = cake
         touch.target(named: "cake")?.enabled = cake != nil
         // The two naming targets that have to stand aside for a real one — the
-        // whisk sits inside the bowl during the stir, and the basket sits under
+        // spoon sits inside the bowl during the stir, and the basket sits under
         // its own ingredient until she has taken it. Both are explained where
         // they are registered.
-        touch.target(named: "whisk")?.enabled = state.step != .roeren
+        touch.target(named: "spoon")?.enabled = state.step != .roeren
         touch.target(named: "basket")?.enabled = used.contains(Layout.Source.mandje.rawValue)
         refreshHalo()
     }
@@ -765,25 +768,25 @@ final class KitchenRoom {
     // MARK: - Step presentation
 
     private func applyStep(animated: Bool) {
-        guard let oven, let whisk, let tin else { return }
+        guard let oven, let spoon, let tin else { return }
 
-        // The whisk: on the table until she needs it, standing in the bowl
+        // The spoon: on the table until she needs it, standing in the bowl
         // while she stirs, back on the table once the batter is done.
         // Off the bowl's *live* position, not `Layout.bowlHome`: the bowl can be
-        // carried anywhere now, and a whisk that stands where the bowl used to
-        // be is a whisk standing in mid-air.
+        // carried anywhere now, and a spoon that stands where the bowl used to
+        // be is a spoon standing in mid-air.
         let stirring = state.step == .roeren
-        let whiskTarget = stirring
+        let spoonTarget = stirring
             ? (bowl?.position ?? Layout.bowlHome) + [0, 0.030, 0]
-            : Layout.whiskHome + [0, 0.006, 0]
-        let whiskTilt = stirring ? simd_quatf(angle: 0, axis: [0, 1, 0])
+            : Layout.spoonHome + [0, 0.006, 0]
+        let spoonTilt = stirring ? simd_quatf(angle: 0, axis: [0, 1, 0])
                                  : simd_quatf(angle: .pi / 2.2, axis: [1, 0, 0])
         if animated {
-            ticker.move(whisk, to: whiskTarget, duration: 0.4)
-            whisk.orientation = whiskTilt
+            ticker.move(spoon, to: spoonTarget, duration: 0.4)
+            spoon.orientation = spoonTilt
         } else {
-            whisk.position = whiskTarget
-            whisk.orientation = whiskTilt
+            spoon.position = spoonTarget
+            spoon.orientation = spoonTilt
         }
 
         // The dough is only out while she is rolling it; after that it is the
@@ -856,7 +859,12 @@ final class KitchenRoom {
     private func shapeDough(_ dough: Entity, roll: Float) {
         let t = max(0, min(1, roll))
         dough.scale = SIMD3<Float>(1 + 0.9 * t, 1 - 0.72 * t, 1 + 0.9 * t)
-        dough.position = Layout.doughSpot + [0, 0.012 * (1 - 0.6 * t), 0]
+        // No height to animate any more. The blob stands on its own base, so
+        // squashing it down the Y axis keeps it on the table by construction —
+        // where the old sphere, scaled about its centre, sank into the wood
+        // unless its position was eased in the opposite direction at the same
+        // time.
+        dough.position = Layout.doughSpot
     }
 
     private func setDoor(open: Bool, animated: Bool, oven: KitchenProps.Oven) {
@@ -1079,6 +1087,10 @@ final class KitchenRoom {
     /// nobody is holding.
     private func surfaceUnder(_ point: SIMD3<Float>, for entity: Entity) -> Float {
         if entity === cake, Layout.nearPlank(point) { return Layout.cakePlankY + 0.004 }
+        // The two ingredients that wait on the wall shelves. Without this the
+        // ring for them landed on the floor 150 mm below the berry it was
+        // pointing at — see `Layout.shelfSurfaceY`.
+        if let shelf = Layout.shelfSurfaceY(at: point) { return shelf }
         return Layout.surfaceY(at: point)
     }
 
@@ -1327,7 +1339,7 @@ final class KitchenRoom {
     /// `max` rather than a sum is deliberate — a real circle should not also
     /// bank its own arc length and finish in one and a half turns.
     private func stir(to world: SIMD3<Float>) {
-        guard let whisk else { return }
+        guard let spoon else { return }
         let angle = angleAroundBowl(world)
         defer {
             stirLastAngle = angle
@@ -1346,12 +1358,12 @@ final class KitchenRoom {
 
         state.stir = min(1, state.stir + gain / turnsNeeded)
 
-        // The whisk follows her finger, held inside the bowl.
+        // The spoon follows her finger, held inside the bowl.
         let centre = bowl?.position ?? Layout.bowlHome
         var offset = SIMD3<Float>(world.x - centre.x, 0, world.z - centre.z)
         let reach = simd_length(SIMD2<Float>(offset.x, offset.z))
         if reach > 0.016 { offset *= 0.016 / reach }
-        whisk.position = centre + offset + [0, 0.030, 0]
+        spoon.position = centre + offset + [0, 0.030, 0]
 
         // The batter turns with her, and the colour comes up as it mixes.
         if let disc = bowlBatter {
@@ -1418,6 +1430,24 @@ final class KitchenRoom {
         pour(bowl: bowl, tin: tin)
     }
 
+    /// **Tip, pour, fill — in that order, with the pouring visible.**
+    ///
+    /// It used to be tip and cut: the bowl tilted over 0.45 s, and on the frame
+    /// the tilt finished the bowl's batter was removed and the tin's began to
+    /// grow. Both *ends* of the action were animated and the action itself was
+    /// missing, so what she saw was batter teleporting between two containers
+    /// (owner, 2026-08-16).
+    ///
+    /// There is now a stream between them, and the three things that have to
+    /// happen together do: the stream runs, the bowl empties, and the tin fills,
+    /// all over the same 0.7 seconds. Emptying the bowl is the half that is easy
+    /// to forget — a source that pours forever while the destination fills is
+    /// the same tell as water that never gathers in the basin, which is why the
+    /// tap has a pool.
+    ///
+    /// The stream is a child of the room rather than of either container: it
+    /// belongs to neither, it must not tip with the bowl, and it has to outlive
+    /// the bowl's own batter.
     private func pour(bowl: ModelEntity, tin: KitchenProps.Tin) {
         // Entities, not the struct, because these get captured weakly below.
         let tinRoot = tin.root
@@ -1428,41 +1458,100 @@ final class KitchenRoom {
             guard let self else { return }
             self.sound.play(.pour)
 
-            // Tip it. The batter goes with the bowl until it is gone.
+            // Tip it. The batter goes with the bowl until the stream takes over.
             let tipped = simd_quatf(angle: -1.15, axis: [0, 0, 1])
             self.ticker.tween(0.45, ease: Ease.inOut, step: { [weak bowl] t in
                 bowl?.orientation = simd_slerp(simd_quatf(angle: 0, axis: [0, 0, 1]), tipped, t)
             }, done: { [weak self] in
-                guard let self else { return }
-                self.bowlBatter?.removeFromParent()
-                self.bowlBatter = nil
-
-                // The tin fills.
-                tinBatter.isEnabled = true
-                tinBatter.model?.materials = [Palette.material(self.state.bowlSpec.batterColour)]
-                tinBatter.scale = [1, 0.05, 1]
-                self.ticker.tween(0.5, ease: Ease.out, step: { [weak tinBatter] t in
-                    tinBatter?.scale = SIMD3<Float>(1, 0.05 + 0.95 * t, 1)
-                })
-                Sparkles.ring(at: tinRoot.position + [0, 0.012, 0], in: self.root,
-                              ticker: self.ticker,
-                              colour: self.state.bowlSpec.batterColour, radius: 0.04)
-
-                // And the bowl goes back where it lives.
-                self.ticker.after(0.35) { [weak self] in
-                    guard let self, let bowl = self.bowl else { return }
-                    self.ticker.tween(0.4, ease: Ease.out, step: { [weak bowl] t in
-                        bowl?.orientation = simd_slerp(tipped,
-                                                       simd_quatf(angle: 0, axis: [0, 0, 1]), t)
-                    })
-                    self.ticker.move(bowl, to: Layout.bowlHome, duration: 0.45, arc: 0.02)
-                }
-
-                self.state.step = .inOven
-                self.save()
-                self.applyStep(animated: true)
-                self.voice.sayWhenQuiet([Line.gegoten, Line.ottoWacht])
+                self?.runPour(from: above, into: tinRoot, batter: tinBatter, tipped: tipped)
             })
+        }
+    }
+
+    /// The pour itself, once the bowl is over the tin and tilted.
+    private func runPour(from lip: SIMD3<Float>, into tinRoot: Entity,
+                         batter tinBatter: ModelEntity, tipped: simd_quatf) {
+        let colour = state.bowlSpec.batterColour
+        // From the tipped rim down to the floor of the tin. The bowl pours off
+        // its +X side — tipping about −Z carries its mouth that way — so the
+        // stream stands just off the tin's centre rather than down its axis,
+        // which is also what stops it z-fighting the batter rising to meet it.
+        let length: Float = 0.026
+        let stream = KitchenProps.pourStream(colour: colour, length: length, flat: flat)
+        stream.position = lip + [0.010, -0.004, 0]
+        stream.scale = [1, 0.001, 1]
+        root.addChild(stream)
+
+        // Growing down the Y axis is the stream arriving.
+        ticker.tween(0.18, ease: Ease.out, step: { [weak stream] t in
+            stream?.scale = SIMD3<Float>(1, max(0.001, t), 1)
+        })
+
+        // And it turns while it runs, so its six facets travel across the
+        // surface. A fixed shape that does not move is a stick.
+        var spin: Float = 0
+        let spinJob = ticker.add { [weak stream] dt in
+            guard let stream, stream.parent != nil else { return false }
+            spin += dt
+            stream.orientation = simd_quatf(angle: spin * 7.0, axis: [0, 1, 0])
+            return true
+        }
+        bakeJobs.append(spinJob)
+
+        // The tin fills and the bowl empties over the same stretch. Neither
+        // reads as pouring on its own.
+        tinBatter.isEnabled = true
+        tinBatter.model?.materials = [Palette.material(colour)]
+        tinBatter.scale = [1, 0.05, 1]
+        ticker.tween(0.70, ease: Ease.inOut, step: { [weak tinBatter] t in
+            tinBatter?.scale = SIMD3<Float>(1, 0.05 + 0.95 * t, 1)
+        })
+        if let bowlBatter {
+            ticker.tween(0.70, ease: Ease.inOut, step: { [weak bowlBatter] t in
+                bowlBatter?.scale = SIMD3<Float>(1, max(0.001, 1 - t), 1)
+            }, done: { [weak self] in
+                self?.bowlBatter?.removeFromParent()
+                self?.bowlBatter = nil
+            })
+        }
+
+        // A splash where it lands, twice, while it is running.
+        for delay in [Float(0.24), 0.56] {
+            ticker.after(delay) { [weak self] in
+                guard let self else { return }
+                Sparkles.burst(at: tinRoot.position + [0, 0.014, 0], in: self.root,
+                               ticker: self.ticker, colour: colour,
+                               count: 4, size: 0.0018, speed: 0.05,
+                               gravity: 0.35, life: 0.45)
+            }
+        }
+
+        ticker.after(0.72) { [weak self] in
+            guard let self else { return }
+            self.ticker.cancel(spinJob)
+            // Shrinks from the bottom up — the tail of a pour leaves the rim
+            // last, which is the opposite of how it arrived.
+            self.ticker.tween(0.20, ease: Ease.inCurve, step: { [weak stream] t in
+                stream?.scale = SIMD3<Float>(1, max(0.001, 1 - t), 1)
+            }, done: { [weak stream] in stream?.removeFromParent() })
+
+            Sparkles.ring(at: tinRoot.position + [0, 0.012, 0], in: self.root,
+                          ticker: self.ticker, colour: colour, radius: 0.04)
+
+            // And the bowl comes upright and goes back where it lives.
+            self.ticker.after(0.10) { [weak self] in
+                guard let self, let bowl = self.bowl else { return }
+                self.ticker.tween(0.4, ease: Ease.out, step: { [weak bowl] t in
+                    bowl?.orientation = simd_slerp(tipped,
+                                                   simd_quatf(angle: 0, axis: [0, 0, 1]), t)
+                })
+                self.ticker.move(bowl, to: Layout.bowlHome, duration: 0.45, arc: 0.02)
+            }
+
+            self.state.step = .inOven
+            self.save()
+            self.applyStep(animated: true)
+            self.voice.sayWhenQuiet([Line.gegoten, Line.ottoWacht])
         }
     }
 
@@ -2297,7 +2386,7 @@ final class KitchenRoom {
         case .uitrollen: return rollingPin
         case .vullen: return tokens.indices.contains(state.nextIndex)
             ? tokens[state.nextIndex].entity : nil
-        case .roeren: return whisk
+        case .roeren: return spoon
         case .gieten: return bowl
         case .inOven: return tin?.root
         case .bakken: return oven?.dome
