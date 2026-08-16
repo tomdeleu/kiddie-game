@@ -8,9 +8,16 @@ reverse-engineered out of 2,447 lines of `KitchenRoom.swift`.
 obey to feel like the same game. Everything here is shipped code, not a plan;
 where a number appears, it is the number in the file, and the file is named.
 
-**None of it has been compiled.** The kitchen was written in a container with no
-Swift toolchain, so treat every constant as correct-by-construction and check it
-on first build — `app/README.md`, "First build".
+**All three rooms have now compiled** — Xcode 26.6, twice on 2026-08-16. That is
+worth knowing precisely, because of *what* the two builds caught: eight errors,
+not one of which was a number. Every one was scope, actor isolation, or a type
+turning out to be a struct. **So the constants in this file have survived two
+compilers and the prose around them has not**, and the two edits that most need a
+build behind them are moving a function between files and calling into anything
+main-actor. `app/README.md`, "First build", has all eight.
+
+What none of it has survived is **a 4-year-old**. Nothing here has been in front
+of Nina, so every touch radius and every tolerance below is still a calculation.
 
 > **De Tuin is built, and it is the first room built *against* this file rather
 > than out of it.** Where it needed something this contract described as living

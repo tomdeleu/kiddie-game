@@ -48,12 +48,15 @@ screen — but the way *in* is now visible, because the triple tap it replaced s
 under the opening film and could not be tapped at all. The triple tap still
 works for anyone with the muscle memory.
 
-**The kitchen and the decorating room compiled clean on 2026-08-16** — Xcode
-26.6, iOS Simulator, Debug. What that build caught is in `app/README.md`.
-**De Tuin, the fence, the gate, the potting bench and the reconciliation that
-merged the two branches came after it and have not been built**, so treat those
-as correct-by-construction until the next compile: they were written in a
-container with no toolchain.
+**All three rooms compiled clean on 2026-08-16** — Xcode 26.6, iOS Simulator,
+Debug, twice: once when the kitchen and the decorating room landed, and again
+after De Tuin, the fence, the gate, the potting bench and the reconciliation that
+merged the two branches. Both builds' findings are in `app/README.md`, and both
+are worth the two minutes: **between them they caught eight errors and none of
+them was among the five the project had been predicting.** The container this is
+written in still has no Swift toolchain, so anything added after that second
+build is correct-by-construction again — and the thing to know about
+correct-by-construction is that it has now been wrong eight times.
 
 Deliberate deviations from the design are recorded there. The kitchen's: the
 palette gained a blue, an amber and a lilac the locked thirteen do not contain;

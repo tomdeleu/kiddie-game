@@ -15,16 +15,17 @@ pastel low-poly direction survive real-time rendering without baked ambient
 occlusion?* — is answered and stays answered. [Approved lighting](#approved-lighting)
 below is still the record of that.
 
-> **Compiled once, on 2026-08-16** — Xcode 26.6, iOS Simulator, Debug — after
-> everything up to that point had been written in a Linux container with no Swift
-> toolchain. Five errors, all the same mistake (`[weak]` on a struct), plus five
-> warnings. See [First build](#first-build).
+> **Compiled twice, both on 2026-08-16** — Xcode 26.6, iOS Simulator, Debug —
+> after everything up to each point had been written in a Linux container with no
+> Swift toolchain. Five errors the first time, all the same mistake (`[weak]` on
+> a struct); three the second, all different from each other and from the first
+> five. See [First build](#first-build), which now covers both.
 >
-> **The garden's fence, gate and potting bench came after that build and have not
-> been compiled**, so they are still correct-by-construction. They were written
-> back in the container. The same class of mistake is what to look for first, and
-> the two things worth knowing are already checked: no `[weak]` in them captures
-> anything but an `Entity`, and no function signature repeats an argument label.
+> **Everything in this file has now been through a compiler**, including the
+> fence, the gate, the potting bench and the reconciliation that merged the
+> garden with the decorating room. What has *not* been through anything is the
+> iPad: nothing here has been in front of Nina, and `POC.md`'s protocol is still
+> the next thing owed.
 
 > **De Keuken is the reference implementation.** What it established that every
 > later room inherits — the box and the camera, the step machine, the save
@@ -1591,9 +1592,11 @@ and the colour is what lets her tell them apart without reading. The developer
 panel keeps its plain iOS controls — nothing in there is for Nina, and it is
 deliberately not pretty.
 
-The design is verified but **not compiled**, like everything else here.
-`references/buttons/render-facetbutton.py` re-draws `FacetPlate` from the same
-constants so the sheet in that folder shows what the code will produce.
+It compiles, like everything else here, but **nobody has pressed one** — the
+sinking, the chamfer inversion and the 2 pt drop are all still design rather than
+observation. `references/buttons/render-facetbutton.py` re-draws `FacetPlate`
+from the same constants, so the sheet in that folder shows what the code
+produces without needing a device.
 
 ### Why the touch handling is hand-rolled
 
@@ -1729,15 +1732,44 @@ long-standing limitation, not a setup problem.
 
 ### First build
 
-> **It has now happened**, and what it actually cost is in the commit *Make both
-> rooms compile*: five errors, every one of them `[weak can]` on
-> `GardenProps.WateringCan`, which is a struct — `weak` only applies to classes.
-> The closures did not want the struct anyway, they wanted the two entities
-> inside it. **None of the five predictions below was among them.**
+> **It has now happened twice**, and both times are worth reading, because
+> together they are the only evidence this project has about what
+> correct-by-construction actually misses.
 >
-> They are kept because they are still the right list for *the SDK moving under
-> the project*, which is the other way this breaks, and because the fence, the
-> gate and the potting bench have not been through a compiler yet.
+> **Build one** — the commit *Make both rooms compile*. Five errors, every one of
+> them `[weak can]` on `GardenProps.WateringCan`, which is a struct; `weak` only
+> applies to classes. The closures did not want the struct anyway, they wanted
+> the two entities inside it.
+>
+> **Build two** — the commit *fix build*, after De Tuin, the fence, the gate, the
+> bench and the reconciliation. Three errors, no two alike:
+>
+> 1. **`Props.gate` called `model(...)` six times with no `RoomBuilder.`
+>    prefix.** The calls were written inside `KitchenProps`, where a local
+>    `model` was in scope, and came across unchanged when the door moved out to
+>    `Props/Doorway.swift`. **This is the tax on every file move**, and it is
+>    invisible to a reader who knows what the line means.
+> 2. **`KitchenLayout.surfaces` passed `floorY:` where it needed
+>    `RoomBox.floorY`.** A static property of an enum reaching for another static
+>    of the same enum while that enum is still being initialised. It reads
+>    correctly and is not.
+> 3. **`VersierLayout.assertSpacing()` needed `@MainActor`**, because its new
+>    perpendicular-distance pass calls `RoomBox.screenSeparation`, which reads
+>    `CameraRig.eye`. Adding one call to a main-actor thing pulled isolation up
+>    through a function that had never needed it. Its only caller was already on
+>    the main actor, so the fix cost nothing — but nothing in a grep would have
+>    found it.
+>
+> **The pattern across all eight: none of them was a number, and none of them was
+> a prediction.** The five below did not fire either time. Every one of the eight
+> was *scope, isolation, or a type's kind* — which is precisely the category a
+> careful reader cannot check and a compiler settles in a second. The lesson for
+> the next room written in this container is not "check the constants harder";
+> the constants have been fine twice. It is that **a file move and a new call
+> into main-actor code are the two edits that most need a build behind them.**
+>
+> The five are kept because they are still the right list for *the SDK moving
+> under the project*, which is the other way this breaks.
 
 Five places are the most likely to want a fix, and all five are one line:
 
@@ -1774,13 +1806,15 @@ Five places are the most likely to want a fix, and all five are one line:
 
 ### The developer panel
 
-**Triple-tap the top-right corner.** Hidden on purpose: `CONCEPT.md` §5 asks for
-a parent gate she will not find, and a visible gear is a thing she will press.
+**Tap the small grey wrench in the top-right corner.** The strip behind it is
+hidden on purpose: `CONCEPT.md` §5 asks for a parent gate she will not find, and
+a visible gear is a thing she will press.
 
-**At the top of it is the room picker** — Keuken / Tuin — which is how you visit
-a room without playing the game up to it. That was fine to do without while
-there was one room and is useless with six: checking a touch radius in the
-garden should not be a five-minute walk.
+**At the top of it is the room picker** — Tuin / Keuken / Versieren — which is
+how you visit a room without playing the game up to it, in either mode and with
+any cake. That was fine to do without while there was one room and is useless
+with six: checking a touch radius in the garden should not be a five-minute
+walk.
 
 The strip stays off screen until it is asked for, and the picker is exactly the
 control that gate was written about: a visible row of buttons that teleports her
@@ -1790,11 +1824,14 @@ an invisible corner — the gesture was unreachable under the film and there was
 way to see that it was. `developerButton` in `ContentView.swift` has the whole
 argument.
 
-Under it: the room's own two or three lines — the kitchen prints its step, its
-bowl and its plank, the garden prints its step, its bed and its basket — and
-**which voice line just played**, which during a session with Nina is the
-difference between "she ignored it" and "she never heard it". Plus a new round, a
-mute, and the whole POC lighting panel underneath.
+Under it: the room's own two or three lines, which the strip no longer knows how
+to compose — it renders `Room.debugRows` and `Room.debugActions`, so the kitchen
+prints its step, its bowl and its plank, the garden its step, its bed and its
+basket, the decorating room its mode, its turn and what is on the cake, and a
+fourth room shows up in here for nothing. Then **which voice line just played**,
+which during a session with Nina is the difference between "she ignored it" and
+"she never heard it". Plus a new round, a mute, and the whole POC lighting panel
+underneath.
 
 ## Approved lighting
 
