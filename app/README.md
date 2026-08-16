@@ -15,11 +15,14 @@ pastel low-poly direction survive real-time rendering without baked ambient
 occlusion?* — is answered and stays answered. [Approved lighting](#approved-lighting)
 below is still the record of that.
 
-> **Compiled twice, both on 2026-08-16** — Xcode 26.6, iOS Simulator, Debug —
-> after everything up to each point had been written in a Linux container with no
-> Swift toolchain. Five errors the first time, all the same mistake (`[weak]` on
-> a struct); three the second, all different from each other and from the first
-> five. See [First build](#first-build), which now covers both.
+> **Compiled three times, all on 2026-08-16** — Xcode 26.6, iOS Simulator,
+> Debug — after everything up to each point had been written in a Linux
+> container with no Swift toolchain. Five errors the first time, all the same
+> mistake (`[weak]` on a struct); three the second, all different from each
+> other and from the first five; **none the third**, which was the garden's ten
+> Blender props and the four call sites that load them, and which is also the
+> first build written on a machine that had a compiler on it. See
+> [First build](#first-build), which covers all three.
 >
 > **Everything in this file has now been through a compiler**, including the
 > fence, the gate, the potting bench and the reconciliation that merged the
@@ -1627,11 +1630,12 @@ control in the app.
 
 ### Props modelled in Blender
 
-**Ten props are not built in code**: the flour sack, the toverbosbes, the
-crate, the toverklaver, the toverveertje, the maanstof pouch, the sink, the
-spoon, the cake and the scale. All are USDZ files in `Resources/Models/`,
-modelled by the scripts in [`models/`](../models/README.md) and loaded by
-`ModelLibrary`.
+**Twenty props are not built in code.** Ten in De Keuken: the flour sack, the
+toverbosbes, the crate, the toverklaver, the toverveertje, the maanstof pouch,
+the sink, the spoon, the cake and the scale. Ten in De Tuin: the molehill, the
+seed bed, the fence, and seven of the eight ripe plants. All are USDZ files in
+`Resources/Models/`, modelled by the scripts in
+[`models/`](../models/README.md) and loaded by `ModelLibrary`.
 
 They are a trial of a second authoring route, and each was picked on the same
 test — the prop where the `FacetedMesh` vocabulary visibly runs out against its
@@ -1687,7 +1691,39 @@ plate, not the prop that would be fun to model.
   lying, as the reference draws it, with the **inverse of the room's tip on its
   root** so both poses still come out right.
 
-All ten carry the game's only ambient occlusion — see the deviations above.
+**De Tuin's ten went differently, and the difference is worth knowing before the
+next room.** The kitchen picked its props one at a time, each because one plate
+asked for one thing. The garden's were asked for as a batch, so the useful
+question was not *which prop* but what this room kept needing that the last one
+did not — and there were three answers, which is now `models/garden.py`: **the
+fold** (every garden plate creases its leaves down the midrib, and a bed has
+thirty of them), **the bend** (`plant-aardbei.png`'s arched stalk and
+`plant-klaver.png`'s two curved stems; there is no bend in `FacetedMesh` at all),
+and **a point on the end of things**.
+
+Three of them are worth calling out here:
+
+- **The molehill fixed a bug rather than a shape.** `tapMolehill` lifts Mo to
+  y = 0.0135; his head sat at his pivot's origin with a 9.2 mm radius against a
+  19.5 mm hill, so at full pop it cleared the earth by 3.2 mm and the **nose
+  never came up at all**. The model builds him 11.2 mm up his own pivot, so the
+  room's two tween positions — gameplay numbers that have been played against —
+  are untouched.
+- **The fence is the whole L, in world coordinates, at the origin.** It is the
+  room's boundary rather than a thing standing in the room, and it turns
+  forty-odd pickets, eleven posts and six rails into three meshes.
+- **The bed's holes are wells without a boolean**: the soil sits 3 mm below
+  `bedSoilY` and each ring stands 2.2 mm above it, so she looks into a 5 mm well
+  made of two convex solids that happen to overlap. A boolean would hand back a
+  fan of triangles where there was one facet, in the one prop the room's
+  required action happens on.
+
+**`plant-bosbes` is the gap.** It was not in the batch that was asked for, so
+one of the five holes in the bed grows a plant built the old way — visible if
+you look for it, because its leaves alternate two greens where the other seven
+are one.
+
+All twenty carry the game's only ambient occlusion — see the deviations above.
 
 What the route costs is a round trip through a file, and what it buys is shapes
 that have to be built vertex by vertex. `models/README.md` has the rules a
@@ -1732,7 +1768,7 @@ long-standing limitation, not a setup problem.
 
 ### First build
 
-> **It has now happened twice**, and both times are worth reading, because
+> **It has now happened three times**, and all three are worth reading, because
 > together they are the only evidence this project has about what
 > correct-by-construction actually misses.
 >
@@ -1760,13 +1796,28 @@ long-standing limitation, not a setup problem.
 >    the main actor, so the fix cost nothing — but nothing in a grep would have
 >    found it.
 >
-> **The pattern across all eight: none of them was a number, and none of them was
-> a prediction.** The five below did not fire either time. Every one of the eight
-> was *scope, isolation, or a type's kind* — which is precisely the category a
-> careful reader cannot check and a compiler settles in a second. The lesson for
-> the next room written in this container is not "check the constants harder";
-> the constants have been fine twice. It is that **a file move and a new call
-> into main-actor code are the two edits that most need a build behind them.**
+> **Build three** — De Tuin's ten Blender props and the four call sites that
+> load them. **No errors**, and the reason is not that the work got easier: it
+> is the first change written on a machine with a compiler on it, so the edits
+> that would have been errors were fixed before anything was committed.
+>
+> It is not a null result. It came with **five findings of its own, and every
+> one of them came from a render rather than from a build** — the honey pot that
+> read as a pie from a 34° camera, a strawberry hung so far out it landed on the
+> next plant, a feather made as wide as it was tall, a mole with his paws inside
+> the hill, and rails buried 3.5 mm inside every picket they passed. A compiler
+> would have passed all five. `models/README.md` has them.
+>
+> **The pattern across all eight compiler errors: none of them was a number, and
+> none of them was a prediction.** The five below did not fire on any build.
+> Every one of the eight was *scope, isolation, or a type's kind* — which is
+> precisely the category a careful reader cannot check and a compiler settles in
+> a second. The lesson for the next room written without a toolchain is not
+> "check the constants harder"; the constants have been fine three times. It is
+> that **a file move and a new call into main-actor code are the two edits that
+> most need a build behind them** — and, from build three, that **geometry needs
+> an eye rather than a compiler**: ten props built correct-by-construction were
+> all compile-clean and five of them were visibly wrong.
 >
 > The five are kept because they are still the right list for *the SDK moving
 > under the project*, which is the other way this breaks.

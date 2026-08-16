@@ -11,7 +11,9 @@ This folder is for the shapes that vocabulary cannot reach.
 | | |
 |---|---|
 | `lowpoly.py` | The shared rules: flat shading, palette colours, ring/bridge/tube/box builders, the AO bake, and the export. A prop script is then only its shape. |
-| `flour-sack.py`, `bosbes.py`, `crate.py`, `klaver.py`, `sink.py`, `cake.py`, `scale.py`, `veertje.py`, `maanstof.py`, `spoon.py` | The ten props. Run one to rebuild and re-export it. |
+| `garden.py` | **De Tuin's own vocabulary**, on top of `lowpoly.py`: a pointed lathe, a folded leaf, a swept curve, an arbitrary-section column, a chamfered octagon, and the plant anatomy the seven plants share. Nothing outside the garden imports it. |
+| `flour-sack.py`, `bosbes.py`, `crate.py`, `klaver.py`, `sink.py`, `cake.py`, `scale.py`, `veertje.py`, `maanstof.py`, `spoon.py` | De Keuken's ten. Run one to rebuild and re-export it. |
+| `molehill.py`, `garden-bed.py`, `garden-fence.py`, `plant-*.py` × 7 | De Tuin's ten. |
 | `*.blend` | The same things, openable. **Not the source of truth** — a convenience for looking at and for nudging a number before it goes back into the `.py`. |
 | → `app/NinaBakeryPOC/Resources/Models/*.usdz` | What ships. |
 
@@ -28,6 +30,17 @@ blender --background --python models/scale.py
 blender --background --python models/veertje.py
 blender --background --python models/maanstof.py
 blender --background --python models/spoon.py
+
+blender --background --python models/molehill.py
+blender --background --python models/garden-bed.py
+blender --background --python models/garden-fence.py
+blender --background --python models/plant-aardbei.py
+blender --background --python models/plant-honing.py
+blender --background --python models/plant-klaver.py
+blender --background --python models/plant-maanstof.py
+blender --background --python models/plant-sterrensuiker.py
+blender --background --python models/plant-veertje.py
+blender --background --python models/plant-wolkenroom.py
 ```
 
 Each writes its USDZ and saves its `.blend`. Add `-- --no-save` to export
@@ -41,7 +54,7 @@ is a prop that can only be changed by the person with Blender open.
 ## What is here, and why each one earned it
 
 A prop belongs here when the plate asks for something the code cannot say — or,
-when what the plate asks for was never built at all. All ten were chosen on
+when what the plate asks for was never built at all. All twenty were chosen on
 that test, not because modelling is nicer.
 
 **One prop is deliberately half here and half in code**: the sink. Its tap is
@@ -297,6 +310,134 @@ the rest — 5.5 mm. At 2.5 and 4 it found nothing, which is the honest answer f
 a shape this open: the handle leaves the rim along a tangent instead of burying
 itself in the bowl, so there is barely a crevice to find.
 
+## De Tuin's ten
+
+The garden went second, and it went differently: De Keuken picked ten props one
+at a time, each because that one plate asked for one thing the vocabulary could
+not say. The garden's ten were asked for as a batch — the molehill, the bed, the
+fence and seven of the eight ripe plants — so the useful question was not *which
+prop* but **what does this room keep needing that the last one did not**. There
+were three answers, and they are `garden.py`.
+
+### What the room needed, three times over
+
+- **The fold, thirty times.** Every plate in `references/garden/` creases its
+  leaves down the midrib, and `FacetedMesh.extrude` makes a slab with one front
+  face and one tone. It is exactly the clover's gap — but a bed grows five
+  plants with six leaves each, so the thing that was one prop's problem in the
+  kitchen is the whole room's here. `garden.leaf` is the clover's petal
+  generalised: two fans meeting on a crease, solidified.
+
+  It settles a colour question at the same time. `GardenProps.plant` paints
+  alternate leaves `sage` and `mint` because a slab needed the difference
+  painted on; with a real fold the facets do it, so **every leaf in these ten
+  models is one colour**, which is what the plates show.
+
+- **The bend.** `plant-aardbei.png` hangs its berry off an arched stalk and
+  `plant-klaver.png` grows two curved stems out of one crown. There is no bend
+  in the vocabulary at all: the code fakes the first with three rotated boxes
+  and does not attempt the second. `garden.sweep` carries a polygon along a
+  path, and the arch is the single biggest visual difference between the model
+  and the code in the whole batch.
+
+- **A point on the end of things.** A strawberry, a seed pod's teeth, a picket,
+  a post cap. `lowpoly.tube` closes a solid out of rings, and a zero-radius ring
+  is eight vertices in the same place — eight degenerate triangles the bake
+  reads as facing every direction at once. `garden.lathe` collapses an end
+  station to a single apex vertex.
+
+### One shape, so five plants are one garden
+
+The seven plants are `garden.plant_base` — mound, rosette, stem — plus whatever
+their plate hangs on top, and the numbers are `GardenProps.plant`'s to the
+millimetre. That matters twice. **Five grow at once**, and five silhouettes that
+share nothing are five different games rather than one garden. And **only the
+ripe stage is modelled**: stages 0–2 stay in Swift, so the mound the model
+stands on has to be the mound they leave behind, or the last sweep of the
+watering can would move the earth.
+
+| | What its plate asked for that the code could not say |
+|---|---|
+| `plant-aardbei` | The arch. The berry hangs off a bent stalk clear of the rosette, and there is no straight stem at all — in the plate the stalk *is* the stem |
+| `plant-honing` | The pot **is** the flower head, ringed by a collar of flat petal chips. A ring of points is a star; a ring of chips is a sunflower |
+| `plant-klaver` | **Two** heads on two curved stems out of one crown, which a single straight prism cannot even approximate |
+| `plant-maanstof` | The pouch as a seed pod, **split open** into a crown of pointed teeth with the dark inside showing |
+| `plant-sterrensuiker` | A ridge running from the centre out to every tip, so each arm is two facets. `FacetedMesh.star` extrudes an outline and its whole front is one tone |
+| `plant-veertje` | The clover's fold on a vane that rises from its shaft on both sides |
+| `plant-wolkenroom` | Six lobes in **one mesh**, so the seams where they push into each other can be measured. Four separate spheres cannot be measured against each other at all |
+
+**`plant-bosbes` is not here.** It was not in the batch that was asked for. The
+plate exists, the anatomy is shared, and it is one short script — until then that
+one plant is built the old way and its leaves alternate two greens where the
+other seven are one.
+
+### The molehill, and a bug the model had to fix
+
+`GardenRoom.tapMolehill` lifts Mo to y = +0.0135. His head sat at his pivot's own
+origin with a radius of 9.2 mm against a hill 19.5 mm high, so **at full pop the
+head cleared the earth by 3.2 mm and the nose — which hangs 1.6 mm below the
+head's centre — never came up at all.** The toy was a grey sliver.
+
+It is fixed in the model, by building Mo 11.2 mm up his own pivot, and that
+choice is the point: the room's two tween positions are gameplay numbers that
+have been played against, and what was wrong was the thing they were moving. At
+−14 mm he is still completely inside the hill, which is the other half of what
+those two numbers have to be true about.
+
+The plate's other two contributions are a **convex** hill — loose earth pushed up
+from below flares at the foot and rolls over at the crown, where the code's
+tapered prism is a lampshade — and **two paws** resting on it, which are what
+turn a ball with a nose into an animal leaning out of a hole. The paws took one
+render to place: they have to be *outside* the hill, not merely below the head,
+and the hill is 19 mm across at the height they sit at.
+
+### The bed, and a hole without a boolean
+
+Three things off `garden-bed.png`: **two board bands** with a groove between
+them rather than one 40 mm slab, **posts standing proud** of the boards rather
+than flush with them, and **holes with a wall**.
+
+The last one is the interesting one. A hole through a slab is a boolean, and a
+boolean on a flat-shaded low-poly mesh hands back a fan of triangles where there
+was one facet — the whole style, gone, in the one prop the room's required
+action happens on. So the soil sits 3 mm lower than `GardenLayout.bedSoilY` and
+each ring stands 2.2 mm above it: what she looks down into is a 5 mm well with a
+lit rim and a floor, made of nothing but **two convex solids that happen to
+overlap**. The plant still grows at `bedSoilY`, which puts its mound's foot
+inside the ring.
+
+Its one modelling trap is worth stating on its own: **a ring is four bands
+bridged in a loop, not a tube capped with a disc at each end.** The capped
+version is a solid with its own inside doubled back through it, which the
+winding pass cannot recalculate and the bake reads as a face buried in geometry.
+
+### The fence, which is the room's boundary rather than a prop in it
+
+**The whole L, in world coordinates, dropped at the origin** — the only model in
+the game that is not a thing standing somewhere. `garden-fence.py` computes the
+same post positions, the same 19 mm picket spacing and the same gate gap that
+`GardenRoomBuilder.addRun` does, deliberately as a transcription of it, and the
+payoff is that forty-odd pickets, eleven posts and six rails stop being
+forty-odd entities: three meshes carry the lot.
+
+From the plate: **chamfered pickets**. The code cuts a flat board, which gives a
+picket two faces and both of them flat; turned timber with the corners taken off
+gives it four. The footprint is unchanged, so the 11 mm gap between pickets —
+the thing that makes this a fence and not a low wall — is unchanged too.
+
+Two things in the plate are deliberately not built, and they are opposite kinds
+of decision:
+
+- **The grey bolt heads**, two per picket, each under a screen pixel. Fine
+  detail fights the style (`references/REFERENCES.md` §1) — the same call the
+  door's four panels made when they became two.
+- **The rails in front of the pickets.** The plate nails them to the face. In
+  the room the inside of the left run is 4 mm from the back of the potting
+  bench, and a 10 mm rail on that side goes through it. It is
+  `references/garden/README.md`'s own rule pointing the other way for once — *a
+  plate cannot answer a question about the room it is not standing in* — and
+  this time the room-box plate does not answer it either.
+
 ## Ambient occlusion, on these props
 
 It started on the berry. Standing the crown up cost something: the crown and
@@ -326,6 +467,15 @@ What it finds, at the settings each prop is exported with:
 | Feather | 10 on the vane | the crease, either side of the shaft |
 | Pouch | 15 on the bag, 40 on the cord, 6 on the cloth | under the cord, and where the open cloth folds into it |
 | Spoon | 3 on the scoop, 3 on the handle | the one shallow join, where the handle leaves the rim |
+| Every plant | 6–7 per leaf, every time | the hub, where six leaves and a stem crowd into 4 mm |
+| Aardbei | 9 on the berry, 6 on the stalk | under the calyx, and the inside of the arch's curl |
+| Klaver | 4–12 per petal | the hub again, four petals to a head and two heads to a plant |
+| Wolkenroom | 9 + 21 on the cloud, 5 + 5 on its crown | every seam where two lobes push into each other |
+| Maanstof | 10 on the pod, 9 on the opening | the ring where the teeth stand out of the neck |
+| Molehill | 6 on the head, 6 on the nose, 13 on the paws | where he comes out of the earth, and under the nose |
+| Bed | 12 on the frame, 90 on the holes | the butt joints at each post, and the inside of every well |
+| Fence | **nothing** | see below — and that is the right answer |
+| Sterrensuiker | nothing | a ridged star is convex; every crease on it is a ridge |
 
 **The cake's tiers are never shaded**, only the trimmings — they are repainted
 every round from `CakeSpec.tierColours`, and a tier a step darker would read as
@@ -375,6 +525,31 @@ Each of these came from a bake that looked wrong, and each is a knob on
   *within* a part; darkening every face of one is just painting it a different
   colour. The sack's tie sits under the collar's overhang and at 6 mm came back
   uniformly dark — correct as physics, wrong as a tie.
+
+### Two more the garden added
+
+- **The bright note of a prop has to cast without receiving.** The honey plant's
+  rim is a 3 mm band and its pool of honey a 1.6 mm disc, both sitting inside a
+  ring of eight petals, so nine of every ten of their faces measure as occluded
+  and the floor-shifting rule above hands back a pot of dark honey. It is the
+  cake's tiers again, and `garden.finish`'s `shade` argument is `occluders`
+  turned round the useful way: pass the whole prop to cast, and list what may be
+  darkened.
+- **Very large facets have nothing to quantise.** The fence's bake finds
+  nothing, and raising the distance does not fix that — a rail's front face is a
+  single 400 mm polygon, so the strip of it each picket edge would shade is
+  averaged across the whole run. Push the distance up and the entire face tips
+  over the threshold instead, darkening 400 mm of rail. The spoon reached the
+  same place from the other direction: a shape with barely a crevice in it
+  measures as having barely a crevice in it, and the honest thing is to record
+  the zero rather than tune until a number appears.
+
+  It also caught real geometry: `GardenRoomBuilder` centres the rails 8 mm out
+  from the run's line, which buries 3.5 mm of rail inside every picket. That was
+  invisible while both were separate entities, and once they were one mesh it
+  gave coplanar faces inside solid geometry **and** a bake measuring the join
+  from inside it — the rails came back uniformly dark and the pickets untouched.
+  Butted flush, both problems go away.
 
 ## Rules a model has to hold to
 

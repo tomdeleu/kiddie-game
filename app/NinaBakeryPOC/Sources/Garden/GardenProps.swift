@@ -118,6 +118,21 @@ enum GardenProps {
         let root = Entity()
         root.name = "Plant_\(ingredient.rawValue)_\(growth)"
 
+        // **The ripe stage is modelled in Blender**, one file per ingredient,
+        // from the eight `plant-*.png` plates. See `ripePlantModel` for what
+        // that buys and for the one ingredient it does not cover.
+        //
+        // Only the ripe stage: stages 0–2 are `sprout-early.png` and
+        // `sprout-half.png`, which the vocabulary says perfectly well, and the
+        // model's mound is `garden.MOUND_*` — the same dome, the same nine
+        // sides — so the last sweep of the can grows a head rather than moving
+        // the earth.
+        if growth >= GardenLayout.ripeStage, flat,
+           let modelled = ripePlantModel(ingredient) {
+            root.addChild(modelled)
+            return root
+        }
+
         // The turned earth every stage stands in. A faceted dome, not a cone:
         // `sprout-early.png` is emphatic about it, and a cone reads as a
         // molehill — which this room also has, eleven centimetres away.
@@ -224,6 +239,80 @@ enum GardenProps {
         }
         return root
     }
+
+    /// **Mound, rosette, stem and head, modelled in Blender** — one file per
+    /// ingredient, built from that ingredient's own `plant-*.png` plate by
+    /// `models/plant-*.py`. `nil` means there is no such file, and the caller
+    /// falls back to the code-built plant above.
+    ///
+    /// Three things the plates ask for that `FacetedMesh` cannot say, and they
+    /// are why these went to Blender at all:
+    ///
+    /// - **The fold.** Every plate creases its leaves down the midrib, and
+    ///   `.extrude` makes a slab with one front face and one tone. The code
+    ///   version paints alternate leaves `sage` and `mint` to compensate — a
+    ///   tint standing in for a shape. With a real fold the facets do it, so
+    ///   every leaf in these models is one colour, which is also what the
+    ///   plates show. It is the clover's argument from `models/README.md`, now
+    ///   applying to thirty leaves in a bed rather than to four petals.
+    /// - **The bend.** `plant-aardbei.png` hangs its berry off an arched stalk
+    ///   and `plant-klaver.png` grows two curved stems out of one crown. There
+    ///   is no bend in the vocabulary: the code fakes the first with three
+    ///   rotated boxes and cannot attempt the second.
+    /// - **Contact shading.** The join where a fruit sits on a stem, where six
+    ///   leaves crowd a hub, and where a cloud's lobes push into each other are
+    ///   all joins no facet can shade — both surfaces face outwards and come
+    ///   back the same tone. `lowpoly.bake_ao_facets` measures them at model
+    ///   time and `ModelLibrary` paints the result a step darker.
+    ///
+    /// **`bosbes` has no model**, and its plant is still the code-built one. It
+    /// was not in the batch that was asked for; `references/garden/`
+    /// has the plate, and `models/plant-wolkenroom.py` is the shape of the
+    /// script it needs. Until then one of the five holes in the bed grows a
+    /// plant built the other way, which is visible if you look for it — its
+    /// leaves alternate two greens where the other seven are one.
+    private static func ripePlantModel(_ ingredient: Ingredient) -> Entity? {
+        let head: [String: UIColorLike]
+        switch ingredient {
+        case .aardbei:
+            head = ["BerryBody": Palette.rose, "BerryLeaf": Palette.sage]
+        case .honing:
+            head = ["HoningPot": Palette.cream,
+                    "HoningRand": Palette.creamLight,
+                    "HoningVulling": Palette.honeyAmber,
+                    "HoningBlad": Palette.butterYellow,
+                    "HoningStok": Palette.sandyWood,
+                    "HoningKop": Palette.sandyWood]
+        case .klaver:
+            head = ["KlaverBlad": Palette.sage]
+        case .maanstof:
+            head = ["MaanstofPeul": Palette.lilac,
+                    "MaanstofKroon": Palette.creamLight,
+                    "MaanstofOpening": Palette.lilacDeep]
+        case .sterrensuiker:
+            head = ["SterBody": Palette.mintLight]
+        case .veertje:
+            head = ["VeertjeBlad": Palette.creamLight,
+                    "VeertjeSchacht": Palette.cream]
+        case .wolkenroom:
+            head = ["RoomBol": Palette.cream, "RoomBolTop": Palette.creamLight]
+        case .bosbes:
+            return nil
+        }
+        return ModelLibrary.load("plant-\(ingredient.rawValue)",
+                                 tint: plantTint.merging(head) { _, model in model })
+    }
+
+    /// What every plant model has below its head. The head's own colours are
+    /// merged over this, and nothing in either map is a prefix of anything in
+    /// the other — `ModelLibrary.load` matches longest first, so a collision
+    /// would be silent.
+    private static let plantTint: [String: UIColorLike] = [
+        "PlantMound": Palette.woodBrown,
+        "PlantLeaf": Palette.sage,
+        "PlantStem": Palette.sageDeep,
+        "PlantStalk": Palette.sageDeep,
+    ]
 
     /// A flat pointed leaf lying in the XY plane, length along +Y. One outline,
     /// scaled, for every leaf in the room — the plates all draw the same lance.
@@ -440,10 +529,85 @@ enum GardenProps {
         let mole: Entity
     }
 
-    /// `references/garden/molehill.png`: a wide faceted cone of loose earth with
-    /// a round grey head, two dot eyes and a **pink nose**, which is the whole
+    /// `references/garden/molehill.png`: a wide faceted hill of loose earth with
+    /// a round head, two dot eyes and a **pink nose**, which is the whole
     /// character and the only part that has to read at 20 mm.
+    ///
+    /// **Modelled in Blender**, `models/molehill.py`, and it fixed a real bug
+    /// rather than only improving a shape. `tapMolehill` lifts Mo to y = 0.0135;
+    /// in the code-built version his head sits at his pivot's own origin with a
+    /// radius of 0.0092 against a hill 0.0195 high, so at full pop the head
+    /// cleared the earth by 3.2 mm and the nose — which hangs 1.6 mm *below* the
+    /// head's centre — never came up at all. The toy was a grey sliver.
+    ///
+    /// The model builds Mo 11.2 mm up his own pivot, so the room's two tween
+    /// positions are untouched: they are gameplay numbers that have been played
+    /// against, and what was wrong was the thing they were moving. The plate's
+    /// two **paws** resting on the earth are here too, and the hill has the
+    /// plate's convex profile instead of a straight taper.
     static func molehill(flat: Bool) -> Molehill {
+        if flat, let modelled = ModelLibrary.load(
+                "molehill",
+                tint: ["HillEarth": Palette.woodBrown,
+                       "MoleHead": moleGrey,
+                       "MolePaw": moleGrey,
+                       "MoleNose": Palette.blushPink,
+                       "MoleEye": Palette.ovenInside]),
+           let mole = group("Mole", in: modelled) {
+            let root = Entity()
+            root.name = "Molehill"
+            root.addChild(modelled)
+            return Molehill(root: root, mole: mole)
+        }
+        return proceduralMolehill(flat: flat)
+    }
+
+    private static let moleGrey = Palette.mix(Palette.creamLight,
+                                              Palette.woodBrown, 0.45)
+
+    /// **Put every mesh whose name starts with `prefix` on one upright pivot.**
+    ///
+    /// `ModelLibrary.pivot` matches a single part by its exact name, and Mo is
+    /// six of them — a head, a nose, two eyes and two paws — that have to rise
+    /// out of the hill together. The pivot is a plain entity parented to the
+    /// loaded wrapper and therefore world-aligned, which is the thing that
+    /// matters: everything inside a loaded prop hangs under the exporter's
+    /// Z-up-to-Y-up rotation, so a child's local Y is the world's Z, and
+    /// `tapMolehill` drives Mo by nudging Y.
+    ///
+    /// It lives here rather than next to `ModelLibrary.pivot` because it is
+    /// De Tuin's problem and `ModelLibrary` is shared with two other rooms.
+    ///
+    /// Returns `nil` if nothing matched, which is the caller's cue to fall back
+    /// rather than animate an empty holder.
+    private static func group(_ prefix: String, in wrapper: Entity) -> Entity? {
+        var family: [ModelEntity] = []
+        collect(prefix, in: wrapper, into: &family)
+        guard !family.isEmpty else { return nil }
+
+        let holder = Entity()
+        holder.name = prefix
+        wrapper.addChild(holder)
+        for part in family {
+            part.setParent(holder, preservingWorldTransform: true)
+        }
+        return holder
+    }
+
+    private static func collect(_ prefix: String, in entity: Entity,
+                                into found: inout [ModelEntity]) {
+        if let model = entity as? ModelEntity, model.model != nil,
+           model.name.hasPrefix(prefix) {
+            found.append(model)
+        }
+        for child in entity.children {
+            collect(prefix, in: child, into: &found)
+        }
+    }
+
+    /// The code-built molehill. See `molehill(flat:)` for when it runs — and
+    /// note that Mo is buried in this one at the room's own pop height.
+    private static func proceduralMolehill(flat: Bool) -> Molehill {
         let root = Entity()
         root.name = "Molehill"
 
