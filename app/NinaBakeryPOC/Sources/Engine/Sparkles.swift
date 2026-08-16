@@ -31,7 +31,8 @@ enum Sparkles {
                       size: Float = 0.0026,
                       speed: Float = 0.09,
                       gravity: Float = 0.18,
-                      life: Float = 0.75) {
+                      life: Float = 0.75,
+                      glow: Float = 0) {
         // A five-point star, thin enough to catch the light edge-on as it
         // tumbles. `size` is its outer radius, so every existing call site
         // keeps the scale it was tuned to.
@@ -40,8 +41,22 @@ enum Sparkles {
                                         thickness: size * 0.5)
         let mesh = FacetedMesh.flatShaded(positions: geometry.positions,
                                           indices: geometry.indices)
-        var material = UnlitMaterial(color: colour)
-        material.blending = .transparent(opacity: .init(floatLiteral: 0.95))
+        // **`glow` is off by default, and only the halo turns it on.** Sparkles
+        // are usually seen against a prop or in the air, where an unlit star at
+        // full opacity is plenty. The ones lifting off the halo are seen against
+        // the pale floor the ring is lying on — which is the case where unlit
+        // loses, by the same arithmetic that made the ring itself read as a
+        // stain until it started emitting. They belong to a light, so they emit
+        // like one.
+        let material: RealityKit.Material
+        if glow > 0 {
+            material = Palette.lightMaterial(colour, emission: colour,
+                                             intensity: glow, opacity: 0.95)
+        } else {
+            var unlit = UnlitMaterial(color: colour)
+            unlit.blending = .transparent(opacity: .init(floatLiteral: 0.95))
+            material = unlit
+        }
 
         for _ in 0..<count {
             let bit = ModelEntity(mesh: mesh, materials: [material])

@@ -76,7 +76,7 @@ Fourteen seconds, two shots, narrated end to end:
 | | Shot | Voice |
 |---|---|---|
 | 1 | **Outside**, 8.042 s — a slow push-in on the bakery, smoke from the chimney, a little sparkle | 7.50 s: *"Welkom in mijn toverbakkerij! Ik ben Nina, de bakker. Hier maak ik de allermooiste tovertaarten. Kom je mee naar binnen?"* |
-| 2 | **Inside**, 6.042 s — the camera glides across the kitchen while the whisk turns in the bowl, steam lifts off Otto and the jars wobble | 5.83 s: *"Dit is mijn keuken. Hier bakken we de allerlekkerste tovertaarten. Zullen we samen beginnen?"* |
+| 2 | **Inside**, 6.042 s — the camera glides across the kitchen while the spoon turns in the bowl, steam lifts off Otto and the jars wobble | 5.83 s: *"Dit is mijn keuken. Hier bakken we de allerlekkerste tovertaarten. Zullen we samen beginnen?"* |
 
 **13.33 seconds of narration under 14.08 seconds of film**, each line ending
 about two tenths of a second before its own cut. It used to be 10.6, and the
@@ -162,7 +162,7 @@ One round is `GAMEPLAY.md` §6.3, end to end:
 |---|---|---|
 | **uitrollen** | Roll the ball of dough flat with the rolling pin | It spreads under the pin, puffs flour, and hops into the tin as a base |
 | **vullen** | Fetch **five ingredients**, one from each of five places, into the bowl | A plop, a ring of sparkles, the batter rising and changing colour, and Nina naming what that ingredient will do |
-| **roeren** | Stir with a finger | The whisk follows her hand, the batter turns and comes up to colour |
+| **roeren** | Stir with a finger | The spoon follows her hand, the batter turns and comes up to colour |
 | **gieten** | Drag the bowl onto the tin | It tips, pours onto the base, and goes back where it lives |
 | **inOven** | Drag the tin to Otto | It slides in, the door shuts, Otto is delighted |
 | **bakken** | Tap Otto | Four seconds of him puffing and breathing, a rising ping, and the cake comes out in her colours |
@@ -211,7 +211,7 @@ Three rules hold it together:
   speaking. A naming line can never talk over the instruction it would be
   explaining, and a burst of taps gets one name rather than a pile-up.
 
-Two targets had to be built around a real one. The **whisk** is switched off
+Two targets had to be built around a real one. The **spoon** is switched off
 during stirring, because it stands in the middle of the bowl then and
 `TouchRouter` picks the nearest centre rather than the biggest target — it would
 have won about half of the touches meant to make batter. The **basket** is
@@ -314,13 +314,17 @@ three ways of saying the same sentence to somebody who cannot read:
   not to open the door, it is to say the door is *openable*.
 - **the light behind it turns on**, emissive, so that slice is worth seeing.
   Unlit it read as the inside of a cupboard.
-- **a ring lands on the floor at the threshold** — the same cue as every other
-  instruction in the game. It sits 40 mm out from the wall with a 38 mm radius,
-  which tucks its inner edge *under the jambs*: light spilling from beneath a
-  door is a thing she has seen, whereas a disc of light near a door is not. It
-  started 6 mm further out and looked exactly like the second thing. The wall's
-  inner face is what stops it getting closer — a ring reaching into the plaster
-  is a ring with a bite out of it.
+- **a ring lands on the floor at the threshold**, centred on the doorframe. It
+  was out in the room twice — 46 mm from the wall, then 40 — on the reasoning
+  that a ring must not reach into the plaster, and both times it read as *a disc
+  of light near a door* rather than as light coming from one. From a camera on
+  the +X+Z diagonal it also sits visibly down and to the right of the door it
+  belongs to. It is now concentric with the doorway, and **its back half is
+  inside the wall on purpose**: the wall is solid from y = 0 up, so the buried
+  part is simply occluded, and what shows is a bright crescent hugging the
+  threshold. Which is what light through a doorway looks like — the thing that
+  was wrong was never the clipping, it was pulling the ring off the door to
+  avoid it.
 
 This is **the second time the game lights two things at once**, and the reason is
 different from the first. The cake-to-plank halo was a journey with two ends;
@@ -390,7 +394,7 @@ camera sits 8% further back to suit. Both numbers moved for one reason: the
 
 What that looked like. Seven props shared a 0.210 × 0.115 m table top, and
 their centres all fell inside a 0.154 × 0.076 m patch of it — the bowl and the
-whisk 1 mm apart, the tin and the cake spot 2 mm. The three toys on the back
+spoon 1 mm apart, the tin and the cake spot 2 mm. The three toys on the back
 counter sat at 50 mm centres with 32 mm touch spheres, so **both** neighbouring
 pairs overlapped and which one a tap got was settled by the nearest-wins
 tie-break rather than by where she put her finger. The table's right edge and
@@ -415,7 +419,7 @@ two no longer share any Z at all.
 
 The table's seven props are now in three clusters, left to right, and they are
 the round's three jobs: **roll** (dough and pin, basket above them), **mix**
-(whisk and bowl), **bake** (tin, and the cake it comes back as, on Otto's
+(spoon and bowl), **bake** (tin, and the cake it comes back as, on Otto's
 side). Reading the table left to right is reading the recipe.
 
 **The camera had to move, and that cost something.** At the old eye the 0.40 m
@@ -446,6 +450,23 @@ The five ingredients live in **five different places**: the upper wall shelf,
 the lower wall shelf, a pot on the back counter, the basket on the table, and
 a crate on the floor. One basket on one table made the room a work surface;
 five places make her look up, along, and down.
+
+**The shelves are 36 mm deep, not 14.** The plank was narrower than the things
+standing on it — a jar is 20 mm across and the honey pot 31 mm with its dipper,
+on a 14 mm board whose back edge was already flush with the plaster, so they
+overhung the front *and* pushed into the wall. The depth is set by the widest
+prop that can stand there rather than by what looks like a shelf in elevation,
+and `Layout.shelfX` keeps the back edge on the wall face so it grows forwards.
+
+Two things came out with it. The ingredients had been **hovering 10 mm above the
+plank** since the shelves were built — the jars sat at the plank's top and the
+ingredients at a hand-typed number that was not it — which is hard to see against
+a wall and impossible to miss once you know. And the halo for a shelf ingredient
+had been landing **on the floor, 150 mm below the berry it was pointing at**,
+because `surfaceY` only knows about the table, the counter and the floor. For two
+of the five fetching steps the game's only instruction was pointing at the wrong
+place. `Layout.shelfSurfaceY` answers for the shelves, and it is height-gated so
+it can only ever match a prop that is actually up there.
 
 **The two shelves are mirrored, because five places were only ever four.** Both
 planks were laid out the same way, which put both ingredients at z = 0.044 and
@@ -524,6 +545,19 @@ own luminance, so the ring can only ever brighten what it lies on. And the
 falloff itself, so the band's centre line glows hardest and its edges fade into
 the floor rather than stopping at one. If it still reads flat on device, the one
 lever is `Halo.emissionPeak`; the geometry and the profile are right.
+
+**Then it had to get smaller.** Emitting, the ring's old proportions read as
+heavy: the band was 0.34 of the radius either side — two thirds of the radius
+across, 31 mm of glow around a 46 mm ring on the bowl — and the ring itself was
+drawn a third wider than the prop it marked. Both numbers were tuned while it was
+*dim*, when a faint thing needs area to be found at all. A light does not. The
+band is 0.18 now (13 mm on that same bowl) and the ring 1.10 of the prop rather
+than 1.35, so it sits just proud of what it is pointing at instead of hooping it.
+
+**The sparkles took up the slack.** They are the ring's own colour, a third
+bigger, three at a time rather than two, and they emit — an unlit star against
+the pale floor loses by exactly the arithmetic the ring did. `Sparkles.burst`
+grew a `glow` parameter for it, off everywhere else.
 
 The lesson is narrower than "judge it on the device". The plate was right about
 the *shape* of the falloff and wrong about the *value*, because it was rendered
@@ -874,6 +908,75 @@ subject is a *container*, and a container has to read as having an inside; at
 details inside a thumbnail, and all that carried the object was its silhouette.
 The extra third is what makes the honey visible as honey.
 
+### De pollepel
+
+**The thing she stirs with is a wooden spoon now**, modelled from
+`references/props/spoon.png`. It was a whisk — two prisms, a stick with an
+upside-down cone on the end — and it read as neither a whisk nor anything else.
+
+A spoon is one of the few kitchen objects a 4-year-old can already draw, which
+means she knows when it is wrong, so the plate is followed closely. Three things
+carry it: **the scoop is hollow** (`FacetedMesh.bowl` gives it a real rim and a
+real inside, which is the whole difference between a spoon and a lollipop), **the
+handle tapers** thicker at the scoop and narrower at the tip, and **it is
+chunky** — 28 mm across against a 32 mm mixing bowl, where the whisk's head was
+22 mm.
+
+It is built standing on its scoop with the handle straight up, which is the
+convention the whisk used, so nothing in the round had to change: stirring stands
+it in the bowl as-is and resting it on the table is the same single rotation.
+
+The plate's hanging hole in the handle is not modelled — there are no booleans in
+`FacetedMesh`, and at 4 mm across it would be two pixels of smudge. Same argument
+that gave the honey dipper two parts instead of the plate's five rings.
+
+Two voice lines went with it, since both said *garde*: the naming line is now
+`nina.dit.lepel`, and the one variant of `nina.keuken.roeren` that named the tool
+was regenerated.
+
+### Pouring
+
+**The pour is a pour now.** It used to be a cut — the bowl tilted over 0.45 s,
+and on the frame the tilt finished the bowl's batter was removed and the tin's
+began to grow. Both *ends* of the action were animated and the action itself was
+missing, so the batter teleported between two containers.
+
+There is a stream between them now, built the way the tap's is: a lathe hanging
+from y = 0 so growing it down the Y axis is the pour starting, narrow at the rim,
+swelling as it falls, pulling in as it lands. It turns while it runs so its six
+facets travel.
+
+The part that is easy to forget is that **the bowl has to empty while the tin
+fills** — a source that pours forever into a filling destination is the same tell
+as water that never gathers in the basin, which is why the tap has a pool. All
+three happen over the same 0.7 seconds.
+
+### Ingredient variety, and what it cost
+
+The five slots each took their own `randomElement()`, which is five independent
+rolls of a six-sided die: the odds of all five coming up different were about
+**9%**, so a round with two toverbosbessen and no toverklaver anywhere was the
+normal outcome rather than bad luck. The room has five places to visit and it was
+routinely sending her to two of them for the same thing.
+
+They are dealt from a shuffled deck now, reshuffled only when it runs out — so a
+repeat is impossible until every type has been seen once, and with six
+ingredients in five slots that means every round is five different things.
+
+**This costs the cake rules, and the trade was deliberate.** Five of six
+ingredients means at least four coloured ones in every bowl, and three colours or
+more is a `regenboogtaart` — so `.effen` and `.gemengd`, the one-colour and
+two-colour cakes in `GAMEPLAY.md` §5, are now unreachable, along with the lines
+Nina has for each colour. Ingredient variety was bought with cake variety, on the
+grounds that being sent twice to the same berry is something she notices every
+round and which of four cake shapes she got is not.
+
+It is worth undoing when the garden lands, because the garden is what fills the
+basket and can fill it with an interesting *three* rather than an exhaustive
+five. Until then the lever is `Layout.ingredientsPerRound`: at three, dealing
+still guarantees no repeats and the colour count is free to be one, two or three
+again.
+
 ### The portrait
 
 **There is a photograph of Nina on the back wall above Otto**, framed in rose.
@@ -1186,14 +1289,15 @@ with **Copy settings** before overwriting.
 
 ## Audio
 
-**Voice is real.** 134 Dutch lines, generated with `text2speech_v2` /
+**Voice is real.** 136 Dutch lines, generated with `text2speech_v2` /
 `elevenlabs` and bundled as mp3s — the app never calls an API. Nina is Gracie;
 Otto is provisionally Barrett, and `audio/auditions/README.md` explains how to
 swap him for four credits and no code.
 
 The 30 added on 2026-08-16 — 9 credits — are the 21 naming lines in
 `script-namen.json`, the 5 that make the end of a round a moment rather than a
-cut, and the 4 that finish the room and open the door. `VoiceBank` loads every bundled `script-*.json` and merges them, so a whole
+cut, the 4 that finish the room and open the door, and 2 for the spoon that replaced
+the whisk — the naming line, and the one `roeren` variant that named the tool. `VoiceBank` loads every bundled `script-*.json` and merges them, so a whole
 new layer of speech is a new file and no Swift change; the same is true of the
 next room.
 

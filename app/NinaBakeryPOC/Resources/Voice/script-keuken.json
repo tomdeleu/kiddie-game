@@ -98,7 +98,7 @@
 
     { "id": "nina.keuken.roeren", "character": "nina", "variants": [
       { "index": 20, "file": "nina-keuken-roeren-1.mp3", "text": "Nu roeren! Draai maar rondjes met je vinger." },
-      { "index": 21, "file": "nina-keuken-roeren-2.mp3", "text": "Roer maar lekker door, met de garde." },
+      { "index": 21, "file": "nina-keuken-roeren-2.mp3", "text": "Roer maar lekker door, met de pollepel." },
       { "index": 22, "file": "nina-keuken-roeren-3.mp3", "text": "Rondjes draaien! Dan mengt alles lekker door elkaar." }
     ]},
     { "id": "nina.keuken.roerenGoedZo", "character": "nina", "variants": [
