@@ -823,6 +823,8 @@ enum RoomBuilder {
         case lathe(profile: [SIMD2<Float>], sides: Int)
         case extrude(outline: [SIMD2<Float>], thickness: Float)
         case star(points: Int, outerRadius: Float, innerRadius: Float, thickness: Float)
+        case ribbon(points: [SIMD3<Float>], normals: [SIMD3<Float>],
+                    width: Float, thickness: Float)
 
         var geometry: FacetedMesh.Geometry {
             switch self {
@@ -853,6 +855,9 @@ enum RoomBuilder {
             case .star(let points, let outer, let inner, let thickness):
                 return FacetedMesh.star(points: points, outerRadius: outer,
                                         innerRadius: inner, thickness: thickness)
+            case .ribbon(let points, let normals, let width, let thickness):
+                return FacetedMesh.ribbon(points: points, normals: normals,
+                                          width: width, thickness: thickness)
             }
         }
     }

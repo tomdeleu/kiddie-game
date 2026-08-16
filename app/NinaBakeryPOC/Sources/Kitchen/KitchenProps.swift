@@ -910,16 +910,21 @@ enum KitchenProps {
         cake.name = "Cake"
 
         let colours = spec.tierColours(3)
-        let radii: [Float] = [0.026, 0.021, 0.015]
-        let heights: [Float] = [0.013, 0.011, 0.009]
+        // **Radii and heights come from `CakeGeometry`**, which is also what the
+        // decorating room derives every sticker position from. They used to be
+        // typed here and again in `models/cake.py`; a third copy would have been
+        // the one that put stickers inside the icing.
+        let radii = CakeGeometry.radii
+        let heights = CakeGeometry.heights
         let stretch: Float = spec.isTall ? 1.5 : 1.0
 
         var y: Float = 0
-        for tier in 0..<3 {
+        for tier in 0..<CakeGeometry.tierCount {
             let height = heights[tier] * stretch
             let colour = colours[min(tier, colours.count - 1)]
             let mesh = FacetedMesh.mesh(FacetedMesh.prism(radius: radii[tier],
-                                                          height: height, sides: 10),
+                                                          height: height,
+                                                          sides: CakeGeometry.sides),
                                         flat: flat)
             let material = spec.glows
                 ? Palette.glowMaterial(colour, intensity: 0.35)

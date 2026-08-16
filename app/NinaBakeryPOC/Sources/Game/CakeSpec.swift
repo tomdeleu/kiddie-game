@@ -169,6 +169,52 @@ struct CakeSpec: Codable, Equatable {
 
     var ingredients: [Ingredient] = []
 
+    // MARK: - What the decorating room adds
+    //
+    // **Every one of these is `Optional`, and that is not a style choice.**
+    //
+    // `CakeSpec` had no `version` field before this, and Swift's synthesised
+    // `init(from:)` does *not* fall back to a memberwise default for a missing
+    // key — it throws `keyNotFound`. Every cake already sitting in the `shelf`
+    // array of somebody's `keuken.json` was written without these keys, so a
+    // non-optional field here would fail to decode all of them, `RoomStore.load`
+    // would fall back to `.fresh()`, and her plank would silently empty.
+    //
+    // `GAMEPLAY.md` §8 is blunt about the stakes: "getting this wrong costs a
+    // child her wall." `RoundState.used` is the pattern, accessors and all.
+
+    /// Bumped when the shape changes in a way a reader needs to know about.
+    /// Absent means 1 — the kitchen-only build.
+    var version: Int?
+
+    var stickers: [Sticker]?
+    var strokes: [Stroke]?
+
+    var specVersion: Int { version ?? 1 }
+    /// **Read through these, never through the optionals.** Same reason
+    /// `RoundState.usedSlots` exists.
+    var placed: [Sticker] { stickers ?? [] }
+    var piped: [Stroke] { strokes ?? [] }
+
+    var isDecorated: Bool { !placed.isEmpty || !piped.isEmpty }
+
+    /// **The counts the wishes are made of** (`GAMEPLAY.md` §4).
+    ///
+    /// They live here rather than in the decorating room because §4 is explicit
+    /// that matching is evaluated **once, at the party**, and that nothing else
+    /// in the game looks at it — not the garden's hint, not the kitchen, and not
+    /// the decorating room. The room fills the array; only the party reads it.
+    func count(of kind: StickerKind) -> Int {
+        placed.filter { $0.kind == kind }.count
+    }
+
+    /// Mo's wish is *three candles*, and it is **placed, not lit**. Lighting one
+    /// is a toy; making the wish depend on it would smuggle a required action
+    /// into the one room that must never ask her for anything.
+    var litCandles: Int {
+        placed.filter { $0.kind == .kaarsje && $0.lit == true }.count
+    }
+
     /// **A cake nobody baked**, for a room entered on a visit rather than
     /// mid-round.
     ///
