@@ -55,7 +55,23 @@ enum Palette {
     /// It appears on exactly one surface in the game, the honey in the pot.
     static let honeyAmber    = hex(0xD2A868)
 
-    /// **A fourth**, and the only dark one: the inside of Otto's mouth.
+    /// **A fourth and fifth**, for the portrait on the back wall.
+    ///
+    /// The photograph the portrait is built from has the girl in a lilac t-shirt
+    /// covered in deeper purple daisies, and purple is the second hue the locked
+    /// thirteen do not contain — the plates had no more purple in frame than
+    /// they had blue. Built the same way `berryBlue` was, and it is worth saying
+    /// again because it is the rule rather than the exception: **not sampled off
+    /// a screen, derived to the register.** Same desaturation and the same
+    /// lightness as `mint` and `berryBlue`, so the shirt sits beside the mint
+    /// jars rather than shouting over them, and `lilacDeep` is one step down for
+    /// the flowers, matching how `berryBlueDeep` sits under `berryBlue`.
+    ///
+    /// Two surfaces in the game, both inside the picture frame.
+    static let lilac         = hex(0xD3C6E4)
+    static let lilacDeep     = hex(0xAE9CC9)
+
+    /// **A sixth**, and the only dark one: the inside of Otto's mouth.
     ///
     /// The locked thirteen bottom out at `woodBrown`, which under the room's
     /// even lighting reads as a wooden surface, not a cavity — and with the

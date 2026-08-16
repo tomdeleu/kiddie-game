@@ -56,6 +56,8 @@ final class KitchenRoom {
     private var crate: Entity?
     private var rollingPin: Entity?
     private var doorway: KitchenProps.Doorway?
+    /// Nina's picture, framed, on the back wall over Otto.
+    private var portrait: Entity?
     /// The door's open-hold-shut turn, held so a second tap restarts it.
     private var doorSwing: Int?
     private var cakePlank: ModelEntity?
@@ -82,6 +84,11 @@ final class KitchenRoom {
     private var carryGoalY: Float = 0
     /// What it is currently over, for the contact shadow.
     private var carrySurfaceY: Float = Layout.tableTopY
+    /// The last place her finger reported, on the drag's fixed plane. Kept
+    /// because the ray through it is what the prop's position is read off, and
+    /// that has to be recomputed on frames where no touch arrived — see
+    /// `placeCarried`.
+    private var carryAnchor = SIMD3<Float>.zero
     /// Exactly where the prop was when she took hold of it, so a touch that
     /// went nowhere can put it back exactly — see `settle`.
     private var carryOrigin = SIMD3<Float>.zero
@@ -102,9 +109,21 @@ final class KitchenRoom {
     private var saidGoodStirring = false
     private var idleJob: Int?
     private var eyeLifeJob: Int?
+    /// The running blink, one job per eyeball. Held so the next blink can
+    /// cancel it rather than run alongside it — see `blink`.
+    private var blinkJobs: [Int] = []
     private var bakeJobs: [Int] = []
+    /// **Otto is already baking.** `state.step` stays `.bakken` for the whole
+    /// four seconds he performs, so without this a second tap on him started a
+    /// second bake — five taps, five overlapping breathe jobs, five puff
+    /// schedules, and five cakes arriving on top of each other. He still
+    /// answers every tap while it runs; he just chats instead of starting again.
+    private var baking = false
     private var lastSavedStir: Float = 0
     private var lastBatterMix: Float = -1
+    /// What the batter is painted right now, so a new ingredient can bleed from
+    /// it rather than cut to its own colour.
+    private var lastBatterColour: UIColorLike?
     private var rollTickAccumulator: Float = 0
     private var rollLastPoint: SIMD3<Float>?
 
@@ -277,6 +296,13 @@ final class KitchenRoom {
         ContactShadows.update(for: box, surfaceY: Layout.floorY, settings: settings)
 
         cakePlank = root.findEntity(named: "CakePlankBoard") as? ModelEntity
+
+        // The picture over Otto. Built here rather than in `RoomBuilder` with
+        // the rest of the wall furniture because it answers a tap, and this
+        // class owns everything that does.
+        let frame = KitchenProps.portrait(flat: flat)
+        root.addChild(frame)
+        portrait = frame
     }
 
     private func buildDoorway() {
@@ -341,6 +367,33 @@ final class KitchenRoom {
             target.onDragBegan = { [weak self] world in self?.bowlTouchBegan(world) }
             target.onDragMoved = { [weak self] world in self?.bowlTouchMoved(world) }
             target.onDragEnded = { [weak self] world in self?.bowlTouchEnded(world) }
+            target.onTap = { [weak self] in self?.sayName(Line.ditKom, wobbling: self?.bowl) }
+        }
+
+        // **The whisk is a target now, and it is switched off while she stirs.**
+        // During `roeren` it stands in the middle of the bowl, so leaving it
+        // live would put a 26 mm sphere in the one place her finger has to land
+        // to make batter — and `TouchRouter` picks the *nearest* centre, not the
+        // biggest target, so it would win about half the time.
+        touch.register("whisk", entity: whisk, radius: 0.026,
+                       planeY: Layout.tableTopY) { target in
+            target.tracksEntity = true
+            // Draggable like every other loose prop, and for the reason
+            // `refreshInteractivity` gives for not locking things: a whisk she
+            // can see and cannot pick up is a locked door with a nice sound on
+            // it. The one thing that still owns its position is the stirring
+            // step, which stands it in the bowl and puts it back after — that is
+            // the action, not the room tidying up after her.
+            target.onDragBegan = { [weak self] world in
+                guard let self, let whisk = self.whisk else { return }
+                self.pickUp(whisk, at: world)
+            }
+            target.onDragMoved = { [weak self] world in self?.carry(to: world) }
+            target.onDragEnded = { [weak self] _ in
+                guard let self, let whisk = self.whisk else { return }
+                self.settle(whisk, missed: false)
+            }
+            target.onTap = { [weak self] in self?.sayName(Line.ditGarde, wobbling: self?.whisk) }
         }
 
         touch.register("tin", entity: tin?.root, radius: 0.037,
@@ -352,6 +405,7 @@ final class KitchenRoom {
             }
             target.onDragMoved = { [weak self] world in self?.carry(to: world) }
             target.onDragEnded = { [weak self] world in self?.dropTin(at: world) }
+            target.onTap = { [weak self] in self?.sayName(Line.ditVorm, wobbling: self?.tin?.root) }
         }
 
         touch.register("otto", entity: oven?.root, radius: 0.076,
@@ -403,7 +457,29 @@ final class KitchenRoom {
                 guard let self, let crate = self.crate else { return }
                 self.ticker.squash(crate, amount: 0.12)
                 self.sound.playVaried(.thud, volume: 0.5)
+                self.voice.say(Line.ditKist, priority: .low)
             }
+        }
+        // **The basket, live only once its ingredient has gone.** The `mandje`
+        // token stands 12 mm above the basket's own centre, which from a fixed
+        // camera is the same point on screen — two targets a millimetre apart in
+        // ray distance, and which one a tap got would be a coin toss. So the
+        // basket is simply not there while there is something in it: the tap
+        // that matters is the one that picks the ingredient up.
+        touch.register("basket", entity: basket, radius: 0.026,
+                       planeY: Layout.tableTopY) { target in
+            target.onTap = { [weak self] in self?.sayName(Line.ditMandje, wobbling: self?.basket) }
+        }
+        touch.register("cakePlank", entity: cakePlank, radius: 0.038,
+                       planeY: Layout.cakePlankY) { target in
+            // No wobble: it is screwed to the wall, and the plank is the one
+            // prop in the room where a squash would read as the shelf coming
+            // loose with four cakes on it.
+            target.onTap = { [weak self] in self?.sayName(Line.ditTaartenplank, wobbling: nil) }
+        }
+        touch.register("portrait", entity: portrait, radius: 0.036,
+                       planeY: Layout.portraitCentre.y) { target in
+            target.onTap = { [weak self] in self?.tapPortrait() }
         }
         touch.register("rollingPin", entity: rollingPin, radius: 0.035,
                        planeY: Layout.tableTopY) { target in
@@ -423,7 +499,28 @@ final class KitchenRoom {
                 guard let self, let pin = self.rollingPin else { return }
                 self.ticker.wiggle(pin, angle: 0.10)
                 self.sound.playVaried(.roll, volume: 0.5)
+                self.voice.say(Line.ditDeegroller, priority: .low)
             }
+        }
+        // **The ball of dough, whose drags belong to the rolling pin.**
+        //
+        // It is the one prop with a target that does not drive itself, and that
+        // is the point. It sits 44 mm from the pin's home, so a target of its
+        // own would sometimes win the grab that was meant to start the rolling —
+        // and a target that answers a tap but eats a drag would break the
+        // round's first step. Forwarding the drag means a grab anywhere around
+        // the dough picks up the pin, which is what she meant by it anyway, and
+        // a *tap* on the dough gets to be a tap on the dough.
+        touch.register("dough", entity: dough, radius: 0.024,
+                       planeY: Layout.tableTopY) { target in
+            target.onDragBegan = { [weak self] world in self?.rollBegan(at: world) }
+            target.onDragMoved = { [weak self] world in self?.roll(to: world) }
+            target.onDragEnded = { [weak self] _ in
+                guard let self, let pin = self.rollingPin else { return }
+                self.rollLastPoint = nil
+                self.settle(pin, missed: false)
+            }
+            target.onTap = { [weak self] in self?.sayName(Line.ditDeeg, wobbling: self?.dough) }
         }
         // The six jars on the two wall shelves.
         for height in [150, 105] {
@@ -436,6 +533,35 @@ final class KitchenRoom {
                 }
             }
         }
+    }
+
+    /// **A tap said what the thing is.**
+    ///
+    /// The whole naming layer goes through here, so the two rules it has to obey
+    /// are written once. `.low` priority is the important one: `VoiceBank` drops
+    /// a low line outright while anyone is speaking, so a tap can never talk
+    /// over the step instruction it would be explaining, and a burst of taps
+    /// gets one name rather than a pile-up.
+    ///
+    /// The wobble is the other half. She is four, and the connection between
+    /// "the thing I touched" and "the voice I hear" is made by the thing moving
+    /// at the same moment; a name with nothing moving is a name about the room
+    /// in general.
+    private func sayName(_ lineID: String, wobbling entity: Entity?) {
+        if let entity, entity.isEnabled { ticker.squash(entity, amount: 0.13) }
+        sound.play(.stirTick, volume: 0.3, rate: 1.25)
+        voice.say(lineID, priority: .low)
+    }
+
+    /// The picture on the back wall. It cannot wobble — it is screwed to the
+    /// plaster — so the answer is a sparkle over it and Nina saying who it is.
+    private func tapPortrait() {
+        guard let portrait else { return }
+        sound.play(.sparkle, volume: 0.5)
+        Sparkles.burst(at: portrait.position + [0, 0.030, 0.010], in: root,
+                       ticker: ticker, colour: Palette.lilacDeep,
+                       count: 7, size: 0.0022, speed: 0.05, life: 0.8)
+        voice.say(Line.ditPortret, priority: .low)
     }
 
     /// Which targets are live right now.
@@ -465,6 +591,12 @@ final class KitchenRoom {
         touch.target(named: "tin")?.enabled = state.step != .bakken && state.step != .klaar
         touch.target(named: "cake")?.entity = cake
         touch.target(named: "cake")?.enabled = cake != nil
+        // The two naming targets that have to stand aside for a real one — the
+        // whisk sits inside the bowl during the stir, and the basket sits under
+        // its own ingredient until she has taken it. Both are explained where
+        // they are registered.
+        touch.target(named: "whisk")?.enabled = state.step != .roeren
+        touch.target(named: "basket")?.enabled = used.contains(Layout.Source.mandje.rawValue)
         refreshHalo()
     }
 
@@ -649,12 +781,27 @@ final class KitchenRoom {
             bowlBatter?.removeFromParent()
             bowlBatter = nil
             lastBatterMix = -1
+            lastBatterColour = nil
             return
         }
 
-        // Cream at first and her colour by the end of stirring — the batter
-        // "takes its colour as she goes" (GAMEPLAY.md §6.3).
-        let mix = 0.35 + 0.65 * min(1, state.stir)
+        // **The batter takes the colour, not a hint of it.**
+        //
+        // It used to be `0.35 + 0.65 × stir` — 35% of the way from cream towards
+        // the ingredient's colour at the moment it went in, and the rest bought
+        // by stirring. The intent was the batter "taking its colour as she goes"
+        // (`GAMEPLAY.md` §6.3), and the effect was that dropping a toverbosbes
+        // in turned cream into slightly-blue cream: an in-between hue that is
+        // neither the thing she picked nor the thing that was there. It read as
+        // nothing happening (owner, 2026-08-16: "sometimes it doesn't seem
+        // like it").
+        //
+        // It now goes 82% of the way immediately and reaches the colour exactly
+        // by the end of the stir. The first frame after the plop is the answer
+        // to "what did that do", and it has to be legible from across the table
+        // to somebody who is four; the remaining 18% is what stirring is still
+        // visibly for.
+        let mix = 0.82 + 0.18 * min(1, state.stir)
         let colour = Palette.mix(Palette.cream, state.bowlSpec.batterColour, mix)
         let level = 0.006 + 0.005 * Float(min(count, 3))
 
@@ -666,11 +813,24 @@ final class KitchenRoom {
             fresh = true
         }
         guard let disc = bowlBatter else { return }
-        // Stirring calls this on every touch event. Rebuilding a material 60
-        // times a second to move a colour by nothing is the kind of waste that
-        // only shows up as a warm iPad, so it steps rather than slides.
-        if fresh || abs(mix - lastBatterMix) > 0.02 {
+        if animated && !fresh, let was = lastBatterColour {
+            // An ingredient just went in. Bleed the old colour into the new one
+            // over about a third of a second rather than cutting: a colour that
+            // *arrives* is a colour she watches happen, and a cut is something
+            // she can miss by blinking.
             lastBatterMix = mix
+            lastBatterColour = colour
+            ticker.tween(0.35, ease: Ease.out, step: { [weak disc] t in
+                disc?.model?.materials = [Palette.material(Palette.mix(was, colour, t))]
+            }, done: { [weak disc] in
+                disc?.model?.materials = [Palette.material(colour)]
+            })
+        } else if fresh || abs(mix - lastBatterMix) > 0.02 {
+            // Stirring calls this on every touch event. Rebuilding a material 60
+            // times a second to move a colour by nothing is the kind of waste
+            // that only shows up as a warm iPad, so it steps rather than slides.
+            lastBatterMix = mix
+            lastBatterColour = colour
             disc.model?.materials = [Palette.material(colour)]
         }
         let target = SIMD3<Float>(0, level, 0)
@@ -687,7 +847,15 @@ final class KitchenRoom {
     private func pickUp(_ entity: Entity, at world: SIMD3<Float>) {
         endCarry()
         carried = entity
-        carryOffset = entity.position - world
+        carryAnchor = world
+        // **Measured against the ray at the prop's own height, not against the
+        // touch point.** For most props those are the same thing, because the
+        // drag plane starts at the prop's height — but the bowl's target carries
+        // a 20 mm `planeOffset` so that stirring happens on the plane of its
+        // rim, and reading the offset off a point 20 mm higher would put a 23 mm
+        // step into the very first frame of the drag.
+        carryOffset = entity.position
+            - Layout.pointOnRay(through: world, atHeight: entity.position.y)
         carryOffset.y = 0
         carryOrigin = entity.position
         carryY = entity.position.y
@@ -716,17 +884,32 @@ final class KitchenRoom {
         // the point back in, and it juddered between the two. It could not be
         // put on the plank at all — it stuck on the counter underneath it.
         //
-        // With the plane fixed, XZ is a pure function of her finger and cannot
-        // oscillate. The prop drifts up or down *on screen* relative to her
-        // finger as it changes surface, which turns out to read better anyway:
-        // vertical movement against a still fingertip is the clearest possible
-        // way of saying "this is on the floor now".
+        // **And the second half of that fix, added 2026-08-16.** Freezing the
+        // plane stopped the oscillation and left the prop drifting up and down
+        // the screen away from her fingertip as it changed surface — the note
+        // that used to sit here argued that reads *better*, and on the device it
+        // does not: 68 mm of world height between the table and the floor throws
+        // the prop most of a thumb's width off her finger, and what she sees is
+        // the thing she is holding jumping somewhere else (owner's report).
+        //
+        // What broke the loop for good is `Layout.surfacePointedAt` deciding the
+        // surface from the *ray* rather than from the prop's position, so height
+        // can no longer feed back into the choice. With that settled, the prop's
+        // XZ can safely be read off the same ray at whatever height it has
+        // reached — which is what `placeCarried` does, and what keeps it pinned
+        // under her fingertip the whole way down. The reasoning is written out
+        // in full over `surfacePointedAt`.
+        //
+        // The job re-places it every frame rather than only on touch events,
+        // because touches stop arriving the moment her finger stops moving and a
+        // prop halfway down to the floor has to keep going *and* stay under the
+        // finger that is holding still.
         carryJob = ticker.add { [weak self] dt in
             guard let self, let held = self.carried else { return false }
             // Exponential ease — about 90% of the remaining gap in a third of
             // a second, whatever the frame rate, and no overshoot.
             self.carryY += (self.carryGoalY - self.carryY) * (1 - exp(-dt * 7.5))
-            held.position.y = self.carryY
+            self.placeCarried()
             ContactShadows.update(for: held, surfaceY: self.carrySurfaceY,
                                   settings: self.settings)
             return true
@@ -743,16 +926,48 @@ final class KitchenRoom {
     /// a second, and going back up onto the table lifts it again.
     private func carry(to world: SIMD3<Float>) {
         guard let carried else { return }
-        var next = Layout.clampToPlayArea(world + carryOffset)
-        carrySurfaceY = surfaceUnder(next, for: carried)
+        carryAnchor = world
+        carrySurfaceY = pointedSurface(from: world, for: carried)
         carryGoalY = carrySurfaceY + Layout.carryLift
+        placeCarried()
+    }
+
+    /// **Put the carried prop back under her fingertip.**
+    ///
+    /// One line of arithmetic, and it is the whole of the drag: the prop goes on
+    /// the ray she is pointing along, read at whatever height it has eased to.
+    /// Height moves, the finger does not, and the prop stays where the finger
+    /// is — which is what a drag has to feel like.
+    private func placeCarried() {
+        guard let carried else { return }
+        var next = Layout.clampToPlayArea(
+            Layout.pointOnRay(through: carryAnchor, atHeight: carryY) + carryOffset)
         // Y is owned by the carry job; the touch only ever moves it about.
         next.y = carryY
         carried.position = next
     }
 
-    /// What the carried prop is over. The cake is the one prop that can also be
-    /// over the wall plank, which is where the round now ends.
+    /// **What she is pointing at**, for a prop being carried.
+    ///
+    /// `Layout.surfacePointedAt` answers it for the room's three real surfaces.
+    /// The one thing it does not know about is the cake plank, which is not a
+    /// surface anywhere else in the game — it would shadow the counter it hangs
+    /// over and fling the sink shelf-high — and is checked first here, for the
+    /// one prop and the one step that can reach it.
+    private func pointedSurface(from anchor: SIMD3<Float>, for entity: Entity) -> Float {
+        if entity === cake {
+            let plankHeight = Layout.cakePlankY + 0.004
+            if Layout.nearPlank(Layout.pointOnRay(through: anchor, atHeight: plankHeight)) {
+                return plankHeight
+            }
+        }
+        return Layout.surfacePointedAt(from: anchor)
+    }
+
+    /// What a prop that is standing somewhere is standing *on*. Position-based,
+    /// where `pointedSurface` is ray-based — the halo asks this one, because it
+    /// follows a prop rather than a finger, and it has to be right for a prop
+    /// nobody is holding.
     private func surfaceUnder(_ point: SIMD3<Float>, for entity: Entity) -> Float {
         if entity === cake, Layout.nearPlank(point) { return Layout.cakePlankY + 0.004 }
         return Layout.surfaceY(at: point)
@@ -863,14 +1078,21 @@ final class KitchenRoom {
 
     // MARK: - Step 1: filling the bowl
 
+    /// **A tap on an ingredient names it.**
+    ///
+    /// It used to answer with an instruction — "doe de toverdingetjes maar in de
+    /// kom" for the lit one, "pak maar wat er glimt" for any other — and that
+    /// was the wrong answer to the question a tap asks. She already has the
+    /// instruction: the halo is on, Nina said the step out loud when it opened,
+    /// the idle nudge repeats it after 45 seconds and three misses bring it back
+    /// at full priority. What she did *not* have anywhere was the word for the
+    /// thing under her finger, and an ingredient called toverbosbes is worth
+    /// more to a 4-year-old than a fourth copy of the instruction.
     private func nudgeToken(_ index: Int) {
         guard index < tokens.count else { return }
         ticker.squash(tokens[index].entity, amount: 0.18)
         sound.playVaried(.plop, volume: 0.5)
-        // Tapping one whose turn it is not still does something, and what it
-        // says is where to look instead.
-        voice.say(index == state.nextIndex ? Line.doeInKom : Line.pakGlimmend,
-                  priority: .low)
+        voice.say(tokens[index].ingredient.nameLineID, priority: .low)
     }
 
     /// A token released. In the bowl it counts; anywhere else it just stays
@@ -918,7 +1140,7 @@ final class KitchenRoom {
             self.state.inBowl.append(token.ingredient)
             self.state.used = slots + [index]
             self.refreshBowlBatter(animated: true)
-            self.voice.say(token.ingredient.lineID)
+            self.voice.sayWhenQuiet(token.ingredient.lineID)
             self.baker?.set(.cheering)
             self.save()
 
@@ -947,7 +1169,7 @@ final class KitchenRoom {
         saidGoodStirring = false
         applyStep(animated: true)
         save()
-        voice.say(Line.roeren)
+        voice.sayWhenQuiet(Line.roeren)
     }
 
     // MARK: - Step 2: stirring
@@ -1063,7 +1285,7 @@ final class KitchenRoom {
         sound.play(.sparkle)
         baker?.set(.cheering)
         applyStep(animated: true)
-        voice.say(Line.beslagKlaar)
+        voice.sayWhenQuiet(Line.beslagKlaar)
         ticker.after(2.6) { [weak self] in
             guard let self, self.state.step == .gieten else { return }
             self.voice.say(Line.gieten, priority: .low)
@@ -1130,7 +1352,7 @@ final class KitchenRoom {
                 self.state.step = .inOven
                 self.save()
                 self.applyStep(animated: true)
-                self.voice.say([Line.gegoten, Line.ottoWacht])
+                self.voice.sayWhenQuiet([Line.gegoten, Line.ottoWacht])
             })
         }
     }
@@ -1167,7 +1389,7 @@ final class KitchenRoom {
                 self.save()
                 self.setDoor(open: false, animated: true, oven: oven)
                 self.refreshInteractivity()
-                self.voice.say(Line.ottoVormErin)
+                self.voice.sayWhenQuiet(Line.ottoVormErin)
                 self.ticker.after(3.0) { [weak self] in
                     guard let self, self.state.step == .bakken else { return }
                     self.voice.say(Line.klopOpOtto, priority: .low)
@@ -1180,12 +1402,15 @@ final class KitchenRoom {
 
     private func tapOtto() {
         guard let oven else { return }
-        ticker.squash(oven.dome, amount: 0.16)
+        // Not while he is baking: the bake owns the dome's scale, writing it
+        // every frame, so a squash on top of it is a fight the squash loses and
+        // then "restores" a scale it read out of the middle of.
+        if !baking { ticker.squash(oven.dome, amount: 0.16) }
         blink(oven)
         googlyEyes(oven)
-        guard state.step == .bakken else {
-            // Otto is a toy the rest of the time, and says something different
-            // every single time she pokes him.
+        guard state.step == .bakken, !baking else {
+            // Otto is a toy the rest of the time — and while he bakes — and he
+            // says something different every single time she pokes him.
             sound.playVaried(.thud, volume: 0.4)
             voice.say(Line.ottoTik)
             return
@@ -1194,12 +1419,13 @@ final class KitchenRoom {
     }
 
     private func bake(oven: KitchenProps.Oven) {
+        baking = true
         clearHalo()
         let spec = state.bowlSpec
         let dome = oven.dome
         let door = oven.door
         let chimneyTop = oven.chimneyTop
-        voice.say(Line.ottoBakken)
+        voice.sayWhenQuiet(Line.ottoBakken)
         sound.play(.whoosh, volume: 0.6)
 
         // Four seconds of Otto being delighted. Nothing is being waited for —
@@ -1235,6 +1461,7 @@ final class KitchenRoom {
     }
 
     private func cakeIsReady(spec: CakeSpec, oven: KitchenProps.Oven) {
+        baking = false
         oven.dome.scale = SIMD3<Float>(repeating: 1)
         oven.door.model?.materials = [Palette.material(Palette.blushPinkDeep)]
         sound.play(.ovenPing)
@@ -1267,7 +1494,7 @@ final class KitchenRoom {
             // Otto first, then Nina on the colour and at most one effect, and
             // only then where it goes — the last step is not an interruption of
             // her looking at what she made.
-            self.voice.say([Line.ottoKlaar] + spec.reactionLines + [Line.opDePlank])
+            self.voice.sayWhenQuiet([Line.ottoKlaar] + spec.reactionLines + [Line.opDePlank])
         }
     }
 
@@ -1293,6 +1520,7 @@ final class KitchenRoom {
         ticker.squash(cake, amount: 0.15)
         sound.play(.sparkle, volume: 0.6)
         Sparkles.burst(at: cake.position + [0, 0.04, 0], in: root, ticker: ticker, count: 6)
+        voice.say(Line.ditTaart, priority: .low)
     }
 
     /// **The last step of the round: she carries the cake up onto the plank.**
@@ -1320,7 +1548,28 @@ final class KitchenRoom {
         placeOnPlank(cake, spec: spec)
     }
 
-    /// Onto the plank, and a fresh round behind it.
+    /// Onto the plank, and — after a proper look at it — a fresh round.
+    ///
+    /// **The end of a round used to last three quarters of a second.** The cake
+    /// landed on the plank, `startNewRound` fired from the same completion
+    /// handler, and the room she had spent eleven minutes filling was torn down
+    /// and rebuilt while Nina was still on the first syllable of saying well
+    /// done. Owner, 2026-08-16: "it just kind of jumps too fast to the start
+    /// again without much explanation."
+    ///
+    /// It is now the one moment in the round that is allowed to take its time.
+    /// The cake climbs up and shrinks onto the plank, Nina says three things —
+    /// what they made, that it is up there with the others, and what happens
+    /// next — the plank throws sparkles between them, and **only when she has
+    /// stopped talking does the room reset.** Nothing blocks: every prop still
+    /// answers a touch throughout, and the whole thing is `whenQuiet`, so a
+    /// missing mp3 or a muted iPad simply makes it shorter rather than
+    /// stranding her in a finished kitchen.
+    ///
+    /// The three lines are deliberately in that order. She is looking at the
+    /// cake, so the cake is first; the plank is what she just did, so it is
+    /// second; and "shall we make another one" is last, because it is the only
+    /// one of the three that is about a kitchen she has not yet got to.
     private func placeOnPlank(_ cake: Entity, spec: CakeSpec) {
         var shelf = state.shelf
         shelf.append(spec)
@@ -1331,7 +1580,7 @@ final class KitchenRoom {
         clearHalo()
         setPlankInviting(false)
         // Shrinks to plank size as it goes, which is what makes four of them
-        // fit on a 13 cm board.
+        // fit on the board.
         ticker.tween(0.7, ease: Ease.inOut, step: { [weak cake] t in
             cake?.scale = SIMD3<Float>(repeating: 1 - 0.38 * t)
         })
@@ -1339,12 +1588,40 @@ final class KitchenRoom {
             guard let self else { return }
             self.sound.play(.sparkle, volume: 0.7)
             Sparkles.burst(at: slot + [0, 0.02, 0], in: self.root, ticker: self.ticker, count: 10)
-            self.startNewRound(shelf: shelf)
+            self.celebrate(shelf: shelf, at: slot)
         }
         baker?.set(.cheering)
-        voice.say(Line.klaar)
+        voice.sayWhenQuiet([Line.klaar, Line.plankGezet, Line.plankNogEen], gap: 0.42)
         self.cake = nil
         touch.target(named: "cake")?.enabled = false
+    }
+
+    /// The cake is on the plank. Look at it for a bit.
+    ///
+    /// Three seconds of it would be a pause; what makes it a moment is that
+    /// something happens on each beat — a shower over the new cake, then a
+    /// smaller one over the whole row, and Nina hopping again in the middle of
+    /// it. The rebuild waits on `whenQuiet` rather than on the length of this,
+    /// so the two cannot drift apart when a line is re-recorded.
+    private func celebrate(shelf: [CakeSpec], at slot: SIMD3<Float>) {
+        for (i, delay) in [Float(1.1), 2.4, 3.9].enumerated() {
+            ticker.after(delay) { [weak self] in
+                guard let self else { return }
+                let over = i == 1
+                    ? SIMD3<Float>(Layout.cakePlankCentre.x, Layout.cakePlankY + 0.030,
+                                   Layout.cakePlankCentre.y)
+                    : slot + [0, 0.026, 0]
+                Sparkles.burst(at: over, in: self.root, ticker: self.ticker,
+                               colour: i == 1 ? Palette.creamLight : Halo.core,
+                               count: i == 1 ? 12 : 7, size: 0.0024,
+                               speed: 0.06, life: 1.0)
+                self.sound.play(.sparkle, volume: 0.35, rate: 1.0 + Float(i) * 0.12)
+                if i == 1 { self.baker?.set(.cheering) }
+            }
+        }
+        voice.whenQuiet(after: 0.5) { [weak self] in
+            self?.startNewRound(shelf: shelf)
+        }
     }
 
     /// The door. It does not go anywhere yet — the decorating room does not
@@ -1361,7 +1638,12 @@ final class KitchenRoom {
         guard let doorway else { return }
         sound.play(.whoosh)
         swingDoor(doorway)
-        voice.say(nudgeLine(for: state.step), priority: .low)
+        // It used to repeat the current step's instruction, which was the door
+        // apologising for not going anywhere. It now says what it is, like every
+        // other prop — and "daarachter is nog een kamer" is true, promises
+        // nothing, and is the right thing for her to be told about a door that
+        // will one day open onto the decorating room.
+        voice.say(Line.ditDeur, priority: .low)
     }
 
     /// Open, hold, fall shut — 1.5 s, and re-tapping restarts it rather than
@@ -1394,8 +1676,12 @@ final class KitchenRoom {
         state = RoundState.fresh(keeping: shelf)
         RoundStore.save(state)
         build(flat: flat)
+        // A beat so the new dough is on the table before she is told about it,
+        // and `sayWhenQuiet` in case the celebration is still finishing — the
+        // rebuild is triggered by Nina going quiet, but a re-recorded line or a
+        // timeout could still put the two within a syllable of each other.
         ticker.after(0.8) { [weak self] in
-            self?.voice.say([Line.opdracht, Line.uitrollen], gap: 0.35)
+            self?.voice.sayWhenQuiet([Line.opdracht, Line.uitrollen], gap: 0.35)
         }
     }
 
@@ -1447,7 +1733,12 @@ final class KitchenRoom {
                           ticker: self.ticker, count: 7)
         }
         dustFloor(near: flourSack.position)
-        if Int.random(in: 0..<3) == 0 { voice.say(Line.bloem, priority: .low) }
+        // Mostly the name; one time in three the joke. The sack is the room's
+        // most pokeable toy, so it is the one prop where hearing the same
+        // sentence every single time would wear out fastest — and "hihi, bloem
+        // op je neus" is worth keeping for exactly that reason.
+        voice.say(Int.random(in: 0..<3) == 0 ? Line.bloem : Line.ditBloem,
+                  priority: .low)
     }
 
     /// The handprints from `GAMEPLAY.md` §6.3, as a fading patch of flour. It
@@ -1499,6 +1790,7 @@ final class KitchenRoom {
         stream.isEnabled = true
         pool.isEnabled = true
         sound.play(.water)
+        voice.say(Line.ditKraan, priority: .low)
 
         sinkJobs.append(ticker.tween(0.22, ease: Ease.out, step: { [weak stream] t in
             stream?.scale = SIMD3<Float>(1, max(0.001, t), 1)
@@ -1561,6 +1853,7 @@ final class KitchenRoom {
     private func tapScale() {
         guard let scaleProp else { return }
         sound.playVaried(.ding)
+        voice.say(Line.ditWeegschaal, priority: .low)
         let pan = scaleProp.pan
         let home = pan.position
         ticker.tween(0.55, ease: Ease.linear, step: { [weak pan] t in
@@ -1572,6 +1865,7 @@ final class KitchenRoom {
     private func tapJar(_ jar: Entity) {
         ticker.wiggle(jar, angle: 0.12, duration: 0.45)
         sound.playVaried(.rattle, volume: 0.7)
+        voice.say(Line.ditPotje, priority: .low)
     }
 
     private func rollBegan(at world: SIMD3<Float>) {
@@ -1637,7 +1931,7 @@ final class KitchenRoom {
                           colour: Palette.cream, radius: 0.035)
             self.refreshTinBase()
             self.applyStep(animated: true)
-            self.voice.say(Line.deegKlaar)
+            self.voice.sayWhenQuiet(Line.deegKlaar)
 
             // **She may already have filled the bowl.** Nothing stops her
             // fetching ingredients before rolling — the halo suggests an order,
@@ -1671,13 +1965,30 @@ final class KitchenRoom {
         sound.play(.sparkle, volume: 0.25, rate: 1.3)
     }
 
+    /// **One blink at a time, and always off the same rest pose.**
+    ///
+    /// Both halves matter. `oven.eyeRest` rather than `eye.scale` means a blink
+    /// landing on top of another one cannot take the squeezed eye as its
+    /// starting point — which is how repeated taps left Otto permanently
+    /// squinting (owner, 2026-08-16). And cancelling the running blink means
+    /// two of them cannot write different scales to the same eye on alternate
+    /// frames, which is a flicker rather than a blink.
+    ///
+    /// The reset before the tween is what a cancelled job's `done` would have
+    /// done: `Ticker.cancel` drops the job without running it, so the eye is
+    /// put back by hand here instead.
     private func blink(_ oven: KitchenProps.Oven) {
+        for job in blinkJobs { ticker.cancel(job) }
+        blinkJobs.removeAll()
+
+        let base = oven.eyeRest
         for eye in oven.eyes {
-            let base = eye.scale
-            ticker.tween(0.22, ease: Ease.linear, step: { [weak eye] t in
+            eye.scale = base
+            let job = ticker.tween(0.22, ease: Ease.linear, step: { [weak eye] t in
                 let squeeze = 1 - sin(t * .pi) * 0.85
                 eye?.scale = SIMD3<Float>(base.x, base.y * squeeze, base.z)
             }, done: { [weak eye] in eye?.scale = base })
+            blinkJobs.append(job)
         }
     }
 
@@ -1903,6 +2214,9 @@ final class KitchenRoom {
     private func cancelEverything() {
         for job in bakeJobs { ticker.cancel(job) }
         bakeJobs.removeAll()
+        baking = false
+        for job in blinkJobs { ticker.cancel(job) }
+        blinkJobs.removeAll()
         for job in sinkJobs { ticker.cancel(job) }
         sinkJobs.removeAll()
         ticker.cancel(plankGlowJob)

@@ -1,5 +1,6 @@
 import SwiftUI
 import AVFoundation
+import CoreMedia
 import Combine
 
 /// The opening film: outside the bakery, then inside the kitchen, and then the
@@ -41,8 +42,28 @@ struct IntroMovie: View {
     /// different length then keeps the lines in the right places by itself.
     var onShotFinished: (@MainActor (Int) -> Void)?
 
+    /// **Called on the film's first real frame**, not when the view appears.
+    ///
+    /// Two things wait on it, and both were bugs before it existed.
+    ///
+    /// The narration is one. Shot 1's line is 7.50 s under an 8.042 s shot, and
+    /// it used to start on a 0.4 s timer taken from the moment the view was
+    /// created — which was already 0.14 s of margin, and then had to absorb
+    /// however long `AVQueuePlayer` spent opening the first file *and* the half
+    /// second the title plate spent crossfading. It routinely did not fit, and
+    /// the cut to shot 2 cut Nina off mid-sentence (owner, 2026-08-16). Started
+    /// from the first frame, the line has the shot's full half-second of tail
+    /// back and cannot drift, whatever the device does.
+    ///
+    /// The title plate is the other. It stays up until this fires, which is what
+    /// stops the room showing through between the two covers — see
+    /// `ContentView.finishLoading`.
+    var onStarted: (@MainActor () -> Void)?
+
     @State private var items: [AVPlayerItem] = []
     @State private var player: AVQueuePlayer?
+    /// Watches the player's clock for the first frame — see `onStarted`.
+    @State private var startWatch = FilmStartWatch()
     /// The end of *this* item is the end of the film. Every other item's end
     /// notification is just the cut to the next shot.
     @State private var lastItem: AVPlayerItem?
@@ -106,6 +127,7 @@ struct IntroMovie: View {
             finish(skipped: false)
         }
         .onDisappear {
+            startWatch.stop()
             player?.pause()
             player = nil
         }
@@ -154,14 +176,69 @@ struct IntroMovie: View {
         self.items = items
         lastItem = items.last
         self.player = player
+        if let onStarted { startWatch.watch(player, then: onStarted) }
         player.play()
     }
 
     private func finish(skipped: Bool) {
         guard !finished else { return }
         finished = true
+        startWatch.stop()
         player?.pause()
         onFinish(skipped)
+    }
+}
+
+/// **Tells you when a film is actually on screen**, rather than when you asked
+/// it to be.
+///
+/// `player.play()` returns immediately; the first frame arrives whenever the
+/// file has been opened and decoded, which on a cold launch is not the same
+/// moment and is not a fixed amount of time either. Anything hung off `play()`
+/// is therefore hung off a guess — which is what the intro narration used to be,
+/// and why it ran off the end of its own shot.
+///
+/// A periodic observer at 20 Hz is the cheapest honest answer: the player's
+/// clock does not advance until it is rendering, so the first tick past zero is
+/// the first frame. It removes itself the moment it fires, so this costs nothing
+/// after the opening.
+///
+/// It is a class rather than two `@State` variables because the observer block
+/// is `@Sendable` and a `@MainActor` class is the one thing that can safely be
+/// captured by one — the callback is stored here and reached through `self`,
+/// so nothing else crosses the boundary.
+@MainActor
+final class FilmStartWatch {
+    private var token: Any?
+    private weak var player: AVPlayer?
+    private var body: (@MainActor () -> Void)?
+
+    func watch(_ player: AVPlayer, then body: @escaping @MainActor () -> Void) {
+        stop()
+        self.player = player
+        self.body = body
+        token = player.addPeriodicTimeObserver(
+            forInterval: CMTime(seconds: 0.05, preferredTimescale: 600),
+            queue: .main) { [weak self] time in
+                guard time.seconds > 0.01 else { return }
+                MainActor.assumeIsolated { self?.fire() }
+            }
+    }
+
+    /// Safe to call twice, and safe to call after `fire` — which matters,
+    /// because `onDisappear` and `finish` both call it and either can come
+    /// first.
+    func stop() {
+        if let token, let player { player.removeTimeObserver(token) }
+        token = nil
+        body = nil
+        player = nil
+    }
+
+    private func fire() {
+        guard let body else { return }
+        stop()
+        body()
     }
 }
 

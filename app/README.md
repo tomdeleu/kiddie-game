@@ -39,6 +39,17 @@ A tap ends it early — and a tap anywhere, at any time, puts a sparkle under he
 finger, because a screen that eats a tap silently is where she decides the iPad
 is broken.
 
+**It does not hand over to the film with a crossfade, and that is the fix for a
+flash.** The plate and the film used to be two branches of one `opening` state,
+swapped inside a `withAnimation` — so for half a second neither cover was
+opaque and what showed through both of them was the lit kitchen, moments before
+a film about walking into it. The plate is on a flag of its own now: the film is
+inserted *underneath* it with no animation at all, and the plate lifts only when
+the film reports its first real frame. Every cover in the opening appears
+instantly and leaves with a fade, which is the general rule — **a cover that
+fades in is a peep-hole.** If the first frame never comes, the plate lifts
+anyway after three seconds, onto the film's own black.
+
 The plate breathes, 1.0 → 1.03 over 2.6 s. A still image with nothing moving on
 it looks like an app that has hung.
 
@@ -72,6 +83,16 @@ about two tenths of a second before its own cut. It used to be 10.6, and the
 missing three seconds were audible: each shot went quiet a third of the way
 from its end and the film sat there looking like it was buffering. Both lines
 were rewritten longer and regenerated.
+
+**Both lines are hung off the picture, not off a stopwatch.** Shot 2's always
+was — it fires on the cut. Shot 1's used to start on a 0.4 s timer taken from
+the moment the view was created, which was 0.14 s of margin that then had to
+absorb however long `AVQueuePlayer` spent opening the first file *and* the half
+second the title plate spent crossfading over it. It routinely did not fit and
+the cut to shot 2 chopped Nina off mid-sentence. `IntroMovie.onStarted` now
+fires on the player's own clock passing zero — the first frame actually on
+screen — and the line gets the shot's full half-second of tail back on any
+device.
 
 The long pause before the cut is gone with them. It was carrying *"kom je mee
 naar binnen?"* as a question the cut answered — which is still true, except the
@@ -145,7 +166,7 @@ One round is `GAMEPLAY.md` §6.3, end to end:
 | **gieten** | Drag the bowl onto the tin | It tips, pours onto the base, and goes back where it lives |
 | **inOven** | Drag the tin to Otto | It slides in, the door shuts, Otto is delighted |
 | **bakken** | Tap Otto | Four seconds of him puffing and breathing, a rising ping, and the cake comes out in her colours |
-| **klaar** | **Carry the cake up onto the plank** | It rises to shelf height as it nears the wall, shrinks, lands beside the others, and a fresh round begins |
+| **klaar** | **Carry the cake up onto the plank** | It rises to shelf height as it nears the wall, shrinks, lands beside the others — and then the round is actually *finished* rather than swapped out |
 
 At the top of every round she hears what the whole thing is for — *"meng alle
 toverdingetjes in de kom, en zet de taart daarna in de oven"* — and then the
@@ -162,6 +183,66 @@ counts at half rate.
 **She cannot fail.** No drop is rejected, nothing is disabled, greyed out or
 refused, and every tap does something — including a tap on nothing, which
 sparkles.
+
+### Two verbs, and the tap finally has a job
+
+**Drag to bake. Tap to find out what a thing is called.**
+
+The game has only ever had two verbs (`GAMEPLAY.md` §3), and until now only one
+of them meant anything: a drag was the round, and a tap was a wobble, a sound
+effect and — on an ingredient — a repeat of an instruction she already had. So
+**every prop in the room now says what it is when she taps it**, in Dutch, in
+Nina's voice. Twenty-one lines, in `script-namen.json`: the six ingredients, the
+deegroller, the deeg, the kom, the garde, the bakvorm, the bloem, the kraan, the
+weegschaal, the mandje, the kist, the potjes, the taartenplank, the deur, the
+taart, and the portrait on the wall. Otto is the exception and keeps his own
+five, because he is a character and answering for himself is the joke.
+
+Three rules hold it together:
+
+- **Name first, then one short thing about it.** *"Dit is de deegroller.
+  Daarmee rol je het deeg lekker plat."* Never longer than two clauses; the
+  longest is 4.9 s and most are near 3.
+- **One variant each, deliberately** — the one place in the game that breaks the
+  never-the-same-line-twice rule. A character who repeats herself does not sound
+  like a person, but a *name* is a thing you learn by hearing it the same way
+  twice. Repetition is the feature.
+- **All at `.low` priority**, which `VoiceBank` drops outright while anyone is
+  speaking. A naming line can never talk over the instruction it would be
+  explaining, and a burst of taps gets one name rather than a pile-up.
+
+Two targets had to be built around a real one. The **whisk** is switched off
+during stirring, because it stands in the middle of the bowl then and
+`TouchRouter` picks the nearest centre rather than the biggest target — it would
+have won about half of the touches meant to make batter. The **basket** is
+switched off until its ingredient has gone, because the token sits 12 mm above
+it and from a fixed camera that is the same point on screen. The **dough** has a
+target whose *drags* are forwarded to the rolling pin: it sits 44 mm from the
+pin's home, so a target of its own would sometimes swallow the grab that starts
+the round's first step, and forwarding means a grab near the dough picks up the
+pin — which is what she meant — while a tap on the dough gets to be a tap on the
+dough.
+
+### Nobody gets talked over
+
+**A step never opens its mouth while the last line is still going.** `say` at
+normal priority interrupts, which is right for a reaction to something happening
+*this instant* and was wrong everywhere it was used for the line that opens the
+next step: drop the last ingredient in, and 1.1 seconds later stirring began and
+said so, straight through the four-second line about the ingredient. Playing
+fast cost her the words.
+
+`VoiceBank.sayWhenQuiet` holds the line until Nina stops — including through the
+quarter-second gaps *inside* a chain, which a naive `isSpeaking` check reads as
+finished. Every step transition goes through it.
+
+**Only one line can ever be waiting, and a newer one replaces it.** That is the
+whole reason it is not a queue: three quick drops would otherwise earn a
+twelve-second monologue about things that had already happened, which is worse
+than the interruption it fixed. What she gets is the line playing now, and then
+the most recent thing that is still true. Nothing blocks on any of it — the step
+has already changed and the halo has already moved — so the worst case is a
+dropped line rather than a stalled game.
 
 **Sparkles are yellow stars.** They were `creamLight` icospheres, which at
 sparkle size is a grey dot — an unlit cream ball two millimetres across against
@@ -184,6 +265,51 @@ Nina apologised for it, which was wrong twice: it undid the one thing she can
 do with a kitchen full of objects, and it treated every stray drag as a failed
 attempt when most of them are a 4-year-old moving a rolling pin because it is
 a rolling pin.
+
+### The batter takes the colour
+
+Dropping a toverbosbes in makes the batter **blue** — not slightly-blue cream.
+
+It used to go 35% of the way from cream towards the ingredient's colour when it
+landed, with the rest bought by stirring, and the result was an in-between hue
+that was neither the thing she picked nor the thing that was there. Half the
+time it read as nothing having happened at all. It now goes 82% of the way
+immediately, bleeds from the old colour over a third of a second so the change
+is something she watches rather than something she can miss by blinking, and
+reaches the colour exactly by the end of the stir — the remaining 18% is what
+stirring is still visibly for.
+
+The value it goes to is a third one, `CakeColour.batter`, alongside `base` and
+`deep`. A cake tier is seen against a room; batter is seen against the inside of
+a cream bowl from across the table by someone who is four, and the two existing
+values are each wrong for that in one case — yellow's `deep` is `sandyWood`,
+which beside cream reads browner rather than yellower, and `base` for pink and
+blue is a step or two off the cream it is replacing. So `roze` → `blushPinkDeep`,
+`blauw` → `berryBlueDeep`, `geel` → `honeyAmber`, `groen` → `sageDeep`.
+
+White is the honest exception — `wolkenroom` makes a white cake, so its batter
+brightens rather than changes hue — and `sterrensuiker` changes nothing at all,
+which is the point of it (`GAMEPLAY.md` §5: "no colours" is a real outcome).
+
+### Ending a round
+
+**The end of a round used to last three quarters of a second.** The cake landed
+on the plank, the room was torn down and rebuilt from the same completion
+handler, and eleven minutes of work was swapped out while Nina was still on the
+first syllable of saying well done. It read as the game throwing her cake away
+rather than putting it up.
+
+It is now the one moment in the round allowed to take its time. The cake climbs
+and shrinks onto the plank, Nina says three things — **what they made, that it
+is up there with the others, and what happens next** — the plank throws sparkles
+between them and she hops in the middle, and **only when Nina has stopped
+talking does the room reset**. The rebuild waits on `VoiceBank.whenQuiet` rather
+than on a duration, so re-recording a line cannot put the two out of step.
+
+The order is deliberate: she is looking at the cake, so the cake is first; the
+plank is what she just did, so it is second; and *"zullen we er nog eentje
+maken?"* is last, because it is the only one of the three that is about a
+kitchen she has not got to yet.
 
 **Three misses and the instruction comes back.** A miss now means something
 narrow — she dragged the prop the current step is about and it did not land —
@@ -257,6 +383,23 @@ the lower wall shelf, a pot on the back counter, the basket on the table, and
 a crate on the floor. One basket on one table made the room a work surface;
 five places make her look up, along, and down.
 
+**The two shelves are mirrored, because five places were only ever four.** Both
+planks were laid out the same way, which put both ingredients at z = 0.044 and
+45 mm apart in y — one directly on top of the other. From a camera that never
+moves, that is indistinguishable from one place holding two things. The lower
+shelf is now built end-for-end reversed: its ingredient stands at the far end and
+its three jars fill the near half, so the two are **148 mm apart along the wall**,
+one at each end. It costs nothing — same plank, same three jars, read backwards.
+
+**The crate moved out into the near-right foreground.** At (0.132, 0.058) it was
+tucked into the corner where the table's right edge and Otto's footprint nearly
+meet, with 24 mm of floor around it — no clear ground, which is what makes a
+thing read as shoved under the furniture rather than standing on it. At
+(0.150, 0.126) it has 42 mm to the table's nearest corner and 190 mm to Otto's
+dome, and it becomes the right-hand half of a pair: the flour sack on the
+near-left floor, the crate on the near-right, bracketing the open foreground
+instead of both crowding the middle.
+
 The two that were added are deliberately the extremes of reach — the top shelf
 is the highest thing in the room, the crate is on the ground — because
 everything else in the kitchen lives on a work surface within ten centimetres
@@ -284,11 +427,26 @@ already returning most of the light they can, so an emissive term below 1 moves
 them a few percent, towards white, in a room where everything is nearly white.
 
 It is now a **soft** ring on the surface *around* the prop, picked from
-`references/cues/floor/` and built to the sampled colours of that plate: a
-`#F6D861` gold washing out to `#FFF6D8` at the core, with the interior left
-clear. The object keeps its own colour entirely. Softness is the whole reason
-this version survives where the first ring did not — a hard edge is what UI has
-and light does not.
+`references/cues/floor/`, with the interior left clear. The object keeps its own
+colour entirely. Softness is the whole reason this version survives where the
+first ring did not — a hard edge is what UI has and light does not.
+
+**And it is bright yellow, which took a fourth go.** The colour was sampled
+straight off the plate — a `#F6D861` gold washing out to `#FFF6D8` at the core —
+and that failed for the same reason the emissive version before it did: *the
+core was where the ring was brightest, and the core was almost white*. In a room
+whose floor, walls, counter and half the props are cream, a near-white band on a
+cream surface is a smudge, and it read as a faint yellow-ish nothing. It now
+runs from an amber `#F0AE12` in the shoulders *up* to a saturated `#FFE01F` at
+the core rather than *down* to white, the peak band is fully opaque, and the
+falloff is slightly fatter so more of the ring sits near that peak. Yellow is the
+one hue nothing in the kitchen is painted — the same argument that made the
+sparkles yellow — so the ring is the only thing on screen that colour.
+
+The lesson, on the fourth attempt, is narrower than "judge it on the device":
+the plate was right about the *shape* of the falloff and wrong about the
+*value*, because it was rendered on a grey studio backdrop and the value is the
+half that has to survive the room it is standing on.
 
 It is eighteen concentric bands of geometry at graded opacities on a Gaussian
 profile, not a texture. A radial-gradient texture needs `TextureResource`, a
@@ -317,21 +475,45 @@ Pick a berry off the top shelf and it swoops down as she brings it to the bowl;
 carry it back over the table and it lifts again. `Layout.surfaceY` is the whole
 model: four rectangles, tested nearest-camera first.
 
-**The drag plane is fixed for the length of a drag**, and that is not laziness.
-It was written down every frame at first, so the prop stayed pinned under her
-fingertip while it changed height — which is a feedback loop, because the
-height depends on the XZ and the XZ depends on the plane. Raising the plane by
-Δ slides the ray's intersection about 1.7Δ towards the camera at this camera
-angle, which can move the prop straight back out of the region that raised it.
-It made the cake impossible to put on the plank: reaching the plank zone lifted
-it 67 mm, which slid the mapped point out of the zone, so it dropped back to
-the counter, which slid it back in, and it juddered between the two.
+**The prop stays under her fingertip, and getting there took two goes.**
 
-With the plane fixed, XZ is a pure function of her finger and cannot oscillate.
-The prop drifts up or down *on screen* against her fingertip as it changes
-surface, which reads better anyway — vertical movement against a still finger
-is the clearest way of saying "this is on the floor now". `tracksEntity` picks
-the plane up from wherever the prop ended when she next grabs it.
+The first version re-projected the drag onto a plane at the prop's *current*
+height every frame. That is a feedback loop — the height depends on the XZ and
+the XZ depends on the plane — and at this camera moving the plane by Δ slides
+the intersection about 1.63Δ along the view direction, which can move the prop
+straight back out of the region that raised it. It made the cake impossible to
+put on the plank: reaching the plank zone lifted it 67 mm, which slid the mapped
+point out of the zone, so it dropped to the counter, which slid it back in, and
+it juddered between the two.
+
+The second froze the plane at pick-up. That killed the oscillation and left the
+prop **sliding up or down the screen away from her finger** as it changed
+surface — 68 mm of world height between the table and the floor, which throws
+the prop most of a thumb's width off her fingertip. The note that used to sit
+here argued that reads better. On the device it does not: it reads as the thing
+she is holding jumping somewhere else.
+
+What fixes it for good is deciding the surface from **the ray alone**.
+`Layout.surfacePointedAt` asks which surface the line from her eye through her
+fingertip lands on first — a pure function of the touch, which never looks at
+the prop. With the height unable to feed back into that choice, the prop's XZ
+can safely be read off the same ray at whatever height it has eased to, so it is
+pinned under her fingertip the whole way down and cannot flip between two
+surfaces. Nothing in the chain points backwards.
+
+It is a better rule as well as a stabler one. Pointing at the table means the
+table; pointing at the floor in front of it means the floor. And **it makes
+losing a prop behind the table impossible by construction**: a floor point is
+hidden exactly when the sightline to it crosses the table top inside the table's
+footprint, and that sightline *is* this ray — so any route to the hidden strip
+is a ray that hit the table first and got the table. `isOutOfSight` and the
+float-home in `settle` stay as the safety net for the small constant grab offset
+a carried prop keeps off the ray, and should now essentially never fire.
+
+The camera never moving is what makes this cheap: any world point plus the eye
+is a complete description of the ray through it, so a touch reported on one
+plane can be re-read on any other with no extra plumbing from the gesture.
+`tracksEntity` still picks the starting plane up from wherever the prop was left.
 
 One case needed guarding: every tap is also a zero-length drag, so without a
 "barely moved" check, poking the berry on the top shelf would knock it to the
@@ -371,6 +553,22 @@ to add a confirmation, which is unreadable to her by definition.
 Seven, none of which gate anything: the flour sack, the tap, the scale, the six
 shelf jars, the crate, the rolling pin (it actually rolls), and Otto himself,
 who says something different every single time he is poked.
+
+**Otto's eyes stopped getting stuck shut.** Every tap on him blinks him, and the
+blink squeezed an eyeball down its Y axis and restored it to whatever
+`eye.scale` happened to be when *that* blink started. He is the most tapped prop
+in the room, so a second tap mid-blink took the squeezed scale as the new rest
+pose and handed it back flattened; the third flattened that. Half a dozen pokes
+and his eyes were slits that never opened again. It is exactly the compounding
+`Ticker.Pose` was written to stop for `squash`, and the eyes go through `tween`
+directly — so `Oven.eyeRest` is their own copy of the rule, and a new blink
+cancels the running one rather than fighting it frame by frame.
+
+**And tapping him during a bake no longer starts another one.** `state.step`
+stays `.bakken` for the whole four seconds he performs, so five taps used to
+mean five overlapping breathe jobs, five puff schedules and five cakes arriving
+on top of each other. He still answers every tap while he bakes; he chats
+instead of starting again.
 
 Two of them were rebuilt from plates in `references/ingredients/`:
 
@@ -451,6 +649,26 @@ full argument, the before-and-after numbers and what the camera move cost are
 under [The size of the room](#the-size-of-the-room). It is the deviation most
 worth testing with Nina, because what it trades against is target size.
 
+**The door moved 32 mm towards the camera, because it could not open.** At
+z = 0.140 its opening ran from z = 0.103 to 0.177 and the table's near edge is at
+0.122, so the two overlapped by 19 mm — and the leaf swings *into* the room off
+its near jamb, which put its outer half straight through the table top.
+
+The fix is z, not x, and it is bounded on both sides. The whole left wall is
+spoken for: the counter takes z ∈ [−0.213, −0.151], the two ingredient shelves
+take [−0.120, 0.060], the table takes [−0.018, 0.122]. The only clear run is the
+near-left corner and the door is 94 mm wide across its frame. Working the swing
+out gives the window — the leaf's worst reach over the table's x-range is 71.8 mm
+back from the hinge, and that happens at **14°, not at full open**, because a
+nearly-shut door is longer in z than an open one — so the centre has to clear
+z = 0.157, and the frame's outer edge has to stay on the floor, which caps it at
+0.183. **0.172 sits in the middle**: 15 mm of daylight between the swept leaf and
+the table, 11 mm between the frame and the floor's near edge.
+
+**The table did not have to move, and did not.** It is the surface seven props
+are laid out on and every one of those positions is absolute, so moving it is
+seven more edits and seven more chances to put something over an edge.
+
 **The doorway does not lead anywhere yet, and no longer ends the round either.**
 `GAMEPLAY.md` §7 says the door always works, even mid-task. Here it cannot: the
 decorating room does not exist, so there is nowhere to go. Tapping it opens the
@@ -507,6 +725,15 @@ That step is the one place two things are lit at once: the cake, because it is
 what she picks up, and the plank, because it is where it goes. Every other step
 lights exactly one prop. A journey has two ends.
 
+**And a lilac.** The photograph the portrait is built from has the girl in a
+lilac t-shirt covered in deeper purple daisies, and purple is the second hue the
+locked thirteen do not contain — the plates had no more purple in frame than they
+had blue. `Palette.lilac` and `lilacDeep` are built the same way `berryBlue` was,
+and it is worth saying again because it is the rule rather than the exception:
+**not sampled off a screen, derived to the register.** Same desaturation and the
+same lightness as `mint` and `berryBlue`, so the shirt sits beside the mint jars
+rather than shouting over them. Two surfaces in the game, both inside the frame.
+
 **The palette gained a blue, and then an amber.** The locked thirteen sampled
 from the plates have pink, mint, sage, cream, butter and wood, and no blue at
 all — the plates simply had none in frame. `GAMEPLAY.md` §5 needs one: the
@@ -525,6 +752,35 @@ a cavity, and the locked thirteen bottom out at `woodBrown` — a surface colour
 and nothing else. The no-AO rule is about shadow pooled onto surfaces; a mouth
 is the one place where dark is the subject.
 
+### The portrait
+
+**There is a picture of Nina on the back wall above Otto**, framed in rose, from
+a photograph the owner supplied: a small girl grinning, brown hair swept back
+into a knot with a loose strand at the front, in a lilac t-shirt printed with
+purple daisies that have yellow smiling centres. Tapping it sparkles and she
+says who it is. It fills the one large blank surface left in the room — the back
+wall's right-hand half, which read as blank.
+
+**It is modelled, not textured, and that is not a shortcut.** Dropping the photo
+onto a plane would have been three lines. It would also have put a rendered,
+smoothly-shaded, occlusion-heavy image inside a room whose entire argument is
+flat facets and no ambient occlusion — which is precisely what
+`references/ingredients/flour-cloud.png` produced, where the one photographic
+thing in the kitchen was the only thing that looked like it came from somewhere
+else, and the owner called it on sight. A reference plate is a brief. This is the
+brief carried out in the room's own vocabulary: eighteen boxes, three stars and
+three icospheres.
+
+The frame is a shallow shadow-box 12 mm deep — the same depth the door frame
+stands proud of the left wall, and for the same reason: at this camera a casing
+with no visible side reads as paint. Everything inside it is staged at its own
+depth, climbing from the mount at 0.0015 to the eyes at 0.0118, because two
+surfaces at the same z flicker against each other and at this size that would
+look like the picture was broken rather than like a picture. The face ends up
+about 2 mm proud of the rails, which is deliberate: a portrait perfectly flush
+with its own frame is a decal, and in a room whose whole subject is faceted
+relief it should catch the key light like everything else.
+
 ## The plank instead of the wall
 
 `GAMEPLAY.md` §2 says the wall of twelve frames is the game. It lives in the
@@ -532,6 +788,14 @@ bakery, which does not exist yet, so the kitchen has **de taartenplank** on the
 back wall holding her last four cakes. It does the same job in miniature: it
 means the second cake is not the first cake again. It is a stand-in and should
 be retired when the wall arrives, not grown.
+
+**It did get longer, though — 0.190 m, up from 0.150** — because putting the
+cake on it is the round's last action and the hardest one, performed at arm's
+length against the back wall. Length buys two things: the four cake slots go from
+37.5 mm to 47.5 mm, so the shrunk 32 mm cakes stand apart instead of shoulder to
+shoulder; and the **landing zone gets 40 mm wider**, because `nearPlank` measures
+half the plank plus the snap radius. It grew leftwards — the right end stays near
+x = 0 because past that it starts crossing Otto's chimney.
 
 ## What is in it
 
@@ -541,14 +805,14 @@ be retired when the wall arrives, not grown.
 | `Engine/Ticker.swift` | The one clock. Every animation is an interruptible closure ticked from here. |
 | `Engine/TouchRouter.swift` | One finger, two verbs. Targets are generous spheres, not meshes, and each carries the plane its prop is standing on. |
 | `Engine/Sparkles.swift` | Faceted yellow stars that fly out and vanish. The whole reward vocabulary. |
-| `Engine/Halo.swift` | The ring of light on the surface under the prop a step is about — the game's only instruction. |
+| `Engine/Halo.swift` | The bright-yellow ring of light on the surface under the prop a step is about — the game's only instruction. |
 | `Intro/LoadingScreen.swift` | The title plate, and the floor it is held for. |
 | `Intro/IntroMovie.swift` | The opening film: a queue of shots, and two ways out of it. |
 | `Audio/SoundKit.swift` | All thirteen sound effects, synthesised at launch. |
-| `Audio/VoiceBank.swift` | Nina and Otto, driven by `script-keuken.json`. |
+| `Audio/VoiceBank.swift` | Nina and Otto, driven by `script-keuken.json` and `script-namen.json`. Also `sayWhenQuiet` and `whenQuiet`, which are why nobody gets talked over. |
 | `Game/CakeSpec.swift` | Six ingredients → colour, effects, and what Nina says about them. |
 | `Game/RoundState.swift` | The round, and the JSON it is saved to. |
-| `Kitchen/KitchenProps.swift` | Otto, the bowl, the batter, the tin, the cake, the six ingredients, the toys. |
+| `Kitchen/KitchenProps.swift` | Otto, the bowl, the batter, the tin, the cake, the six ingredients, the toys, the door, the portrait. |
 | `Kitchen/KitchenRoom.swift` | The room: assembly, the state machine, the toys, the nudges. |
 | `RoomBuilder.swift` | The shell and the furniture, plus `Layout` — every position in the room, in one table. |
 | `FacetedMesh.swift` | **The core of the look.** Flat-shaded primitive builders — `lathe`, `extrude`, `star` and `annulus` are what the ingredients and the halo are made of — plus the smooth variant for A/B. |
@@ -727,10 +991,16 @@ with **Copy settings** before overwriting.
 
 ## Audio
 
-**Voice is real.** 104 Dutch lines, generated with `text2speech_v2` /
+**Voice is real.** 130 Dutch lines, generated with `text2speech_v2` /
 `elevenlabs` and bundled as mp3s — the app never calls an API. Nina is Gracie;
 Otto is provisionally Barrett, and `audio/auditions/README.md` explains how to
 swap him for four credits and no code.
+
+The 26 added on 2026-08-16 — 7.8 credits — are the 21 naming lines in
+`script-namen.json` and the 5 that make the end of a round a moment rather than a
+cut. `VoiceBank` loads every bundled `script-*.json` and merges them, so a whole
+new layer of speech is a new file and no Swift change; the same is true of the
+next room.
 
 **Sound effects are synthesised.** Thirteen of them, rendered to PCM at launch
 by `SoundKit`. `CONCEPT.md` §7.4 records that the connector cannot supply SFX;

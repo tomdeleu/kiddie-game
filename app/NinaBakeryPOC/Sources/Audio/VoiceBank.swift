@@ -42,6 +42,8 @@ final class VoiceBank {
     private var lastPick: [String: Int] = [:]
     private var player: AVAudioPlayer?
     private var chainJob: Int?
+    /// The one line waiting for her to stop talking — see `sayWhenQuiet`.
+    private var pendingJob: Int?
     private let ticker: Ticker
 
     /// What is on screen right now, for the debug panel and for tests with
@@ -50,6 +52,15 @@ final class VoiceBank {
     private(set) var lastSpoken: String = ""
 
     var isSpeaking: Bool { player?.isPlaying ?? false }
+
+    /// **Mid-sentence, or mid-breath between two of them.** A chain of lines
+    /// goes quiet for a quarter of a second between each pair, and treating that
+    /// gap as "she has finished" is how a two-line reaction gets talked over by
+    /// its own follow-up.
+    private var isTalking: Bool { isSpeaking || chainJob != nil }
+
+    /// Talking, or holding something to say the moment she stops.
+    var isBusy: Bool { isTalking || pendingJob != nil }
 
     init(ticker: Ticker) {
         self.ticker = ticker
@@ -142,9 +153,75 @@ final class VoiceBank {
         }
     }
 
+    // MARK: - Waiting for her to finish
+
+    /// **Say this as soon as Nina stops talking, rather than over the top of
+    /// her.**
+    ///
+    /// `say` at `.normal` interrupts, and that is right for a reaction to
+    /// something Nina did *this instant* — but it is wrong for the line that
+    /// opens the next step, which is exactly where it kept biting: drop the last
+    /// ingredient in and 1.1 s later stirring begins and says so, straight
+    /// through the four-second line about the ingredient (owner, 2026-08-16:
+    /// "when moving from one action to another you MUST wait until the voiceover
+    /// has completed"). Playing fast should not cost her the words.
+    ///
+    /// **Only one line can ever be waiting, and a newer one replaces it.** That
+    /// is the whole reason this is not a queue: a queue would mean three quick
+    /// drops earn a twelve-second monologue about things that have already
+    /// happened, which is worse than the interruption it fixed. What she gets is
+    /// the line she is speaking now, and then the most recent thing that is
+    /// still true.
+    ///
+    /// The timeout is the escape hatch. Nothing in the game blocks on this — the
+    /// step has already changed and the halo has already moved — so the worst
+    /// case is a line that is dropped rather than a game that stops.
+    func sayWhenQuiet(_ ids: [String], gap: Float = 0.3,
+                      breath: Float = 0.3, timeout: Float = 12) {
+        guard !ids.isEmpty else { return }
+        ticker.cancel(pendingJob)
+        var waited: Float = 0
+        var quiet: Float = 0
+        pendingJob = ticker.add { [weak self] dt in
+            guard let self else { return false }
+            waited += dt
+            quiet = self.isTalking ? 0 : quiet + dt
+            guard quiet >= breath || waited > timeout else { return true }
+            self.pendingJob = nil
+            self.say(ids, gap: gap)
+            return false
+        }
+    }
+
+    func sayWhenQuiet(_ id: String, breath: Float = 0.3, timeout: Float = 12) {
+        sayWhenQuiet([id], breath: breath, timeout: timeout)
+    }
+
+    /// Run `body` once she has stopped talking — including through the gaps in a
+    /// chain and through anything `sayWhenQuiet` is still holding.
+    ///
+    /// The end of a round uses it: the celebration is four sentences long, and
+    /// the room must not rebuild itself underneath the third one.
+    @discardableResult
+    func whenQuiet(after breath: Float = 0.3, timeout: Float = 30,
+                   then body: @escaping @MainActor () -> Void) -> Int {
+        var waited: Float = 0
+        var quiet: Float = 0
+        return ticker.add { [weak self] dt in
+            guard let self else { return false }
+            waited += dt
+            quiet = self.isBusy ? 0 : quiet + dt
+            guard quiet >= breath || waited > timeout else { return true }
+            body()
+            return false
+        }
+    }
+
     func stop() {
         ticker.cancel(chainJob)
         chainJob = nil
+        ticker.cancel(pendingJob)
+        pendingJob = nil
         player?.stop()
         player = nil
     }
@@ -177,7 +254,13 @@ enum Line {
     static let oeps = "nina.oeps"
     static let bloem = "nina.speel.bloem"
     static let stil = "nina.stil"
+
+    /// **The three lines that end a round**, said in this order: what she made,
+    /// where it is now, and what happens next. `KitchenRoom.placeOnPlank` has
+    /// the argument for why the last one exists.
     static let klaar = "nina.klaar"
+    static let plankGezet = "nina.plank.gezet"
+    static let plankNogEen = "nina.plank.nogeen"
 
     /// What we are doing today, said once at the top of every round.
     static let opdracht = "nina.keuken.opdracht"
@@ -204,4 +287,38 @@ enum Line {
     /// The opening film, one line per shot, each written to that shot's length.
     static let introBuiten = "nina.intro.buiten"
     static let introKeuken = "nina.intro.keuken"
+
+    // MARK: - The naming lines
+
+    /// **What a prop is, said when she taps it.** `script-namen.json`.
+    ///
+    /// The game has exactly two verbs (`GAMEPLAY.md` §3) and until now only one
+    /// of them meant anything: a drag was the round, and a tap was a wobble and
+    /// a sound effect. These give the tap a job of its own — **drag to bake,
+    /// tap to find out what a thing is called** — and they are the only place in
+    /// the game that teaches a word rather than asking for an action.
+    ///
+    /// Every one is said at `.low` priority, which is what keeps them a layer
+    /// rather than an interruption: a naming line is dropped outright if Nina is
+    /// already saying anything, so it can never talk over the instruction it
+    /// would be explaining.
+    ///
+    /// The six ingredient names are reached through `Ingredient.nameLineID`
+    /// rather than listed here, for the same reason `lineID` is: the six ids are
+    /// spelled once in the whole game, off the enum case.
+    static let ditDeegroller = "nina.dit.deegroller"
+    static let ditDeeg = "nina.dit.deeg"
+    static let ditKom = "nina.dit.kom"
+    static let ditGarde = "nina.dit.garde"
+    static let ditVorm = "nina.dit.vorm"
+    static let ditBloem = "nina.dit.bloem"
+    static let ditKraan = "nina.dit.kraan"
+    static let ditWeegschaal = "nina.dit.weegschaal"
+    static let ditMandje = "nina.dit.mandje"
+    static let ditKist = "nina.dit.kist"
+    static let ditPotje = "nina.dit.potje"
+    static let ditTaartenplank = "nina.dit.taartenplank"
+    static let ditDeur = "nina.dit.deur"
+    static let ditTaart = "nina.dit.taart"
+    static let ditPortret = "nina.dit.portret"
 }

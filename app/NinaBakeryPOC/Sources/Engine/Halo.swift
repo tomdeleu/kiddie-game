@@ -49,9 +49,26 @@ import simd
 ///
 /// Banding is not visible because the falloff is only ~20 screen points wide at
 /// the size these props are drawn, so eighteen steps is about a point each.
-/// The colour and profile are sampled from `references/cues/floor/A-ring.png`:
-/// a `#F6D861` gold that washes out towards `#FFF6D8` at the core, on a
-/// Gaussian centred on the ring radius.
+/// The profile is a Gaussian centred on the ring radius.
+///
+/// ## The colour, and the fourth go at it
+///
+/// It was sampled straight off `references/cues/floor/A-ring.png` — a `#F6D861`
+/// gold washing out to `#FFF6D8` at the core — and on the iPad that failed for
+/// the same reason the emissive version before it did: **the core was where the
+/// ring was brightest, and the core was almost white.** In a room whose floor,
+/// walls, counter and half the props are cream, a near-white band on a cream
+/// surface is a faint smudge, and the owner read it as "a faint yellow-ish
+/// colour" rather than as a light.
+///
+/// It is now **bright yellow all the way through**: an amber `#F0AE12` in the
+/// shoulders coming *up* to a saturated `#FFE01F` at the core, rather than
+/// *down* to white. Yellow is the one hue nothing in the kitchen is painted —
+/// the same argument that made the sparkles yellow — so the ring is the only
+/// thing on screen that colour, and the peak band is fully opaque. That is what
+/// a plate sampled on a grey studio backdrop could not tell us: the reference
+/// was right about the *shape* of the falloff and wrong about the value, and the
+/// value is the half that has to survive the room it is standing on.
 @MainActor
 enum Halo {
 
@@ -62,16 +79,25 @@ enum Halo {
         let ring: Entity
     }
 
-    /// The band colours, sampled off the reference plate.
-    private static let gold = Palette.hex(0xF6D861)
-    private static let core = Palette.hex(0xFFF6D8)
+    /// **The band colours. Both are bright yellow, and that is the point.**
+    ///
+    /// The shoulders are an amber and the core is a saturated yellow, so the
+    /// band gets *more* colourful towards the middle instead of washing out to
+    /// the cream the room is already made of. See the note above the type.
+    private static let gold = Palette.hex(0xF0AE12)
+    /// Internal rather than private only because it is this function's own
+    /// default argument, and a default value has to be as visible as the
+    /// function it belongs to.
+    static let core = Palette.hex(0xFFE01F)
 
     private static let bandCount = 18
     /// How far the falloff reaches either side of the ring, as a fraction of
     /// the ring's radius. The reference's band is soft over about this much.
     private static let spread: Float = 0.34
-    /// Gaussian width, again as a fraction of the radius.
-    private static let sigma: Float = 0.155
+    /// Gaussian width, again as a fraction of the radius. Widened from 0.155
+    /// with the colour change: a fatter shoulder means more of the ring sits
+    /// near full opacity, which is brightness bought without a harder edge.
+    private static let sigma: Float = 0.170
 
     /// Light up the surface around a prop, and keep it lit until `remove`.
     ///
@@ -85,7 +111,7 @@ enum Halo {
     /// the cake at the end of the round. Without it the ring would be a child
     /// of the prop and float in mid-air the moment she picked anything up.
     static func attach(to entity: Entity, radius size: Float, ticker: Ticker,
-                       colour: UIColorLike = Palette.butterYellow,
+                       colour: UIColorLike = Halo.core,
                        surfaceY: @escaping @MainActor (SIMD3<Float>) -> Float) -> Handle? {
 
         guard let parent = entity.parent else { return nil }
@@ -182,12 +208,15 @@ enum Halo {
         let x = (r - radius) / (sigma * radius)
         let g = exp(-0.5 * x * x)
         let edge = exp(-0.5 * (spread / sigma) * (spread / sigma))
-        return max(0, (g - edge) / (1 - edge)) * 0.92
+        // Peaks at 1, not 0.92: the middle band of the ring is fully opaque, so
+        // what she sees at the centre of the falloff is the yellow itself
+        // rather than the yellow mixed with the table underneath it.
+        return max(0, (g - edge) / (1 - edge))
     }
 
-    /// Gold in the shoulders, washing out towards warm white at the core —
-    /// which is what the reference plate does, and what stops the middle of the
-    /// band reading as a flat sticker.
+    /// Amber in the shoulders, coming up to full yellow at the core. It used to
+    /// mix towards warm white, which is what made the brightest part of the ring
+    /// the part that vanished into a cream room.
     private static func tint(_ alpha: Float) -> UIColorLike {
         Palette.mix(gold, core, min(1, alpha * 1.25))
     }

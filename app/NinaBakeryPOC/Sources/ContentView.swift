@@ -25,6 +25,22 @@ struct ContentView: View {
     private enum Opening { case loading, film, playing }
     @State private var opening: Opening = .loading
 
+    /// **Whether the title plate is still up, kept separate from `opening`.**
+    ///
+    /// The two used to be the same thing, and that is what made the room flash
+    /// between the plate and the film (owner, 2026-08-16). Swapping `.loading`
+    /// for `.film` inside a `withAnimation` crossfades the plate *out* while the
+    /// film fades *in*, and for that half second neither cover is opaque — so
+    /// what she sees through the two of them is the lit kitchen, a third of a
+    /// second before a film that is about walking into it. The player needing a
+    /// moment to produce its first frame only widens the gap.
+    ///
+    /// With the plate on a flag of its own, the film can be inserted *underneath
+    /// it* with no animation at all and the plate lifted separately, once the
+    /// film reports it is actually playing. There is never a frame with a
+    /// transparent cover on it.
+    @State private var plateUp = true
+
     /// Set from the `RealityView` make closure, once the room exists and the
     /// lights are on it. This is what the loading screen waits for.
     @State private var sceneReady = false
@@ -36,13 +52,20 @@ struct ContentView: View {
                 roomView
                 restartButton
                 developerLayer
+                // **Order and transitions are both load-bearing here.** The
+                // plate is last, so it is on top of the film; and each cover
+                // appears with no animation and leaves with a fade, so there is
+                // never a moment when the thing covering the room is
+                // semi-transparent. A cover that fades *in* is a peep-hole.
                 if opening == .film {
-                    IntroMovie(onFinish: finishIntro, onShotFinished: introShotFinished)
-                        .transition(.opacity)
+                    IntroMovie(onFinish: finishIntro,
+                               onShotFinished: introShotFinished,
+                               onStarted: filmStarted)
+                        .transition(.asymmetric(insertion: .identity, removal: .opacity))
                 }
-                if opening == .loading {
+                if plateUp {
                     LoadingScreen(ready: sceneReady, onFinish: finishLoading)
-                        .transition(.opacity)
+                        .transition(.asymmetric(insertion: .identity, removal: .opacity))
                 }
             }
             .coordinateSpace(.named("room"))
@@ -90,20 +113,45 @@ struct ContentView: View {
         .gesture(finger)
     }
 
-    /// The title plate is done. Either the film follows, or the kitchen does.
+    /// The title plate has done its waiting. Either the film follows, or the
+    /// kitchen does — and the two are uncovered differently on purpose.
+    ///
+    /// **With a film, nothing fades yet.** The film is inserted underneath the
+    /// plate with no animation, so the plate is still the only thing on screen;
+    /// `filmStarted` lifts it once there is a first frame under it. Fading the
+    /// plate out here instead is what let the room flash through between the two
+    /// covers.
+    ///
+    /// **Without one, this is the reveal**, and the crossfade is the point: the
+    /// plate is the only cover and the kitchen is what is behind it.
     private func finishLoading() {
         guard opening == .loading else { return }
-        let film = IntroMovie.isAvailable
-        withAnimation(.easeInOut(duration: 0.5)) {
-            opening = film ? .film : .playing
-        }
-        if film {
-            scene.sayIntroLines()
-        } else {
+        guard IntroMovie.isAvailable else {
+            opening = .playing
+            withAnimation(.easeInOut(duration: 0.5)) { plateUp = false }
             // The beat that `GameScene.start` used to schedule, now that the
             // room appears here rather than at launch.
             scene.greetWhenQuiet(after: 0.9)
+            return
         }
+        opening = .film
+        // **And a way out if the first frame never comes.** `IntroMovie` calls
+        // back off the player's own clock, which is the honest signal and also
+        // one that a corrupt file or a decoder that gives up would never send.
+        // "She cannot lose" has to cover a title plate too, so after three
+        // seconds it lifts anyway — onto the film's own black, which is a worse
+        // opening than the film and a far better one than a picture with no way
+        // out of it.
+        scene.ticker.after(3.0) { filmStarted() }
+    }
+
+    /// The film's first frame is on screen. Lift the plate off it, and start
+    /// Nina — both from the picture rather than from a stopwatch, which is what
+    /// gives shot 1's line its full 8 seconds instead of 7.5 of a moving target.
+    private func filmStarted() {
+        guard opening == .film, plateUp else { return }
+        withAnimation(.easeInOut(duration: 0.45)) { plateUp = false }
+        scene.sayIntroLines()
     }
 
     /// The cut inside is where Nina names the kitchen. Hung off the cut rather
