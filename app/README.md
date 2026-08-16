@@ -735,22 +735,23 @@ rather than a billboard.
 
 ## Deliberate deviations from the design
 
-**There is ambient occlusion on the two Blender props, and nowhere else.**
+**There is ambient occlusion on the three Blender props, and nowhere else.**
 `references/REFERENCES.md` bans it outright — the facets are supposed to do the
 shading and corners are supposed to stay light — and that holds everywhere a
-facet can answer the question. These two are where it cannot: the berry's crown
-stands up off the globe, the sack's collar fans out over its tie, and in both
-cases the surfaces in the join face the same way as everything around them, so
-they come back the same tone and nothing says the two shapes touch. Owner's
-call, on seeing the standing crown, and extended to the sack.
+facet can answer the question. These three are where it cannot: the berry's crown
+stands up off the globe, the sack's collar fans out over its tie, and every one
+of the crate's boards butts into a corner post — and in all of those joins the
+surfaces face the same way as everything around them, so they come back the
+same tone and nothing says the two shapes touch. Owner's call, on seeing the
+standing crown, and extended to the sack and the crate.
 
 It is baked **to the facets, not to a texture** — `bake_ao_facets` in
 `models/lowpoly.py` measures the occlusion at model time and splits the faces
 in the crevice into their own mesh, which `Palette.occluded` paints a step
 darker. So there are still no UVs, no lightmap and no runtime cost, and the
-occlusion is still one flat tone on a facet. Its reach is 2.2 mm on the berry
-and 6 mm on the sack: contact shading where two parts meet, not the all-over
-darkening the clay direction was rejected for. Everything built by `FacetedMesh`
+occlusion is still one flat tone on a facet. Its reach is 2.2 mm on the berry,
+4 mm on the crate and 6 mm on the sack: contact shading where two parts meet,
+not the all-over darkening the clay direction was rejected for. Everything built by `FacetedMesh`
 has none. `models/README.md` has the argument in full and the three rules that
 keep the bake honest, and `LIGHTMAPS.md` is still the untaken texture route.
 
@@ -1034,11 +1035,11 @@ control in the app.
 
 ### Props modelled in Blender
 
-**Two props are not built in code: the flour sack and the toverbosbes.** Both
-are USDZ files in `Resources/Models/`, modelled by the scripts in
+**Three props are not built in code: the flour sack, the toverbosbes and the
+crate.** All are USDZ files in `Resources/Models/`, modelled by the scripts in
 [`models/`](../models/README.md) and loaded by `ModelLibrary`.
 
-They are a trial of a second authoring route, and both were picked on the same
+They are a trial of a second authoring route, and each was picked on the same
 test — the prop where the `FacetedMesh` vocabulary visibly runs out against its
 plate, not the prop that would be fun to model.
 
@@ -1050,8 +1051,14 @@ plate, not the prop that would be fun to model.
 - **The berry**: a faceted globe with a calyx dished into its top and a crown
   of five sharp spikes standing in it. A lathe gives broad vertical panels, a
   pole at each end, and no way to make a dish and a dome from one profile.
-  Without the crown a round berry is a blue marble. It also carries the game's
-  only ambient occlusion — see the deviations above.
+  Without the crown a round berry is a blue marble.
+- **The crate**: four corner posts with boards spanning between them and gaps
+  you can see through. This one is not a shape the vocabulary was missing, it is
+  a shape nobody built — the code version is a four-sided `bowl` with a ring on
+  top, which is a tapered tub, and a tub cannot be tuned into joinery. Its plate
+  was generated for the job: `references/props/crate-a.png`.
+
+All three carry the game's only ambient occlusion — see the deviations above.
 
 What the route costs is a round trip through a file, and what it buys is shapes
 that have to be built vertex by vertex. `models/README.md` has the rules a

@@ -342,6 +342,24 @@ def apply_modifiers(ob):
     return ob
 
 
+def add_box(bm, x, y, z):
+    """Append one axis-aligned box to `bm`. Each argument is a `(min, max)` pair.
+
+    Several boxes can go into one bmesh and still make a closed mesh — every
+    edge has two faces even though the shells are disjoint — so a prop built
+    out of boards is one object with one material, not twelve.
+    """
+    x0, x1 = x
+    y0, y1 = y
+    z0, z1 = z
+    v = [bm.verts.new(c) for c in ((x0, y0, z0), (x1, y0, z0), (x1, y1, z0), (x0, y1, z0),
+                                   (x0, y0, z1), (x1, y0, z1), (x1, y1, z1), (x0, y1, z1))]
+    for face in ((0, 3, 2, 1), (4, 5, 6, 7), (0, 1, 5, 4),
+                 (1, 2, 6, 5), (2, 3, 7, 6), (3, 0, 4, 7)):
+        bm.faces.new([v[i] for i in face])
+    return bm
+
+
 def clear(prefix):
     """Remove any objects from a previous run, so a script is re-runnable."""
     for ob in list(bpy.data.objects):

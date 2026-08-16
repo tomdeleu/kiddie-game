@@ -674,12 +674,40 @@ enum KitchenProps {
         return sack
     }
 
-    /// The crate the fifth ingredient waits in, down on the floor.
+    /// The crate the fifth ingredient waits in, down on the floor. It is the
+    /// only reason to reach below the table, and reaching down is half of what
+    /// makes the room feel tall.
     ///
-    /// A four-sided open box, turned to put a corner towards the camera so it
-    /// reads as having an inside. It is the only reason to reach below the
-    /// table, and reaching down is half of what makes the room feel tall.
+    /// **Modelled in Blender**, from `references/props/crate-a.png` — and this
+    /// one is not a shape the vocabulary was missing, it is a shape nobody
+    /// built. The code version below is a four-sided `bowl` with a lathe ring
+    /// on top: a tapered tub with a rim, which reads as a plastic bucket, and
+    /// no tuning of three numbers turns a solid tub into something made of
+    /// boards. A crate is joinery — corner posts, boards spanning between them,
+    /// and gaps you can see through — which is a dozen boxes, not a profile.
+    ///
+    /// **No 45° turn on the modelled one, and that is not an omission.** The
+    /// code crate is a 4-sided prism, whose vertices sit on the axes and whose
+    /// faces therefore run diagonally, so it has to be spun to put a flat face
+    /// square to the room. `models/crate.py` builds a box with its faces already
+    /// normal to X and Z, and the fixed camera looks down the +X+Z diagonal, so
+    /// it already shows two sides and the corner post between them. Turning it
+    /// as well would put a flat side to the camera and lose the inside.
+    ///
+    /// Same two fallbacks as every imported prop — see `flourSack(flat:)`.
     static func crate(flat: Bool) -> Entity {
+        if flat, let modelled = ModelLibrary.load("crate",
+                                                  tint: ["Crate": Palette.cream,
+                                                         "CratePost": Palette.sandyWood]) {
+            modelled.name = "Crate"
+            return modelled
+        }
+        return proceduralCrate(flat: flat)
+    }
+
+    /// The code-built crate — a tub, and the reason there is a modelled one.
+    /// See `crate(flat:)`.
+    static func proceduralCrate(flat: Bool) -> Entity {
         let crate = Entity()
         crate.name = "Crate"
         crate.orientation = simd_quatf(angle: .pi / 4, axis: [0, 1, 0])

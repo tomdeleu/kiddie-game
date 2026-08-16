@@ -313,7 +313,11 @@ final class KitchenRoom {
         box.position = Layout.crateSpot
         root.addChild(box)
         crate = box
-        ContactShadows.attach(to: box, radius: 0.026, settings: settings)
+        // 30 mm, not 26: the modelled crate is a square box 46 mm across the
+        // flats and 65 mm across the corners, where the tub it replaced was 37
+        // and 52. The disc has to reach the corner posts or the crate looks
+        // like it is standing on a coaster.
+        ContactShadows.attach(to: box, radius: 0.030, settings: settings)
         ContactShadows.update(for: box, surfaceY: Layout.floorY, settings: settings)
 
         cakePlank = root.findEntity(named: "CakePlankBoard") as? ModelEntity
