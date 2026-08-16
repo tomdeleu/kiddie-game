@@ -173,7 +173,7 @@ standalone assets. Noting it so nobody rediscovers it and wastes an afternoon.
 Cost is ~0.15 credits per line, so auditioning and regenerating is effectively
 free. There is no reason to settle for a voice that is merely acceptable.
 
-### 7.2 The fairy's voice — DECIDED
+### 7.2 Nina's voice — DECIDED
 
 **Gracie.** Young female preset, `elevenlabs` engine.
 
@@ -187,8 +187,10 @@ voice_id   09878754-f20b-5330-9790-58a8027ab5b2
 Also recorded in [`audio/voices.json`](audio/voices.json), which is the file to
 read when generating lines.
 
-Every line the fairy speaks — now and in any room added later — uses this ID, so
-she does not change voice mid-project.
+Every line Nina speaks — now and in any room added later — uses this ID, so she
+does not change voice mid-project. It was cast for a fairy helper called Luna
+who no longer exists; the voice was cast *young*, so it survived the change to
+Nina unaltered. §11 has the reversal.
 
 **Audition shortlist** it was chosen from, all generated with the line
 *"Hallo Nina! Kom je mij helpen met taart bakken?"*:
@@ -626,18 +628,23 @@ everything from it.
 
 ## 11. Open questions
 
-- Casting Otto the oven, and the four voices covering the twelve friends.
+- Casting Otto the oven, and the four voices covering the eleven friends.
 - Music and SFX source — CC0 library, paid pack, or GarageBand? The party is the
   payoff and it is currently silent.
 - The character proportion rule. (The palette is settled — see
   [`POC.md`](POC.md).)
 
-**Resolved.** The fairy is called **Luna** — LOO-nah in every language that
-matters, no vowel that shifts across them, clearly distinct from *Nina* in
-sound, and it means moon, which hands the character a magic motif for nothing.
-
-Nina is the baker and has no avatar; she is the hands, the bakery
-carries her name, and the friends thank her by name. The fairy is a separate
-character who lives there and helps. That avoids the "this is you" reaction
-falling flat if the model does not match her self-image, and it means there is
-no player character to model, rig or animate.
+> **Superseded, 2026-08-15 and 2026-08-16.** This block used to resolve two
+> things that have both since been reversed by the owner, and it is kept only so
+> that the reversal is legible.
+>
+> It said the fairy was called **Luna**, and that **Nina had no avatar** — she
+> was the hands, and Luna was a separate character who lived in the bakery and
+> helped, which avoided the "this is you" reaction falling flat and meant there
+> was no player character to model or rig.
+>
+> **Both are gone.** Nina is the baker, she is on screen behind the table, and
+> every line in the game is hers. Luna does not exist, and the twelfth gold
+> frame that was hers is now Nina's own. The risk the old decision was
+> protecting against is real and has been accepted; what it buys is a kitchen
+> with somebody in it. `GAMEPLAY.md` §1 is the current text.

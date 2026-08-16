@@ -43,6 +43,11 @@ the wall of twelve frames. And **test the kitchen with Nina first** — `POC.md`
 has the protocol, and what it says about the snap radius and target sizes is
 the thing worth knowing before another room is built on the same numbers.
 
+**Before writing a room, read [`ROOMS.md`](ROOMS.md).** It is the contract the
+kitchen established — the box and the camera, the step machine, the halo, the
+voice rules, targets, carrying, idle, misses, the door — written down once so
+the next room does not have to be reverse-engineered out of `KitchenRoom.swift`.
+
 [`POC.md`](POC.md) stays as the record of why the look is what it is, and its
 palette and pass criteria are still the standard every new room is held to.
 
@@ -52,7 +57,8 @@ palette and pass criteria are still the standard every new room is held to.
 |---|---|
 | [`app/`](app/) | **The app.** De Keuken, whole: the round, the toys, Nina, Otto, the lighting panel. Written but never compiled — see its README. |
 | [`models/`](models/) | **Props modelled in Blender**, as Python that rebuilds them. Six so far — the flour sack, the toverbosbes, the crate, the toverklaver, the sink and the cake, the only props not built in code. Its README has the rules, the export settings, and the test a prop has to pass to belong there. |
-| [`GAMEPLAY.md`](GAMEPLAY.md) | **Storyline and gameplay in detail.** The wall, the twelve friends and their wishes, the cake rules, what each room requires versus what is optional, the timing budget. |
+| [`GAMEPLAY.md`](GAMEPLAY.md) | **Storyline and gameplay in detail.** The wall, the eleven friends and their wishes, the cake rules, what each room requires versus what is optional, the timing budget. Reconciled with the built kitchen on 2026-08-16. |
+| [`ROOMS.md`](ROOMS.md) | **How to build a room.** The contract De Keuken established: the box, the camera, the step machine, the halo, the voice rules, touch, carrying, idle, misses, the door — and the traps that have already been paid for once. Read before writing a room. |
 | [`POC.md`](POC.md) | Step 0 proof of concept — answered. Kept for the palette, the geometry specs and the pass criteria. |
 | [`audio/`](audio/) | The voice script, the casting, the auditions, and the re-fetch script. |
 | [`app/LIGHTMAPS.md`](app/LIGHTMAPS.md) | How to bake AO in Reality Composer Pro 3, and how to A/B it against no-AO. |
@@ -126,10 +132,21 @@ These were argued through and settled. Reopen only if the user asks.
   the fairy in `references/plates/02-fairy-character.png`, standing behind the
   table and working while the round runs. **This reversed an earlier decision**
   — she used to have no avatar and a separate fairy called Luna did the
-  talking — on the owner's call, 2026-08-15. Luna is gone; `GAMEPLAY.md` §1 has
-  what that leaves open on the wall of frames.
+  talking — on the owner's call, 2026-08-15. Luna is gone.
 - **The spine is the wall of twelve frames**, which doubles as a textless level
-  select. Not chapters, not endless orders. `GAMEPLAY.md` §2.
+  select. Not chapters, not endless orders. `GAMEPLAY.md` §2. **Eleven of them
+  are friends and the twelfth, gold one is Nina's own** — owner's call,
+  2026-08-16, filling the slot Luna's removal emptied. The last cake is the one
+  she makes for her own finished bakery.
+- **A room can be played two ways** — as one step inside a round, or as a visit
+  on its own with its own completion rule (the kitchen's is three cakes). One
+  flag, not two implementations. Owner's call, 2026-08-16. `GAMEPLAY.md` §3.
+- **The basket holds five, not three.** Owner's call, 2026-08-16, ratifying what
+  the kitchen shipped: the garden grows five, the kitchen fetches five from five
+  places. `GAMEPLAY.md` §5.
+- **Drag to play, tap to learn the word.** Every prop says what it is when
+  tapped, in Dutch, one variant each. It is the only part of the game that
+  teaches her language, and every new room brings its own naming lines.
 - **Nothing unlocks.** Every seed, sticker and friend is available from the
   first round. Variety comes from her choices and from who is at the door.
 - **Every wish can be ignored** with no penalty and no difference in the
