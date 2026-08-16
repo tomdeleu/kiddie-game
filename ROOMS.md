@@ -16,8 +16,8 @@ on first build — `app/README.md`, "First build".
 > than out of it.** Where it needed something this contract described as living
 > inside `KitchenRoom`, that thing moved: §5's targets and §6's carrying are now
 > `Engine/Surfaces.swift` and `Engine/CarryController.swift`, the door is
-> `Props/Doorway.swift`, and a room is a `GameRoom` the developer panel can
-> switch between. Nothing in the *rules* changed; the addresses did, and they
+> `Props/Doorway.swift`, and a room is a `Room` the developer panel can switch
+> between. Nothing in the *rules* changed; the addresses did, and they
 > are updated below.
 
 ---
@@ -250,6 +250,20 @@ press that travels less than **24 pt** (`tapSlop`) is a tap.
   as one on the ground behind it, which is how the garden's butterfly came to
   sit on top of two of the bed's five holes. Check a layout by perpendicular
   distance, and check the fliers.
+  **`RoomBox.screenSeparation(_:_:)` is that measurement**, and it is what a
+  spacing check must call. `RoomBox.distanceXZ` is still right for snapping — a
+  drop is about where a prop lands — but it is the wrong question for *can she
+  tell these two apart*.
+  **Versieren was checked against this and does not pass.** Its
+  `VersierLayout.assertSpacing` measures XZ, and all seven sticker trays run
+  along an axis at a 64 mm pitch, so on screen they are 47–51 mm apart against a
+  64 mm requirement; the two tools and the stool are the same story. That check
+  now prints the perpendicular overlaps as well as asserting the XZ ones, and it
+  **warns rather than asserts** on them deliberately: the room is built and on
+  device, the fix is either an 85 mm pitch or a 24 mm radius — 60 pt, under
+  `CONCEPT.md` §5's floor — and choosing between those needs someone who can see
+  the screen. Do not let a new room ship in that state; it is far cheaper before
+  the props are placed than after.
 - **Overlap between like things in a row is intended; overlap between unlike
   things is a bug.** Five holes, eight jars, five flowers: nearest-wins gives
   each an equal band and an imprecise tap always lands on the nearest one, which
@@ -411,7 +425,15 @@ voice and the save are identical. What differs:
 In the kitchen this is exactly two functions: `refreshDoorInvitation()`, which
 decides whether the door is inviting, and `endRoom()`, which is what happens
 when it is tapped. **`endRoom()` is the one function the decorating room
-replaces.**
+replaces** — and as of 2026-08-16 it has: the kitchen's swing is now the first
+half of a handover, and the finished `CakeSpec` goes to Versieren on the beat
+the leaf reaches full open.
+
+The two rooms differ in one instructive way. The kitchen's door waits for three
+cakes; **the decorating room's is inviting from the first frame**, because it
+has no required action to wait for. `refreshDoorInvitation` still exists there
+and is nearly empty, which is the right shape — a room with nothing to gate on
+should say so in the function that would have gated it, not by deleting it.
 
 ### The door says it three ways at once
 
@@ -444,8 +466,13 @@ None of them a word or an arrow, because she cannot read one.
   the clipping was.** Worth remembering for any cue that belongs to something
   standing against a wall.
 
-**Never promise a room that does not exist.** With nowhere to go, the kitchen's
-ending is a ceremony — the leaf swings wide, light spills over the threshold, and
+**Never promise a room that does not exist**, and note this does not stop
+applying once one of them does. The kitchen now says *"nu gaan we hem
+versieren!"* — but only when there is a cake to take through; reach a finished
+kitchen with an empty plank and it still says the careful thing. Versieren's own
+door promises a party that is coming *straks*, because the party is not built.
+
+With nowhere to go, the kitchen's ending was a ceremony — the leaf swings wide, light spills over the threshold, and
 Nina says the next room is coming *soon* rather than *now*. A 4-year-old told she
 is going somewhere and then not taken there has been lied to.
 
@@ -468,13 +495,21 @@ it can and add cases only for genuinely new events.
 
 A checklist, in the order it is worth doing:
 
-0. **Conformance to `GameRoom`** (`Sources/Game/GameRoom.swift`) and a case in
-   `RoomID`, so it appears in the developer panel's room picker and can be
-   visited without playing the game up to it. Seven small methods, of which only
-   `teardown()` has a trap: **a `Ticker` job a torn-down room still holds keeps
-   animating a detached entity forever, and nothing on screen says so.** Every
-   job id, every `Halo.Handle` and every touch target goes in it — which is the
-   same list a rebuild already needs, so write it once and call it from both.
+0. **Conformance to `Room`** (`Sources/Game/Room.swift`) and a case in `RoomID`,
+   so it appears in the developer panel's room picker and can be visited without
+   playing the game up to it. A handful of small members, of which only `leave()`
+   has a trap: **a `Ticker` job a torn-down room still holds keeps animating a
+   detached entity forever, and nothing on screen says so.** Every job id and
+   every `Halo.Handle` goes in it — which is the same list a rebuild already
+   needs, so write it once and call it from both. `GameScene` detaches the tree
+   and clears the touch targets on its own side, so `leave()` owns the jobs, the
+   save, and any `TouchRouter` callback the room set beyond its targets
+   (`onEmptyTap`, `onAnyTouch`, `onMoved` — the garden's butterfly follows the
+   last of those, and a stale one would follow her finger around the kitchen).
+   **Ending is `onExit`**, not a jump: the room says what just happened —
+   `RoomExit.keuken(basket)`, `.versieren(cake)`, `.bakkerij` — and hands back
+   control. A room that knows what comes next is a routing table waiting to
+   happen.
 1. **A `Layout` block** — every position in one table, plus the room's own
    `Surfaces`. Almost every bug in a room like this is two files disagreeing
    about where the table top is.
@@ -530,6 +565,20 @@ A checklist, in the order it is worth doing:
 - **Size a surface from the widest thing that stands on it**, not from what
   looks right in elevation. The wall shelves were 14 mm deep under a 31 mm honey
   pot, so its contents overhung the front and pushed into the plaster at once.
+- **`TouchRouter.register` appends.** Re-registering a name leaves both
+  targets, and the second one still holds its entity and still wins hit tests.
+  Harmless while every target is registered once in `build`; a leak per frame
+  the moment a room registers one mid-round. `remove(prefixed:)` exists for
+  exactly that.
+- **A number two rooms depend on belongs to neither of them.** The cake's tier
+  radii lived in `KitchenProps` and again in `models/cake.py`, which was fine
+  until every sticker position in a second room derived from them. They are
+  `CakeGeometry` now. The general form: the moment a constant crosses a room
+  boundary, it stops being that room's.
+- **Check spacing against the sum of the radii, not against a pitch.** Seven
+  trays at a 64 mm pitch are correctly spaced from each other and 2 mm too close
+  to the tools beside them, because the tools carry a larger radius.
+  `VersierLayout.assertSpacing` is the cheap version of noticing.
 - **A prop's resting height must be derived, never hand-typed.** The shelf
   ingredients hovered 10 mm above their plank from the day the shelves were
   built, because the jars took the plank's top and the ingredients took a

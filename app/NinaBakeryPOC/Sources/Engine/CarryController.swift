@@ -105,7 +105,7 @@ final class CarryController {
         // its rim, and reading the offset off a point 20 mm higher would put a
         // 23 mm step into the very first frame of the drag.
         offset = entity.position
-            - Surfaces.pointOnRay(through: world, atHeight: entity.position.y)
+            - RoomBox.pointOnRay(through: world, atHeight: entity.position.y)
         offset.y = 0
         origin = entity.position
         currentY = entity.position.y
@@ -170,7 +170,7 @@ final class CarryController {
     private func place() {
         guard let carried else { return }
         var next = surfaces.clamp(
-            Surfaces.pointOnRay(through: anchor, atHeight: currentY) + offset)
+            RoomBox.pointOnRay(through: anchor, atHeight: currentY) + offset)
         // Y is owned by the carry job; the touch only ever moves it about.
         next.y = currentY
         carried.position = next
@@ -203,8 +203,8 @@ final class CarryController {
         for container in containers() where container.entity !== entity {
             guard container.entity.isEnabled, container.entity.parent != nil else { continue }
             let top = container.entity.position.y + container.rimHeight
-            let over = Surfaces.pointOnRay(through: anchor, atHeight: top)
-            guard Surfaces.distanceXZ(over, container.entity.position) <= container.radius
+            let over = RoomBox.pointOnRay(through: anchor, atHeight: top)
+            guard RoomBox.distanceXZ(over, container.entity.position) <= container.radius
             else { continue }
             if best == nil || top > best! { best = top }
         }
@@ -254,7 +254,7 @@ final class CarryController {
         // zero-length drag (`TouchRouter.ended`), and without this the berry
         // would obediently fall to the floor because that is what is under a
         // shelf. A grab she thought better of gets the same answer.
-        guard Surfaces.distanceXZ(entity.position, from) > 0.010 else {
+        guard RoomBox.distanceXZ(entity.position, from) > 0.010 else {
             ticker.move(entity, to: from, duration: 0.16, arc: 0, ease: Ease.out) {
                 [weak self] in
                 guard let self else { return }

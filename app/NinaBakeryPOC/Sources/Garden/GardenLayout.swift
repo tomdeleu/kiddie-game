@@ -8,22 +8,25 @@ import simd
 /// disagreeing about where the bed is. `Layout` is the kitchen's copy of this
 /// and `ROOMS.md` §11.1 is the rule.
 ///
-/// **Same box, same chair.** `roomSize`, `wallHeight`, `floorY` and
-/// `CameraRig.eye` are the kitchen's, unchanged, because the whole game is one
-/// continuous place and a room seen from a different chair is a different game
-/// with the same palette (`ROOMS.md` §0). Nothing here needed more floor than
-/// the kitchen has — the garden's problem is the opposite, one long bed and a
-/// lot of open ground.
+/// **Same box, same chair** — `RoomBox`, which is where the box's own numbers
+/// live for every room. The whole game is one continuous place, and a room seen
+/// from a different chair is a different game with the same palette
+/// (`ROOMS.md` §0). Nothing here needed more floor than the kitchen has; the
+/// garden's problem is the opposite, one long bed and a lot of open ground.
 ///
 /// **So every touch radius is the kitchen's too**, including its 1.08 camera
 /// scaling. They are world-space spheres satisfying a rule about the screen
 /// (`CONCEPT.md` §5's ~120 pt targets), and the screen has not changed.
+///
+/// **What this room does not take from `RoomBox` is `shell()`** — that builds
+/// the two walls every other room opens with, and this one has a fence. See
+/// `GardenRoomBuilder`.
 enum GardenLayout {
 
-    static let roomSize: Float = Layout.roomSize
-    static let half: Float = Layout.half
-    static let slabThickness: Float = Layout.slabThickness
-    static let floorY: Float = Layout.floorY
+    static let roomSize: Float = RoomBox.roomSize
+    static let half: Float = RoomBox.half
+    static let slabThickness: Float = RoomBox.slabThickness
+    static let floorY: Float = RoomBox.floorY
 
     // MARK: - The fence, where the walls were
 
@@ -102,10 +105,10 @@ enum GardenLayout {
     /// **Five holes, and five is `GAMEPLAY.md` §5's basket.**
     ///
     /// The garden grows what the kitchen fetches, so this is
-    /// `Layout.ingredientsPerRound` rather than a number of its own — if the
+    /// `KitchenLayout.ingredientsPerRound` rather than a number of its own — if the
     /// basket ever goes back to three (`GAMEPLAY.md` §10 leaves it open), the
     /// bed follows it and nothing else has to be touched.
-    static var plotCount: Int { Layout.ingredientsPerRound }
+    static var plotCount: Int { KitchenLayout.ingredientsPerRound }
 
     /// How many watering passes ripen a plant. Three, as `GAMEPLAY.md` §6.2 has
     /// it — and because the bed is a row, three sweeps ripen all five.
@@ -372,11 +375,11 @@ enum GardenLayout {
         // flowers, `minZ` the bushes against the back fence, `maxZ` the open
         // ground where the can and the basket stand.
         minX: -0.205, maxX: 0.200, minZ: -0.200, maxZ: 0.200,
-        lift: Layout.carryLift
+        lift: RoomBox.carryLift
     )
 
     /// Horizontal distance, the only kind that matters for a drop.
     static func distanceXZ(_ a: SIMD3<Float>, _ b: SIMD3<Float>) -> Float {
-        Surfaces.distanceXZ(a, b)
+        RoomBox.distanceXZ(a, b)
     }
 }

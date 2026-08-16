@@ -319,7 +319,7 @@ Two consequences, both real:
   `Layout.ingredientsPerRound`.
 
   > **The garden has landed, and this is now more pressing rather than less.**
-  > It fills the basket for real — `HarvestStore` hands it to the kitchen — and
+  > It fills the basket for real — `RoomExit.keuken` hands it to the kitchen — and
   > it fills it with **whatever she chose**, repeats included, from eight jars.
   > So the arithmetic above is no longer the game's: five rainbow strawberries
   > are now a reachable, deliberate, very pink cake, and so is a bed of five
@@ -506,7 +506,7 @@ function the decorating room replaces.
 further back, the doorway leads nowhere yet, and the palette gained a blue, an
 amber and a lilac the locked thirteen do not contain.
 
-### 6.4 Versieren — decorating — **NEXT**
+### 6.4 Versieren — decorating — **BUILT**
 
 **Required:** nothing. The door works immediately. This is the room she will
 spend the most time in and it must never ask her for anything.
@@ -564,12 +564,18 @@ tenth sprinkle, the cake turned all the way round); the room's own idle nudge �
 which must be *"it is lovely, shall we go?"* rather than an instruction, since
 there is nothing she is failing to do.
 
-**Completion in round mode** is the door, whenever she likes. **In visit mode**
-it needs a rule of its own and does not obviously have one — decorating with no
-cake in front of her is not a thing. The likely answer is that this room has no
-visit mode at all and is only ever entered mid-round, which would make it the
-first room where the flag is false. Worth deciding before it is built, not
-after.
+**Completion in round mode** is the door, whenever she likes.
+
+**Visit mode exists — DECIDED, 2026-08-16.** This file's own lean was that it
+should not, on the grounds that decorating with no cake in front of her is not a
+thing. The owner's call went the other way, and the reasoning is that the
+missing cake is a thing to supply rather than a reason to refuse her the room:
+entering on a visit **deals a cake** off the same shuffled deck the kitchen
+uses. The completion rule is the door, exactly as in a round.
+
+That also made the debug room switcher and visit mode one code path instead of
+two, which is the tell that it was the right shape: entering the room with no
+cake handed over *is* a visit.
 
 ### 6.5 Het Feest — the party
 
@@ -683,10 +689,10 @@ assumed. The kitchen is the calibration: 46 line ids across 86 files came to
 
 | | Line ids | Rough credits |
 |---|---|---|
-| De Keuken — **done** | 46 + 21 names | ~32 |
+| De Keuken — **done** | 47 + 21 names | ~32 |
 | The opening film — **done** | 3 | ~1 |
-| De Tuin — **done** | 17 + 13 names | ~16 |
-| Versieren | ~12 + ~15 names | ~12 |
+| Versieren — **done** | 12 + 15 names | ~11 |
+| De Tuin — **done** | 17 + 15 names | ~16 |
 | Het Feest | ~10 + ~10 names | ~10 |
 | De Bakkerij | ~10 + ~10 names | ~10 |
 | Eleven friends × 6–8 | ~80 | ~24 |
@@ -743,8 +749,12 @@ about it. After that:
    pulled back 8%, and every touch radius was scaled to compensate. That
    compensation is a calculation, not an observation, and one afternoon turns it
    into an observation.
-3. **Decorating**, which is the other half of a cake and the room she will live
-   in. `KitchenRoom.endRoom()` is the single function that changes.
+3. ~~**Decorating**~~ — **built**, 2026-08-16. `KitchenRoom.endRoom()` was
+   indeed the single function that changed, and the kitchen's door now hands its
+   finished `CakeSpec` over. What it cost beyond the room itself was the seam:
+   one `Room` protocol, the box split out of the kitchen's `Layout`, and a
+   debug room switcher behind the existing parent gate. See
+   [`app/README.md`](app/README.md).
 4. **The party**, so a round has an ending. Start the music search before the
    room — it is the only genuinely blocked dependency in the project.
 5. **The wall** — twelve frames, the grey ghosts, the level select, and
@@ -784,7 +794,6 @@ completed, because until the wall exists there is no reason for a second round.
 - **Whether the basket goes back to three when the garden fills it** — §5. Five
   dealt from six makes every cake a rainbow and four of the eleven wishes
   automatic. Decide before the friends are built.
-- **Whether decorating has a visit mode at all** — §6.4.
 - **Whether hanging the frame is something she does or something that happens** —
   §6.6.
 - **Whether the eleven friends are the right eleven.** They are cheap to change

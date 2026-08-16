@@ -49,6 +49,23 @@ struct RoundState: Codable {
     /// The cake currently out of the oven, if any.
     var cake: CakeSpec?
 
+    /// **The last cake she actually finished** — the one the door hands to the
+    /// decorating room.
+    ///
+    /// Not `shelf.last`, which is nearly the same thing and wrong in one case
+    /// that will happen: the plank holds four and drops the oldest off the end,
+    /// so after a long session `shelf` is a window rather than a history. This
+    /// is the cake she just made, and it survives the plank forgetting it.
+    ///
+    /// Optional because it did not exist in the previous build, per `ROOMS.md`
+    /// §2 — a save written before this still loads, and the door falls back to
+    /// `shelf.last` for it.
+    var lastFinished: CakeSpec?
+
+    /// What the door should hand over. The fallback is what makes an old save
+    /// work rather than arriving at the decorating room with nothing.
+    var cakeToDecorate: CakeSpec? { lastFinished ?? shelf.last }
+
     var bowlSpec: CakeSpec { CakeSpec(ingredients: inBowl) }
 
     /// The lowest slot she has not used yet — the one the halo lights.
@@ -64,9 +81,9 @@ struct RoundState: Codable {
     var allCollected: Bool { usedSlots.count >= basket.count && !basket.isEmpty }
 
     /// Which of the five places the next ingredient is waiting in.
-    var nextSource: Layout.Source? {
+    var nextSource: KitchenLayout.Source? {
         guard !allCollected else { return nil }
-        return Layout.Source(rawValue: min(nextIndex, Layout.Source.allCases.count - 1))
+        return KitchenLayout.Source(rawValue: min(nextIndex, KitchenLayout.Source.allCases.count - 1))
     }
 
     /// A fresh basket, one ingredient per source.
@@ -121,43 +138,43 @@ struct RoundState: Codable {
     /// still out of reach** and honestly cannot be bought this way: one colour
     /// from five draws needs four colourless ingredients in the hand, which
     /// needs at least four in the deck, which is most of it. The remaining
-    /// lever is `Layout.ingredientsPerRound` — at three, the colour count is
+    /// lever is `KitchenLayout.ingredientsPerRound` — at three, the colour count is
     /// free to be one, two or three and every cake in §5 comes back. That is
     /// the change to make when the garden lands and starts choosing what goes
     /// in the basket, because an interesting three beats an exhaustive five.
     ///
     /// ## And the garden fills it, when she has been there
     ///
-    /// `HarvestStore` is the handover (`app/.../Game/Harvest.swift`): De Tuin
-    /// writes the five things she actually picked, and the next round started in
-    /// the kitchen bakes those instead of five dealt off a deck. The order is
-    /// hers and is not sorted — `CakeSpec.colours` reads it and paints the tiers
-    /// from it, which is what makes two identical baskets come out as two
-    /// different cakes.
+    /// `picked` is De Tuin's basket, arriving through `RoomExit.keuken` the way
+    /// the kitchen's cake reaches the decorating room through
+    /// `RoomExit.versieren`. It is the five things she actually grew, and the
+    /// round is baked from those instead of from five dealt off a deck. The
+    /// order is hers and is not sorted — `CakeSpec.colours` reads it and paints
+    /// the tiers from it, which is what makes two identical baskets come out as
+    /// two different cakes.
     ///
     /// **The deck stays as the fallback rather than being replaced**, because
     /// the garden is one room of six and she is allowed to walk into the kitchen
-    /// without having been anywhere first. Taking the harvest also clears it, so
-    /// a basket is baked once — otherwise every restart for the rest of the week
-    /// would deal the same five things she picked on Tuesday.
-    static func fresh(keeping shelf: [CakeSpec] = []) -> RoundState {
+    /// without having been anywhere first.
+    ///
+    /// **A basket is used exactly as it came**, short or not. `GAMEPLAY.md`
+    /// §6.2: she may leave the garden with one ingredient or with five, and
+    /// fewer is a plainer cake rather than a broken round — the kitchen lays its
+    /// sources out from the basket it is handed, so three ingredients is three
+    /// places to visit. Topping it up to five would quietly overrule her.
+    static func fresh(keeping shelf: [CakeSpec] = [],
+                      picked: [Ingredient] = []) -> RoundState {
         var state = RoundState()
         state.used = []
         state.shelf = shelf
 
-        // **A harvest is used exactly as it came**, short or not. `GAMEPLAY.md`
-        // §6.2: she may leave the garden with one ingredient or with five, and
-        // fewer is a plainer cake rather than a broken round — the kitchen lays
-        // its sources out from the basket it is handed, so three ingredients is
-        // three places to visit. Topping it up to five would quietly overrule
-        // her.
-        if let picked = HarvestStore.take(), !picked.isEmpty {
-            state.basket = Array(picked.prefix(Layout.ingredientsPerRound))
+        if !picked.isEmpty {
+            state.basket = Array(picked.prefix(KitchenLayout.ingredientsPerRound))
             return state
         }
 
         var deck: [Ingredient] = []
-        state.basket = (0..<Layout.ingredientsPerRound).map { _ in
+        state.basket = (0..<KitchenLayout.ingredientsPerRound).map { _ in
             if deck.isEmpty { deck = Ingredient.allCases.shuffled() }
             return deck.removeLast()
         }
@@ -165,11 +182,15 @@ struct RoundState: Codable {
     }
 }
 
-/// JSON in Application Support, as `CONCEPT.md` §10 asks. SwiftData is more
-/// machinery than one small struct needs.
-enum RoundStore {
-
-    private static let fileName = "keuken.json"
+/// **One save file per room**, JSON in Application Support, as `CONCEPT.md` §10
+/// asks. SwiftData is more machinery than one small struct needs.
+///
+/// One file per room rather than one game-wide struct, because a room's state is
+/// only ever read by that room — and it means **adding a room cannot corrupt
+/// another room's save** (`GAMEPLAY.md` §8). The one thing that genuinely
+/// crosses rooms is `CakeSpec`, and it travels inside whichever room's file is
+/// currently holding it.
+enum RoomStore {
 
     private static var directory: URL? {
         guard let base = FileManager.default.urls(for: .applicationSupportDirectory,
@@ -180,19 +201,38 @@ enum RoundStore {
         return folder
     }
 
-    static func load() -> RoundState {
+    /// **A decode failure falls back rather than throwing**, and that is the
+    /// dangerous path, not the safe one: it loses her round. `ROOMS.md` §2 —
+    /// every field added after the first build is `Optional`, so this stays the
+    /// exceptional case it is meant to be.
+    static func load<S: Decodable>(_ fileName: String, fallback: () -> S) -> S {
         guard let url = directory?.appendingPathComponent(fileName),
               let data = try? Data(contentsOf: url),
-              let state = try? JSONDecoder().decode(RoundState.self, from: data) else {
-            return .fresh()
+              let state = try? JSONDecoder().decode(S.self, from: data) else {
+            return fallback()
         }
         return state
     }
 
-    static func save(_ state: RoundState) {
+    static func save<S: Encodable>(_ state: S, to fileName: String) {
         guard let url = directory?.appendingPathComponent(fileName),
               let data = try? JSONEncoder().encode(state) else { return }
         try? data.write(to: url, options: .atomic)
+    }
+}
+
+/// The kitchen's own save. A thin name over `RoomStore` so its call sites did
+/// not have to move when the decorating room needed one too.
+enum RoundStore {
+
+    private static let fileName = "keuken.json"
+
+    static func load() -> RoundState {
+        RoomStore.load(fileName) { .fresh() }
+    }
+
+    static func save(_ state: RoundState) {
+        RoomStore.save(state, to: fileName)
     }
 
     /// For the debug panel — the whole kitchen back to the beginning, plank

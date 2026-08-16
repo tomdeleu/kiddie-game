@@ -10,7 +10,7 @@ import simd
 /// after being got wrong twice, and none of that is about a kitchen.
 ///
 /// The dimensions stay in `Layout`: a door is the same door in every room, and
-/// `Layout.doorOpening` is taller than Nina on purpose (a door she could not
+/// `KitchenLayout.doorOpening` is taller than Nina on purpose (a door she could not
 /// walk through is a cupboard).
 enum Props {
 
@@ -61,7 +61,7 @@ enum Props {
     /// but it is a parameter so that the day a room needs it elsewhere is an
     /// argument rather than a fork.
     static func doorway(flat: Bool,
-                        centre: SIMD3<Float> = Layout.doorwayCentre) -> Doorway {
+                        centre: SIMD3<Float> = KitchenLayout.doorwayCentre) -> Doorway {
         let root = Entity()
         root.name = "Doorway"
         root.position = centre
@@ -70,10 +70,10 @@ enum Props {
         // runs towards the back wall and local +Z out into the room.
         root.orientation = simd_quatf(angle: .pi / 2, axis: [0, 1, 0])
 
-        let open = Layout.doorOpening
-        let jamb = Layout.doorFrameWidth
-        let depth = Layout.doorFrameDepth
-        let leafThickness = Layout.doorLeafThickness
+        let open = KitchenLayout.doorOpening
+        let jamb = KitchenLayout.doorFrameWidth
+        let depth = KitchenLayout.doorFrameDepth
+        let leafThickness = KitchenLayout.doorLeafThickness
 
         // The next room: a plate of light standing 1 mm clear of the wall face,
         // deep inside the frame. Clear of it rather than flush, because two
@@ -81,7 +81,7 @@ enum Props {
         // is hidden until the door opens.
         let glow = RoomBuilder.model(.box([open.x, open.y, 0.002]),
                                      Palette.butterYellow, flat: flat, name: "DoorwayGlow")
-        glow.position = [0, open.y / 2, Layout.doorWallFace + 0.002]
+        glow.position = [0, open.y / 2, KitchenLayout.doorWallFace + 0.002]
         root.addChild(glow)
 
         // Frame: two jambs standing on the floor and a lintel across them. It
@@ -91,12 +91,12 @@ enum Props {
         for side: Float in [-1, 1] {
             let post = RoomBuilder.model(.box([jamb, open.y, depth]),
                                          Palette.rose, flat: flat, name: "DoorwayJamb")
-            post.position = [side * (open.x + jamb) / 2, open.y / 2, Layout.doorFrameZ]
+            post.position = [side * (open.x + jamb) / 2, open.y / 2, KitchenLayout.doorFrameZ]
             root.addChild(post)
         }
         let lintel = RoomBuilder.model(.box([open.x + jamb * 2, jamb, depth]),
                                        Palette.rose, flat: flat, name: "DoorwayLintel")
-        lintel.position = [0, open.y + jamb / 2, Layout.doorFrameZ]
+        lintel.position = [0, open.y + jamb / 2, KitchenLayout.doorFrameZ]
         root.addChild(lintel)
 
         // **The hinge is on the near side**, local -X, which is the corner of
@@ -116,7 +116,7 @@ enum Props {
         // leaf moves out into the room and nothing ever enters the frame.
         let hinge = Entity()
         hinge.name = "DoorHinge"
-        hinge.position = [-open.x / 2, 0, Layout.doorLeafZ]
+        hinge.position = [-open.x / 2, 0, KitchenLayout.doorLeafZ]
         root.addChild(hinge)
 
         let leaf = RoomBuilder.model(.box([open.x, open.y, leafThickness]),

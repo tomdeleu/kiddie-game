@@ -1,0 +1,155 @@
+{
+  "_comment": "The decorating room's voice-over script. BOTH the durable production record (CONCEPT.md §7.3) AND the runtime manifest — bundled into the app and read by VoiceBank.swift, which maps line id -> variant files. VoiceBank loads every bundled script-*.json, so this file needed no Swift change beyond the id constants in VersierLine.",
+  "_provider": "higgsfield",
+  "_model": "text2speech_v2",
+  "_variant": "elevenlabs",
+  "_cost_per_line_credits": 0.3,
+  "_generated": "2026-08-16 — room 6.4, Versieren",
+  "_files": "app/NinaBakeryPOC/Resources/Voice/",
+  "language": "nl",
+
+  "_why": {
+    "the_idle_line_is_not_an_instruction": "GAMEPLAY.md §6.4 is explicit about this and it is the one place this room's dialogue differs in kind from every other room's. There is no required action here, so there is nothing she can be failing to do — an idle nudge that said 'put something on the cake' would invent the required action the whole room exists without. `zullenWeGaan` is 'it is already lovely, shall we go?' and it alternates with `stil`, which is just 'I am still here'.",
+    "the_door_still_says_soon": "The party does not exist. `deurRonde` promises a feest that is coming *straks* rather than one she is about to be taken to, because ROOMS.md §9 forbids promising a room that is not built and a 4-year-old told she is going somewhere and then not taken there has been lied to.",
+    "mooi_is_low_priority_on_purpose": "She will place dozens of stickers. A line for each would be a lift announcement, so `mooi` fires about one time in five and at .low priority, which VoiceBank drops outright if anyone is already speaking. The four named reactions in §6.4 — a sticker placed, the first candle lit, the tenth sprinkle, the cake turned all the way round — fire once each and at normal priority.",
+    "length": "Gracie reads Dutch at 15–17 characters a second, so these were written to a measured length rather than trimmed afterwards. Nothing here is longer than about four seconds."
+  },
+
+  "characters": {
+    "nina": {
+      "name": "Nina",
+      "voice_type": "preset",
+      "voice_id": "09878754-f20b-5330-9790-58a8027ab5b2",
+      "preset_name": "Gracie"
+    }
+  },
+
+  "_line_ids": {
+    "_comment": "What the game calls, and when. Every id here is referenced from Swift (VersierLine); every id in VersierLine exists here.",
+    "nina.versieren.hallo": "On entering the room, either from the kitchen or on a visit.",
+    "nina.versieren.eerste": "The first sticker of the session lands on the cake. Once.",
+    "nina.versieren.mooi": "Occasional low-priority encouragement as she keeps decorating.",
+    "nina.versieren.kaarsAan": "The first candle is lit. Once.",
+    "nina.versieren.veelSprinkels": "The tenth sprinkle lands. Once.",
+    "nina.versieren.rondje": "The turntable has been turned a full circle. Once.",
+    "nina.versieren.spuitzakLeeg": "The piping bag ran out mid-squeeze. It refills itself as she says this.",
+    "nina.versieren.opnieuw": "The restart button — everything comes off the cake, and the cake stays.",
+    "nina.versieren.stil": "Idle, alternating with zullenWeGaan. 'I am still here.'",
+    "nina.versieren.zullenWeGaan": "Idle. NOT an instruction — see _why above.",
+    "nina.versieren.deurRonde": "The door, mid-round. The party is coming soon, not now.",
+    "nina.versieren.deurBezoek": "The door, on a visit."
+  },
+
+  "lines": [
+    {
+      "id": "nina.versieren.hallo",
+      "character": "nina",
+      "variants": [
+        { "index": 500, "file": "nina-versieren-hallo-1.mp3", "text": "Kijk, de taart is klaar om te versieren! Wat zullen we erop doen?" },
+        { "index": 501, "file": "nina-versieren-hallo-2.mp3", "text": "Oeh, nu mogen we hem mooi maken. Pak maar wat je leuk vindt!" },
+        { "index": 502, "file": "nina-versieren-hallo-3.mp3", "text": "Daar is mijn taart! Doe er maar van alles op, hoor." },
+        { "index": 503, "file": "nina-versieren-hallo-4.mp3", "text": "Wat een mooie taart. Zullen we hem samen versieren?" }
+      ]
+    },
+    {
+      "id": "nina.versieren.eerste",
+      "character": "nina",
+      "variants": [
+        { "index": 504, "file": "nina-versieren-eerste-1.mp3", "text": "Oeh, wat mooi! Doe er nog maar meer op." },
+        { "index": 505, "file": "nina-versieren-eerste-2.mp3", "text": "Kijk nou! Die staat er prachtig op." },
+        { "index": 506, "file": "nina-versieren-eerste-3.mp3", "text": "Ja! Zo wordt hij helemaal van jou." }
+      ]
+    },
+    {
+      "id": "nina.versieren.mooi",
+      "character": "nina",
+      "variants": [
+        { "index": 507, "file": "nina-versieren-mooi-1.mp3", "text": "Mooi hoor!" },
+        { "index": 508, "file": "nina-versieren-mooi-2.mp3", "text": "Oeh, wat leuk." },
+        { "index": 509, "file": "nina-versieren-mooi-3.mp3", "text": "Ja, die past er goed bij." },
+        { "index": 510, "file": "nina-versieren-mooi-4.mp3", "text": "Kijk eens aan!" }
+      ]
+    },
+    {
+      "id": "nina.versieren.kaarsAan",
+      "character": "nina",
+      "variants": [
+        { "index": 511, "file": "nina-versieren-kaarsAan-1.mp3", "text": "Kijk, hij brandt! Nu is het echt feest." },
+        { "index": 512, "file": "nina-versieren-kaarsAan-2.mp3", "text": "Oeh, een brandend kaarsje. Wat mooi zeg!" },
+        { "index": 513, "file": "nina-versieren-kaarsAan-3.mp3", "text": "Aan! Zo wordt de taart nog gezelliger." }
+      ]
+    },
+    {
+      "id": "nina.versieren.veelSprinkels",
+      "character": "nina",
+      "variants": [
+        { "index": 514, "file": "nina-versieren-veelSprinkels-1.mp3", "text": "Zoveel sprinkels! Wat een feesttaart." },
+        { "index": 515, "file": "nina-versieren-veelSprinkels-2.mp3", "text": "Oeh, overal spikkeltjes. Heerlijk!" },
+        { "index": 516, "file": "nina-versieren-veelSprinkels-3.mp3", "text": "Kijk nou, helemaal vol met sprinkels." }
+      ]
+    },
+    {
+      "id": "nina.versieren.rondje",
+      "character": "nina",
+      "variants": [
+        { "index": 517, "file": "nina-versieren-rondje-1.mp3", "text": "Hij draait helemaal rond! Zo zie je alle kanten." },
+        { "index": 518, "file": "nina-versieren-rondje-2.mp3", "text": "Oeh, rondjes draaien. Nu kun je overal bij." },
+        { "index": 519, "file": "nina-versieren-rondje-3.mp3", "text": "Kijk, de hele taart komt langs!" }
+      ]
+    },
+    {
+      "id": "nina.versieren.spuitzakLeeg",
+      "character": "nina",
+      "variants": [
+        { "index": 520, "file": "nina-versieren-spuitzakLeeg-1.mp3", "text": "Oeps, mijn spuitzak is leeg. Ik vul hem even bij!" },
+        { "index": 521, "file": "nina-versieren-spuitzakLeeg-2.mp3", "text": "Hij is op! Wacht, ik doe er nieuwe room in." },
+        { "index": 522, "file": "nina-versieren-spuitzakLeeg-3.mp3", "text": "Even bijvullen, hoor. Zo is hij zo weer vol." }
+      ]
+    },
+    {
+      "id": "nina.versieren.opnieuw",
+      "character": "nina",
+      "variants": [
+        { "index": 523, "file": "nina-versieren-opnieuw-1.mp3", "text": "Ik haal alles er even af. Dan kun je opnieuw beginnen!" },
+        { "index": 524, "file": "nina-versieren-opnieuw-2.mp3", "text": "Zo, de taart is weer helemaal kaal. Begin maar!" },
+        { "index": 525, "file": "nina-versieren-opnieuw-3.mp3", "text": "Alles eraf! Nu mag je weer helemaal opnieuw versieren." }
+      ]
+    },
+    {
+      "id": "nina.versieren.stil",
+      "character": "nina",
+      "variants": [
+        { "index": 526, "file": "nina-versieren-stil-1.mp3", "text": "Ik ben er nog, hoor." },
+        { "index": 527, "file": "nina-versieren-stil-2.mp3", "text": "Neem maar rustig de tijd." },
+        { "index": 528, "file": "nina-versieren-stil-3.mp3", "text": "Ik kijk gewoon even mee." }
+      ]
+    },
+    {
+      "id": "nina.versieren.zullenWeGaan",
+      "character": "nina",
+      "variants": [
+        { "index": 529, "file": "nina-versieren-zullenWeGaan-1.mp3", "text": "Hij is al zo mooi. Zullen we gaan?" },
+        { "index": 530, "file": "nina-versieren-zullenWeGaan-2.mp3", "text": "Wat een prachtige taart. Ga je mee?" },
+        { "index": 531, "file": "nina-versieren-zullenWeGaan-3.mp3", "text": "Zo is hij al heel mooi, hoor. Zullen we verder?" }
+      ]
+    },
+    {
+      "id": "nina.versieren.deurRonde",
+      "character": "nina",
+      "variants": [
+        { "index": 532, "file": "nina-versieren-deurRonde-1.mp3", "text": "Wat is hij mooi geworden! Straks gaan we feestvieren, hoor." },
+        { "index": 533, "file": "nina-versieren-deurRonde-2.mp3", "text": "Klaar! Het feest komt er gauw aan." },
+        { "index": 534, "file": "nina-versieren-deurRonde-3.mp3", "text": "Wat een taart zeg! Het feestje komt zo, beloofd." }
+      ]
+    },
+    {
+      "id": "nina.versieren.deurBezoek",
+      "character": "nina",
+      "variants": [
+        { "index": 535, "file": "nina-versieren-deurBezoek-1.mp3", "text": "Wat is hij mooi geworden. Tot de volgende keer!" },
+        { "index": 536, "file": "nina-versieren-deurBezoek-2.mp3", "text": "Klaar! Dag taart, dag versierseltjes." },
+        { "index": 537, "file": "nina-versieren-deurBezoek-3.mp3", "text": "Mooi gedaan! We komen gauw weer terug." }
+      ]
+    }
+  ]
+}

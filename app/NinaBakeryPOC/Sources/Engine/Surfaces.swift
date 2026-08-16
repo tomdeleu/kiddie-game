@@ -12,7 +12,7 @@ import simd
 /// ever have.
 ///
 /// A room declares its own rectangles and hands them to `CarryController`. The
-/// kitchen's are in `Layout.surfaces`; the garden's are in
+/// kitchen's are in `KitchenLayout.surfaces`; the garden's are in
 /// `GardenLayout.surfaces`. `ROOMS.md` §6 is the prose version of this file.
 ///
 /// **The two questions it answers are not the same question**, and confusing
@@ -30,7 +30,7 @@ struct Surfaces {
     struct Rect {
         /// (x, z). Named `centre` rather than a `SIMD3` because a rectangle
         /// lying flat has no height of its own to argue about — see the bug
-        /// `Layout.nearPlank` documents, where two spellings of `.y` in one
+        /// `KitchenLayout.nearPlank` documents, where two spellings of `.y` in one
         /// expression put a snap zone 30 cm out.
         let centre: SIMD2<Float>
         let size: SIMD2<Float>
@@ -136,7 +136,7 @@ struct Surfaces {
     @MainActor
     func pointedAt(from anchor: SIMD3<Float>) -> Float {
         for rect in rects {
-            let over = Self.pointOnRay(through: anchor, atHeight: rect.y)
+            let over = RoomBox.pointOnRay(through: anchor, atHeight: rect.y)
             if Self.within(over, rect, margin: 0.006) { return rect.y }
         }
         return floorY
@@ -166,26 +166,15 @@ struct Surfaces {
     }
 
     // MARK: - The ray
-
-    /// **The same ray she is pointing along, read at a different height.**
-    ///
-    /// The camera never moves, so any world point plus the eye is a complete
-    /// description of the ray through it. `TouchRouter` hands the room a point
-    /// on a fixed plane; this is what turns it back into "where she is
-    /// pointing", and it is the whole basis of `CarryController`.
-    @MainActor
-    static func pointOnRay(through anchor: SIMD3<Float>, atHeight y: Float) -> SIMD3<Float> {
-        let eye = CameraRig.eye
-        let along = anchor - eye
-        guard abs(along.y) > 1e-6 else { return anchor }
-        return eye + along * ((y - eye.y) / along.y)
-    }
-
-    /// Horizontal distance. Snapping ignores height on purpose: she aims at
-    /// where a thing *is on the table*, not at its centre of mass.
-    static func distanceXZ(_ a: SIMD3<Float>, _ b: SIMD3<Float>) -> Float {
-        simd_length(SIMD2<Float>(a.x - b.x, a.z - b.z))
-    }
+    //
+    // **`RoomBox` owns the generic half of this**, and did before this type
+    // existed: `pointOnRay`, `distanceXZ`, `within`, `carryLift` and the box's
+    // own constants are all there, and `Layout` was already delegating to them.
+    // This type had grown its own copies while the two were being built in
+    // parallel, and one geometry vocabulary is worth more than two correct ones.
+    //
+    // What is left here is the part that is genuinely per-room: which
+    // rectangles a room has, and which questions they answer.
 
     // MARK: - Bounds
 
@@ -225,10 +214,11 @@ struct Surfaces {
         return Self.within(crossing, hider, margin: 0.004)
     }
 
-    /// True where `point` is over a rectangle, grown by `margin` so a prop set
-    /// down right on an edge lands on the surface rather than beside it.
+    /// True where `point` is over one of this room's rectangles, grown by
+    /// `margin` so a prop set down right on an edge lands on the surface rather
+    /// than beside it. Straight through to `RoomBox.within`, which takes the
+    /// centre and size loose; this is the `Rect` overload of it.
     static func within(_ point: SIMD3<Float>, _ rect: Rect, margin: Float) -> Bool {
-        abs(point.x - rect.centre.x) <= rect.size.x / 2 + margin
-            && abs(point.z - rect.centre.y) <= rect.size.y / 2 + margin
+        RoomBox.within(point, centre: rect.centre, size: rect.size, margin: margin)
     }
 }

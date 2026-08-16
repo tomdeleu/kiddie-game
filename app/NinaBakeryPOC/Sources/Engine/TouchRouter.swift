@@ -109,6 +109,21 @@ final class TouchRouter {
         active = nil
     }
 
+    /// **Drop a family of targets by name prefix.**
+    ///
+    /// `register` appends, so re-registering a name that is already there leaves
+    /// *both* — which was survivable while every target in the game was
+    /// registered once, in `build`, and stopped being survivable the moment a
+    /// room could add one mid-round. The decorating room registers one target
+    /// per placed sticker and re-registers the set every time she places or
+    /// removes one; without this it would accumulate a dead target per grain of
+    /// sprinkle, each still holding its entity and still winning hit tests near
+    /// where a sticker used to be.
+    func remove(prefixed prefix: String) {
+        targets.removeAll { $0.name.hasPrefix(prefix) }
+        if let active, active.name.hasPrefix(prefix) { self.active = nil }
+    }
+
     func target(named name: String) -> Target? {
         targets.first { $0.name == name }
     }

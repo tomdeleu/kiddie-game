@@ -1,0 +1,448 @@
+{
+  "_comment": "The naming lines: what Nina says when a prop is TAPPED rather than dragged. Separate from script-keuken.json because it is a whole layer rather than a step in a round — every room after this one will bring its own naming lines for its own props, and VoiceBank loads every bundled script-*.json, so a new room is a new file rather than an edit to a shared one.",
+  "_provider": "higgsfield",
+  "_model": "text2speech_v2",
+  "_variant": "elevenlabs",
+  "_cost_per_line_credits": 0.3,
+  "_cost_total_credits": 6.3,
+  "_generated": "2026-08-16 — the kitchen's props, then room 6.4's",
+  "_files": "app/NinaBakeryPOC/Resources/Voice/",
+  "language": "nl",
+  "_why": {
+    "_comment": "Owner's ask, 2026-08-16: 'make sure we have a small voice over telling what an ingredient / item is when you tap it instead of dragging it. teaches things like this.' It splits the game's two verbs cleanly for the first time — a DRAG is the round, a TAP is the room explaining itself — and it turns the eighteen props that previously answered a tap with a wobble and a sound into eighteen Dutch words.",
+    "one_variant_each": "Every other line id in the game has two or three variants and never plays the same one twice running, because a character who repeats herself does not sound like a person. These are the exception and it is deliberate: a name is a thing you learn by hearing it the same way twice. Repetition is the feature.",
+    "shape": "Name first, then one short thing about it. Never longer than two clauses — she is four, and a tap she has to sit through is a tap she stops making. The longest here is 4.9 s and most are near 3.",
+    "priority": "They are all said at .low priority, which VoiceBank drops outright if anyone is already speaking. A naming line must never talk over the step instruction it would be explaining."
+  },
+  "characters": {
+    "nina": {
+      "name": "Nina",
+      "voice_type": "preset",
+      "voice_id": "09878754-f20b-5330-9790-58a8027ab5b2",
+      "preset_name": "Gracie"
+    }
+  },
+  "lines": [
+    {
+      "id": "nina.dit.aardbei",
+      "character": "nina",
+      "variants": [
+        {
+          "file": "nina-dit-aardbei-1.mp3",
+          "seconds": 4.31,
+          "text": "Dit is een regenboogaardbei. Zo'n zoet rood vruchtje!"
+        }
+      ]
+    },
+    {
+      "id": "nina.dit.bosbes",
+      "character": "nina",
+      "variants": [
+        {
+          "file": "nina-dit-bosbes-1.mp3",
+          "seconds": 4.08,
+          "text": "Dit is een toverbosbes. Een klein rond blauw besje."
+        }
+      ]
+    },
+    {
+      "id": "nina.dit.honing",
+      "character": "nina",
+      "variants": [
+        {
+          "file": "nina-dit-honing-1.mp3",
+          "seconds": 4.86,
+          "text": "Dit is zonnehoning, in een potje. Honing is zoet en plakkerig."
+        }
+      ]
+    },
+    {
+      "id": "nina.dit.klaver",
+      "character": "nina",
+      "variants": [
+        {
+          "file": "nina-dit-klaver-1.mp3",
+          "seconds": 4.78,
+          "text": "Dit is een toverklaver. Kijk, vier blaadjes! Dat brengt geluk."
+        }
+      ]
+    },
+    {
+      "id": "nina.dit.wolkenroom",
+      "character": "nina",
+      "variants": [
+        {
+          "file": "nina-dit-wolkenroom-1.mp3",
+          "seconds": 3.42,
+          "text": "Dit is wolkenroom. Zo zacht als een wolkje in de lucht."
+        }
+      ]
+    },
+    {
+      "id": "nina.dit.sterrensuiker",
+      "character": "nina",
+      "variants": [
+        {
+          "file": "nina-dit-sterrensuiker-1.mp3",
+          "seconds": 4.78,
+          "text": "Dit is sterrensuiker. Allemaal kleine glinsterende sterretjes."
+        }
+      ]
+    },
+    {
+      "id": "nina.dit.maanstof",
+      "character": "nina",
+      "variants": [
+        {
+          "file": "nina-dit-maanstof-1.mp3",
+          "seconds": 4.15,
+          "text": "Dit is maanstof. Glinsterend stof, helemaal van de maan."
+        }
+      ]
+    },
+    {
+      "id": "nina.dit.veertje",
+      "character": "nina",
+      "variants": [
+        {
+          "file": "nina-dit-veertje-1.mp3",
+          "seconds": 4.08,
+          "text": "Dit is een toverveertje. Zo licht als een echt veertje!"
+        }
+      ]
+    },
+    {
+      "id": "nina.dit.deegroller",
+      "character": "nina",
+      "variants": [
+        {
+          "file": "nina-dit-deegroller-1.mp3",
+          "seconds": 3.74,
+          "text": "Dit is de deegroller. Daarmee rol je het deeg lekker plat."
+        }
+      ]
+    },
+    {
+      "id": "nina.dit.deeg",
+      "character": "nina",
+      "variants": [
+        {
+          "file": "nina-dit-deeg-1.mp3",
+          "seconds": 3.42,
+          "text": "Dit is het deeg. Daar maken we de bodem van de taart van."
+        }
+      ]
+    },
+    {
+      "id": "nina.dit.kom",
+      "character": "nina",
+      "variants": [
+        {
+          "file": "nina-dit-kom-1.mp3",
+          "seconds": 3.11,
+          "text": "Dit is de mengkom. Daar gaat alles in wat we mengen."
+        }
+      ]
+    },
+    {
+      "id": "nina.dit.lepel",
+      "character": "nina",
+      "variants": [
+        {
+          "file": "nina-dit-lepel-1.mp3",
+          "seconds": 4.55,
+          "text": "Dit is de pollepel. Dat is een grote houten lepel om mee te roeren."
+        }
+      ]
+    },
+    {
+      "id": "nina.dit.vorm",
+      "character": "nina",
+      "variants": [
+        {
+          "file": "nina-dit-vorm-1.mp3",
+          "seconds": 3.03,
+          "text": "Dit is de bakvorm. Daar giet je het beslag in."
+        }
+      ]
+    },
+    {
+      "id": "nina.dit.bloem",
+      "character": "nina",
+      "variants": [
+        {
+          "file": "nina-dit-bloem-1.mp3",
+          "seconds": 3.66,
+          "text": "Dit is een zak bloem. Van bloem maken we het deeg."
+        }
+      ]
+    },
+    {
+      "id": "nina.dit.kraan",
+      "character": "nina",
+      "variants": [
+        {
+          "file": "nina-dit-kraan-1.mp3",
+          "seconds": 2.61,
+          "text": "Dit is de kraan. Daar komt water uit."
+        }
+      ]
+    },
+    {
+      "id": "nina.dit.weegschaal",
+      "character": "nina",
+      "variants": [
+        {
+          "file": "nina-dit-weegschaal-1.mp3",
+          "seconds": 3.89,
+          "text": "Dit is de weegschaal. Daarmee weeg je hoeveel je nodig hebt."
+        }
+      ]
+    },
+    {
+      "id": "nina.dit.mandje",
+      "character": "nina",
+      "variants": [
+        {
+          "file": "nina-dit-mandje-1.mp3",
+          "seconds": 3.42,
+          "text": "Dit is het mandje. Daar bewaar ik toverdingetjes in."
+        }
+      ]
+    },
+    {
+      "id": "nina.dit.kist",
+      "character": "nina",
+      "variants": [
+        {
+          "file": "nina-dit-kist-1.mp3",
+          "seconds": 3.27,
+          "text": "Dit is de kist op de grond. Daar ligt ook iets lekkers in."
+        }
+      ]
+    },
+    {
+      "id": "nina.dit.potje",
+      "character": "nina",
+      "variants": [
+        {
+          "file": "nina-dit-potje-1.mp3",
+          "seconds": 2.95,
+          "text": "Dat is een potje op de plank. Daar zit van alles in."
+        }
+      ]
+    },
+    {
+      "id": "nina.dit.taartenplank",
+      "character": "nina",
+      "variants": [
+        {
+          "file": "nina-dit-taartenplank-1.mp3",
+          "seconds": 3.11,
+          "text": "Dat is de taartenplank. Daar zet ik alle taarten op."
+        }
+      ]
+    },
+    {
+      "id": "nina.dit.deur",
+      "character": "nina",
+      "variants": [
+        {
+          "file": "nina-dit-deur-1.mp3",
+          "seconds": 3.03,
+          "text": "Dat is de deur. Daarachter is nog een kamer."
+        }
+      ]
+    },
+    {
+      "id": "nina.dit.taart",
+      "character": "nina",
+      "variants": [
+        {
+          "file": "nina-dit-taart-1.mp3",
+          "seconds": 3.66,
+          "text": "Dit is jouw taart. Die heb je helemaal zelf gemaakt!"
+        }
+      ]
+    },
+    {
+      "id": "nina.dit.portret",
+      "character": "nina",
+      "variants": [
+        {
+          "file": "nina-dit-portret-1.mp3",
+          "seconds": 3.27,
+          "text": "Kijk, dat ben ik! In een mooi lijstje aan de muur."
+        }
+      ]
+    },
+    {
+      "id": "nina.dit.draaitafel",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 600,
+          "file": "nina-dit-draaitafel-1.mp3",
+          "text": "Dit is de draaitafel. Daarmee draai je de taart in het rond."
+        }
+      ]
+    },
+    {
+      "id": "nina.dit.spuitzak",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 601,
+          "file": "nina-dit-spuitzak-1.mp3",
+          "text": "Dit is de spuitzak. Daarmee spuit je slingers van room."
+        }
+      ]
+    },
+    {
+      "id": "nina.dit.strooibus",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 602,
+          "file": "nina-dit-strooibus-1.mp3",
+          "text": "Dit is de strooibus. Schud maar, dan regent het sprinkels!"
+        }
+      ]
+    },
+    {
+      "id": "nina.dit.sprinkel",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 603,
+          "file": "nina-dit-sprinkel-1.mp3",
+          "text": "Dit zijn sprinkels. Kleine kleurige spikkeltjes op je taart."
+        }
+      ]
+    },
+    {
+      "id": "nina.dit.kaarsje",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 604,
+          "file": "nina-dit-kaarsje-1.mp3",
+          "text": "Dit is een kaarsje. Tik erop, dan gaat het vlammetje aan."
+        }
+      ]
+    },
+    {
+      "id": "nina.dit.hartje",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 605,
+          "file": "nina-dit-hartje-1.mp3",
+          "text": "Dit is een hartje. Omdat je van iemand houdt."
+        }
+      ]
+    },
+    {
+      "id": "nina.dit.sterretje",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 606,
+          "file": "nina-dit-sterretje-1.mp3",
+          "text": "Dit is een sterretje. Net zo een als aan de hemel."
+        }
+      ]
+    },
+    {
+      "id": "nina.dit.kroontje",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 607,
+          "file": "nina-dit-kroontje-1.mp3",
+          "text": "Dit is een kroontje. Voor wie er jarig is!"
+        }
+      ]
+    },
+    {
+      "id": "nina.dit.fruitje",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 608,
+          "file": "nina-dit-fruitje-1.mp3",
+          "text": "Dit is een kersje. Lekker zoet, bovenop de taart."
+        }
+      ]
+    },
+    {
+      "id": "nina.dit.roomtoefje",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 609,
+          "file": "nina-dit-roomtoefje-1.mp3",
+          "text": "Dit is een roomtoefje. Zacht en zoet en helemaal wit."
+        }
+      ]
+    },
+    {
+      "id": "nina.dit.glitterpot",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 610,
+          "file": "nina-dit-glitterpot-1.mp3",
+          "text": "Dit is de glitterpot. Vol met fonkelende glitters."
+        }
+      ]
+    },
+    {
+      "id": "nina.dit.taartborden",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 611,
+          "file": "nina-dit-taartborden-1.mp3",
+          "text": "Dit zijn taartborden. Daar zet je een taart op."
+        }
+      ]
+    },
+    {
+      "id": "nina.dit.kwastje",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 612,
+          "file": "nina-dit-kwastje-1.mp3",
+          "text": "Dit is een kwastje. Daarmee veeg je de kruimeltjes weg."
+        }
+      ]
+    },
+    {
+      "id": "nina.dit.krukje",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 613,
+          "file": "nina-dit-krukje-1.mp3",
+          "text": "Dit is mijn krukje. Daar zit ik op als ik moe ben."
+        }
+      ]
+    },
+    {
+      "id": "nina.dit.sprinkelpotjes",
+      "character": "nina",
+      "variants": [
+        {
+          "index": 614,
+          "file": "nina-dit-sprinkelpotjes-1.mp3",
+          "text": "Dit zijn potjes met sprinkels. Alle kleuren staan erin."
+        }
+      ]
+    }
+  ],
+  "_rooms": {
+    "versieren": "Fifteen ids added with room 6.4: the turntable, the two tools, the seven sticker types and the five toys. One variant each, like every other line in this file — a name is a thing you learn by hearing it the same way twice."
+  }
+}

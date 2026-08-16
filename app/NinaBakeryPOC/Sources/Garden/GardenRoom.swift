@@ -33,9 +33,21 @@ import simd
 ///   saying what it is.** That is the only place in the game where a tap is not
 ///   a naming line, and it is `GAMEPLAY.md` §6.2's explicit instruction.
 @MainActor
-final class GardenRoom: GameRoom {
+final class GardenRoom: Room {
 
     let root = Entity()
+
+    /// Set by `GameScene`. The garden says *the basket is picked* and hands back
+    /// control; it does not know the kitchen exists.
+    var onExit: ((RoomExit) -> Void)?
+
+    /// Which way she came in. `ROOMS.md` §9: one flag, not two implementations.
+    /// The garden reads it nowhere yet — sowing, watering and picking are the
+    /// same either way, and a full basket is the completion rule in both modes
+    /// (owner's call, 2026-08-16) — but it is stored so the room is spelled like
+    /// the other two, and so the day the bakery hub lands the door has something
+    /// to ask.
+    let mode: RoomMode
 
     private let ticker: Ticker
     private let touch: TouchRouter
@@ -120,12 +132,13 @@ final class GardenRoom: GameRoom {
     private var lastTouchPoint: SIMD3<Float>?
 
     init(ticker: Ticker, touch: TouchRouter, voice: VoiceBank,
-         sound: SoundKit, settings: LightingSettings) {
+         sound: SoundKit, settings: LightingSettings, mode: RoomMode = .bezoek) {
         self.ticker = ticker
         self.touch = touch
         self.voice = voice
         self.sound = sound
         self.settings = settings
+        self.mode = mode
         self.state = GardenStore.load()
         root.name = "Garden"
 
@@ -540,7 +553,7 @@ final class GardenRoom: GameRoom {
     /// Roughly how big the prop is — it sets how far the sparkles lift off it.
     private func haloRadius(for entity: Entity) -> Float {
         if entity === can?.root { return 0.030 }
-        if entity === doorMarker { return Layout.doorHaloRadius }
+        if entity === doorMarker { return KitchenLayout.doorHaloRadius }
         if plotMarkers.contains(where: { $0 === entity }) { return GardenLayout.plotRadius }
         return 0.022
     }
@@ -561,7 +574,7 @@ final class GardenRoom: GameRoom {
         guard let doorway else { return }
         let done = gardenComplete
 
-        doorRest = done ? Layout.doorAjarAngle : 0
+        doorRest = done ? KitchenLayout.doorAjarAngle : 0
         if doorSwing == nil {
             doorway.hinge.orientation = simd_quatf(angle: doorRest, axis: [0, 1, 0])
         }
@@ -1022,8 +1035,8 @@ final class GardenRoom: GameRoom {
     /// round has no next room to hand to — and **a 4-year-old told she is going
     /// somewhere and then not taken there has been lied to** (`ROOMS.md` §9).
     ///
-    /// What it does do is real: the basket is written to `HarvestStore`, so the
-    /// next round the kitchen starts is baked from **what she actually grew**.
+    /// What it does do is real: the basket goes out through `onExit`, so the
+    /// round the kitchen starts next is baked from **what she actually grew**.
     /// She will not see the handover happen and that is fine; she will see five
     /// familiar things waiting in the kitchen's five places.
     ///
@@ -1032,7 +1045,7 @@ final class GardenRoom: GameRoom {
     private func endRoom(_ doorway: Props.Doorway) {
         swingDoor(doorway, hold: 2.6)
         sound.play(.reward, volume: 0.7)
-        HarvestStore.put(state.basket)
+        save()
         voice.sayWhenQuiet(Line.Tuin.kamerDeur)
 
         let threshold = doorMarker?.position ?? GardenLayout.gateCentre
@@ -1046,6 +1059,16 @@ final class GardenRoom: GameRoom {
                 self.sound.play(.sparkle, volume: 0.45, rate: 1.0 + Float(i) * 0.15)
             }
         }
+
+        // **Handed over on the beat the leaf reaches full open**, the same beat
+        // the kitchen uses, so the swing reads as the way through rather than as
+        // something that happened first. An empty basket is not a handover —
+        // she opened the gate on a garden she had not picked — so that ends the
+        // visit instead, which today means staying exactly where she is.
+        let basket = state.basket
+        ticker.after(0.9) { [weak self] in
+            self?.onExit?(basket.isEmpty ? .bakkerij : .keuken(basket))
+        }
     }
 
     /// Open, hold, fall back to `doorRest` — and re-tapping restarts it rather
@@ -1054,7 +1077,7 @@ final class GardenRoom: GameRoom {
         ticker.cancel(doorSwing)
         let hinge = doorway.hinge
         let rest = doorRest
-        let open = Layout.doorOpenAngle
+        let open = KitchenLayout.doorOpenAngle
         doorSwing = ticker.tween(hold, ease: Ease.linear, step: { [weak hinge] t in
             guard let hinge else { return }
             let amount: Float
@@ -1338,7 +1361,7 @@ final class GardenRoom: GameRoom {
         }
     }
 
-    // MARK: - GameRoom
+    // MARK: - Room
 
     /// What she hears when the room appears.
     ///
@@ -1407,18 +1430,22 @@ final class GardenRoom: GameRoom {
         }
     }
 
-    func teardown() {
-        save()
+    /// Everything stops, then the bed is written down. `GameScene` calls this
+    /// before it swaps the room out — a ticker job left running would go on
+    /// watering a garden nobody is in. It clears the touch callbacks the garden
+    /// sets beyond its targets: `onMoved` is the butterfly's, and a stale one
+    /// would follow her finger around the kitchen.
+    func leave() {
         cancelEverything()
-        touch.removeAll()
+        save()
         touch.onEmptyTap = nil
         touch.onAnyTouch = nil
         touch.onMoved = nil
-        root.children.removeAll()
-        root.removeFromParent()
     }
 
-    var debugLines: [String] {
+    var debugTitle: String { RoomID.tuin.title }
+
+    var debugRows: [String] {
         let bed = state.plots.map { plot in
             guard let seed = plot.seed else { return "·" }
             return "\(seed.rawValue.prefix(3))\(plot.growth)"
@@ -1426,6 +1453,10 @@ final class GardenRoom: GameRoom {
         return ["Step: \(state.step.rawValue)",
                 "Bed: \(bed)",
                 "Mandje: \(state.basket.map(\.rawValue).joined(separator: ", "))"]
+    }
+
+    var debugActions: [(String, @MainActor () -> Void)] {
+        [("New round", { [weak self] in self?.resetRound() })]
     }
 
     /// **Every job this room holds, in one place.**

@@ -46,7 +46,7 @@ enum KitchenProps {
     static func oven(flat: Bool) -> Oven {
         let root = Entity()
         root.name = "Otto"
-        root.position = Layout.ovenOrigin
+        root.position = KitchenLayout.ovenOrigin
 
         // The body sits under its own entity so squash-and-stretch does not
         // drag the door, the arch or the face around with it.
@@ -54,8 +54,8 @@ enum KitchenProps {
         body.name = "OttoBody"
         root.addChild(body)
 
-        let dome = RoomBuilder.model(.dome(radius: Layout.ovenDomeRadius,
-                                           height: Layout.ovenDomeHeight,
+        let dome = RoomBuilder.model(.dome(radius: KitchenLayout.ovenDomeRadius,
+                                           height: KitchenLayout.ovenDomeHeight,
                                            sides: 8, rings: 4),
                                      Palette.mint, flat: flat, name: "OvenDome")
         body.addChild(dome)
@@ -68,13 +68,13 @@ enum KitchenProps {
         // (x²+z²)/r² + y²/h² = 1, so it bulges furthest forward at the centre
         // of the mouth. The arch's back plane sits behind the near one so it
         // looks embedded.
-        let archDepth = Layout.mouthDepth
-        let archBack = Layout.mouthBackZ
-        let archFront = Layout.mouthFrontZ
+        let archDepth = KitchenLayout.mouthDepth
+        let archBack = KitchenLayout.mouthBackZ
+        let archFront = KitchenLayout.mouthFrontZ
 
-        let arch = RoomBuilder.model(.archRing(innerRadius: Layout.mouthArchInner,
+        let arch = RoomBuilder.model(.archRing(innerRadius: KitchenLayout.mouthArchInner,
                                                outerRadius: 0.034,
-                                               legHeight: Layout.mouthLegHeight,
+                                               legHeight: KitchenLayout.mouthLegHeight,
                                                depth: archDepth, segments: 6),
                                      Palette.rose, flat: flat, name: "OvenArch")
         arch.position = [0, 0, archBack + archDepth / 2]
@@ -98,8 +98,8 @@ enum KitchenProps {
         let oversize: Float = 0.002
         let plugDepth: Float = 0.028
         let plugRecess: Float = 0.008
-        let mouth = RoomBuilder.model(.archPlug(radius: Layout.mouthArchInner + oversize,
-                                                legHeight: Layout.mouthLegHeight + oversize,
+        let mouth = RoomBuilder.model(.archPlug(radius: KitchenLayout.mouthArchInner + oversize,
+                                                legHeight: KitchenLayout.mouthLegHeight + oversize,
                                                 depth: plugDepth, segments: 6),
                                       Palette.ovenInside, flat: flat, name: "OvenMouth")
         mouth.position = [0, -oversize, archFront - plugRecess - plugDepth / 2]
@@ -112,15 +112,15 @@ enum KitchenProps {
         doorPivot.position = [0, 0, archFront - 0.004]
         root.addChild(doorPivot)
 
-        let door = RoomBuilder.model(.archPlug(radius: Layout.mouthArchInner + 0.005,
-                                               legHeight: Layout.mouthLegHeight + 0.005,
+        let door = RoomBuilder.model(.archPlug(radius: KitchenLayout.mouthArchInner + 0.005,
+                                               legHeight: KitchenLayout.mouthLegHeight + 0.005,
                                                depth: 0.005, segments: 6),
                                      Palette.blushPinkDeep, flat: flat, name: "OvenDoor")
         doorPivot.addChild(door)
 
         let handle = RoomBuilder.model(.box([0.020, 0.004, 0.004]),
                                        Palette.butterYellow, flat: flat, name: "OvenDoorHandle")
-        handle.position = [0, Layout.mouthLegHeight + 0.026, 0.004]
+        handle.position = [0, KitchenLayout.mouthLegHeight + 0.026, 0.004]
         doorPivot.addChild(handle)
 
         // The chimney, per the plate: a square shaft, a wider lighter cap, and
@@ -210,7 +210,7 @@ enum KitchenProps {
         return Oven(root: root, dome: dome, doorPivot: doorPivot, door: door,
                     eyes: eyes, pupils: pupils, pupilRest: pupilRest,
                     eyeRest: SIMD3<Float>(repeating: 1),
-                    chimneyTop: Layout.ovenOrigin + SIMD3<Float>(0.028, 0.112, -0.030))
+                    chimneyTop: KitchenLayout.ovenOrigin + SIMD3<Float>(0.028, 0.112, -0.030))
     }
 
     // MARK: - The bake
@@ -910,16 +910,21 @@ enum KitchenProps {
         cake.name = "Cake"
 
         let colours = spec.tierColours(3)
-        let radii: [Float] = [0.026, 0.021, 0.015]
-        let heights: [Float] = [0.013, 0.011, 0.009]
+        // **Radii and heights come from `CakeGeometry`**, which is also what the
+        // decorating room derives every sticker position from. They used to be
+        // typed here and again in `models/cake.py`; a third copy would have been
+        // the one that put stickers inside the icing.
+        let radii = CakeGeometry.radii
+        let heights = CakeGeometry.heights
         let stretch: Float = spec.isTall ? 1.5 : 1.0
 
         var y: Float = 0
-        for tier in 0..<3 {
+        for tier in 0..<CakeGeometry.tierCount {
             let height = heights[tier] * stretch
             let colour = colours[min(tier, colours.count - 1)]
             let mesh = FacetedMesh.mesh(FacetedMesh.prism(radius: radii[tier],
-                                                          height: height, sides: 10),
+                                                          height: height,
+                                                          sides: CakeGeometry.sides),
                                         flat: flat)
             let material = spec.glows
                 ? Palette.glowMaterial(colour, intensity: 0.35)
@@ -1342,7 +1347,7 @@ enum KitchenProps {
     ///   `generatePlane` carries UVs, and a photograph is flat anyway.
     /// - **The frame is sized from the photo**, not the other way round. The
     ///   texture's pixel dimensions give the aspect and the picture is fitted
-    ///   inside `Layout.portraitPictureMax`, so replacing the file with one of a
+    ///   inside `KitchenLayout.portraitPictureMax`, so replacing the file with one of a
     ///   different shape needs no numbers changed here.
     /// - **It is lit, not unlit.** A `PhysicallyBasedMaterial` with the photo as
     ///   its base colour dims and brightens with the room's key light the way a
@@ -1361,14 +1366,14 @@ enum KitchenProps {
     static func portrait(flat: Bool) -> Entity {
         let root = Entity()
         root.name = "Portrait"
-        root.position = Layout.portraitCentre
+        root.position = KitchenLayout.portraitCentre
 
         if let photo = photograph() {
             let picture = fit(photo)
             addFrame(to: root, around: picture, flat: flat)
             addPhotograph(photo, size: picture, to: root)
         } else {
-            let picture = Layout.portraitFallbackPicture
+            let picture = KitchenLayout.portraitFallbackPicture
             addFrame(to: root, around: picture, flat: flat)
             addMount(to: root, size: picture, flat: flat)
             addModelledSitter(to: root, flat: flat)
@@ -1402,7 +1407,7 @@ enum KitchenProps {
     /// side runs out first sets the scale, so neither a tall photo nor a wide
     /// one is ever cropped or squashed.
     private static func fit(_ photo: TextureResource) -> SIMD2<Float> {
-        let box = Layout.portraitPictureMax
+        let box = KitchenLayout.portraitPictureMax
         let aspect = Float(photo.width) / Float(max(1, photo.height))
         let wide = SIMD2<Float>(box.x, box.x / max(aspect, 0.0001))
         return wide.y <= box.y ? wide : SIMD2<Float>(box.y * aspect, box.y)
@@ -1439,8 +1444,8 @@ enum KitchenProps {
     /// is actually made and one fewer thing to line up.
     private static func addFrame(to root: Entity, around picture: SIMD2<Float>,
                                  flat: Bool) {
-        let rail = Layout.portraitRail
-        let depth = Layout.portraitDepth
+        let rail = KitchenLayout.portraitRail
+        let depth = KitchenLayout.portraitDepth
         let outer = SIMD2<Float>(picture.x + rail * 2, picture.y + rail * 2)
 
         for side: Float in [-1, 1] {
@@ -1476,7 +1481,7 @@ enum KitchenProps {
     /// is the only thing in the app that shows what the faceted style does with
     /// a human face.
     ///
-    /// Laid out for a `Layout.portraitFallbackPicture` opening, and **every part
+    /// Laid out for a `KitchenLayout.portraitFallbackPicture` opening, and **every part
     /// is staged at its own depth**, climbing from the mount at z = 0.0015 to
     /// the eyes at 0.0118: two surfaces at the same z flicker against each other
     /// and at this size that would read as the picture being broken rather than

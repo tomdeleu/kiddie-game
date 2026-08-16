@@ -40,7 +40,7 @@ struct GardenState: Codable {
 
     /// How many the basket holds. The kitchen's number, so the two rooms cannot
     /// disagree about what a round is.
-    static var capacity: Int { Layout.ingredientsPerRound }
+    static var capacity: Int { KitchenLayout.ingredientsPerRound }
 
     var isFull: Bool { basket.count >= Self.capacity }
     var plantedCount: Int { plots.filter { !$0.isEmpty }.count }
@@ -117,7 +117,7 @@ enum GardenStore {
             return .fresh()
         }
         // **A bed that is the wrong length is a save from a different build.**
-        // `plotCount` follows `Layout.ingredientsPerRound`, which `GAMEPLAY.md`
+        // `plotCount` follows `KitchenLayout.ingredientsPerRound`, which `GAMEPLAY.md`
         // §10 explicitly leaves open, so this will happen the day that number
         // moves. Growing the bed keeps her plants; shrinking it keeps the ones
         // that still fit, which is the best answer available and better than

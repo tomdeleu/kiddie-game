@@ -272,6 +272,14 @@ enum Line {
     /// a room *soon* rather than a room *now* — see `KitchenRoom.endRoom`.
     static let kamerDeur = "nina.kamer.deur"
 
+    /// **The kitchen's door, when there is a cake to take through it.**
+    ///
+    /// `kamerDeur` is the careful one — *"die komt gauw, hoor"* — and it is
+    /// still what she hears if she reaches a finished kitchen with nothing to
+    /// decorate. This is the one `ROOMS.md` §9 wrote down as the round-mode
+    /// line, and it can be said now because the room on the other side exists.
+    static let naarVersieren = "nina.keuken.naarVersieren"
+
     /// What we are doing today, said once at the top of every round.
     static let opdracht = "nina.keuken.opdracht"
     /// The rolling step, which comes before anything goes in the bowl.
