@@ -702,23 +702,24 @@ rather than a billboard.
 
 ## Deliberate deviations from the design
 
-**There is ambient occlusion on the toverbosbes, and nowhere else.**
+**There is ambient occlusion on the two Blender props, and nowhere else.**
 `references/REFERENCES.md` bans it outright — the facets are supposed to do the
 shading and corners are supposed to stay light — and that holds everywhere a
-facet can answer the question. The berry is where it cannot: its crown stands
-up off the globe rather than lying folded on it, and the crater floor and the
-crown's underside face the same way as everything around them, so they come
-back the same tone and nothing says the two shapes touch. Owner's call, on
-seeing the standing crown.
+facet can answer the question. These two are where it cannot: the berry's crown
+stands up off the globe, the sack's collar fans out over its tie, and in both
+cases the surfaces in the join face the same way as everything around them, so
+they come back the same tone and nothing says the two shapes touch. Owner's
+call, on seeing the standing crown, and extended to the sack.
 
 It is baked **to the facets, not to a texture** — `bake_ao_facets` in
 `models/lowpoly.py` measures the occlusion at model time and splits the faces
 in the crevice into their own mesh, which `Palette.occluded` paints a step
 darker. So there are still no UVs, no lightmap and no runtime cost, and the
-occlusion is still one flat tone on a facet. Its reach is 2.2 mm: contact
-shading where two parts meet, not the all-over darkening the clay direction was
-rejected for. `models/README.md` has the argument in full, and `LIGHTMAPS.md`
-is still the untaken texture route.
+occlusion is still one flat tone on a facet. Its reach is 2.2 mm on the berry
+and 6 mm on the sack: contact shading where two parts meet, not the all-over
+darkening the clay direction was rejected for. Everything built by `FacetedMesh`
+has none. `models/README.md` has the argument in full and the three rules that
+keep the bake honest, and `LIGHTMAPS.md` is still the untaken texture route.
 
 **The room is 0.46 m across and the camera moved with it.** `POC.md` asks for a
 box "around 0.4 m" and signed off a framing; this is that box grown 15% and that

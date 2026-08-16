@@ -88,10 +88,11 @@ enum Palette {
     /// standing rule — `references/REFERENCES.md` bans occlusion outright,
     /// because the facets are supposed to do the shading and corners are
     /// supposed to stay light. That rule holds everywhere a facet can answer
-    /// the question. The toverbosbes is where it cannot: once its crown stands
-    /// up off the berry rather than lying folded on it, the crater floor and
-    /// the crown's underside face the same way as everything around them, so
-    /// they come back the same tone and nothing says the two shapes touch.
+    /// the question. The two props modelled in Blender are where it cannot: the
+    /// berry's crown stands up off its globe, the flour sack's collar fans out
+    /// over its tie, and in both joins the surfaces face the same way as
+    /// everything around them, so they come back the same tone and nothing says
+    /// the two shapes touch. Nothing `FacetedMesh` builds uses this.
     ///
     /// It is not a lightmap and it costs nothing at runtime. `bake_ao_facets`
     /// in `models/lowpoly.py` measures the occlusion at model time and splits

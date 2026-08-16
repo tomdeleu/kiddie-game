@@ -117,11 +117,20 @@ def tube(rings, n, cap_bottom=True, cap_top=True):
 
 
 # ------------------------------------------------------------ occlusion bake
+#: Rays leaving a facet closer to its own plane than this are discarded. A ray
+#: at a few degrees off tangent tells you nothing about whether the facet is in
+#: a crevice — the facet's own plane is right there, and floating point will
+#: happily report a hit on the surface the ray just left. **This is not a nicety:
+#: with grazing rays in, the flour sack's body measured a mean occlusion of 0.44
+#: and came back almost entirely shaded. Without them it measures 0.04.**
+GRAZING_CUTOFF = 0.12
+
+
 def _cosine_hemisphere(samples):
     """A fixed, cosine-weighted set of directions in the +Z hemisphere.
 
-    Deterministic on purpose — `Math.random` would make the export differ run
-    to run, and a model that changes when you rebuild it is a model nobody can
+    Deterministic on purpose — a random set would make the export differ run to
+    run, and a model that changes when you rebuild it is a model nobody can
     review a diff of.
     """
     golden = math.pi * (3 - math.sqrt(5))
@@ -129,7 +138,10 @@ def _cosine_hemisphere(samples):
     for k in range(samples):
         r = math.sqrt((k + 0.5) / samples)
         a = golden * k
-        dirs.append((r * math.cos(a), r * math.sin(a), math.sqrt(max(0.0, 1 - r * r))))
+        z = math.sqrt(max(0.0, 1 - r * r))
+        if z < GRAZING_CUTOFF:
+            continue
+        dirs.append((r * math.cos(a), r * math.sin(a), z))
     return dirs
 
 
@@ -178,6 +190,11 @@ def bake_ao_facets(objects, thresholds=(0.12, 0.30), distance=0.005, samples=48,
     bvh = mathutils.bvhtree.BVHTree.FromPolygons(verts, polys, all_triangles=False)
 
     dirs = _cosine_hemisphere(samples)
+    # Lift the ray's start clear of the facet it belongs to, in proportion to
+    # how far the rays travel. A fixed epsilon that works on a 20 mm berry is
+    # inside the floating-point noise of a 56 mm sack.
+    lift = max(2e-5, distance * 0.03)
+
     produced = []
     for ob in objects:
         rotation = ob.matrix_world.to_3x3()
@@ -186,20 +203,33 @@ def bake_ao_facets(objects, thresholds=(0.12, 0.30), distance=0.005, samples=48,
             centre = ob.matrix_world @ poly.center
             normal = (rotation @ poly.normal).normalized()
             basis = _basis(normal)
-            origin = centre + normal * 2e-5
+            origin = centre + normal * lift
             hit = 0
             for d in dirs:
                 if bvh.ray_cast(origin, basis @ mathutils.Vector(d), distance)[0] is not None:
                     hit += 1
-            ao = hit / float(samples)
+            ao = hit / float(len(dirs))
             level = sum(1 for t in thresholds if ao >= t)
             buckets.setdefault(level, []).append(poly.index)
 
         # Demote thin levels, darkest first, so a straggler joins the band below
-        # it rather than standing out on its own.
-        for level in sorted(buckets, reverse=True):
-            if level > 0 and len(buckets[level]) < min_faces:
+        # it rather than standing out on its own. Walked down one level at a
+        # time rather than over a snapshot of the keys, because a demotion feeds
+        # the level below it and that level then has to be judged again.
+        level = max(buckets)
+        while level > 0:
+            if level in buckets and len(buckets[level]) < min_faces:
                 buckets.setdefault(level - 1, []).extend(buckets.pop(level))
+            level -= 1
+
+        # **A part where every face lands in the same shaded bucket has learned
+        # nothing.** Occlusion is contrast within a part; shading all of it is
+        # just painting the part a darker colour, which is the all-over
+        # darkening this is explicitly not for. The flour sack's tie sits under
+        # the collar's overhang and came back uniformly dark — correct as
+        # physics, wrong as a tie.
+        if len(buckets) == 1 and 0 not in buckets:
+            buckets = {0: next(iter(buckets.values()))}
 
         produced.extend(_split_levels(ob, buckets))
     return produced
@@ -279,6 +309,37 @@ def _split_levels(ob, buckets):
         p.use_smooth = False
     ob.data.update()
     return produced
+
+
+def apply_modifiers(ob):
+    """Bake an object's modifiers into its mesh, right now.
+
+    Needed before `bake_ao_facets`: the bake measures occlusion against the
+    *evaluated* geometry but splits the faces of the *stored* mesh, and a
+    split-off piece is a new object with no modifiers on it. Leave a solidify
+    unapplied and the shaded faces come out paper-thin while everything around
+    them is thick. Applying first makes both views of the mesh the same one.
+
+    Done through the depsgraph rather than `bpy.ops.object.modifier_apply`,
+    which needs an active object and a context this may not have.
+    """
+    if not ob.modifiers:
+        return ob
+    deps = bpy.context.evaluated_depsgraph_get()
+    evaluated = ob.evaluated_get(deps)
+    baked = bpy.data.meshes.new_from_object(evaluated)
+    old = ob.data
+    name = old.name
+    ob.data = baked
+    ob.modifiers.clear()
+    # Free the old mesh *before* taking its name, or Blender hands back
+    # `Name.001` — and the USD exporter names the Mesh prim after the mesh, so
+    # that suffix travels all the way into the app as `FlourSackCollar_001`.
+    bpy.data.meshes.remove(old)
+    baked.name = name
+    for p in ob.data.polygons:
+        p.use_smooth = False
+    return ob
 
 
 def clear(prefix):

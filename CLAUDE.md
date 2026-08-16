@@ -34,8 +34,8 @@ Four deliberate deviations from the design are recorded there: the doorway does
 not lead to the decorating room, which does not exist yet; the palette gained a
 blue and an amber the locked thirteen do not contain; the room box is now
 0.46 m with the camera pulled back 8%, rather than the 0.4 m and the framing
-`POC.md` signed off; and **the toverbosbes carries ambient occlusion**, which
-nothing else does — see below. The round is ended by carrying the finished cake
+`POC.md` signed off; and **the two Blender props carry ambient occlusion**,
+which nothing else does — see below. The round is ended by carrying the finished cake
 up onto the plank.
 
 **Next**, per [`GAMEPLAY.md`](GAMEPLAY.md) §9: decorating, then the party, then
@@ -150,10 +150,12 @@ These were argued through and settled. Reopen only if the user asks.
   from the facet normals, and corners stay light. Every room is an open corner
   room box (two walls + floor) on a slim base slab, at a fixed isometric angle.
   Full spec in `references/REFERENCES.md`.
-  **One prop breaks the AO rule, on the owner's call, 2026-08-16**: the
-  toverbosbes, where the crown standing off the globe is a join no facet can
-  shade. It is baked to the facets, not to a texture, and reaches 2.2 mm.
-  `models/README.md` has the argument; the rule holds everywhere else.
+  **The two Blender props break the AO rule, on the owner's call, 2026-08-16**:
+  the toverbosbes and the flour sack, where a crown standing off a globe and a
+  collar fanning over a tie are joins no facet can shade. It is baked to the
+  facets, not to a texture, and reaches 2.2 mm and 6 mm. `models/README.md` has
+  the argument; the rule holds everywhere else, including everything
+  `FacetedMesh` builds.
   **Every image generation must pass the matching locked style reference**
   alongside the prompt — scenes `64f0893e-073a-4065-b363-f87687ced11d`
   (`references/plates/01-cottage-exterior.png`), characters

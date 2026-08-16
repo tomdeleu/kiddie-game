@@ -76,17 +76,31 @@ between each pair, and that is where "pointy" comes from.
 
 Same two fallbacks as the sack: `KitchenProps.buildProceduralBlueberry`.
 
-### And the only ambient occlusion in the game
+## Ambient occlusion, on these two props only
 
-Standing the crown up cost something: the crown and the globe stopped being one
-silhouette, and nothing in the renderer said the two shapes touch. The facets
-cannot answer it — the crater floor and the crown's underside face the same way
-as everything around them, so they come back the same tone.
+It started on the berry. Standing the crown up cost something: the crown and
+the globe stopped being one silhouette, and nothing in the renderer said the
+two shapes touch. The facets cannot answer it — the crater floor and the
+crown's underside face the same way as everything around them, so they come
+back the same tone. The sack has the same problem in three places: under the
+fanned collar, into the groove of the tie, and where the corners tuck under the
+bulge.
 
 `lowpoly.bake_ao_facets` casts rays over each face's hemisphere against the
 whole prop, and moves the faces that are actually in the crevice into their own
 mesh named `…Shade1` / `…Shade2`. `ModelLibrary` reads that suffix and paints
 them a step darker per level, out of the palette.
+
+What it finds, at the settings each prop is exported with:
+
+| | Shaded | Where |
+|---|---|---|
+| Berry | 12 faces one step, 3 two steps, 5 on the crown | the crater ring, and the crown's hull underneath |
+| Sack | 21 on the tie, 36 on the collar | the tie's top half under the collar's overhang, and the collar's inner faces |
+
+The sack's body and corners come back **unshaded**, which is the right answer:
+a slumped bag is convex nearly everywhere, and the two faces that did measure
+as occluded were too few to read as anything but a blemish.
 
 **This is a deliberate exception to a locked rule.**
 `references/REFERENCES.md` bans occlusion outright, and it stays banned
@@ -96,14 +110,34 @@ against it:
 - **It is baked to facets, not to a texture.** No UVs, no lightmap, no runtime
   cost — the result is still one flat tone per face, which is what the whole
   style is made of. `app/LIGHTMAPS.md` is the texture route, and it is not this.
-- **Its reach is 2.2 mm.** Contact shading where two parts meet, not the all-over
-  darkening that got the clay direction rejected.
-- **It is on one prop**, because one prop needed it.
+- **Its reach is short**: 2.2 mm on the berry, 6 mm on the sack, which is the
+  same *proportion* of a prop five times the size. Contact shading where two
+  parts meet, not the all-over darkening that got the clay direction rejected.
+- **It is on these two props**, because these two needed it. Nothing built by
+  `FacetedMesh` has any, and the rule stands there.
 
-The knobs are `distance`, `thresholds` and `min_faces`. The last one demotes a
-level that catches fewer than three faces: one facet a step darker than
-everything around it does not read as occlusion, it reads as a blemish, which
-is exactly what the first bake produced.
+### The three things that make it behave
+
+Each of these came from a bake that looked wrong, and each is a knob on
+`bake_ao_facets`:
+
+- **Grazing rays are discarded** (`GRAZING_CUTOFF`). A ray leaving a facet a few
+  degrees off tangent tells you nothing about whether that facet is in a
+  crevice, and floating point will happily report it as hitting the surface it
+  just left. This is not a nicety: with grazing rays in, the sack's body
+  measured a mean occlusion of **0.44** and came back almost entirely shaded.
+  Without them it measures **0.04**. The ray's start is also lifted clear of its
+  facet in proportion to `distance` — a fixed epsilon that works on a 20 mm
+  berry is inside the noise of a 56 mm sack.
+- **Thin levels are demoted** (`min_faces`, default 3). One facet a step darker
+  than everything around it does not read as occlusion, it reads as a blemish.
+  The demotion walks down a level at a time rather than over a snapshot of the
+  buckets, because a demotion feeds the level below it and that level then has
+  to be judged again.
+- **A part shaded uniformly is not shaded at all.** Occlusion is contrast
+  *within* a part; darkening every face of one is just painting it a different
+  colour. The sack's tie sits under the collar's overhang and at 6 mm came back
+  uniformly dark — correct as physics, wrong as a tie.
 
 ## Rules a model has to hold to
 

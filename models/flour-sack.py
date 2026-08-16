@@ -106,9 +106,24 @@ def build():
     root = bpy.data.objects.new("FlourSack", None)
     root.empty_display_size = 0.02
     bpy.context.collection.objects.link(root)
-    for ob in [body, tie, collar] + corners:
+    parts = [body, tie, collar] + corners
+    for ob in parts:
         ob.parent = root
-    return [root, body, tie, collar] + corners
+
+    # The solidify has to be real geometry before the bake: the split-off shade
+    # pieces are new objects with no modifiers, so an unapplied solidify would
+    # leave the collar's shaded faces paper-thin inside a thick fan.
+    lowpoly.apply_modifiers(collar)
+
+    # Contact shading where the sack folds into itself — under the fanned
+    # collar, into the groove of the tie, along the gather where the cloth is
+    # pinched, and where the corners tuck under the bulge. Same bake as the
+    # berry (`models/README.md`), scaled to a prop five times the size: 6 mm of
+    # reach on a 48 mm sack is the same *proportion* of contact shading, not a
+    # step towards lighting the whole thing.
+    shades = lowpoly.bake_ao_facets(parts, distance=0.006, thresholds=(0.14, 0.34))
+
+    return [root] + parts + shades
 
 
 if __name__ == "__main__":
