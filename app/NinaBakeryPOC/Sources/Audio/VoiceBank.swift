@@ -380,7 +380,11 @@ enum Line {
         static let bij = "nina.speel.bij"
         static let mol = "nina.speel.mol"
         static let bloemen = "nina.speel.bloemen"
-        static let plas = "nina.speel.plas"
+        /// **The pond**, which replaced the garden's two puddles on the owner's
+        /// call. `nina.speel.plas` went with them: a line that says *plas* over
+        /// a pond teaches the wrong word, and the word is half of what a toy is
+        /// for here.
+        static let vijver = "nina.speel.vijver"
         static let regenboog = "nina.speel.regenboog"
     }
 
@@ -409,7 +413,7 @@ enum Line {
         static let molshoop = "nina.dit.molshoop"
         static let vlinder = "nina.dit.vlinder"
         static let bij = "nina.dit.bij"
-        static let plas = "nina.dit.plas"
+        static let vijver = "nina.dit.vijver"
         static let boom = "nina.dit.boom"
         static let struik = "nina.dit.struik"
         static let potje = "nina.dit.potje"       // the kitchen's, reused

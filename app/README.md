@@ -975,9 +975,16 @@ is intended and stays: `TouchRouter` picks the nearest centre, so each owns an
 equal band and an imprecise tap always lands on the nearest one. Overlap between
 **unlike** things is the bug, because the wrong kind of answer can win.
 
-Two toy-to-toy pairs are still a few millimetres short (the molehill and a
-puddle, the basket and a puddle). Both resolve by nearest-wins and both answer
-with a word, so they are left alone.
+**The pond re-ran this check and it comes out clean.** Every unlike pair in the
+garden was measured again when the two puddles became one pond, with the same
+formula the helper uses: the only pairs still short are `plot2`/`greenery1` (6.6
+mm) and `plot3`/`greenery1` (4.2 mm), which are the bed's holes against the bush
+behind them and predate the pond. The toy-to-toy shortfall that used to be here
+— a puddle 3 mm inside the butterfly — went out with the puddle. The pond's own
+worst neighbour is the watering can at 96 mm against the 82 the two radii need.
+
+The check is one script rather than a habit: it is worth re-running whenever a
+prop moves, because every one of these numbers was chosen to *just* fit.
 
 **The measurement is now `RoomBox.screenSeparation(_:_:)`**, so the next room
 does not have to rederive it. `RoomBox.distanceXZ` stays where it is and stays
@@ -1111,7 +1118,22 @@ Six, none of which gate anything:
   because a target big enough to catch every drag would eat every other drag in
   the room. It follows *slowly*: a butterfly that arrives is a cursor.
 - **A bee** that hums when chased.
-- **Two puddles** that splash.
+- **A pond** that splashes — a ring of thirteen faceted stones round a pool that
+  steps down in three bands, at the front of the lawn between the can and the
+  basket. **It replaced two puddles** on the owner's call, 2026-08-16, and it is
+  the one toy in the room that moved other props: the molehill was standing
+  where the middle of it now is, and the butterfly hovered close enough over the
+  rim to read as sitting on the water. Both moved, which was the second half of
+  the same instruction — *nothing else is in the pond*.
+
+  **The water steps down and it does that without a hole in the floor.** The
+  puddle stacked three discs *upward*, palest and smallest on top, which is a
+  mound of water — fine at 50 mm across and wrong at 120. Sinking the new one
+  below `floorY` is the obvious fix and cannot work: the floor is a solid box
+  and geometry inside it is simply hidden. So the whole basin stands on the
+  grass, each band is a lathed washer whose top sits 1.4 mm below the one
+  outside it, and the stones stand five to seven millimetres proud of the water.
+  What she looks into is the rim, not the ground.
 - **A rainbow**, which is the one worth describing. `GAMEPLAY.md` §6.2 says
   waving the can in the air makes one, and it is discovered rather than
   explained: a long swing of the can that watered nothing is exactly what a
@@ -1196,9 +1218,10 @@ Nothing structural. The three things it is short of are content and are cheap:
   already migrates a save whose bed is the wrong length.
 - **The wish hint** — a colour wish shimmering its matching jar — is one line
   once the friends exist, because the shimmer is already the jars' cue.
-- **`GAMEPLAY.md` §6.2 lists a bee, a butterfly, a mole, puddles and flowers.**
-  All six are in. The next one or two are free (`ROOMS.md` §8: add one every time
-  you touch a room).
+- **`GAMEPLAY.md` §6.2 lists a bee, a butterfly, a mole, water and flowers.**
+  All six are in — the water as one pond rather than the two puddles §6.2 used
+  to ask for, owner's call 2026-08-16, and §6.2 now says pond. The next one or
+  two are free (`ROOMS.md` §8: add one every time you touch a room).
 
 ## Deliberate deviations from the design
 

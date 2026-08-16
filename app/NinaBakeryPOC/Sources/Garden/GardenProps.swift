@@ -739,28 +739,93 @@ enum GardenProps {
         return root
     }
 
-    /// `references/garden/puddle.png`: an octagonal pool lying flat, with two
-    /// concentric stepped rings inside it.
+    /// `references/garden/pond.png`: a ring of chunky faceted stones round a
+    /// shallow octagonal pool that **steps down** in three bands, palest at the
+    /// rim and deepest in the middle.
     ///
-    /// **Opaque, unlike the kitchen's water**, and the plate is right about it.
-    /// A puddle is seen from directly above against one flat ground colour, so
-    /// there is nothing behind it for transparency to reveal — and
-    /// `references/REFERENCES.md` §1's no-transparency rule only ever had one
-    /// exception because running water has no other read.
-    static func puddle(flat: Bool) -> Entity {
+    /// **It replaced two puddles**, owner's call 2026-08-16. The puddle was
+    /// three discs stacked *upward*, smallest and palest on top, which is a
+    /// mound of water — legible at 50 mm across and wrong at 120. A pond is a
+    /// hole, so this one descends: each band is a lathed washer whose top sits
+    /// lower than the one outside it, and the step walls are what say *depth*.
+    ///
+    /// **The steps go down without a hole in the floor.** The obvious build —
+    /// sinking the water below `floorY` — cannot work: the floor is a solid box
+    /// and anything inside it is simply hidden. So the whole basin stands *on*
+    /// the grass and the stones stand around it, five to seven millimetres
+    /// proud of the water, and what she looks into is the rim rather than the
+    /// ground.
+    ///
+    /// **Opaque, like the puddle was**, and the plate is right about it. Still
+    /// water seen from above against one flat ground colour has nothing behind
+    /// it for transparency to reveal — `references/REFERENCES.md` §1's
+    /// no-transparency rule only ever had one exception, and it was for running
+    /// water, which has no other read.
+    ///
+    /// **The stones are `creamLight`, not the studio plate's sandy ones.** Same
+    /// call the seed jar and the watering can already made in this room: the
+    /// studio plate is shot on grey and cannot be asked what the prop stands
+    /// next to, and `roombox-v3-pond.png` — which can — came back with a pale
+    /// near-white rim on the mint lawn. Sandy stones beside a sandy bench and a
+    /// brown soil bed would be a third brown.
+    static func pond(flat: Bool) -> Entity {
         let root = Entity()
-        root.name = "Puddle"
-        let steps: [(Float, Float, UIColorLike)] = [
-            (0.0250, 0.0016, Palette.berryBlue),
-            (0.0180, 0.0010, Palette.mix(Palette.berryBlue, Palette.white, 0.30)),
-            (0.0105, 0.0008, Palette.mix(Palette.berryBlue, Palette.white, 0.55)),
+        root.name = "Pond"
+
+        // The water, outside in: each band's top is 1.4 mm below its neighbour's,
+        // so the wall between them is a real face that catches its own light.
+        // A washer is a lathe rather than a prism because a prism is solid — a
+        // smaller prism inside a taller one is buried, not nested.
+        let bands: [(outer: Float, inner: Float, top: Float, colour: UIColorLike)] = [
+            (0.0420, 0.0320, 0.0052, Palette.mix(Palette.berryBlue, Palette.white, 0.45)),
+            (0.0320, 0.0195, 0.0038, Palette.berryBlue),
         ]
-        for (i, step) in steps.enumerated() {
-            let disc = RoomBuilder.model(.prism(radius: step.0, height: step.1,
+        for (i, band) in bands.enumerated() {
+            let ring = RoomBuilder.model(.lathe(profile: [[band.outer, 0],
+                                                          [band.outer, band.top],
+                                                          [band.inner, band.top],
+                                                          [band.inner, 0]],
                                                 sides: 8),
-                                         step.2, flat: flat, name: "PuddleStep\(i)")
-            disc.position = [0, Float(i) * 0.0007, 0]
-            root.addChild(disc)
+                                         band.colour, flat: flat, name: "PondBand\(i)")
+            root.addChild(ring)
+        }
+        let deep = RoomBuilder.model(.prism(radius: 0.0195, height: 0.0024, sides: 8),
+                                     Palette.berryBlueDeep, flat: flat, name: "PondDeep")
+        root.addChild(deep)
+
+        // Thirteen stones, straddling the water's edge so no grass shows between
+        // the rim and the pool. Odd count on purpose: an even ring reads as two
+        // halves from this camera. Sizes and angles are a fixed cycle rather
+        // than random — a pond that rebuilds differently every time the
+        // flat-shading toggle flips is a pond that moved while she was looking.
+        let stoneRing: Float = 0.0500
+        let sizes: [Float] = [0.0112, 0.0102, 0.0108, 0.0098, 0.0106]
+        for i in 0..<13 {
+            let angle = Float(i) / 13 * 2 * .pi
+            let radius = sizes[i % sizes.count]
+            let stone = RoomBuilder.model(.icosphere(radius: radius, subdivisions: 0),
+                                          i.isMultiple(of: 2) ? Palette.creamLight
+                                                              : Palette.cream,
+                                          flat: flat, name: "PondStone\(i)")
+            // A squashed boulder, **laid along the ring rather than across it**.
+            // That is what keeps the rim a rim: the long axis is tangential, so
+            // thirteen of them at 24 mm of arc apiece meet edge to edge, and the
+            // pond's footprint is the 0.95 semi-axis rather than the 1.15 one —
+            // which is where `GardenLayout.pondRadius`'s 61 mm comes from.
+            //
+            // The tilt is deliberately tiny. A squashed sphere rolled far enough
+            // stands its flat axis up and becomes a tall stone, so the roll is
+            // kept under 0.07 rad, where the height it adds is 0.06 mm.
+            stone.scale = [1.15, 0.66, 0.95]
+            stone.orientation = simd_quatf(angle: -(angle + .pi / 2), axis: [0, 1, 0])
+                * simd_quatf(angle: Float(i % 3) * 0.06 - 0.06, axis: [1, 0, 0])
+            // Sunk 2.2 mm into the grass, so it sits in the ground rather than
+            // resting on it. Tops land at 10.5–12.6 mm, five to seven above the
+            // water — an uneven rim, which is what a ring of stones is.
+            stone.position = [cos(angle) * stoneRing,
+                              radius * 0.66 - 0.0022,
+                              sin(angle) * stoneRing]
+            root.addChild(stone)
         }
         return root
     }

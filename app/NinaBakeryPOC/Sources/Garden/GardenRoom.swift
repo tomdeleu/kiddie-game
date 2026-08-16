@@ -73,7 +73,7 @@ final class GardenRoom: Room {
     private var molehill: GardenProps.Molehill?
     private var butterfly: Entity?
     private var bee: Entity?
-    private var puddles: [Entity] = []
+    private var pond: Entity?
     private var doorway: Props.Doorway?
     private var doorMarker: Entity?
     private var doorTouchSpot: Entity?
@@ -188,7 +188,7 @@ final class GardenRoom: Room {
         plants.removeAll()
         plotMarkers.removeAll()
         flowers.removeAll()
-        puddles.removeAll()
+        pond = nil
         basketTokens.removeAll()
         strays.removeAll()
         strayTargets = 0
@@ -298,13 +298,18 @@ final class GardenRoom: Room {
         root.addChild(buzzer)
         bee = buzzer
 
-        for (index, spot) in GardenLayout.puddleSpots.enumerated() {
-            let pool = GardenProps.puddle(flat: flat)
-            pool.position = spot
-            pool.name = "Puddle\(index)"
-            root.addChild(pool)
-            puddles.append(pool)
-        }
+        // **The pond, and nothing in it.** Two puddles stood here and at the
+        // bed's right end; one pond replaces both, on the owner's call. It is
+        // built last of the toys for the same reason it is placed first in
+        // `GardenLayout`: everything else in the near foreground is positioned
+        // around it, not the other way about.
+        let pool = GardenProps.pond(flat: flat)
+        pool.position = SIMD3<Float>(GardenLayout.pondCentre.x,
+                                     GardenLayout.floorY,
+                                     GardenLayout.pondCentre.y)
+        pool.name = "Pond"
+        root.addChild(pool)
+        pond = pool
     }
 
     /// **The gate**, which is what this room has instead of a door.
@@ -431,11 +436,13 @@ final class GardenRoom: Room {
             target.tracksEntity = true
             target.onTap = { [weak self] in self?.tapBee() }
         }
-        for (index, pool) in puddles.enumerated() {
-            touch.register("puddle\(index)", entity: pool, radius: 0.030,
-                           planeY: GardenLayout.floorY) { target in
-                target.onTap = { [weak self] in self?.tapPuddle(index) }
-            }
+        // 42 mm rather than the puddle's 30: it is the largest prop on the
+        // floor of this room and the kitchen's set has a radius for that. It
+        // clears the can by 96 mm on screen and the basket by 107, against the
+        // 82 and 80 those pairs of radii need.
+        touch.register("pond", entity: pond, radius: 0.042,
+                       planeY: GardenLayout.floorY) { target in
+            target.onTap = { [weak self] in self?.tapPond() }
         }
         for (index, spot) in [GardenLayout.treeSpot, GardenLayout.bushSpots[0]].enumerated() {
             let marker = Entity()
@@ -1171,16 +1178,22 @@ final class GardenRoom: Room {
         sayToy(Line.Dit.bij, Line.Speel.bij)
     }
 
-    private func tapPuddle(_ index: Int) {
-        guard puddles.indices.contains(index) else { return }
-        let pool = puddles[index]
+    /// **A tap on the pond.** The puddle's splash, scaled to a pond.
+    ///
+    /// Squashing the whole prop would bounce the stone rim, which is a rim of
+    /// stones and does not bounce, so only the water moves — and the droplets
+    /// are thrown from the middle of the pool rather than from its edge.
+    private func tapPond() {
+        guard let pond else { return }
         sound.playVaried(.water, volume: 0.6)
-        ticker.squash(pool, amount: 0.26, duration: 0.5)
-        // Droplets bouncing out of it, in the water's own colour.
-        Sparkles.burst(at: pool.position + [0, 0.006, 0], in: root, ticker: ticker,
-                       colour: Palette.berryBlue, count: 9, size: 0.0022,
-                       speed: 0.075, life: 0.65)
-        sayToy(Line.Dit.plas, Line.Speel.plas)
+        for band in pond.children where band.name.hasPrefix("PondBand")
+                                     || band.name == "PondDeep" {
+            ticker.squash(band, amount: 0.30, duration: 0.55)
+        }
+        Sparkles.burst(at: pond.position + [0, 0.010, 0], in: root, ticker: ticker,
+                       colour: Palette.berryBlue, count: 12, size: 0.0024,
+                       speed: 0.090, life: 0.70)
+        sayToy(Line.Dit.vijver, Line.Speel.vijver)
     }
 
     /// **The butterfly follows her finger and the bee hovers over the flowers.**

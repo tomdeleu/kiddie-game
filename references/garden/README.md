@@ -46,7 +46,7 @@ text out explicitly: no lettering, no numbers, no labels, no markings.
 | `butterfly.png` | `79fbe2fd-f75a-4b95-9a65-046ec706aef2` | A segmented body, two straight antennae, and **four** flat wings — a big upper and a smaller lower each side |
 | `bee.png` | `e8efea5d-ba7e-47bb-ba1f-db5ffc6bb161` | Nearly spherical, in **broad bands**, with two small pale wings and knobbed antennae |
 | `garden-tree.png` | `5f33d95f-bcd1-4192-984b-481907562f26` | A **cluster** of a dozen overlapping balls on a straight tapered trunk — not one ball |
-| `puddle.png` | `692a809d-e733-420f-adea-e3a0a5edfe7d` | An octagonal pool lying flat, with **concentric stepped rings** inside it |
+| `puddle.png` | `692a809d-e733-420f-adea-e3a0a5edfe7d` | An octagonal pool lying flat, with **concentric stepped rings** inside it — the two puddles this built were replaced by the pond below on 2026-08-16 |
 
 ### The three that replaced the walls
 
@@ -75,7 +75,8 @@ front edge. It is the kitchen's mirrored-shelf problem rotated a quarter turn.
 
 ## The room-box plate overruled the studio plates. Again.
 
-Three times now in this one room, which makes it a rule rather than an anecdote.
+**Four times now** in this one room, which makes it a rule rather than an
+anecdote.
 
 - **The seed jar** came back as glass; `roombox.png` drew it opaque and tinted.
 - **The watering can** came back blush; `roombox.png` put a mint one in a rose
@@ -88,10 +89,42 @@ Three times now in this one room, which makes it a rule rather than an anecdote.
   cream fence is one colour, and the path is what gives the gate somewhere to
   lead now that it has no lit doorway behind it.
 
+- **The pond's stones** are the fourth, and the quickest to settle: sandy
+  boulders on grey in `pond.png`, near-white ones on a mint lawn in
+  `roombox-v3-pond.png`. See below.
+
 Every one of those is a question about **what a prop is standing next to**, which
 a studio shot on a grey backdrop cannot be asked. So: *ask for the room box a
 second time, with the room's own contents in it, and let it win.*
 
+
+### The pond, and the fourth time the room box overruled a studio shot
+
+Owner's call, 2026-08-16: *"in the garden I would like to see a small pond at
+the bottom instead of 2 puddles… make sure there are no other items IN the
+pond."* Two plates, one credit each, both against the scene reference.
+
+| File | Job ID | What the model took from it |
+|---|---|---|
+| `pond.png` | `82db921b-6d49-4a2a-9346-6e6796c7af3d` | **A ring of separate boulders**, not a moulded kerb, round water that **steps down** in three octagonal bands from pale at the rim to deep in the middle |
+| `roombox-v3-pond.png` | `1f2e2ba1-7d37-4a22-9885-00f22e49a983` | Where it goes and what colour it is: **front-centre of the lawn**, the can on one side and the basket on the other, **near-white stones** on the mint grass |
+
+**The stones came back sandy in the studio and pale in the room, and the room
+won.** That is now the fourth time in this one garden — the jar's glass, the
+can's colour, the fence and the ground, and these stones — and the reason is the
+same every time: a grey backdrop cannot be asked what the prop stands next to.
+Sandy stones beside a sandy bench, a brown soil bed and a cream path would have
+been a third brown; `creamLight` on a mint lawn is a rim you can see.
+
+**The room-box plate also settled the placement without being asked.** The
+prompt said "at the very front of the lawn"; the plate put the pond dead centre
+between the watering can and the basket, which is exactly the pair of props that
+already bracket the room's open foreground. That is where it is built.
+
+**What the studio plate contributed that the room box could not** is the
+descent: three bands stepping *down*. The room-box pond is one flat sheet of
+water, which at that size in frame is all it can be, and a flat sheet is what
+the puddle already was.
 
 The door is not here. It is the kitchen's, reused unchanged —
 `Sources/Props/Doorway.swift`, from `../props/door.png` — because `ROOMS.md` §9's
