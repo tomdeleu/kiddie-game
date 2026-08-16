@@ -235,6 +235,10 @@ enum VersierLayout {
     /// it. The tray pitch would have to go from 64 mm to about 85 mm, or the
     /// 32 mm radius down to about 24 mm — which is 60 pt, under `CONCEPT.md`
     /// §5's floor. Neither is free, and that is the point.
+    /// `@MainActor` because the second loop asks `RoomBox.screenSeparation`,
+    /// which reads `CameraRig.eye`. Its one caller is `VersierRoom.build`,
+    /// which is already on the main actor, so this costs nothing.
+    @MainActor
     static func assertSpacing() {
         #if DEBUG
         var spots: [(String, SIMD3<Float>, Float)] = []

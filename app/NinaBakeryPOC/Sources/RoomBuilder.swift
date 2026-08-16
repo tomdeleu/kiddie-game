@@ -443,7 +443,7 @@ enum KitchenLayout {
     /// `nearPlank` — and only the cake ever uses it, through
     /// `CarryController.pointedExtra`.
     static let surfaces = Surfaces(
-        floorY: floorY,
+        floorY: RoomBox.floorY,
         // Nearest-camera first, so the table wins over the counter where their
         // footprints meet.
         rects: [

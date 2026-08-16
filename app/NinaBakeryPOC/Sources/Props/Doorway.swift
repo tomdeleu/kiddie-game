@@ -212,14 +212,17 @@ enum Props {
         let picketWidth = opening / Float(picketCount) * 0.72
         for i in 0..<picketCount {
             let along = (Float(i) + 0.5) / Float(picketCount) * opening
-            let board = model(.box([picketWidth, height, thickness]),
-                              Palette.cream, flat: flat, name: "GatePicket\(i)")
+            let board = RoomBuilder.model(.box([picketWidth, height, thickness]),
+                                          Palette.cream, flat: flat,
+                                          name: "GatePicket\(i)")
             board.position = [along, height / 2, 0]
             hinge.addChild(board)
 
-            let point = model(.lathe(profile: [[picketWidth * 0.72, 0], [0, 0.0060]],
-                                     sides: 4),
-                              Palette.cream, flat: flat, name: "GatePoint\(i)")
+            let point = RoomBuilder.model(.lathe(profile: [[picketWidth * 0.72, 0],
+                                                           [0, 0.0060]],
+                                                 sides: 4),
+                                          Palette.cream, flat: flat,
+                                          name: "GatePoint\(i)")
             point.orientation = simd_quatf(angle: .pi / 4, axis: [0, 1, 0])
             point.position = [along, height, 0]
             hinge.addChild(point)
@@ -227,8 +230,9 @@ enum Props {
 
         // Two rails behind them, and the brace across.
         for fraction in GardenLayout.fenceRails {
-            let rail = model(.box([opening - 0.004, 0.008, 0.006]),
-                             Palette.creamLight, flat: flat, name: "GateRail")
+            let rail = RoomBuilder.model(.box([opening - 0.004, 0.008, 0.006]),
+                                         Palette.creamLight, flat: flat,
+                                         name: "GateRail")
             rail.position = [opening / 2, height * fraction, -thickness / 2 - 0.003]
             hinge.addChild(rail)
         }
@@ -236,9 +240,10 @@ enum Props {
         let low = height * GardenLayout.fenceRails[0]
         let high = height * GardenLayout.fenceRails[1]
         let rise = high - low
-        let brace = model(.box([sqrt(opening * opening + rise * rise) - 0.006,
-                                0.007, 0.006]),
-                          Palette.sandyWood, flat: flat, name: "GateBrace")
+        let brace = RoomBuilder.model(.box([sqrt(opening * opening + rise * rise) - 0.006,
+                                            0.007, 0.006]),
+                                      Palette.sandyWood, flat: flat,
+                                      name: "GateBrace")
         brace.orientation = simd_quatf(angle: atan2(rise, opening), axis: [0, 0, 1])
         brace.position = [opening / 2, (low + high) / 2, -thickness / 2 - 0.003]
         hinge.addChild(brace)
@@ -246,15 +251,17 @@ enum Props {
         // Two strap hinges on the hanging edge, which is the detail that says
         // which side opens before she has touched it.
         for fraction in GardenLayout.fenceRails {
-            let strap = model(.box([opening * 0.34, 0.005, 0.004]),
-                              Palette.blushPinkDeep, flat: flat, name: "GateStrap")
+            let strap = RoomBuilder.model(.box([opening * 0.34, 0.005, 0.004]),
+                                          Palette.blushPinkDeep, flat: flat,
+                                          name: "GateStrap")
             strap.position = [opening * 0.17, height * fraction, thickness / 2 + 0.002]
             hinge.addChild(strap)
         }
 
         // And a latch on the other, at the height a hand goes for.
-        let latch = model(.box([0.010, 0.005, 0.004]),
-                          Palette.blushPinkDeep, flat: flat, name: "GateLatch")
+        let latch = RoomBuilder.model(.box([0.010, 0.005, 0.004]),
+                                      Palette.blushPinkDeep, flat: flat,
+                                      name: "GateLatch")
         latch.position = [opening - 0.004, high, thickness / 2 + 0.002]
         hinge.addChild(latch)
 
