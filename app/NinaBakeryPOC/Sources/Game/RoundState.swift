@@ -49,6 +49,23 @@ struct RoundState: Codable {
     /// The cake currently out of the oven, if any.
     var cake: CakeSpec?
 
+    /// **The last cake she actually finished** — the one the door hands to the
+    /// decorating room.
+    ///
+    /// Not `shelf.last`, which is nearly the same thing and wrong in one case
+    /// that will happen: the plank holds four and drops the oldest off the end,
+    /// so after a long session `shelf` is a window rather than a history. This
+    /// is the cake she just made, and it survives the plank forgetting it.
+    ///
+    /// Optional because it did not exist in the previous build, per `ROOMS.md`
+    /// §2 — a save written before this still loads, and the door falls back to
+    /// `shelf.last` for it.
+    var lastFinished: CakeSpec?
+
+    /// What the door should hand over. The fallback is what makes an old save
+    /// work rather than arriving at the decorating room with nothing.
+    var cakeToDecorate: CakeSpec? { lastFinished ?? shelf.last }
+
     var bowlSpec: CakeSpec { CakeSpec(ingredients: inBowl) }
 
     /// The lowest slot she has not used yet — the one the halo lights.

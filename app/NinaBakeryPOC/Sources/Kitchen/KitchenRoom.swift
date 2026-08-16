@@ -1840,6 +1840,9 @@ final class KitchenRoom: Room {
         var shelf = state.shelf
         shelf.append(spec)
         if shelf.count > KitchenLayout.cakeShelfCapacity { shelf.removeFirst() }
+        // Recorded separately from the plank, which is a window of four rather
+        // than a history — see `RoundState.lastFinished`.
+        state.lastFinished = spec
 
         let slot = shelfSlot(min(shelf.count - 1, KitchenLayout.cakeShelfCapacity - 1))
         ContactShadows.removeFrom(cake)
@@ -1929,23 +1932,33 @@ final class KitchenRoom: Room {
 
     /// **The end of the kitchen.**
     ///
-    /// It is a ceremony rather than a transition, because there is nowhere yet
-    /// to transition to: the door swings wide and holds there, the light behind
-    /// it spills onto the threshold, and Nina says — carefully — that this is
-    /// where they will carry on. *"Die komt gauw, hoor"* rather than a promise
-    /// of a room this build cannot open, because a 4-year-old told she is going
-    /// somewhere and then not taken there has been lied to.
+    /// **It is a transition now, not a ceremony.**
     ///
-    /// **This is the one function the decorating room replaces**, and by then
-    /// the swing is already the first half of the transition. Until then it can
-    /// be tapped as often as she likes: nothing is consumed, the plank keeps her
-    /// cakes, and the leaf falls back to ajar rather than shut so the room stays
-    /// finished and stays finishable.
+    /// `ROOMS.md` §9 named this as the one function the decorating room
+    /// replaces, and it has been replaced: the swing that used to be the whole
+    /// event is now the first half of the handover. The leaf opens, light spills
+    /// over the threshold, Nina says *"nu gaan we hem versieren!"* — and this
+    /// time that is true, so it is said as a promise rather than as *soon*.
+    ///
+    /// **The ceremony survives when there is nothing to hand over.** She can
+    /// reach a finished kitchen without a cake in it — a save from before this
+    /// build, or a plank cleared by restarting — and in that case the door still
+    /// works and still says something, it just says the old careful thing. A
+    /// 4-year-old told she is going somewhere and then not taken there has been
+    /// lied to, and that rule does not stop applying because the room now
+    /// usually exists.
+    ///
+    /// Nothing is consumed either way: the plank keeps her cakes and the leaf
+    /// falls back to ajar rather than shut, so the room stays finished and stays
+    /// finishable.
     private func endRoom(_ doorway: KitchenProps.Doorway) {
         swingDoor(doorway, hold: 2.6)
         baker?.set(.cheering)
         sound.play(.reward, volume: 0.7)
-        voice.sayWhenQuiet(Line.kamerDeur)
+        save()
+
+        let cake = state.cakeToDecorate
+        voice.sayWhenQuiet(cake == nil ? Line.kamerDeur : Line.naarVersieren)
 
         // Light coming through the gap, twice, on the beat of the swing opening
         // and of it standing there.
@@ -1960,6 +1973,13 @@ final class KitchenRoom: Room {
                 self.sound.play(.sparkle, volume: 0.45, rate: 1.0 + Float(i) * 0.15)
             }
         }
+
+        // **Handed over on the beat the leaf reaches full open**, so the swing
+        // reads as the way through rather than as something that happened first.
+        // `GameScene` waits again on its own side before building, which is what
+        // gives Nina's line room to land.
+        guard let cake else { return }
+        ticker.after(0.9) { [weak self] in self?.onExit?(.versieren(cake)) }
     }
 
     /// Open, hold, fall back to `doorRest` — and re-tapping restarts it rather
