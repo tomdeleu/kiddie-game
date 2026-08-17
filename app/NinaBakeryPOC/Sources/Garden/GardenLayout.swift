@@ -273,44 +273,58 @@ enum GardenLayout {
         SIMD3<Float>(flowerX, floorY, flowerFirstZ + flowerSpacing * Float(index))
     }
 
-    /// **The pond, across the bottom of the lawn** — owner's call, 2026-08-16,
-    /// in place of the two puddles that stood at `(-0.030, 0.070)` and
-    /// `(0.100, 0.018)`.
+    /// **The pond fills the near corner of the lawn and runs off both of its
+    /// near edges** — owner's call, 2026-08-16, in place of the two puddles that
+    /// stood at `(-0.030, 0.070)` and `(0.100, 0.018)`.
     ///
-    /// It was built once as a 122 mm circle in the middle of the near floor and
-    /// that was the wrong read: *"the pond must be bigger and totally at the
-    /// bottom"*, with a sketch of a wide oval lying along the front edge. So it
-    /// is an **ellipse, 196 mm along the screen and 116 mm deep**, centred on
-    /// the room's own diagonal at the near corner. Its far side reaches
-    /// `x + z = 0.208`, which leaves the whole middle of the floor open, and its
-    /// near side stops 4 mm inside the grass.
+    /// It took three goes, and the two corrections are the useful part of the
+    /// record. Built first as a 122 mm circle in the middle of the near floor:
+    /// *"the pond must be bigger and totally at the bottom"*. Built again as a
+    /// 196 mm oval lying along the front edge: *"it must stretch to the side of
+    /// the plateau at the bottom left right, and the shape must be irregular"*.
+    /// Both notes came as a red line drawn over a screenshot of the running
+    /// room, which turns out to be the only brief that can answer a question
+    /// about scale — a plate is shot with nothing beside it, and even the
+    /// room-box plate is a drawing of the room rather than the room.
     ///
-    /// **Long axis along the screen, not along a world axis.** `GardenRoom`
-    /// turns it by `GardenProps.towardsCamera`, so the ellipse's long axis is
-    /// the X−Z diagonal — the one direction that is exactly screen-horizontal
-    /// from this chair (`RoomBox.screenSeparation`). An oval laid along X or Z
-    /// would come out as a diamond lying at 45° to the frame.
+    /// **So it is cut by the plateau.** The water reaches `x = 0.2295` and
+    /// `z = 0.2295`, half a millimetre inside the mint, and stops: **155 mm of
+    /// the right-hand edge and 191 mm of the left-hand one are pond**, and the
+    /// lawn's own corner is under water. Every other prop in the game stands
+    /// inside the box; this is the one the box slices, and that is the whole of
+    /// what *"stretch to the side of the plateau"* means.
     ///
-    /// **This is as wide as the room allows**, and the three things that bound
-    /// it are worth writing down because the next person to be asked for a
-    /// bigger one will hit the same three: the grass runs out at `±0.230`, the
-    /// flower row's near end stands at `(0.185, 0.034)` — 30 mm off the rim —
-    /// and the watering can holds the near-left corner.
+    /// **The numbers below are the ellipse before the wobble and the clip.**
+    /// `GardenProps.pond` lays that ellipse along the X−Z diagonal — the one
+    /// direction that is exactly screen-horizontal from this chair — wobbles its
+    /// radius with two fixed harmonics, and pulls every vertex that lands off
+    /// the lawn back along its own ray. What comes out is **249 mm across the
+    /// screen and 151 mm deep**, and its inland bank — the only side with stones
+    /// on it — wanders 32 mm off the straight line between its two ends, which
+    /// is the *"irregular"* half of the note.
     ///
-    /// **Nothing else stands in it**, which cost three moves. The basket was in
-    /// the middle of the water, the molehill was in it before that, and the
-    /// butterfly hovered over the rim. All three are below, and the rule they
-    /// were moved by is worth keeping: *the pond is water, and water is empty*.
-    /// Anything this room gains later gets tested against the ellipse before it
-    /// gets a position.
-    static let pondCentre = SIMD2<Float>(0.145, 0.145)
-    /// Semi-axis along the screen — the outer edge of the stone rim, not the
-    /// water's. The water reaches `0.080` of it; the stones straddle that and
-    /// finish here.
-    static let pondLong: Float = 0.098
-    /// Semi-axis into the screen. 1.7:1, which is the sketch's proportion and
-    /// also what the grass allows once the ellipse is pushed this far forward.
-    static let pondShort: Float = 0.058
+    /// **Nothing else is in the water**, which is now four moves deep: the
+    /// basket, the molehill and the butterfly all live where they do because of
+    /// this shape, and the flower row's near end is the only thing still close —
+    /// 34 mm of grass, which is a flower at the water's edge rather than a
+    /// flower in it. The rule stands: *the pond is water, and water is empty.*
+    /// Anything this room gains later gets tested against the outline first.
+    static let pondCentre = SIMD2<Float>(0.180, 0.180)
+    /// Semi-axis along the screen, before the wobble. Most of it is clipped
+    /// away — the shape is deliberately drawn larger than the lawn so that the
+    /// lawn is what decides where it ends.
+    static let pondLong: Float = 0.190
+    /// Semi-axis into the screen, before the wobble.
+    static let pondShort: Float = 0.074
+    /// How far the water may run in +x and +z **in the pond's own frame** before
+    /// the plateau ends. Half a millimetre inside the mint, so the cut face and
+    /// the floor's own edge are never the same plane.
+    static var pondCut: SIMD2<Float> {
+        SIMD2<Float>(half - 0.0005 - pondCentre.x, half - 0.0005 - pondCentre.y)
+    }
+    /// Where the tap lands. **Not the shape's centre**, which sits under the
+    /// clipped corner: this is the middle of the water she can actually see.
+    static let pondTouchSpot = SIMD3<Float>(0.160, floorY, 0.160)
 
     /// **The basket moved out of the water.**
     ///

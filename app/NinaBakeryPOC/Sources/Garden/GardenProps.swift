@@ -739,143 +739,236 @@ enum GardenProps {
         return root
     }
 
-    /// `references/garden/pond.png`: a ring of chunky faceted stones round a
-    /// shallow pool that **steps down** in four bands, palest at the rim and
-    /// deepest in the middle.
+    /// `references/garden/pond.png`: chunky faceted stones round a shallow pool
+    /// that **steps down** in four bands, palest at the rim, deepest in the
+    /// middle.
     ///
-    /// **It replaced two puddles**, owner's call 2026-08-16, and then it was
-    /// rebuilt bigger the same day: *"the pond must be bigger and totally at the
-    /// bottom"*. So it is an **ellipse** — 196 × 116 mm, `GardenLayout.pondLong`
-    /// and `pondShort` — lying along the front edge of the lawn rather than the
-    /// 122 mm circle it started as.
+    /// **It replaced two puddles**, owner's call 2026-08-16, and was rebuilt
+    /// twice the same day — each time from a red line drawn over a screenshot of
+    /// the running room, which is a better brief than any plate. First *"the
+    /// pond must be bigger and totally at the bottom"*, then *"it must stretch
+    /// to the side of the plateau at the bottom left right, and the shape must
+    /// be irregular"*. So this one **fills the near corner of the lawn and runs
+    /// off both of its near edges**, and its outline is a wobble rather than an
+    /// ellipse.
     ///
-    /// **Built with +X as the long axis, and turned by the room.** `GardenRoom`
-    /// gives the root `towardsCamera`, which lands the long axis on the X−Z
-    /// diagonal — the one direction that is exactly screen-horizontal from this
-    /// chair. Building it pre-turned would bake the camera into the prop.
+    /// **It is cut by the plateau, on purpose.** The water runs to the edge of
+    /// the mint lawn and stops there, half a millimetre inside it, with the
+    /// slab's cream border beyond — the pond carries on past the diorama the way
+    /// a cross-section does. Every other prop in the game stands inside the box;
+    /// this is the one that is sliced by it, and that is the whole of what
+    /// *"stretch to the side of the plateau"* means.
     ///
-    /// **The steps go down without a hole in the floor.** The obvious build —
-    /// sinking the water below `floorY` — cannot work: the floor is a solid box
-    /// and anything inside it is simply hidden. So the whole basin stands *on*
-    /// the grass and the stones stand around it, five to seven millimetres
-    /// proud of the water, and what she looks into is the rim rather than the
-    /// ground.
+    /// **The clip is radial, which is what makes the cut straight.** Each
+    /// outline vertex is pulled back along its own ray until it sits on the
+    /// limit line, so every clipped vertex lands *exactly* on `x = cut.x` or
+    /// `z = cut.y` and the cut comes out as one straight edge rather than a
+    /// stair. It also keeps the outline star-shaped about the centre, which is
+    /// what lets the top faces be fanned from it.
     ///
-    /// **Opaque, like the puddle was**, and the plate is right about it. Still
-    /// water seen from above against one flat ground colour has nothing behind
-    /// it for transparency to reveal — `references/REFERENCES.md` §1's
-    /// no-transparency rule only ever had one exception, and it was for running
-    /// water, which has no other read.
+    /// **Built in room coordinates, and therefore not turned.** The two earlier
+    /// ponds were built round their own axis and turned by `towardsCamera`; this
+    /// one cannot be, because the thing it is cut by — the lawn's two near edges
+    /// — is a fact about the room. The long axis is baked into the outline
+    /// instead, along the X−Z diagonal, which is the one direction that is
+    /// exactly screen-horizontal from this chair.
     ///
-    /// **The stones are `creamLight`, not the studio plate's sandy ones.** Same
-    /// call the seed jar and the watering can already made in this room: the
-    /// studio plate is shot on grey and cannot be asked what the prop stands
-    /// next to, and `roombox-v3-pond.png` — which can — came back with a pale
-    /// near-white rim on the mint lawn. Sandy stones beside a sandy bench and a
-    /// brown soil bed would be a third brown.
-    static func pond(long: Float, short: Float, flat: Bool) -> Entity {
+    /// **The rim only follows the inland boundary.** Where the water runs off
+    /// the plateau there is no bank to put a stone on, so the stones stop a
+    /// little short of each cut and the water meets the lawn's edge bare.
+    ///
+    /// **The steps go down without a hole in the floor.** Sinking the water
+    /// below `floorY` cannot work: the floor is a solid box and geometry inside
+    /// it is hidden. So the whole basin stands *on* the grass, and what she
+    /// looks into is the rim rather than the ground.
+    ///
+    /// **Opaque, like the puddle was.** Still water seen from above against one
+    /// flat ground colour has nothing behind it for transparency to reveal, and
+    /// `references/REFERENCES.md` §1's no-transparency rule only ever had one
+    /// exception — running water, which has no other read.
+    ///
+    /// **The stones are `creamLight`, not the studio plate's sandy ones**, which
+    /// is the room-box plate overruling a studio shot for the fourth time in
+    /// this one garden: sandy stones beside a sandy bench and a brown soil bed
+    /// would be a third brown, and `roombox-v3-pond.png` came back near-white on
+    /// the mint lawn.
+    static func pond(long: Float, short: Float, cut: SIMD2<Float>, flat: Bool) -> Entity {
         let root = Entity()
         root.name = "Pond"
 
-        // The stones straddle the water's edge, so both are inset from the
-        // footprint the room reserves: the ring by a stone's radial half-extent,
-        // the water by that again less the 7 mm of overlap that stops a sliver
-        // of grass showing between the rim and the pool.
-        let stoneHalf: Float = 0.011
-        let ringLong = long - stoneHalf
-        let ringShort = short - stoneHalf
-        // **One aspect for everything.** Water bands are lathed round and then
-        // squashed on Z by this, which keeps every ellipse in the prop similar
-        // to every other — an oval pond with a round pool in it reads as two
-        // objects.
-        let squash = ringShort / ringLong
-        let waterLong = ringLong - 0.007
+        /// One point of the outline: an ellipse laid along the X−Z diagonal,
+        /// wobbled by two fixed harmonics, then clipped to the plateau.
+        ///
+        /// **Two lobes and seven ripples, not noise.** A random outline rebuilds
+        /// differently every time the flat-shading toggle flips, which is a pond
+        /// that moved while she was looking. These two harmonics are fixed, and
+        /// they are the pair that came out irregular where it counts: the bank
+        /// she can see — the inland side, the only part with stones on it — is
+        /// 250 mm of chord that **wanders 32 mm across it**. A gentler wobble
+        /// left that side of a long ellipse looking like a ruled line, which was
+        /// the whole complaint.
+        func rim(_ theta: Float, _ scale: Float) -> (point: SIMD2<Float>, cut: Bool) {
+            let wobble = 1 + 0.14 * sin(2 * theta + 5.4) + 0.09 * sin(7 * theta + 3.8)
+            let diagonal = SIMD2<Float>(( long * cos(theta) + short * sin(theta)) * 0.70711,
+                                        (-long * cos(theta) + short * sin(theta)) * 0.70711)
+            let point = diagonal * (wobble * scale)
+            var pull: Float = 1
+            if point.x > 0 { pull = min(pull, cut.x / point.x) }
+            if point.y > 0 { pull = min(pull, cut.y / point.y) }
+            return (point * pull, pull < 0.999)
+        }
 
-        // Outside in: each band's top sits 1.4 mm below its neighbour's, so the
-        // wall between them is a real face that catches its own light. A washer
-        // is a lathe rather than a prism because a prism is solid — a smaller
-        // prism inside a taller one is buried, not nested.
+        // 36 sides, which is 10° a facet — chunky enough to see the edges at
+        // this size, and divisible by four, so one vertex lands exactly on the
+        // diagonal and the plateau's corner comes out as a corner rather than a
+        // chamfer.
+        let sides = 36
+        func outline(_ scale: Float) -> [SIMD2<Float>] {
+            (0..<sides).map { rim(Float($0) / Float(sides) * 2 * .pi, scale).point }
+        }
+
+        // Outside in, each band's top 1.4 mm below its neighbour's, so the wall
+        // between them is a real face that catches its own light. Each band is
+        // clipped in its own right rather than scaled from the clipped outline,
+        // so the terraces are cut where they meet the plateau and the step shows
+        // in the cut face.
         let bands: [(outer: Float, inner: Float, top: Float, colour: UIColorLike)] = [
-            (1.000, 0.765, 0.0058, Palette.mix(Palette.berryBlue, Palette.white, 0.55)),
-            (0.765, 0.530, 0.0044, Palette.mix(Palette.berryBlue, Palette.white, 0.30)),
-            (0.530, 0.320, 0.0030, Palette.berryBlue),
+            (1.00, 0.76, 0.0058, Palette.mix(Palette.berryBlue, Palette.white, 0.55)),
+            (0.76, 0.52, 0.0044, Palette.mix(Palette.berryBlue, Palette.white, 0.30)),
+            (0.52, 0.30, 0.0030, Palette.berryBlue),
         ]
         for (i, band) in bands.enumerated() {
-            let outer = waterLong * band.outer, inner = waterLong * band.inner
-            let ring = RoomBuilder.model(.lathe(profile: [[outer, 0],
-                                                          [outer, band.top],
-                                                          [inner, band.top],
-                                                          [inner, 0]],
-                                                sides: 10),
-                                         band.colour, flat: flat, name: "PondBand\(i)")
-            ring.scale = [1, 1, squash]
-            root.addChild(ring)
+            let geometry = pondBand(outer: outline(band.outer),
+                                    inner: outline(band.inner), top: band.top)
+            root.addChild(model(geometry, band.colour, flat: flat, name: "PondBand\(i)"))
         }
-        let deep = RoomBuilder.model(.prism(radius: waterLong * 0.320,
-                                            height: 0.0018, sides: 10),
-                                     Palette.berryBlueDeep, flat: flat, name: "PondDeep")
-        deep.scale = [1, 1, squash]
-        root.addChild(deep)
+        root.addChild(model(pondFloor(outline: outline(0.30), height: 0.0018),
+                            Palette.berryBlueDeep, flat: flat, name: "PondDeep"))
 
-        // **Nineteen stones, spaced by arc length rather than by angle.**
-        //
-        // On an ellipse those are not the same thing: at the ends of the long
-        // axis a given step of angle covers about half the ground it covers at
-        // the flanks, so equal angles would bunch the stones at the two tips and
-        // leave the sides open. So the perimeter is measured once and walked in
-        // equal steps. Odd count on purpose — an even ring reads as two halves
-        // from this camera.
-        let stoneCount = 19
-        let samples = 360
-        var arc: [Float] = [0]
-        for s in 1...samples {
-            let a0 = Float(s - 1) / Float(samples) * 2 * .pi
-            let a1 = Float(s) / Float(samples) * 2 * .pi
-            let dx = ringLong * (cos(a1) - cos(a0))
-            let dz = ringShort * (sin(a1) - sin(a0))
-            arc.append(arc[s - 1] + (dx * dx + dz * dz).squareRoot())
+        // **The stones, spaced by arc length rather than by angle.** On a wobbled
+        // ellipse those are nothing like the same thing — a step of angle covers
+        // twice the ground at the flanks that it covers at the tips — so equal
+        // angles would bunch them where the outline turns tightly and leave the
+        // long runs bare.
+        let walk = 240
+        let ring = (0..<walk).map { rim(Float($0) / Float(walk) * 2 * .pi, 1.0) }
+        // A stone within five samples of the cut is a stone half in the water
+        // that runs off the plateau, so the bank is pulled back that far from
+        // each end.
+        var bank = ring.map { !$0.cut }
+        for i in 0..<walk where ring[i].cut {
+            for d in 1...5 {
+                bank[(i + d) % walk] = false
+                bank[(i - d + walk) % walk] = false
+            }
         }
 
-        // Sizes are a fixed cycle rather than random: a pond that rebuilds
-        // differently every time the flat-shading toggle flips is a pond that
-        // moved while she was looking. Five sizes into nineteen places never
-        // repeats a pattern round the ring.
+        // 20 mm, which is closer than a stone is wide: the ring wants to be
+        // continuous, and at 22 the walk left 2.7 mm holes with grass in them.
+        let spacing: Float = 0.020
         let sizes: [Float] = [0.0118, 0.0106, 0.0112, 0.0102, 0.0110]
-        for i in 0..<stoneCount {
-            let want = arc[samples] * Float(i) / Float(stoneCount)
-            var step = 0
-            while step < samples - 1 && arc[step + 1] < want { step += 1 }
-            let span = max(arc[step + 1] - arc[step], 1e-6)
-            let angle = (Float(step) + (want - arc[step]) / span)
-                / Float(samples) * 2 * .pi
+        var since = spacing
+        var placed = 0
+        for i in 0..<walk {
+            let here = ring[i].point, next = ring[(i + 1) % walk].point
+            since += distance(here, next)
+            guard bank[i] else { since = spacing; continue }
+            guard since >= spacing else { continue }
+            since = 0
 
-            let radius = sizes[i % sizes.count]
-            let stone = RoomBuilder.model(.icosphere(radius: radius, subdivisions: 0),
-                                          i.isMultiple(of: 2) ? Palette.creamLight
-                                                              : Palette.cream,
-                                          flat: flat, name: "PondStone\(i)")
-            // A squashed boulder, **laid along the ring rather than across it**.
-            // That is what keeps the rim a rim, and it is what makes the pond's
-            // footprint the 0.95 semi-axis rather than the 1.15 one — which is
-            // where the 11 mm inset above comes from.
-            //
-            // The roll is deliberately tiny. A squashed sphere rolled far enough
-            // stands its flat axis up and becomes a tall stone; under 0.07 rad
-            // the height it adds is 0.06 mm.
-            let tangent = SIMD2<Float>(-ringLong * sin(angle), ringShort * cos(angle))
-            let facing = atan2(-tangent.y, tangent.x)
+            let radius = sizes[placed % sizes.count]
+            let stone = model(FacetedMesh.icosphere(radius: radius, subdivisions: 0),
+                              placed.isMultiple(of: 2) ? Palette.creamLight : Palette.cream,
+                              flat: flat, name: "PondStone\(placed)")
+            // A squashed boulder laid **along** the bank rather than across it,
+            // which is what keeps a rim a rim. The roll is deliberately tiny: a
+            // squashed sphere rolled far enough stands its flat axis up and
+            // becomes a tall stone, and under 0.07 rad the height it adds is
+            // 0.06 mm.
+            let previous = ring[(i - 1 + walk) % walk].point
+            let along = next - previous
             stone.scale = [1.15, 0.66, 0.95]
-            stone.orientation = simd_quatf(angle: facing, axis: [0, 1, 0])
-                * simd_quatf(angle: Float(i % 3) * 0.06 - 0.06, axis: [1, 0, 0])
+            stone.orientation = simd_quatf(angle: atan2(-along.y, along.x), axis: [0, 1, 0])
+                * simd_quatf(angle: Float(placed % 3) * 0.06 - 0.06, axis: [1, 0, 0])
             // Sunk 2.2 mm into the grass, so it sits in the ground rather than
             // resting on it. Tops land at 11–13 mm, five to seven above the
             // water — an uneven rim, which is what a ring of stones is.
-            stone.position = [ringLong * cos(angle),
-                              radius * 0.66 - 0.0022,
-                              ringShort * sin(angle)]
+            stone.position = [here.x, radius * 0.66 - 0.0022, here.y]
             root.addChild(stone)
+            placed += 1
         }
         return root
+    }
+
+    /// A flat-topped solid from a closed outline — the irregular pond's answer
+    /// to `FacetedMesh.prism`, whose winding this copies exactly.
+    ///
+    /// The outline has to be **star-shaped about the origin**, since both caps
+    /// are fanned from it. The pond's is, and stays so after clipping: cutting a
+    /// star-shaped region with a half-plane that contains its centre leaves it
+    /// star-shaped about that centre.
+    private static func pondFloor(outline: [SIMD2<Float>],
+                                  height: Float) -> FacetedMesh.Geometry {
+        var p: [SIMD3<Float>] = []
+        for q in outline {
+            p.append([q.x, 0, q.y])
+            p.append([q.x, height, q.y])
+        }
+        let centreBottom = UInt32(p.count); p.append([0, 0, 0])
+        let centreTop = UInt32(p.count);    p.append([0, height, 0])
+
+        var idx: [UInt32] = []
+        for i in 0..<outline.count {
+            let n = (i + 1) % outline.count
+            let b0 = UInt32(i * 2), t0 = b0 + 1
+            let b1 = UInt32(n * 2), t1 = b1 + 1
+            idx.append(contentsOf: [b0, t1, b1,  b0, t0, t1])   // wall
+            idx.append(contentsOf: [centreBottom, b0, b1])      // bottom cap
+            idx.append(contentsOf: [centreTop, t1, t0])         // top cap
+        }
+        return (p, idx)
+    }
+
+    /// One terrace of the pond: a closed washer between two outlines that share
+    /// their parametrisation, standing on the ground with its top at `top`.
+    ///
+    /// Four faces per segment, and each one borrows a winding that is already
+    /// proven elsewhere in the file: the outer wall is `FacetedMesh.prism`'s,
+    /// the top is `annulus`'s, and the inner wall is the prism's again with its
+    /// two rings swapped — which is what turns those faces inward, the same way
+    /// a descending section of a `lathe` profile does.
+    private static func pondBand(outer: [SIMD2<Float>], inner: [SIMD2<Float>],
+                                 top: Float) -> FacetedMesh.Geometry {
+        var p: [SIMD3<Float>] = []
+        for i in 0..<outer.count {
+            p.append([outer[i].x, 0, outer[i].y])
+            p.append([outer[i].x, top, outer[i].y])
+            p.append([inner[i].x, top, inner[i].y])
+            p.append([inner[i].x, 0, inner[i].y])
+        }
+        var idx: [UInt32] = []
+        for i in 0..<outer.count {
+            let a = UInt32(i * 4), b = UInt32(((i + 1) % outer.count) * 4)
+            idx.append(contentsOf: [a, b + 1, b,  a, a + 1, b + 1])              // outer wall
+            idx.append(contentsOf: [a + 2, b + 1, a + 1,  a + 2, b + 2, b + 1])  // the water
+            idx.append(contentsOf: [a + 2, b + 3, b + 2,  a + 2, a + 3, b + 3])  // inner wall
+            idx.append(contentsOf: [a, b, b + 3,  a, b + 3, a + 3])              // underside
+        }
+        return (p, idx)
+    }
+
+    /// `RoomBuilder.model` for geometry that is not one of its `Shape` cases.
+    ///
+    /// The pond is the only prop in the game whose outline is not a primitive —
+    /// it is a wobble clipped by the room — so rather than add a case to the
+    /// shared enum for one room's one prop, it builds its own mesh here. Same
+    /// two lines `RoomBuilder.model` runs, and the same flat/smooth A/B.
+    private static func model(_ geometry: FacetedMesh.Geometry, _ colour: UIColorLike,
+                              flat: Bool, name: String) -> ModelEntity {
+        let entity = ModelEntity(mesh: FacetedMesh.mesh(geometry, flat: flat),
+                                 materials: [Palette.material(colour)])
+        entity.name = name
+        return entity
     }
 
     /// `references/garden/garden-tree.png`: a **cluster** of twelve overlapping

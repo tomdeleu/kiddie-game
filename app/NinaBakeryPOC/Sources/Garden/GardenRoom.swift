@@ -74,6 +74,7 @@ final class GardenRoom: Room {
     private var butterfly: Entity?
     private var bee: Entity?
     private var pond: Entity?
+    private var pondTouchSpot: Entity?
     private var doorway: Props.Doorway?
     private var doorMarker: Entity?
     private var doorTouchSpot: Entity?
@@ -189,6 +190,7 @@ final class GardenRoom: Room {
         plotMarkers.removeAll()
         flowers.removeAll()
         pond = nil
+        pondTouchSpot = nil
         basketTokens.removeAll()
         strays.removeAll()
         strayTargets = 0
@@ -305,20 +307,31 @@ final class GardenRoom: Room {
         // everything else in the near foreground is positioned around it, not
         // the other way about.
         //
-        // **The turn is the room's, not the prop's.** `GardenProps.pond` builds
-        // its long axis along +X and this puts it on the X−Z diagonal, which is
-        // the only direction that is exactly screen-horizontal from this chair.
-        // A prop that came out of its builder pre-turned would have the camera
-        // baked into it.
+        // **It is not turned, and that is the one thing to know about it.**
+        // Every other prop that wants to face the camera is built round its own
+        // axis and turned by `towardsCamera`; this one is built in the room's
+        // own coordinates, because the thing that decides its shape is where the
+        // lawn ends. `GardenProps.pond` lays the long axis on the X−Z diagonal
+        // itself and clips the outline against `pondCut`.
         let pool = GardenProps.pond(long: GardenLayout.pondLong,
-                                    short: GardenLayout.pondShort, flat: flat)
+                                    short: GardenLayout.pondShort,
+                                    cut: GardenLayout.pondCut, flat: flat)
         pool.position = SIMD3<Float>(GardenLayout.pondCentre.x,
                                      GardenLayout.floorY,
                                      GardenLayout.pondCentre.y)
-        pool.orientation = GardenProps.towardsCamera
         pool.name = "Pond"
         root.addChild(pool)
         pond = pool
+
+        // The tap goes on a marker in the middle of the *visible* water rather
+        // than on the pond's origin, which sits out under the clipped corner.
+        // Same trick as the gate's `GateTouchSpot`, and for the same reason: a
+        // sphere at a prop's origin is a sphere somewhere she is not aiming.
+        let spot = Entity()
+        spot.name = "PondTouchSpot"
+        spot.position = GardenLayout.pondTouchSpot
+        root.addChild(spot)
+        pondTouchSpot = spot
     }
 
     /// **The gate**, which is what this room has instead of a door.
@@ -445,13 +458,13 @@ final class GardenRoom: Room {
             target.tracksEntity = true
             target.onTap = { [weak self] in self?.tapBee() }
         }
-        // **45 mm, which is smaller than the prop and deliberately so.** The
-        // pond is 196 mm across, and a target that matched it would swallow the
+        // **45 mm, which is far smaller than the prop and deliberately so.** The
+        // pond is 258 mm across, and a target that matched it would swallow the
         // basket and the flower row's near end; a target only has to be big
         // enough to hit (`CONCEPT.md` §5's ~120 pt), and the *visible* pond is
-        // what she aims at. It clears the basket by 101 mm on screen against the
-        // 83 the two radii need, and the can by 187.
-        touch.register("pond", entity: pond, radius: 0.045,
+        // what she aims at. It clears the basket by 108 mm on screen against the
+        // 83 the two radii need, and the nearest flower by 114 against 69.
+        touch.register("pond", entity: pondTouchSpot, radius: 0.045,
                        planeY: GardenLayout.floorY) { target in
             target.onTap = { [weak self] in self?.tapPond() }
         }
@@ -1201,9 +1214,11 @@ final class GardenRoom: Room {
                                      || band.name == "PondDeep" {
             ticker.squash(band, amount: 0.30, duration: 0.55)
         }
-        Sparkles.burst(at: pond.position + [0, 0.010, 0], in: root, ticker: ticker,
-                       colour: Palette.berryBlue, count: 12, size: 0.0024,
-                       speed: 0.090, life: 0.70)
+        // Thrown from the middle of the visible water rather than from the
+        // pond's origin, which is out under the clipped corner.
+        Sparkles.burst(at: GardenLayout.pondTouchSpot + [0, 0.010, 0], in: root,
+                       ticker: ticker, colour: Palette.berryBlue, count: 12,
+                       size: 0.0024, speed: 0.090, life: 0.70)
         sayToy(Line.Dit.vijver, Line.Speel.vijver)
     }
 

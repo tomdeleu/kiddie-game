@@ -126,13 +126,17 @@ descent: bands stepping *down*. The room-box pond is one flat sheet of water,
 which at that size in frame is all it can be, and a flat sheet is what the
 puddle already was.
 
-**And then a screenshot beat both plates.** Built from these two, the pond came
-out as a 122 mm circle in the middle of the near floor; the owner drew over a
-screenshot of the running room in red — *"the pond must be bigger and totally at
-the bottom"* — and the answer was a 196 × 116 mm oval lying along the front edge.
-Neither plate could have said that, and the reason is the same one the room-box
-plate keeps proving one step further on: **a plate cannot be asked how big a
-prop should be in a room it has never been photographed in**. The room box gets
+**And then a screenshot beat both plates, twice.** Built from these two, the
+pond came out as a 122 mm circle in the middle of the near floor; the owner drew
+over a screenshot of the running room in red — *"the pond must be bigger and
+totally at the bottom"* — and it became a 196 mm oval along the front edge; a
+second red line — *"it must stretch to the side of the plateau at the bottom
+left right, and the shape must be irregular"* — made it the 249 mm irregular
+pool that runs off both near edges of the lawn.
+Neither plate could have said either of those, and the reason is the same one
+the room-box plate keeps proving one step further on: **a plate cannot be asked
+how big a prop should be, or where it should stop, in a room it has never been
+photographed in**. The room box gets
 the placement and the colour right because it draws the neighbours; only the
 room itself, running, can be asked about scale. Worth remembering as the party
 and the wall get built: *the last plate is a screenshot*.
