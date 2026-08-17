@@ -122,9 +122,20 @@ between the watering can and the basket, which is exactly the pair of props that
 already bracket the room's open foreground. That is where it is built.
 
 **What the studio plate contributed that the room box could not** is the
-descent: three bands stepping *down*. The room-box pond is one flat sheet of
-water, which at that size in frame is all it can be, and a flat sheet is what
-the puddle already was.
+descent: bands stepping *down*. The room-box pond is one flat sheet of water,
+which at that size in frame is all it can be, and a flat sheet is what the
+puddle already was.
+
+**And then a screenshot beat both plates.** Built from these two, the pond came
+out as a 122 mm circle in the middle of the near floor; the owner drew over a
+screenshot of the running room in red — *"the pond must be bigger and totally at
+the bottom"* — and the answer was a 196 × 116 mm oval lying along the front edge.
+Neither plate could have said that, and the reason is the same one the room-box
+plate keeps proving one step further on: **a plate cannot be asked how big a
+prop should be in a room it has never been photographed in**. The room box gets
+the placement and the colour right because it draws the neighbours; only the
+room itself, running, can be asked about scale. Worth remembering as the party
+and the wall get built: *the last plate is a screenshot*.
 
 The door is not here. It is the kitchen's, reused unchanged —
 `Sources/Props/Doorway.swift`, from `../props/door.png` — because `ROOMS.md` §9's

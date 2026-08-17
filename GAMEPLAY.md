@@ -447,9 +447,9 @@ five means, and the kitchen lays its sources out from the basket it is handed.
 **Toys:** wave the watering can in the air and it makes a rainbow; the flowers
 along the edge chime in a scale when tapped, low to high, which is a quiet
 rehearsal for the party pads; a molehill Mo pops out of; a butterfly that
-follows her finger; a pond at the front of the lawn that splashes when tapped —
-two puddles until the owner's call of 2026-08-16, and **nothing else stands in
-it**; a bee that hums when chased.
+follows her finger; a wide pond lying across the front of the lawn that splashes
+when tapped — two puddles until the owner's call of 2026-08-16, and **nothing
+else stands in it**; a bee that hums when chased.
 
 **The hint:** when the wish is a colour, the matching seed jar shimmers very
 slightly. It never blocks anything and there is no penalty for ignoring it.

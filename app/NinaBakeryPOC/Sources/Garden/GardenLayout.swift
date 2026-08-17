@@ -235,13 +235,10 @@ enum GardenLayout {
     /// x ∈ [−0.212, −0.166] as it opens; this clears that by 76 mm.
     static let canHome = SIMD3<Float>(-0.090, floorY, 0.150)
 
-    /// **The basket, on the near-right floor**, bracketing the open foreground
-    /// against the can. Where the crate stands in the kitchen, and for the same
-    /// reason: floor to the left of tall furniture is hidden by it and floor to
-    /// the right is not.
-    static let basketHome = SIMD3<Float>(0.150, floorY, 0.120)
-    /// Where a picked ingredient lands inside it, and how far apart they stack.
-    static let basketRimY: Float = 0.026
+    // **The basket used to stand on the near-right floor** at (0.150, 0.120),
+    // bracketing the open foreground against the can. The pond covers that spot
+    // to a depth of 60 mm now, so it moved: `basketHome` lives down with the
+    // pond, because the pond is what put it there.
 
     // MARK: - Toys
 
@@ -276,36 +273,72 @@ enum GardenLayout {
         SIMD3<Float>(flowerX, floorY, flowerFirstZ + flowerSpacing * Float(index))
     }
 
-    /// **The pond, at the front of the lawn** — owner's call, 2026-08-16, in
-    /// place of the two puddles that used to sit here and at `(0.100, 0.018)`.
+    /// **The pond, across the bottom of the lawn** — owner's call, 2026-08-16,
+    /// in place of the two puddles that stood at `(-0.030, 0.070)` and
+    /// `(0.100, 0.018)`.
     ///
-    /// `references/garden/roombox-v3-pond.png` put it exactly here without being
-    /// asked to: centred at the near edge of the grass, with the watering can on
-    /// one side of it and the basket on the other. That is the composition the
-    /// room already had — the two props that bracket the open foreground — and
-    /// the pond is what fills the hole between them.
+    /// It was built once as a 122 mm circle in the middle of the near floor and
+    /// that was the wrong read: *"the pond must be bigger and totally at the
+    /// bottom"*, with a sketch of a wide oval lying along the front edge. So it
+    /// is an **ellipse, 196 mm along the screen and 116 mm deep**, centred on
+    /// the room's own diagonal at the near corner. Its far side reaches
+    /// `x + z = 0.208`, which leaves the whole middle of the floor open, and its
+    /// near side stops 4 mm inside the grass.
     ///
-    /// **Nothing else stands in it.** The molehill did, so it moved (below), and
-    /// the butterfly hovered close enough over the rim to read as sitting on the
-    /// water, so it moved too. That is the whole of the owner's second
-    /// instruction and it is worth stating as a rule: *the pond is water and
-    /// water is empty*. Anything added to this room later gets checked against
-    /// `pondCentre` ± `pondRadius` before it gets a position.
-    static let pondCentre = SIMD2<Float>(0.030, 0.140)
-    /// Outer edge of the stone rim — the pond's real footprint, not the water's.
-    /// The water reaches `0.042`; the stones straddle it and finish here.
-    static let pondRadius: Float = 0.061
+    /// **Long axis along the screen, not along a world axis.** `GardenRoom`
+    /// turns it by `GardenProps.towardsCamera`, so the ellipse's long axis is
+    /// the X−Z diagonal — the one direction that is exactly screen-horizontal
+    /// from this chair (`RoomBox.screenSeparation`). An oval laid along X or Z
+    /// would come out as a diamond lying at 45° to the frame.
+    ///
+    /// **This is as wide as the room allows**, and the three things that bound
+    /// it are worth writing down because the next person to be asked for a
+    /// bigger one will hit the same three: the grass runs out at `±0.230`, the
+    /// flower row's near end stands at `(0.185, 0.034)` — 30 mm off the rim —
+    /// and the watering can holds the near-left corner.
+    ///
+    /// **Nothing else stands in it**, which cost three moves. The basket was in
+    /// the middle of the water, the molehill was in it before that, and the
+    /// butterfly hovered over the rim. All three are below, and the rule they
+    /// were moved by is worth keeping: *the pond is water, and water is empty*.
+    /// Anything this room gains later gets tested against the ellipse before it
+    /// gets a position.
+    static let pondCentre = SIMD2<Float>(0.145, 0.145)
+    /// Semi-axis along the screen — the outer edge of the stone rim, not the
+    /// water's. The water reaches `0.080` of it; the stones straddle that and
+    /// finish here.
+    static let pondLong: Float = 0.098
+    /// Semi-axis into the screen. 1.7:1, which is the sketch's proportion and
+    /// also what the grass allows once the ellipse is pushed this far forward.
+    static let pondShort: Float = 0.058
 
-    /// **The molehill moved out of the water.**
+    /// **The basket moved out of the water.**
     ///
-    /// It stood at `(0.040, 0.160)`, which is 20 mm from where the pond's middle
-    /// now is — a mole coming up in the middle of a pond. It takes over the near
-    /// end of the ground the second puddle had, in front of the bed's right end:
-    /// 43 mm of clear grass to the bed's front boards, 84 mm to the pond's rim,
-    /// and on screen — `RoomBox.screenSeparation`, not `distanceXZ` — it clears
-    /// the basket by 82 mm against the 76 the two radii need, and the nearest
-    /// flower by 75 against 62.
-    static let molehillSpot = SIMD3<Float>(0.090, floorY, 0.008)
+    /// It stood at `(0.150, 0.120)`, which the pond now covers to a depth of
+    /// 60 mm. This is the ground the molehill had: in front of the bed's
+    /// right-hand end, 43 mm clear of its front boards, which is where a basket
+    /// wants to be anyway — a picked plant hops into it from the bed, and it is
+    /// now the shortest hop in the room. 85 mm of grass to the pond's rim, and
+    /// on screen it clears the pond by 101 mm against the 83 the two radii need.
+    static let basketHome = SIMD3<Float>(0.090, floorY, 0.008)
+    /// Where a picked ingredient lands inside it, and how far apart they stack.
+    static let basketRimY: Float = 0.026
+
+    // MARK: - Toys
+
+    /// **The molehill moved out of the water, twice.**
+    ///
+    /// It stood at `(0.040, 0.160)` when the pond was a circle in the middle of
+    /// the floor, which put it in the middle of the water; it moved to
+    /// `(0.090, 0.008)`, and the basket needed exactly that ground once the pond
+    /// grew across the bottom. So it is out on the left-centre floor now, in
+    /// front of the bench: 21 mm of grass to the bench's lower shelf, 185 to the
+    /// pond, and on screen it clears the watering can by 89 mm against the 78
+    /// two neighbouring targets need, and the nearest seed jar by 75 against 64.
+    ///
+    /// A mole comes up in a lawn, and this is the only piece of lawn in the room
+    /// with nothing else on it.
+    static let molehillSpot = SIMD3<Float>(-0.085, floorY, 0.050)
 
     /// **Both fliers hover, and both had to move.**
     ///
@@ -317,14 +350,15 @@ enum GardenLayout {
     /// everything else: the butterfly out in the near foreground, the bee over
     /// the far end of the flower row it visits.
     ///
-    /// **The butterfly moved again for the pond.** At `(0.060, 0.075)` its
-    /// ground point was 10 mm outside the stone rim, which is close enough that
-    /// a butterfly hovering there reads as a butterfly sitting on the water.
-    /// It is 25 mm clear of the rim now, 100 mm from the pond's centre on
-    /// screen against the 72 the two radii need, and still 71 mm from the
-    /// nearest hole against 60 — which is the constraint that put it here in
-    /// the first place.
-    static let butterflyHome = SIMD3<Float>(0.020, floorY + 0.055, 0.055)
+    /// **The butterfly moved twice for the pond.** At `(0.060, 0.075)` its
+    /// ground point was 10 mm outside the first pond's rim, which is close
+    /// enough that a butterfly hovering there reads as a butterfly sitting on
+    /// the water. The big pond pushed it once more, off the molehill's new
+    /// screen position: it hovers over the middle of the open floor now, 83 mm
+    /// of grass from the rim, 129 mm from the pond's centre on screen against
+    /// the 75 the two radii need, and still 66 mm from the nearest hole against
+    /// 60 — which is the constraint that put it out here in the first place.
+    static let butterflyHome = SIMD3<Float>(0.045, floorY + 0.055, 0.045)
     static let beeHome = SIMD3<Float>(0.215, floorY + 0.045, -0.185)
 
     /// **Along the back fence**, which is where the bench pushed them.

@@ -975,13 +975,19 @@ is intended and stays: `TouchRouter` picks the nearest centre, so each owns an
 equal band and an imprecise tap always lands on the nearest one. Overlap between
 **unlike** things is the bug, because the wrong kind of answer can win.
 
-**The pond re-ran this check and it comes out clean.** Every unlike pair in the
-garden was measured again when the two puddles became one pond, with the same
-formula the helper uses: the only pairs still short are `plot2`/`greenery1` (6.6
-mm) and `plot3`/`greenery1` (4.2 mm), which are the bed's holes against the bush
-behind them and predate the pond. The toy-to-toy shortfall that used to be here
-— a puddle 3 mm inside the butterfly — went out with the puddle. The pond's own
-worst neighbour is the watering can at 96 mm against the 82 the two radii need.
+**The pond re-ran this check twice and it comes out clean.** Every unlike pair
+in the garden was measured again when the two puddles became one pond, and again
+when the pond grew across the bottom and pushed three props: the only pairs still
+short are `plot2`/`greenery1` (6.6 mm) and `plot3`/`greenery1` (4.2 mm), which
+are the bed's holes against the bush behind them and predate all of it. The
+toy-to-toy shortfall that used to be here — a puddle 3 mm inside the butterfly —
+went out with the puddle. The pond's own worst neighbour is the basket at 101 mm
+against the 83 the two radii need.
+
+**Its target is 45 mm, which is much smaller than the prop**, and that is the
+interesting part: a 196 mm pond with a target to match would swallow the basket
+and the flower row's near end. A target only has to be big enough to hit, and
+what she aims at is the *visible* pond.
 
 The check is one script rather than a habit: it is worth re-running whenever a
 prop moves, because every one of these numbers was chosen to *just* fit.
@@ -1118,22 +1124,47 @@ Six, none of which gate anything:
   because a target big enough to catch every drag would eat every other drag in
   the room. It follows *slowly*: a butterfly that arrives is a cursor.
 - **A bee** that hums when chased.
-- **A pond** that splashes — a ring of thirteen faceted stones round a pool that
-  steps down in three bands, at the front of the lawn between the can and the
-  basket. **It replaced two puddles** on the owner's call, 2026-08-16, and it is
-  the one toy in the room that moved other props: the molehill was standing
-  where the middle of it now is, and the butterfly hovered close enough over the
-  rim to read as sitting on the water. Both moved, which was the second half of
-  the same instruction — *nothing else is in the pond*.
+- **A pond** that splashes — an oval of still water, **196 mm along the screen
+  and 116 mm deep**, ringed by nineteen faceted stones, lying across the whole
+  front of the lawn. **It replaced two puddles** on the owner's call,
+  2026-08-16, and was rebuilt bigger the same day against a sketch over a
+  screenshot: *"the pond must be bigger and totally at the bottom"*.
+
+  **It is an ellipse turned onto the X−Z diagonal**, because that is the one
+  direction which is exactly screen-horizontal from this chair. `GardenProps`
+  builds it with its long axis on +X and `GardenRoom` turns it with
+  `towardsCamera`, so the camera stays out of the prop.
+
+  **This is as wide as the room allows**, and the three things that bound it are
+  worth knowing before anyone is asked for a bigger one: the grass runs out at
+  ±0.230, the flower row's near end stands 30 mm off the rim, and the watering
+  can holds the near-left corner. Wider than that means moving the flower row,
+  which means moving the bee, which is a different job.
+
+  **Nothing is in the water, and that cost three moves.** The basket was in the
+  middle of it, the molehill was in it before that, and the butterfly hovered
+  over the rim. The basket took the molehill's ground in front of the bed —
+  which is where a basket wants to be anyway, since a picked plant hops into it
+  from the bed — the molehill went out to the empty lawn in front of the bench,
+  and the butterfly hovers over the middle of the open floor.
 
   **The water steps down and it does that without a hole in the floor.** The
   puddle stacked three discs *upward*, palest and smallest on top, which is a
-  mound of water — fine at 50 mm across and wrong at 120. Sinking the new one
+  mound of water — fine at 50 mm across and wrong at 200. Sinking the new one
   below `floorY` is the obvious fix and cannot work: the floor is a solid box
-  and geometry inside it is simply hidden. So the whole basin stands on the
-  grass, each band is a lathed washer whose top sits 1.4 mm below the one
+  and geometry inside it is hidden. So the whole basin stands on the grass, each
+  of the four bands is a lathed washer whose top sits 1.4 mm below the one
   outside it, and the stones stand five to seven millimetres proud of the water.
   What she looks into is the rim, not the ground.
+
+  **The stones are spaced by arc length, not by angle.** On an ellipse those are
+  not the same thing — at the ends of the long axis a given step of angle covers
+  about half the ground it covers at the flanks — so equal angles would bunch
+  them at the two tips and leave the sides open. The builder measures the
+  perimeter once and walks it in nineteen equal steps, which lands every stone
+  1.7–4.3 mm inside its neighbour: a continuous rim with no grass showing
+  through it.
+
 - **A rainbow**, which is the one worth describing. `GAMEPLAY.md` §6.2 says
   waving the can in the air makes one, and it is discovered rather than
   explained: a long swing of the can that watered nothing is exactly what a

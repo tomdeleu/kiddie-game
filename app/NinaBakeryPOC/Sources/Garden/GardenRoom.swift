@@ -298,15 +298,24 @@ final class GardenRoom: Room {
         root.addChild(buzzer)
         bee = buzzer
 
-        // **The pond, and nothing in it.** Two puddles stood here and at the
-        // bed's right end; one pond replaces both, on the owner's call. It is
-        // built last of the toys for the same reason it is placed first in
-        // `GardenLayout`: everything else in the near foreground is positioned
-        // around it, not the other way about.
-        let pool = GardenProps.pond(flat: flat)
+        // **The pond, and nothing in it.** Two puddles stood out on this floor;
+        // one pond replaces both, on the owner's call, and a second call made it
+        // an oval across the whole front of the lawn. It is built last of the
+        // toys for the same reason it is placed first in `GardenLayout`:
+        // everything else in the near foreground is positioned around it, not
+        // the other way about.
+        //
+        // **The turn is the room's, not the prop's.** `GardenProps.pond` builds
+        // its long axis along +X and this puts it on the X−Z diagonal, which is
+        // the only direction that is exactly screen-horizontal from this chair.
+        // A prop that came out of its builder pre-turned would have the camera
+        // baked into it.
+        let pool = GardenProps.pond(long: GardenLayout.pondLong,
+                                    short: GardenLayout.pondShort, flat: flat)
         pool.position = SIMD3<Float>(GardenLayout.pondCentre.x,
                                      GardenLayout.floorY,
                                      GardenLayout.pondCentre.y)
+        pool.orientation = GardenProps.towardsCamera
         pool.name = "Pond"
         root.addChild(pool)
         pond = pool
@@ -436,11 +445,13 @@ final class GardenRoom: Room {
             target.tracksEntity = true
             target.onTap = { [weak self] in self?.tapBee() }
         }
-        // 42 mm rather than the puddle's 30: it is the largest prop on the
-        // floor of this room and the kitchen's set has a radius for that. It
-        // clears the can by 96 mm on screen and the basket by 107, against the
-        // 82 and 80 those pairs of radii need.
-        touch.register("pond", entity: pond, radius: 0.042,
+        // **45 mm, which is smaller than the prop and deliberately so.** The
+        // pond is 196 mm across, and a target that matched it would swallow the
+        // basket and the flower row's near end; a target only has to be big
+        // enough to hit (`CONCEPT.md` §5's ~120 pt), and the *visible* pond is
+        // what she aims at. It clears the basket by 101 mm on screen against the
+        // 83 the two radii need, and the can by 187.
+        touch.register("pond", entity: pond, radius: 0.045,
                        planeY: GardenLayout.floorY) { target in
             target.onTap = { [weak self] in self?.tapPond() }
         }
