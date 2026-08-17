@@ -137,23 +137,31 @@ enum KitchenProps {
         // which is exactly what the 2026-08-15 build showed. Grounded, it can
         // never float, whatever the facets do. Boxes are centred, so each y
         // here is the part's centre.
-        let chimneyX: Float = 0.028
-        let chimneyZ: Float = -0.030
+        // **Where it stands and how big it gets are `KitchenLayout`'s**, because
+        // `occluders` has to lift a carried prop over this and a number spelled
+        // in two files is the bug `nearPlank` is a monument to. The cap is the
+        // widest part, so `ovenChimneyWidth` is its width; everything else here
+        // is interior detail nothing outside this function needs.
+        let chimneyX = KitchenLayout.ovenChimneyOffset.x
+        let chimneyZ = KitchenLayout.ovenChimneyOffset.y
+        let capWidth = KitchenLayout.ovenChimneyWidth
 
         let shaft = RoomBuilder.model(.box([0.022, 0.096, 0.022]),
                                       Palette.cream, flat: flat, name: "Chimney")
         shaft.position = [chimneyX, 0.048, chimneyZ]
         body.addChild(shaft)
 
-        let capSlab = RoomBuilder.model(.box([0.034, 0.006, 0.034]),
+        let capSlab = RoomBuilder.model(.box([capWidth, 0.006, capWidth]),
                                         Palette.creamLight, flat: flat, name: "ChimneyCap")
         capSlab.position = [chimneyX, 0.096 + 0.003, chimneyZ]
         body.addChild(capSlab)
 
         // The rim: four walls, outer 0.030, 0.007 thick, leaving a 0.016
-        // square opening.
-        let rimTopY: Float = 0.110
-        let rimWallY: Float = 0.102 + 0.004
+        // square opening. Its top is the chimney's top.
+        let rimTopY = KitchenLayout.ovenChimneyHeight
+        // The walls are 0.008 tall and boxes are centred, so their centre is
+        // half that below the top. Derived, so raising the chimney raises them.
+        let rimWallY = rimTopY - 0.004
         for (i, spec) in [
             (SIMD3<Float>(0.030, 0.008, 0.007), SIMD3<Float>(chimneyX, rimWallY, chimneyZ - 0.0115)),
             (SIMD3<Float>(0.030, 0.008, 0.007), SIMD3<Float>(chimneyX, rimWallY, chimneyZ + 0.0115)),
@@ -210,7 +218,10 @@ enum KitchenProps {
         return Oven(root: root, dome: dome, doorPivot: doorPivot, door: door,
                     eyes: eyes, pupils: pupils, pupilRest: pupilRest,
                     eyeRest: SIMD3<Float>(repeating: 1),
-                    chimneyTop: KitchenLayout.ovenOrigin + SIMD3<Float>(0.028, 0.112, -0.030))
+                    chimneyTop: KitchenLayout.ovenOrigin
+                        + SIMD3<Float>(KitchenLayout.ovenChimneyOffset.x,
+                                       KitchenLayout.ovenChimneyHeight + 0.002,
+                                       KitchenLayout.ovenChimneyOffset.y))
     }
 
     // MARK: - The bake

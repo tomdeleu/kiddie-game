@@ -179,10 +179,22 @@ final class CarryController {
     // MARK: - What it is over
 
     /// **What she is pointing at**, for a prop being carried.
+    ///
+    /// The last line is the difference between carrying something *over* the
+    /// furniture and carrying it *through* the furniture. `pointedAt` only knows
+    /// about surfaces, so anything solid that cannot be stood on — Otto — was
+    /// answered for by the floor underneath it, and a prop dragged across him
+    /// clipped through his dome. Taking the higher of the two lifts it over
+    /// instead, and cannot cost a drop: every snap test is XZ-only.
+    ///
+    /// `pointedExtra` stays first, so a room can still let one prop reach into
+    /// an occluder rather than over it.
     private func pointedSurface(from anchor: SIMD3<Float>, for entity: Entity) -> Float {
         if let extra = pointedExtra?(anchor, entity) { return extra }
         if let rim = containerRim(from: anchor, carrying: entity) { return rim }
-        return surfaces.pointedAt(from: anchor)
+        let surface = surfaces.pointedAt(from: anchor)
+        guard let over = surfaces.carryOverTop(from: anchor) else { return surface }
+        return max(surface, over)
     }
 
     /// **The rim of a container she is holding something over.**

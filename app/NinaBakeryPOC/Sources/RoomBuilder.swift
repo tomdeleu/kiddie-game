@@ -56,6 +56,15 @@ enum KitchenLayout {
     static let ovenOrigin = SIMD3<Float>(0.152, RoomBox.floorY, -0.112)
     static let ovenDomeRadius: Float = 0.062
     static let ovenDomeHeight: Float = 0.075
+    /// **Otto's chimney**, in his local XZ, and the two sizes anything outside
+    /// `KitchenProps.oven` needs to know about it: how wide it is at its widest
+    /// — the cap, not the shaft — and how high the rim reaches. Spelled here
+    /// because `occluders` has to lift a carried prop over it, and a prop that
+    /// clears his dome does not clear his hat.
+    static let ovenChimneyOffset = SIMD2<Float>(0.028, -0.030)
+    static let ovenChimneyWidth: Float = 0.034
+    static let ovenChimneyHeight: Float = 0.110
+
     /// Mouth opening, in Otto's local space.
     static let mouthArchInner: Float = 0.024
     static let mouthLegHeight: Float = 0.012
@@ -489,7 +498,10 @@ enum KitchenLayout {
         lift: 0.012
     )
 
-    /// **The three things in this kitchen you can lose something behind.**
+    /// **Everything solid in this kitchen — what she cannot see behind, and
+    /// what a carried prop has to go over.**
+    ///
+    /// One list, two jobs, and they arrived a day apart from the same report.
     ///
     /// Owner, 2026-08-16: things dropped below the table, behind the oven and
     /// below the back counter cannot be picked up again. All three are the same
@@ -497,6 +509,13 @@ enum KitchenLayout {
     /// float-home in `CarryController.settle` was already right, it was just
     /// being asked about one piece of furniture out of four, and only ever about
     /// drops that ended on the floor.
+    ///
+    /// Owner, 2026-08-17, once that was in: the drop floats back as it should,
+    /// but dragging *across* Otto clips straight through him. Which it did — a
+    /// carried prop rides on what `Surfaces.pointedAt` answers with, that is
+    /// only ever a surface, and Otto is not one. So the same boxes now also
+    /// answer `Surfaces.carryOverTop`, and a prop pointed at any of them is
+    /// carried over its top rather than through its middle.
     ///
     /// Each of these is a solid box the fixed camera cannot see through, and
     /// every one is derived from the constants above, so a prop moving moves its
@@ -517,10 +536,20 @@ enum KitchenLayout {
     ///   footprint stretched forward to the lip of his mouth. **His chimney is
     ///   left out on purpose**: it is 37 mm taller, so its shadow falls further
     ///   back than the dome's and lands on floor the dome has already claimed.
-    ///   **The mouth is not affected** — a tin dropped at the mouth is snapped
-    ///   into Otto by `KitchenRoom.dropTin` before a settle is ever reached, and
-    ///   a tin dropped *inside* his footprint at any other moment is exactly the
-    ///   drop this is here to undo.
+    ///   **The mouth is the one place a prop is allowed to go _into_ him**, and
+    ///   it needs saying twice over. A tin dropped there is snapped in by
+    ///   `KitchenRoom.dropTin` before a settle is ever reached; and because
+    ///   lifting things over Otto would otherwise carry the tin over his head
+    ///   on the way in, `KitchenRoom`'s `pointedExtra` rides it at the mouth
+    ///   floor instead — but only while he is open. Both ask
+    ///   `nearOvenMouth`, so they cannot drift. A tin let go *inside* his
+    ///   footprint at any other moment is exactly the drop this is here to undo.
+    /// - **His chimney**, as a fourth box. It makes no difference to what floats
+    ///   home — measured, not assumed: it is 35 mm taller than the dome but
+    ///   stands behind it, so its shadow lands entirely inside the dome's and
+    ///   the swept floor total does not move by a single cell. It earns its
+    ///   place on the carrying side, where a prop lifted to clear the dome rides
+    ///   at 0.091 and the chimney reaches 0.114.
     /// **Nina is deliberately not on this list**, and she was on it once. She
     /// stands in the open between the table and the counter, so she does hide a
     /// patch of floor nothing else hides — a 75 × 50 mm strip in front of the
@@ -538,15 +567,27 @@ enum KitchenLayout {
     ///   fixed box is an approximation of furniture and a guess about a person,
     ///   and a prop half-behind her flickers into view anyway.
     ///
-    /// **What none of the three shadow is any work surface**, which is the
-    /// property that makes this safe to switch on, and it is measured rather
-    /// than argued: every point of the table top, every point of the counter
-    /// top, the whole near foreground and all thirteen prop home spots come back
-    /// reachable at 2.5 mm. It is not luck either — it is the camera being high.
-    /// Rays to the counter top are already 60 mm behind the table's far edge by
-    /// the time they fall to table height, and rays to the table top never reach
-    /// Otto's z at all, because `ovenOrigin` was moved back until the two shared
-    /// none.
+    /// **What none of them shadow is any work surface**, which is the property
+    /// that makes this safe to switch on, and it is measured rather than argued:
+    /// every point of the table top, every point of the counter top, the whole
+    /// near foreground and all thirteen prop home spots come back reachable at
+    /// 2.5 mm, and the lift is an exact no-op on both work surfaces. It is not
+    /// luck either — it is the camera being high. Rays to the counter top are
+    /// already 60 mm behind the table's far edge by the time they fall to table
+    /// height, and rays to the table top never reach Otto's z at all, because
+    /// `ovenOrigin` was moved back until the two shared none.
+    ///
+    /// The carrying side was swept the same way: **over 25,917 drag directions,
+    /// a carried prop is never inside any of these boxes**, and never lifted
+    /// anywhere in the open foreground.
+    ///
+    /// One wedge is worth knowing about. There is a sliver of floor visible
+    /// *under* the table's right overhang — the sightline reaches it by passing
+    /// beside the edge rather than over the top — and pointing at it now carries
+    /// the prop at table height, which puts it just past the table's near-right
+    /// corner instead of embedded under the top, where it used to hang. Both are
+    /// odd; only one of them is inside the furniture. It settles on open floor
+    /// either way.
     static let occluders: [Surfaces.Occluder] = [
         Surfaces.Occluder(centre: tableCentre, size: tableSize,
                           bottom: RoomBox.floorY, top: tableTopY),
@@ -561,6 +602,17 @@ enum KitchenLayout {
                                  ovenOrigin.z + (mouthFrontZ - ovenDomeRadius) / 2),
             size: SIMD2<Float>(ovenDomeRadius * 2, ovenDomeRadius + mouthFrontZ),
             bottom: RoomBox.floorY, top: ovenOrigin.y + ovenDomeHeight),
+        // **His chimney, as its own box.** It was left out while this list only
+        // decided what floats home — it is 35 mm taller than the dome, so its
+        // shadow lands on floor the dome had already claimed. Carrying changed
+        // that: a prop lifted to clear the dome rides at 0.091 and the chimney
+        // reaches 0.114, so without this it goes over Otto's head and straight
+        // through his hat. Sized to the cap, which is the widest part of it.
+        Surfaces.Occluder(
+            centre: SIMD2<Float>(ovenOrigin.x + ovenChimneyOffset.x,
+                                 ovenOrigin.z + ovenChimneyOffset.y),
+            size: SIMD2<Float>(ovenChimneyWidth, ovenChimneyWidth),
+            bottom: RoomBox.floorY, top: ovenOrigin.y + ovenChimneyHeight),
     ]
 
     /// **What a prop is standing on at this point in the room.**
@@ -673,6 +725,26 @@ enum KitchenLayout {
         // the snap radius, so reaching for it from the table still counts.
         abs(point.x - cakePlankCentre.x) <= cakePlankLength / 2 + plankSnapRadius
             && abs(point.z - cakePlankCentre.y) <= plankSnapRadius
+    }
+
+    /// **The floor of Otto's mouth**, which is what the tin rides on while she
+    /// is pushing it in. `ovenMouth` is where the tin's own origin ends up; this
+    /// is 10 mm below it, so a tin carried at this plus the usual `lift` sits
+    /// within 2 mm of where the drop is about to put it.
+    static var ovenMouthFloorY: Float { ovenOrigin.y + mouthLegHeight }
+
+    /// **Near enough to Otto's mouth to count**, in the one step where it does.
+    ///
+    /// Spelled once and asked twice — by `KitchenRoom.dropTin`, which decides
+    /// whether the tin goes in, and by the carry exception, which decides
+    /// whether it is carried at the mouth or lifted over Otto's head. Those two
+    /// disagreeing is the bug `nearPlank` above is a monument to, so they share
+    /// a function rather than a number.
+    ///
+    /// Generous, like every other snap in the room: this is the step the whole
+    /// round is named after.
+    static func nearOvenMouth(_ point: SIMD3<Float>) -> Bool {
+        RoomBox.distanceXZ(point, ovenMouth) <= 0.081
     }
 
     /// **Somewhere she could put a thing and then not get it back.**

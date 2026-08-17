@@ -379,6 +379,25 @@ Two more rules:
 - **Occluders are furniture, not cast.** A fixed box is a description of a table
   and a guess about a character, who squashes, bobs and wobbles. Prefer leaving
   a character out and documenting the strip they hide.
+- **The same list says what a carried prop goes _over_.** `pointedAt` answers
+  with surfaces, so anything solid that cannot be stood on is answered for by
+  the floor underneath it — and a prop dragged across it goes straight through.
+  De Keuken shipped that too (owner, 2026-08-17: "it just clips"), one day after
+  the drop was fixed, which is the tell that these are one problem: **the drop
+  and the drag have to agree about what is solid.** `Surfaces.carryOverTop`
+  returns the tallest occluder top the ray meets and `CarryController` takes the
+  higher of that and the surface. It cannot cost a landing, because every snap
+  test is XZ-only — riding higher only changes what she sees on the way.
+  - Use the **top**, not the point where the sightline grazes the box. Riding
+    the entry point slides a prop prettily up a dome and leaves it embedded in
+    the side of a table.
+  - Include anything that sticks up. Otto's chimney is 35 mm taller than his
+    dome and changes nothing about what floats home, but a prop lifted to clear
+    the dome goes through his hat without it.
+  - A prop that has to reach *into* an occluder — the tin going into Otto's
+    mouth — goes through `pointedExtra`, which is asked first. Share one
+    predicate between that and the drop's snap test so the two cannot disagree
+    about where the opening is.
 - **Every tap is also a zero-length drag.** Without a "barely moved" check,
   poking the berry on the top shelf knocks it to the floor, because that is what
   is under a shelf.

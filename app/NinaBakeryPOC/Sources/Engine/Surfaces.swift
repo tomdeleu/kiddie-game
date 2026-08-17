@@ -101,6 +101,37 @@ struct Surfaces {
         let bottom: Float
         let top: Float
 
+        /// **Is she pointing at this box at all?**
+        ///
+        /// The same slab test as `hides`, run on the unbounded ray from the eye
+        /// through `anchor` rather than on a segment ending at it — the question
+        /// is not "is something behind this" but "is this box between her eye
+        /// and wherever along that line the prop happens to be". A drag is a
+        /// direction, not a destination.
+        @MainActor
+        func isPointedAt(from anchor: SIMD3<Float>) -> Bool {
+            let eye = CameraRig.eye
+            let low = SIMD3<Float>(centre.x - size.x / 2, bottom, centre.y - size.y / 2)
+            let high = SIMD3<Float>(centre.x + size.x / 2, top, centre.y + size.y / 2)
+            let along = anchor - eye
+            var enter: Float = 0
+            var leave = Float.greatestFiniteMagnitude
+
+            for axis in 0..<3 {
+                let origin = eye[axis], direction = along[axis]
+                guard abs(direction) > 1e-6 else {
+                    if origin < low[axis] || origin > high[axis] { return false }
+                    continue
+                }
+                let a = (low[axis] - origin) / direction
+                let b = (high[axis] - origin) / direction
+                enter = max(enter, min(a, b))
+                leave = min(leave, max(a, b))
+                if enter > leave { return false }
+            }
+            return true
+        }
+
         /// **Does the sightline from the eye to `point` pass through this box?**
         ///
         /// The slab method, run on the *segment* from the eye to the point
@@ -223,6 +254,43 @@ struct Surfaces {
             if Self.within(over, rect, margin: 0.006) { return rect.y }
         }
         return floorY
+    }
+
+    /// **What she is pointing at that has to be gone _over_ rather than
+    /// through**, as the height to carry a prop at.
+    ///
+    /// `pointedAt` above answers with *surfaces*, which is the whole story for
+    /// anything a prop can be put down on and no story at all for anything else.
+    /// Otto is the worked example: he is not a surface, so a prop dragged across
+    /// him was carried at the height of the floor he is standing on, and went
+    /// straight through his dome (owner, 2026-08-17: "it just clips"). The drop
+    /// was already handled — it floats home — but a 4-year-old watches the drag,
+    /// not the drop.
+    ///
+    /// **The top, not where the sightline grazes the box.** Riding the entry
+    /// point would slide a prop up Otto's face, which is prettier and wrong for
+    /// the other two: the table and the counter are boxes here as well, and a
+    /// ray that sneaks in under the table's right edge enters through its *side*
+    /// — so entry-riding would carry a prop up to the height of the table's
+    /// skirt and leave it embedded in the edge. Every one of these is something
+    /// to be lifted over, and the top is the one height that is clear of all of
+    /// them.
+    ///
+    /// Tallest wins, for the same reason `CarryController.containerRim` takes
+    /// the tallest rim, and it is safe for exactly the same reason: **every snap
+    /// test in the game is XZ-only**, so riding higher cannot make a drop harder
+    /// to land. It only changes what she sees on the way there.
+    ///
+    /// A room that wants one prop to reach *into* an occluder — the tin going
+    /// into Otto's mouth — says so through `CarryController.pointedExtra`, which
+    /// is asked first.
+    @MainActor
+    func carryOverTop(from anchor: SIMD3<Float>) -> Float? {
+        var best: Float?
+        for occluder in occluders where occluder.isPointedAt(from: anchor) {
+            if best == nil || occluder.top > best! { best = occluder.top }
+        }
+        return best
     }
 
     /// **The shelf a prop is standing on, if it is standing on one.**

@@ -378,6 +378,37 @@ Two things about it are worth keeping:
   whole near foreground and all thirteen prop home spots come back reachable at
   2.5 mm.
 
+**And the same list says what a carried prop goes _over_.** Fixing the drop
+exposed the other half of it the next day (owner, 2026-08-17: the drop floats
+back as it should, but dragging into the oven "just clips"). It did: a carried
+prop rides on whatever `pointedAt` answers with, that is only ever a *surface*,
+and Otto is not one — so a prop dragged across him was carried at the height of
+the floor he stands on and went through his dome. `Surfaces.carryOverTop`
+returns the tallest occluder top the ray meets, and `CarryController` takes the
+higher of that and the surface, so the prop lifts over Otto instead. It cannot
+cost a landing: every snap test is XZ-only, so riding higher only changes what
+she sees on the way there. Swept over 25,917 drag directions, **a carried prop
+is now never inside any of the four boxes**, and never lifted anywhere in the
+open foreground.
+
+Two details that are the whole difference between this working and looking
+broken:
+
+- **The top of the box, not where the sightline grazes it.** Entry-riding slides
+  a prop up Otto's face, which is prettier — and leaves it embedded in the side
+  of the table, because a ray that reaches under the table's right overhang
+  enters through the *side* face.
+- **Otto's chimney is a fourth box.** It makes no difference to what floats home
+  — it stands behind the dome, so its shadow lands inside the dome's and the
+  swept floor total does not move by one cell. It matters because a prop lifted
+  to clear the dome rides at 0.091 and the chimney reaches 0.114.
+
+**The mouth is the exception, and it goes through `pointedExtra`**, which is
+asked before the occluders — the tin rides on the mouth floor while Otto is
+open, so it slides in at 0.028 against a target of 0.026 instead of sailing over
+his head. It and `dropTin` both ask `KitchenLayout.nearOvenMouth`, so what she
+sees and what counts cannot drift apart.
+
 This replaced a rule where a missed drop floated home and
 Nina apologised for it, which was wrong twice: it undid the one thing she can
 do with a kitchen full of objects, and it treated every stray drag as a failed
@@ -1802,17 +1833,19 @@ long-standing limitation, not a setup problem.
 > The five are kept because they are still the right list for *the SDK moving
 > under the project*, which is the other way this breaks.
 >
-> **Unbuilt since build two: `Surfaces.Occluder` and the kitchen's occluder
-> list.** By that lesson's own reckoning this is a change to watch, because it is
-> both of the two risky edits at once — it adds a `@MainActor` method
-> (`Occluder.hides`, which reads `CameraRig.eye`) and a stored property with a
-> default (`Surfaces.occluders`) that the synthesised memberwise initialiser has
-> to carry, in a struct two rooms construct positionally. If either bites, the
-> fixes are small and known: spell the initialiser out by hand, or mark the
-> nested type's method the way `assertSpacing` had to be. **The geometry itself
-> is not correct-by-construction** — it was swept in Python against the committed
-> camera before being written down, which is how Nina came off the list and how
-> "no work surface is shadowed" became a measurement rather than a claim.
+> **Unbuilt since build two: `Surfaces.Occluder`, the kitchen's occluder list
+> and the carry-over rule.** By that lesson's own reckoning this is a change to
+> watch, because it is both of the two risky edits at once — it adds
+> `@MainActor` methods (`Occluder.hides` and `Occluder.isPointedAt`, which read
+> `CameraRig.eye`) and a stored property with a default (`Surfaces.occluders`)
+> that the synthesised memberwise initialiser has to carry, in a struct two
+> rooms construct positionally. If either bites, the fixes are small and known:
+> spell the initialiser out by hand, or mark the nested type's method the way
+> `assertSpacing` had to be. **The geometry itself is not
+> correct-by-construction** — both halves were swept in Python against the
+> committed camera before being written down, which is how Nina came off the
+> list, how "no work surface is shadowed" became a measurement rather than a
+> claim, and how the chimney got onto the list at all.
 
 Five places are the most likely to want a fix, and all five are one line:
 
