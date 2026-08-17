@@ -637,9 +637,11 @@ final class GardenRoom: Room {
         // fence has no wall to hold one, and she can already see straight
         // through it — so the garden says it twice, on the owner's call.
         //
-        // What partly stands in for it is not lit at all: the sandy path leading
-        // out through the gate (`GardenLayout.pathCentre`). Ground people have
-        // walked on is the one way left to say *there is somewhere to go*.
+        // **Nothing stands in for it any more.** A worn sandy path across the
+        // ground at the gate used to, on the argument that ground people have
+        // walked on is the one way left to say *there is somewhere to go* — it
+        // was removed on the owner's call, 2026-08-17. Two cues, and the room
+        // is the honest test of whether two is enough.
 
         guard done else {
             Halo.remove(doorHalo, ticker: ticker)

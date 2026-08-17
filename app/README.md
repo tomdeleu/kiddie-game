@@ -1140,9 +1140,14 @@ and she can already see straight through it — so the garden's says it twice, o
 the owner's call. `Props.Doorway.glow` became optional to say so; a hidden entity
 nobody ever assigns to is dead geometry that looks live.
 
-What partly stands in for it emits nothing: **the sandy path leading out through
-the gate**. Ground people have walked on is the one way left to say *there is
-somewhere to go*.
+**Nothing stands in for it.** A worn sandy path leading out through the gate did
+— one flat cream heptagon on the lawn, emitting nothing, on the argument that
+ground somebody has walked on is the one way left to say *there is somewhere to
+go*. **Removed on the owner's call, 2026-08-17**, and it is worth recording why
+it was ever there: the room-box plate drew a path, and §9's three-cue rule left
+a gap, and those two facts together made a prop that nobody looking at the
+screen could name. The first question asked about it was "what is this?", which
+is the answer. Two cues.
 
 **The gate stands where the door stood**, and `Props.gate` returns the same
 `Props.Doorway` struct the door does — so every line of the ajar-swing-ring

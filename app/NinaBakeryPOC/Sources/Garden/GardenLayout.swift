@@ -396,17 +396,6 @@ enum GardenLayout {
     static let bushSpots = [SIMD3<Float>(-0.020, floorY, -0.192),
                             SIMD3<Float>(0.170, floorY, -0.185)]
 
-    /// **The sandy path at the gate**, from `references/garden/roombox-v2.png`.
-    ///
-    /// It earns its place beyond the plate. `ROOMS.md` §9 says the way out says
-    /// the same thing three ways, and the garden's now says it twice — a gate in
-    /// a fence has no wall behind it to hold a lit plate. A patch of worn path
-    /// leading out through the gate says *there is somewhere to go* in the one
-    /// way left, which is by being the ground people have walked on. It emits
-    /// nothing and it is one flat polygon.
-    static let pathCentre = SIMD2<Float>(-0.150, 0.150)
-    static let pathRadius: Float = 0.062
-
     // MARK: - The way out
 
     /// **A gate in the fence, standing where the door stood.**
