@@ -47,10 +47,26 @@ final class BakerCharacter {
     private var cheerTime: Float = 0
     private var job: Int?
 
-    init(ticker: Ticker, flat: Bool) {
+    /// **Where she stands, and where a hop puts her back.**
+    ///
+    /// It exists because `cheerTime` lands her back on a hardcoded spot, and
+    /// three rooms now build her somewhere that is not the kitchen. Optional with
+    /// the kitchen's spot as the default, so every existing call site behaves
+    /// exactly as it did — see the note on `init`.
+    private let home: SIMD3<Float>
+
+    /// `home` defaults to the kitchen's spot, which is what this class assumed
+    /// for its whole life. **Rooms that place her by writing `root.position`
+    /// after construction and do not pass it have a latent bug**: cheering eases
+    /// her back to the kitchen's corner and leaves her there. Versieren and De
+    /// Tuin both do that today and neither is changed here — this session's room
+    /// is the party (`CLAUDE.md`, "Always ask which room"), and the fix for the
+    /// other two is to pass their own `bakerSpot`, which is one argument each.
+    init(ticker: Ticker, flat: Bool, home: SIMD3<Float>? = nil) {
         self.ticker = ticker
+        self.home = home ?? KitchenLayout.bakerSpot
         root.name = "Nina"
-        root.position = KitchenLayout.bakerSpot
+        root.position = self.home
 
         // Slightly turned towards the room, so she is never a flat cut-out.
         root.orientation = simd_quatf(angle: 0.28, axis: [0, 1, 0])
@@ -247,9 +263,9 @@ final class BakerCharacter {
             cheerTime -= dt
             // A little hop on top of everything else.
             let hop = max(0, sin((0.9 - cheerTime) / 0.9 * .pi)) * 0.010
-            root.position = KitchenLayout.bakerSpot + SIMD3<Float>(0, hop, 0)
+            root.position = home + SIMD3<Float>(0, hop, 0)
             if cheerTime <= 0 {
-                root.position = KitchenLayout.bakerSpot
+                root.position = home
                 set(.idle)
             }
         }

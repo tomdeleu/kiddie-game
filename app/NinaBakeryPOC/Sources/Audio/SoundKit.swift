@@ -41,6 +41,28 @@ enum Sound: String, CaseIterable {
     case buzz        // the bee, when she chases it
     case dig         // Mo coming up out of the molehill
 
+    // MARK: - Het Feest
+    //
+    // **The five instrument pads that could not be borrowed, and two for the
+    // ending.** `ROOMS.md` §10 asks a room to reuse the existing cases wherever
+    // it can, and the party does: the sixth pad is `ding`, the mirror ball is
+    // `sparkle`, a guest hopping is `plop`, the popper's bang is `poof` played
+    // low. A drum is not a plop and a whistle is not a ding, so these five are
+    // genuinely new events rather than the room wanting its own vocabulary.
+    //
+    // **This is the half of `CONCEPT.md` §7.4 that turned out not to be a gap.**
+    // That section lists "the dance party soundtrack and the six instrument pads"
+    // as blocked on an asset nobody has made. Five oscillators later, the pads
+    // are not: what is still blocked is the *tune*, which is one asset rather
+    // than seven, and which a synth cannot honestly stand in for.
+    case trom        // pad 1 — a low drum
+    case toeter      // pad 3 — a two-note horn
+    case klap        // pad 4 — a handclap
+    case fluit       // pad 5 — a whistle
+    case kras        // pad 6 — a record scratch, and the DJ when tapped
+    case knabbel     // everybody eating the cake
+    case applaus     // and then applauding
+
     /// Filename in `Resources/SFX` to use instead of the synth, once one
     /// exists. Nothing has one yet — see the type doc.
     var fileName: String? { nil }
@@ -244,6 +266,84 @@ private enum Synth {
         case .thud:
             return wav(0.22) { t in
                 (sine(96, t) * 0.8 + sine(148, t) * 0.2) * decay(t, 22) * 0.8
+            }
+
+        // MARK: The party's pads
+        //
+        // Short, all of them. She will hit these dozens of times a minute and a
+        // pad that rings for a second is a pad that is always still ringing when
+        // the next one lands — which would take the one thing this room is about,
+        // her rhythm, and smear it.
+
+        case .trom:
+            // Pitch drops through the floor, with a click of noise on the front
+            // for the stick. The same shape as `plop`, an octave and a half down.
+            return wav(0.30) { t in
+                let f = 165 * exp(-19 * t) + 56
+                let stick = lowpassNoise(t, cutoff: 0.6) * decay(t, 70) * 0.30
+                return (sine(f, t) * 0.9 + stick) * decay(t, 9) * 0.85
+            }
+
+        case .toeter:
+            // Two notes, a fourth apart, the second arriving without a gap —
+            // which is what makes it a horn rather than two beeps.
+            return wav(0.42) { t in
+                let f: Double = t < 0.13 ? 392 : 523.25
+                return (triangle(f, t) * 0.45 + sine(f * 2, t) * 0.12)
+                    * decay(t, 3.0) * Float(min(1, t * 60)) * 0.9
+            }
+
+        case .klap:
+            // Noise, opened right up and cut off fast. A clap is almost entirely
+            // its envelope.
+            return wav(0.20) { t in
+                lowpassNoise(t, cutoff: 0.78) * decay(t, 32) * 0.6
+            }
+
+        case .fluit:
+            // A high sine with a little vibrato on it. Vibrato is the whole
+            // difference between a whistle and a test tone.
+            return wav(0.38) { t in
+                let f = 1180 + 70 * sin(t * 38)
+                return (sine(f, t) * 0.55 + sine(f * 3, t) * 0.05)
+                    * decay(t, 5.5) * Float(min(1, t * 30))
+            }
+
+        case .kras:
+            // Up and back down inside a third of a second, over noise. It is the
+            // DJ's own sound as well as pad six's, which is the joke.
+            return wav(0.34) { t in
+                let sweep = 1 - 2 * abs(t / 0.34 - 0.5)
+                let f = 210 + 640 * sweep
+                return (lowpassNoise(t, cutoff: 0.22) * 0.45 + triangle(f, t) * 0.40)
+                    * decay(t, 4.5) * 0.7
+            }
+
+        // MARK: And the ending
+
+        case .knabbel:
+            // Three crunches, unevenly spaced, because everybody bites at once
+            // but not quite. `GAMEPLAY.md` §6.5 asks for *enormous crunching
+            // noises* and this is the loudest thing in the game.
+            return wav(0.62) { t in
+                var value: Float = 0
+                for (i, start) in [0.0, 0.15, 0.34].enumerated() {
+                    guard t >= start else { continue }
+                    let local = t - start
+                    value += lowpassNoise(local, cutoff: 0.62 - Double(i) * 0.12)
+                        * decay(local, 24) * 0.55
+                }
+                return value
+            }
+
+        case .applaus:
+            // Noise under two beating oscillators, which is a crowd: many hands,
+            // none of them in time. Swells in and out rather than starting hard.
+            return wav(1.7) { t in
+                let swell = Float(min(1, t * 5)) * Float(min(1, (1.7 - t) * 2.2))
+                let hands = Float(0.55 + 0.45 * sin(t * 47))
+                    * Float(0.70 + 0.30 * sin(t * 29))
+                return lowpassNoise(t, cutoff: 0.58) * swell * hands * 0.5
             }
         }
     }

@@ -975,17 +975,26 @@ final class VersierRoom: Room {
     /// **The door works from the first frame and always means the same thing.**
     /// There is no required action to gate it on — §6.4: *the door works
     /// immediately, and this room must never ask her for anything.*
+    ///
+    /// **It is a transition now, in round mode** (2026-08-17). The party exists,
+    /// so the door hands the decorated `CakeSpec` on to it exactly as the
+    /// kitchen's hands the baked one here — and this is the one function the
+    /// party room changed in a room that is not its own, which is precisely the
+    /// shape `ROOMS.md` §9 predicted: *"`endRoom()` is the one function the
+    /// decorating room replaces."* It replaced the kitchen's; the party replaced
+    /// this one.
+    ///
+    /// **A visit is still a ceremony**, because a visit's door goes back to the
+    /// bakery and the bakery does not exist. Never promise a room that is not
+    /// built.
     private func endRoom(_ doorway: Props.Doorway) {
         swingDoor(doorway, hold: 2.6)
         baker?.set(.cheering)
         sound.play(.reward, volume: 0.7)
         save()
 
-        // The party does not exist, so this is a ceremony rather than a
-        // transition, and Nina says the next room is coming *soon* rather than
-        // *now*. `ROOMS.md` §9: a 4-year-old told she is going somewhere and
-        // then not taken there has been lied to.
-        voice.sayInstead(mode == .ronde ? VersierLine.deurRonde : VersierLine.deurBezoek)
+        let toParty = mode == .ronde
+        voice.sayInstead(toParty ? VersierLine.naarFeest : VersierLine.deurBezoek)
 
         let threshold = VersierLayout.doorHaloSpot
         for (i, delay) in [Float(0.45), 1.5].enumerated() {
@@ -999,6 +1008,14 @@ final class VersierRoom: Room {
             }
             jobs.append(job)
         }
+
+        // **Handed over on the beat the leaf reaches full open**, so the swing
+        // reads as the way through rather than as something that happened first.
+        // Same 0.9 s as the kitchen's, and `GameScene` waits again on its own
+        // side, which is what gives Nina's line room to land.
+        guard toParty else { return }
+        let cake = state.cake
+        jobs.append(ticker.after(0.9) { [weak self] in self?.onExit?(.feest(cake)) })
     }
 
     private func swingDoor(_ doorway: Props.Doorway, hold: Float = 1.5) {
@@ -1198,8 +1215,17 @@ enum VersierLine {
     static let opnieuw = "nina.versieren.opnieuw"
     static let stil = "nina.versieren.stil"
     static let zullenWeGaan = "nina.versieren.zullenWeGaan"
+    /// **Kept, and no longer said.** It is the careful line — *the party is
+    /// coming straks* — from when the party did not exist. It stays in the script
+    /// and in this enum because `deurBezoek` is the only line a visit can end on
+    /// and a room that loses its careful line has nothing to fall back to if the
+    /// party is ever taken out again. `ROOMS.md` §4's contract — every id in the
+    /// script is referenced from Swift — is what this constant satisfies.
     static let deurRonde = "nina.versieren.deurRonde"
     static let deurBezoek = "nina.versieren.deurBezoek"
+    /// **What replaced it**, now that there is somewhere to go: *nu gaan we
+    /// feesten!* The mirror of `Line.naarVersieren`.
+    static let naarFeest = "nina.versieren.naarFeest"
 
     // The naming layer — one variant each, deliberately.
     static let ditDraaitafel = "nina.dit.draaitafel"

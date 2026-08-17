@@ -27,7 +27,7 @@ holes, a watering can that grows whatever it sweeps over, six more toys, and a
 picket fence with a gate in it where its walls used to be — and **Het Feest**,
 the party, which is **a disco**: a mirror ball, a light rig, a light-up dance
 floor, a DJ at a booth with two decks, six friends dancing, and six pads whose
-beat is the one she is tapping. 331 Dutch line variants across 176 line ids.
+beat is the one she is tapping. 309 Dutch line variants across 170 line ids.
 No other room exists.
 
 ## → Start here: [`app/README.md`](app/README.md)

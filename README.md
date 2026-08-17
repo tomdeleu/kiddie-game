@@ -9,7 +9,7 @@ sows, waters and picks five magic ingredients; **De Keuken** — one full round
 she just baked goes onto a turntable and she covers it in sprinkles, candles,
 hearts, stars, crowns, fruit and cream; and **Het Feest**, a disco with a mirror
 ball, a DJ, a light-up dance floor and six friends who dance to whatever beat she
-taps. 331 Dutch voice lines between them. Start at
+taps. 309 Dutch voice lines between them. Start at
 [app/README.md](app/README.md).
 
 **Next:** test it with Nina, then the wall of twelve frames — which is the last

@@ -764,7 +764,7 @@ assumed. The kitchen is the calibration: 46 line ids across 86 files came to
 | The opening film — **done** | 3 | ~1 |
 | Versieren — **done** | 12 + 15 names | ~11 |
 | De Tuin — **done** | 17 + 15 names | ~16 |
-| Het Feest — **done** | 17 + 11 friends + 11 names | ~21 |
+| Het Feest — **done** | 11 + 11 friends + 10 names | ~18 |
 | De Bakkerij | ~10 + ~10 names | ~10 |
 | Eleven friends × 6–8 | ~80 | ~24 |
 | The finale | ~4 | ~2 |

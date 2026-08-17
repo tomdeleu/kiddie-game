@@ -1,0 +1,1150 @@
+import Foundation
+import RealityKit
+import simd
+import CoreGraphics
+
+/// **Het Feest — the party.** `GAMEPLAY.md` §6.5.
+///
+/// A discotheque: a mirror ball throwing pools of light across a lit floor, a
+/// rig of coloured lamps, a stack of speakers, a DJ behind a booth with two
+/// decks, six friends dancing, and her cake standing on a table under a light.
+/// Six big pads along the open front edge, one per instrument.
+///
+/// **The whole room is one number, and the number is hers.** `FeestBeat` turns
+/// the interval between her taps into a period, and the guests, the mirror ball,
+/// the floor tiles, the lamps, the decks and the speaker cones all read it. Not
+/// one of them owns a clock. That is what makes the room feel like it is
+/// following her rather than running beside her, and it is the difference §6.5
+/// draws between *her rhythm* and *a recording*.
+///
+/// Three things follow from this being a room that asks her for nothing:
+///
+/// - **The halo has one thing to point at, and it is the cake** — which is also
+///   the way out (`ROOMS.md` §9). Lit from the first frame, exactly as the
+///   decorating room's door is, because *you may finish when you like* is a true
+///   statement here and nowhere else. **There is no door in this room.** §6.5:
+///   *nothing else ends it.*
+/// - **The miss machinery is not wired.** `noteMiss` means *she dragged the prop
+///   the current step is about and it did not land*, and nothing in this room is
+///   dragged at all. Every interaction here is a tap.
+/// - **The idle nudge is not an instruction.** *"Zullen we de taart opeten?"*,
+///   never *"tap a pad"*. There is nothing she is failing to do.
+@MainActor
+final class FeestRoom: Room {
+
+    let root = Entity()
+    var onExit: ((RoomExit) -> Void)?
+
+    /// `ROOMS.md` §9: one flag, not two implementations.
+    let mode: RoomMode
+
+    private let ticker: Ticker
+    private let touch: TouchRouter
+    private let voice: VoiceBank
+    private let sound: SoundKit
+    private var settings: LightingSettings
+    private var flat = true
+
+    private(set) var state: FeestState
+    private let beat = FeestBeat()
+
+    // MARK: - Entities
+
+    private var danceFloor: FeestProps.DanceFloor?
+    private var pads: [FeestProps.Pad] = []
+    private var mirrorBall: FeestProps.MirrorBall?
+    private var ballSpots: Entity?
+    private var lamps: [FeestProps.Lamp] = []
+    private var lampMarker: Entity?
+    private var booth: FeestProps.Booth?
+    private var speakers: FeestProps.Speakers?
+    private var popper: Entity?
+    private var balloon: Entity?
+    private var table: Entity?
+    private var cakeAnchor: Entity?
+    private var cakeNode: Entity?
+    private var stickerLayer: Entity?
+    private var cakeTouchSpot: Entity?
+    private var cakeHalo: Halo.Handle?
+    private var baker: BakerCharacter?
+
+    /// The friend of the day is `guests[0]`. `GuestCharacter` holds its own
+    /// `friend`, so nothing here has to keep the two lists in step.
+    private var guests: [GuestCharacter] = []
+    private var djCharacter: GuestCharacter?
+
+    // MARK: - Interaction state
+
+    /// Which colour the floor is flashing, and for how much longer. A pad tap
+    /// paints every tile its own colour for a beat, which is what ties her finger
+    /// to the room.
+    private var flashColour: UIColorLike?
+    private var flashLeft: Float = 0
+    private var lastLitStep = -1
+
+    private var saidFirstBeat = false
+    private var saidFaster = false
+    private var balloonDrift: SIMD3<Float> = .zero
+
+    private var idleJob: Int?
+    private var idleTime: Float = 0
+    private var nudgeStage = 0
+    private var alternateNudge = false
+    private var beatJob: Int?
+    private var jobs: [Int] = []
+
+    // MARK: - Life
+
+    init(ticker: Ticker, touch: TouchRouter, voice: VoiceBank,
+         sound: SoundKit, settings: LightingSettings,
+         mode: RoomMode = .bezoek, handedCake: CakeSpec? = nil) {
+        self.ticker = ticker
+        self.touch = touch
+        self.voice = voice
+        self.sound = sound
+        self.settings = settings
+        self.mode = mode
+
+        // **A cake arriving means a new party**, and the friend is dealt with it.
+        // On a visit the saved one is resumed, and if there is none a cake and a
+        // friend are dealt together — the decorating room's rule (`CakeSpec.dealt`,
+        // owner's call 2026-08-16) applied to a second missing thing: supply it
+        // rather than refuse her the room.
+        var loaded = FeestStore.load(fallback: CakeSpec.dealt())
+        if let handedCake {
+            loaded = .fresh(cake: handedCake, friend: Friend.dealt())
+        }
+        self.state = loaded
+        root.name = "Feest"
+    }
+
+    // MARK: - Building
+
+    func build(flat: Bool) {
+        self.flat = flat
+        cancelEverything()
+        root.children.removeAll()
+        touch.removeAll()
+        pads.removeAll()
+        lamps.removeAll()
+        guests.removeAll()
+
+        FeestLayout.assertSpacing()
+
+        root.addChild(RoomBox.shell(flat: flat))
+
+        buildDanceFloor()
+        buildPads()
+        buildLightRig()
+        buildMirrorBall()
+        buildBooth()
+        buildGuests()
+        buildToys()
+        buildCake()
+        buildBaker()
+
+        registerTargets()
+        applyStep(animated: false)
+        startBeat()
+        startIdleWatch()
+    }
+
+    private func buildDanceFloor() {
+        let floor = FeestProps.danceFloor(flat: flat)
+        root.addChild(floor.root)
+        danceFloor = floor
+        lastLitStep = -1
+        repaintFloor(force: true)
+    }
+
+    private func buildPads() {
+        for index in 0..<FeestLayout.padCount {
+            let pad = FeestProps.pad(colour: FeestLayout.discoColour(index), flat: flat)
+            pad.root.position = FeestLayout.padSpot(index)
+            root.addChild(pad.root)
+            pads.append(pad)
+        }
+    }
+
+    private func buildLightRig() {
+        let aim = SIMD3<Float>(FeestLayout.floorCentre.x, FeestLayout.tileTopY,
+                               FeestLayout.floorCentre.y)
+
+        let backBar = FeestProps.lightBar(length: 0.280, flat: flat)
+        backBar.position = [0, FeestLayout.backBarY, FeestLayout.backBarZ]
+        root.addChild(backBar)
+
+        let leftBar = FeestProps.lightBar(length: 0.230, flat: flat)
+        leftBar.orientation = simd_quatf(angle: .pi / 2, axis: [0, 1, 0])
+        leftBar.position = [FeestLayout.leftBarX, FeestLayout.backBarY, -0.040]
+        root.addChild(leftBar)
+
+        var index = 0
+        for x in FeestLayout.backLampX {
+            let origin = SIMD3<Float>(x, FeestLayout.backBarY - 0.005, FeestLayout.backBarZ)
+            let lamp = FeestProps.lamp(colour: FeestLayout.discoColour(index),
+                                       aimedAt: aim, from: origin, flat: flat)
+            root.addChild(lamp.root)
+            lamps.append(lamp)
+            index += 1
+        }
+        for z in FeestLayout.leftLampZ {
+            let origin = SIMD3<Float>(FeestLayout.leftBarX, FeestLayout.backBarY - 0.005, z)
+            let lamp = FeestProps.lamp(colour: FeestLayout.discoColour(index),
+                                       aimedAt: aim, from: origin, flat: flat)
+            root.addChild(lamp.root)
+            lamps.append(lamp)
+            index += 1
+        }
+
+        // One target for the whole rig — five lamps are five words for one thing,
+        // and they hang 110 mm apart on a wall nobody needs to aim at precisely.
+        let marker = Entity()
+        marker.name = "LampMarker"
+        marker.position = FeestLayout.lampTouchSpot
+        root.addChild(marker)
+        lampMarker = marker
+    }
+
+    private func buildMirrorBall() {
+        let ball = FeestProps.mirrorBall(flat: flat)
+        root.addChild(ball.root)
+        mirrorBall = ball
+
+        let spots = FeestProps.ballSpots(flat: flat)
+        root.addChild(spots.root)
+        ballSpots = spots.root
+    }
+
+    private func buildBooth() {
+        let deck = FeestProps.booth(flat: flat)
+        root.addChild(deck.root)
+        booth = deck
+
+        // **The DJ is a friend, not a twelfth character.** `GAMEPLAY.md` §1 has
+        // eleven friends and a gold frame that is Nina's, and inventing a twelfth
+        // animal to stand behind the decks would quietly reopen a decision the
+        // owner closed. So the DJ is whoever is *not* at the party today — she
+        // has eleven friends and six of them are on the floor.
+        let onTheFloor = Set(state.everyone)
+        let dj = Friend.allCases.first { !onTheFloor.contains($0) } ?? .bas
+        let character = GuestCharacter(friend: dj, role: .dj, at: FeestLayout.djSpot,
+                                       phase: 0, ticker: ticker, flat: flat)
+        root.addChild(character.root)
+        djCharacter = character
+    }
+
+    private func buildGuests() {
+        for (index, friend) in state.everyone.enumerated() {
+            // A sixth of a beat apart across the six, so the row reads as a crowd
+            // rather than as a chorus line — and it is a constant per guest, not
+            // a random per frame, so a guest does not change character when the
+            // room is rebuilt.
+            let phase = Float(index) / Float(FeestLayout.guestCount) / 6
+            let character = GuestCharacter(friend: friend, role: .gast,
+                                           at: FeestLayout.guestSpot(index),
+                                           phase: phase, ticker: ticker, flat: flat)
+            root.addChild(character.root)
+            guests.append(character)
+        }
+    }
+
+    private func buildToys() {
+        let stack = FeestProps.speakers(flat: flat)
+        root.addChild(stack.root)
+        speakers = stack
+
+        let knaller = FeestProps.popper(flat: flat)
+        root.addChild(knaller)
+        popper = knaller
+
+        let ballon = FeestProps.balloon(flat: flat)
+        root.addChild(ballon)
+        balloon = ballon
+        balloonDrift = .zero
+    }
+
+    /// **The cake, re-rendered from the spec.**
+    ///
+    /// This is the first thing in the game to collect on the promise `Sticker`
+    /// was written for — *"the party and the wall can re-render the same cake
+    /// later from the spec alone, at their own scale and their own angle"*. Every
+    /// sticker she placed and every ribbon she piped is rebuilt here from polar
+    /// anchors, at 1.8× instead of the decorating room's 2.5×, with no world or
+    /// screen position stored anywhere.
+    private func buildCake() {
+        let stand = FeestProps.cakeTable(flat: flat)
+        root.addChild(stand)
+        table = stand
+
+        let anchor = Entity()
+        anchor.name = "TaartAnker"
+        anchor.position = [FeestLayout.tableCentre.x, FeestLayout.tableTopY,
+                           FeestLayout.tableCentre.y]
+        root.addChild(anchor)
+        cakeAnchor = anchor
+
+        let cake = KitchenProps.cake(state.cake, flat: flat)
+        cake.scale = SIMD3<Float>(repeating: FeestLayout.cakeScale)
+            * (state.cake.isTall ? SIMD3<Float>(1, 1.5, 1) : SIMD3<Float>(repeating: 1))
+        anchor.addChild(cake)
+        cakeNode = cake
+
+        // A sibling of the cake, not a child — `isTall` is a 1.5× Y scale on the
+        // cake wrapper and a heart parented under it would come out stretched.
+        // `CakeSurface` resolves `u` against the already-stretched heights, so
+        // the sticker lands right and keeps its shape. Versieren's lesson,
+        // inherited whole.
+        let layer = Entity()
+        layer.name = "Versiering"
+        anchor.addChild(layer)
+        stickerLayer = layer
+        rebuildDecorations()
+
+        let spot = Entity()
+        spot.name = "TaartTouchSpot"
+        spot.position = FeestLayout.cakeTouchSpot
+        root.addChild(spot)
+        cakeTouchSpot = spot
+    }
+
+    private func buildBaker() {
+        baker?.stop()
+        // **Her own spot, passed in.** `BakerCharacter` eases back to a hardcoded
+        // home after a cheer, and three rooms build her somewhere that is not the
+        // kitchen — this is the one that says where.
+        let nina = BakerCharacter(ticker: ticker, flat: flat, home: FeestLayout.bakerSpot)
+        root.addChild(nina.root)
+        baker = nina
+    }
+
+    // MARK: - The cake's surface
+
+    private var surface: CakeSurface {
+        CakeSurface(origin: SIMD3<Float>(FeestLayout.tableCentre.x,
+                                         FeestLayout.tableTopY,
+                                         FeestLayout.tableCentre.y),
+                    scale: FeestLayout.cakeScale,
+                    turn: 0,
+                    tall: state.cake.isTall)
+    }
+
+    private func rebuildDecorations() {
+        guard let layer = stickerLayer else { return }
+        layer.children.removeAll()
+        let s = surface
+
+        for sticker in state.cake.placed {
+            let node = VersierProps.sticker(sticker.kind, flat: flat)
+            let normal = s.localNormal(of: sticker.at)
+            node.position = s.localPosition(of: sticker.at) + normal * (sticker.kind.size * 0.12)
+            let up: SIMD3<Float> = sticker.kind == .kaarsje ? [0, 1, 0] : normal
+            node.orientation = simd_quatf(from: [0, 1, 0], to: up)
+                * simd_quatf(angle: sticker.spin, axis: [0, 1, 0])
+            // **A candle she lit is still lit here.** It is the smallest thing in
+            // the handover and the one most likely to be dropped, and a child who
+            // lit four candles and walked into the party to find them out would
+            // notice immediately.
+            if sticker.kind == .kaarsje, sticker.lit == true,
+               let flame = node.findEntity(named: VersierProps.flameName) as? ModelEntity {
+                flame.model?.materials = [Palette.glowMaterial(Palette.butterYellow,
+                                                               intensity: 2.2)]
+            }
+            layer.addChild(node)
+        }
+
+        for stroke in state.cake.piped {
+            guard stroke.path.count >= 2 else { continue }
+            let points = stroke.path.map {
+                s.localPosition(of: $0) + s.localNormal(of: $0) * 0.0012
+            }
+            let normals = stroke.path.map { s.localNormal(of: $0) }
+            let geometry = FacetedMesh.ribbon(points: points, normals: normals,
+                                              width: stroke.width, thickness: stroke.width * 0.6)
+            guard !geometry.positions.isEmpty else { continue }
+            let colour = state.cake.colours == [.wit] || state.cake.colours.isEmpty
+                ? Palette.cream : Palette.creamLight
+            let material = state.cake.glows
+                ? Palette.material(Palette.cream) : Palette.material(colour)
+            let node = ModelEntity(mesh: FacetedMesh.mesh(geometry, flat: flat),
+                                   materials: [material])
+            node.name = "Roomsliert"
+            layer.addChild(node)
+        }
+    }
+
+    // MARK: - Step presentation
+
+    /// One function rebuilds everything the step implies. There are two steps and
+    /// what this mostly does is decide whether the cake is still a thing she can
+    /// tap — see the class comment on why the cake carries the halo.
+    private func applyStep(animated: Bool) {
+        _ = animated
+        touch.target(named: "taart")?.enabled = state.step == .dansen
+        refreshCakeInvitation()
+    }
+
+    /// **The cake is lit from the first frame, and it is the way out.**
+    ///
+    /// `ROOMS.md` §9's exactly-two functions, in a room whose way out is not a
+    /// door: this is `refreshDoorInvitation`. It is nearly empty, which is the
+    /// right shape — a room with nothing to gate on should say so in the function
+    /// that would have gated it, not by deleting it.
+    private func refreshCakeInvitation() {
+        guard state.step == .dansen else {
+            Halo.remove(cakeHalo, ticker: ticker)
+            cakeHalo = nil
+            return
+        }
+        guard cakeHalo == nil, let anchor = cakeAnchor else { return }
+        cakeHalo = Halo.attach(to: anchor, radius: FeestLayout.cakeHaloRadius,
+                               ticker: ticker) { _ in FeestLayout.tableTopY }
+    }
+
+    // MARK: - Targets
+
+    /// **Registrations are in metres here rather than in points**, and every one
+    /// of them comes from `FeestLayout` where the arithmetic is done and asserted.
+    /// Nothing needs the kitchen's 1.08 rescale: the box and the eye did not move.
+    private func registerTargets() {
+        for index in 0..<FeestLayout.padCount {
+            touch.register("knop\(index)", entity: pads[index].root,
+                           radius: FeestLayout.padRadius,
+                           planeY: FeestLayout.padTopY) { target in
+                // **A pad answers on the way down, not on the way up.** Every
+                // other target in the game acts on `onTap`, which fires when she
+                // lifts her finger — and a drum that sounds when you *stop*
+                // hitting it is a drum whose rhythm is not yours. This is the one
+                // place in the game where that distinction is audible.
+                target.onDragBegan = { [weak self] _ in self?.hitPad(index) }
+                target.onTap = { [weak self] in self?.namePad() }
+            }
+        }
+
+        touch.register("taart", entity: cakeTouchSpot, radius: FeestLayout.cakeRadius,
+                       planeY: FeestLayout.tableTopY) { target in
+            target.onTap = { [weak self] in self?.tapCake() }
+        }
+
+        for (index, guest) in guests.enumerated() {
+            let marker = Entity()
+            marker.name = "GastMarker\(index)"
+            marker.position = FeestLayout.guestSpot(index)
+                + SIMD3<Float>(0, FeestLayout.guestTouchY, 0)
+            root.addChild(marker)
+            touch.register("gast\(index)", entity: marker,
+                           radius: FeestLayout.guestRadius,
+                           planeY: RoomBox.floorY) { target in
+                target.onTap = { [weak self] in self?.tapGuest(index) }
+            }
+        }
+
+        let djMarker = Entity()
+        djMarker.name = "DJMarker"
+        djMarker.position = SIMD3<Float>(FeestLayout.djSpot.x, FeestLayout.djTouchY,
+                                         FeestLayout.djSpot.z)
+        root.addChild(djMarker)
+        touch.register("dj", entity: djMarker, radius: FeestLayout.djRadius,
+                       planeY: RoomBox.floorY) { target in
+            target.onTap = { [weak self] in self?.tapDJ() }
+        }
+
+        registerToyTargets()
+
+        touch.onEmptyTap = { [weak self] world in self?.tapNothing(at: world) }
+        touch.onAnyTouch = { [weak self] in self?.resetIdle() }
+    }
+
+    private func registerToyTargets() {
+        touch.register("discobal", entity: mirrorBall?.root,
+                       radius: FeestLayout.ballTouchRadius,
+                       planeY: FeestLayout.ballCentre.y) { target in
+            target.onTap = { [weak self] in self?.tapMirrorBall() }
+        }
+        touch.register("lampen", entity: lampMarker, radius: FeestLayout.lampRadius,
+                       planeY: FeestLayout.backBarY) { target in
+            target.onTap = { [weak self] in self?.tapLamps() }
+        }
+        let speakerMarker = Entity()
+        speakerMarker.name = "BoxenMarker"
+        speakerMarker.position = SIMD3<Float>(FeestLayout.speakerSpot.x,
+                                              FeestLayout.speakerTouchY,
+                                              FeestLayout.speakerSpot.z)
+        root.addChild(speakerMarker)
+        touch.register("boxen", entity: speakerMarker, radius: FeestLayout.speakerRadius,
+                       planeY: RoomBox.floorY) { target in
+            target.onTap = { [weak self] in self?.tapSpeakers() }
+        }
+        touch.register("knaller", entity: popper, radius: FeestLayout.popperRadius,
+                       planeY: RoomBox.floorY) { target in
+            target.onTap = { [weak self] in self?.tapPopper() }
+        }
+        touch.register("ballon", entity: balloon, radius: FeestLayout.balloonRadius,
+                       planeY: FeestLayout.balloonHome.y) { target in
+            // It floats, so the plane has to come from where it actually is.
+            target.tracksEntity = true
+            target.onTap = { [weak self] in self?.tapBalloon() }
+        }
+    }
+
+    // MARK: - The beat
+
+    /// **One job drives the whole room**, and it steps `FeestBeat` first.
+    ///
+    /// Deliberately not one job per prop: `Ticker` makes no promise about the
+    /// order jobs run in, and six guests reading a beat that some of them saw
+    /// before it advanced and some after would be six guests very slightly out of
+    /// time — which is the one flaw this room cannot have.
+    private func startBeat() {
+        ticker.cancel(beatJob)
+        beatJob = ticker.add { [weak self] dt in
+            guard let self else { return false }
+            self.beat.tick(dt)
+            self.stepRoom(dt)
+            return true
+        }
+    }
+
+    private func stepRoom(_ dt: Float) {
+        for guest in guests { guest.tick(dt, beat: beat) }
+        djCharacter?.tick(dt, beat: beat)
+
+        // The ball turns once every eight beats, and its pools of light turn with
+        // it — the pools are what a mirror ball is actually *for*, and they are
+        // why the ball itself can be a plain faceted sphere in a style with no
+        // reflections in it.
+        let turn = dt / max(0.05, beat.period) * (2 * .pi / 8)
+        if let ball = mirrorBall?.ball {
+            ball.orientation = simd_quatf(angle: ball.orientation.angleAboutY + turn,
+                                          axis: [0, 1, 0])
+        }
+        if let spots = ballSpots {
+            spots.orientation = simd_quatf(angle: spots.orientation.angleAboutY + turn,
+                                           axis: [0, 1, 0])
+        }
+
+        // The decks turn once a beat, which is fast enough to see the rim mark
+        // travel and slow enough not to strobe.
+        if let decks = booth?.decks {
+            let deckTurn = dt / max(0.05, beat.period) * (2 * .pi)
+            for deck in decks {
+                deck.orientation = simd_quatf(angle: deck.orientation.angleAboutY + deckTurn,
+                                              axis: [0, 1, 0])
+            }
+        }
+
+        // The cones push out on the beat. A transform, not a material — this runs
+        // every frame and the floor's repaint does not.
+        if let cones = speakers?.cones {
+            let push = 1 + beat.swing * 0.22
+            for cone in cones { cone.scale = [1, 1, push] }
+        }
+
+        if flashLeft > 0 {
+            flashLeft -= dt
+            if flashLeft <= 0 { flashColour = nil; repaintFloor(force: true) }
+        }
+        if beat.justLanded { repaintFloor(force: false) }
+
+        floatBalloon(dt)
+    }
+
+    /// **Sixteen materials, twice a second — not sixteen materials sixty times a
+    /// second.** A travelling diagonal of lit tiles, stepped on the beat and
+    /// repainted only then. Building a `PhysicallyBasedMaterial` per tile per
+    /// frame is the one thing in this room that could cost a frame.
+    private func repaintFloor(force: Bool) {
+        guard let tiles = danceFloor?.tiles else { return }
+        guard force || beat.count != lastLitStep else { return }
+        lastLitStep = beat.count
+
+        let side = FeestLayout.tilesPerSide
+        for (index, tile) in tiles.enumerated() {
+            let row = index / side, column = index % side
+            let colour = flashColour ?? FeestLayout.discoColour(index)
+            // A diagonal band that walks across the floor. Three of sixteen lit
+            // at a time, which is what `references/feest/dansvloer.png` shows.
+            let onDiagonal = (row + column + beat.count) % 3 == 0
+            let on = flashColour != nil || onDiagonal
+            tile.model?.materials = [on ? FeestProps.lit(colour, 0.9)
+                                        : Palette.material(colour)]
+        }
+
+        // The lamps step their colour with the floor, so the whole room changes
+        // at once rather than in two conversations.
+        for (index, lamp) in lamps.enumerated() {
+            let colour = flashColour ?? FeestLayout.discoColour(index + beat.count)
+            lamp.lens.model?.materials = [FeestProps.lit(colour)]
+            lamp.beam.model?.materials = [
+                Palette.lightMaterial(colour, emission: colour,
+                                      intensity: FeestProps.glowPeak * 0.5, opacity: 0.16)
+            ]
+        }
+    }
+
+    // MARK: - The pads
+
+    /// **The one required-feeling thing in a room with no requirement.**
+    ///
+    /// She hits a pad; the room answers on the beat she just made. Nothing is
+    /// gated on it, nothing counts it, and there is no wrong pad — §6.5's *"six
+    /// big pads, one per instrument"* and nothing more.
+    private func hitPad(_ index: Int) {
+        beat.tap()
+        resetIdle()
+
+        let colour = FeestLayout.discoColour(index)
+        flashColour = colour
+        flashLeft = min(0.28, beat.period * 0.55)
+        repaintFloor(force: true)
+
+        let pad = pads[index]
+        ticker.squash(pad.cap, amount: 0.34, duration: 0.26)
+        Sparkles.burst(at: pad.root.position + [0, FeestLayout.padHeight + 0.004, 0],
+                       in: root, ticker: ticker, colour: colour,
+                       count: 5, size: 0.0022, speed: 0.07, life: 0.5, glow: 1)
+        sound.play(Self.padSounds[index], volume: 0.55,
+                   rate: Float.random(in: 0.97...1.04))
+
+        if !saidFirstBeat {
+            saidFirstBeat = true
+            voice.sayWhenQuiet(FeestLine.eersteBeat)
+            return
+        }
+        // She has sped up a long way — worth one line, once. It is the only thing
+        // in the room that notices what she is doing with the beat, and noticing
+        // twice would be commenting on her playing.
+        if !saidFaster, beat.period < 0.34 {
+            saidFaster = true
+            voice.say(FeestLine.sneller, priority: .low)
+            return
+        }
+        if Int.random(in: 0..<7) == 0 {
+            voice.say(FeestLine.dansen, priority: .low)
+        }
+    }
+
+    /// **Six sounds, and the sixth is borrowed.** `ROOMS.md` §10: reuse the
+    /// existing cases wherever a room can. A bell pad is `ding`, which is the
+    /// scale in the kitchen and the flowers in the garden, and it is already the
+    /// right sound.
+    private static let padSounds: [Sound] = [.trom, .ding, .toeter, .klap, .fluit, .kras]
+
+    /// The naming layer. A pad is a *knop* whichever one it is — six words for
+    /// six identical objects would be six words she has no way to tell apart.
+    private func namePad() {
+        voice.say(FeestLine.ditKnop, priority: .low)
+    }
+
+    // MARK: - The ending
+
+    /// **She tapped the cake, and that is the only thing that ends the party.**
+    ///
+    /// §6.5: *"Putting the ending on a tap matters for two reasons. It is the
+    /// only real authority she has in the game, and it gives a parent a visible,
+    /// honest 'when you tap the cake, we're done'."*
+    private func tapCake() {
+        guard state.step == .dansen else { return }
+        state.step = .opeten
+
+        // **The wish, evaluated once.** `GAMEPLAY.md` §4 puts this here and only
+        // here, and it decides which happy thing happens — never whether one does.
+        let matched = state.friend.matches(state.cake)
+        state.wishMatched = matched
+        save()
+
+        Halo.remove(cakeHalo, ticker: ticker)
+        cakeHalo = nil
+        touch.target(named: "taart")?.enabled = false
+
+        for guest in guests { guest.eat(for: 1.6) }
+        djCharacter?.eat(for: 1.6)
+        baker?.set(.cheering)
+        sound.play(.knabbel, volume: 0.85)
+
+        // The cake goes, in bites rather than at once — it is the one prop in the
+        // game that is consumed, and a cake that vanished on the tap would read
+        // as the game taking it away rather than as everybody eating it.
+        eatTheCake()
+
+        jobs.append(ticker.after(1.7) { [weak self] in
+            guard let self else { return }
+            self.sound.play(.applaus, volume: 0.7)
+            for guest in self.guests { guest.settle(); guest.jump() }
+            self.djCharacter?.settle()
+            FeestProps.confetti(at: SIMD3<Float>(FeestLayout.floorCentre.x, 0.150,
+                                                 FeestLayout.floorCentre.y),
+                                in: self.root, ticker: self.ticker, count: 30, flat: self.flat)
+            // The friend whose wish came true goes over the top for good — §4's
+            // "a special move only they do".
+            if matched, let star = self.guests.first { star.celebrate() }
+        })
+
+        // **What she hears, in the order §6.5 asks for**: everybody eats, the
+        // friend of the day thanks her by name, and — if the wish matched — that
+        // it was exactly what they wanted. Nina relays the thanks until the eleven
+        // friends have voices of their own; `Friend.thanksLineID` is what gets
+        // re-pointed the day they do.
+        var lines = [FeestLine.opeten, state.friend.thanksLineID]
+        if matched { lines.append(FeestLine.wensGelukt) }
+        lines.append(FeestLine.muurKomt)
+        voice.sayInstead(lines)
+
+        // **The room says what just happened and hands back control.** There is
+        // no bakery to go to, so `GameScene` does nothing with this today — which
+        // is exactly why the room also lays out a fresh party behind it. A room
+        // that ends with nowhere to go must not end with nothing to do.
+        jobs.append(ticker.after(1.2) { [weak self] in self?.onExit?(.bakkerij) })
+        jobs.append(voice.whenQuiet(after: 0.5, timeout: 30) { [weak self] in
+            self?.startFreshParty()
+        })
+    }
+
+    /// The cake shrinking away under six sets of teeth. Three bites, each with a
+    /// crumb burst, and then it is gone.
+    private func eatTheCake() {
+        guard let cake = cakeNode, let layer = stickerLayer else { return }
+        let start = cake.scale
+        let job = ticker.tween(1.6, ease: Ease.linear, step: { [weak cake, weak layer] t in
+            // Steps rather than a smooth shrink: eating is bites.
+            let bites = Float(Int(t * 3)) / 3
+            let left = max(0.02, 1 - bites - (t * 3 - Float(Int(t * 3))) * 0.08)
+            cake?.scale = start * left
+            layer?.scale = SIMD3<Float>(repeating: left)
+        }, done: { [weak cake, weak layer] in
+            cake?.isEnabled = false
+            layer?.isEnabled = false
+        })
+        jobs.append(job)
+
+        for i in 0..<3 {
+            jobs.append(ticker.after(Float(i) * 0.5 + 0.1) { [weak self] in
+                guard let self else { return }
+                Sparkles.puff(at: FeestLayout.cakeTouchSpot, in: self.root,
+                              ticker: self.ticker,
+                              colour: self.state.cake.colours.first?.base ?? Palette.cream,
+                              count: 7)
+                if i > 0 { self.sound.play(.knabbel, volume: 0.6, rate: 1.0 + Float(i) * 0.1) }
+            })
+        }
+    }
+
+    /// **A new friend, a new cake, and the room put back.**
+    ///
+    /// The kitchen's shape: a fresh round starts behind the third cake, so a
+    /// finished room is still a room. In a round the cake she brought has been
+    /// eaten, so there is nothing to put back but a dealt one — which is the same
+    /// answer the decorating room gives to a visit with no cake.
+    private func startFreshParty() {
+        // A dealt cake in both modes, because the one she brought has been eaten
+        // and there is no kitchen behind this room to bake another.
+        state = .fresh(cake: CakeSpec.dealt(), friend: Friend.dealt())
+        beat.forget()
+        saidFirstBeat = false
+        saidFaster = false
+        save()
+        build(flat: flat)
+        voice.sayWhenQuiet(FeestLine.nogeen)
+    }
+
+    // MARK: - Toys
+
+    private func tapGuest(_ index: Int) {
+        guard index < guests.count else { return }
+        let guest = guests[index]
+        guest.jump()
+        sound.play(.plop, volume: 0.45, rate: Float.random(in: 1.1...1.5))
+        Sparkles.burst(at: guest.root.position + [0, 0.100, 0], in: root, ticker: ticker,
+                       colour: guest.friend.colour, count: 5, size: 0.0022,
+                       speed: 0.06, life: 0.5)
+        // **Mostly the guest, now and then who the guest is.** The flour sack's
+        // ratio (`ROOMS.md` §5): the word she gets is usually the general one,
+        // and occasionally the specific one, so the specific one stays a small
+        // event rather than becoming the thing every tap says.
+        voice.say(Int.random(in: 0..<4) == 0 ? guest.friend.thanksLineID
+                                             : FeestLine.ditVriendje,
+                  priority: .low)
+    }
+
+    private func tapDJ() {
+        djCharacter?.jump()
+        sound.play(.kras, volume: 0.6)
+        if let decks = booth?.decks {
+            for deck in decks { ticker.squash(deck, amount: 0.20, duration: 0.3) }
+        }
+        if let panel = booth?.panel { ticker.squash(panel, amount: 0.10, duration: 0.3) }
+        // The booth has no target of its own — it is entirely covered by the DJ
+        // standing behind it (`FeestLayout`, and `ROOMS.md` §5) — so its word is
+        // folded in here at the flour sack's ratio.
+        voice.say(Int.random(in: 0..<4) == 0 ? FeestLine.ditDraaideck : FeestLine.ditDJ,
+                  priority: .low)
+    }
+
+    private func tapMirrorBall() {
+        sound.play(.sparkle, volume: 0.6)
+        if let ball = mirrorBall?.ball { ticker.squash(ball, amount: 0.16, duration: 0.5) }
+        // A hard spin on top of the beat's own, which decays back into it.
+        var spun: Float = 0
+        let job = ticker.tween(1.4, ease: Ease.out, step: { [weak self] t in
+            guard let ball = self?.mirrorBall?.ball else { return }
+            let target = t * 5.4
+            ball.orientation = simd_quatf(angle: ball.orientation.angleAboutY + (target - spun),
+                                          axis: [0, 1, 0])
+            spun = target
+        })
+        jobs.append(job)
+        for i in 0..<3 {
+            jobs.append(ticker.after(Float(i) * 0.16) { [weak self] in
+                guard let self else { return }
+                let angle = Float.random(in: 0..<(2 * .pi))
+                Sparkles.burst(at: FeestLayout.ballCentre
+                                + [cos(angle) * 0.03, -0.02, sin(angle) * 0.03],
+                               in: self.root, ticker: self.ticker,
+                               colour: FeestLayout.discoColour(i), count: 6,
+                               size: 0.0026, speed: 0.10, gravity: 0.05, life: 1.0, glow: 1)
+            })
+        }
+        voice.say(FeestLine.ditDiscobal, priority: .low)
+    }
+
+    private func tapLamps() {
+        sound.play(.ding, volume: 0.45, rate: 1.5)
+        for lamp in lamps { ticker.squash(lamp.lens, amount: 0.30, duration: 0.35) }
+        // A colour change now rather than on the next beat, which is the whole
+        // response: five lamps all changing at once is a visible thing.
+        lastLitStep = -1
+        repaintFloor(force: true)
+        voice.say(FeestLine.ditLampen, priority: .low)
+    }
+
+    private func tapSpeakers() {
+        sound.play(.trom, volume: 0.7, rate: 0.85)
+        if let stack = speakers {
+            ticker.squash(stack.root, amount: 0.10, duration: 0.4)
+            for cone in stack.cones { ticker.squash(cone, amount: 0.30, duration: 0.35) }
+        }
+        voice.say(FeestLine.ditBoxen, priority: .low)
+    }
+
+    private func tapPopper() {
+        guard let knaller = popper else { return }
+        sound.play(.poof, volume: 0.75, rate: 0.8)
+        ticker.squash(knaller, amount: 0.26, duration: 0.4)
+        FeestProps.confetti(at: knaller.position + [0, 0.040, 0], in: root,
+                            ticker: ticker, count: 24, flat: flat)
+        voice.say(FeestLine.ditKnaller, priority: .low)
+    }
+
+    /// **It bobs away and comes back**, which is `GAMEPLAY.md` §6.5's own
+    /// description of it, and the drift is bounded so it stays in the back-left
+    /// air where nothing else is. `FeestLayout.assertSpacing` deliberately does
+    /// not check it — a moving target's separation is a fact about a moment — so
+    /// the bound is what keeps that honest.
+    private func tapBalloon() {
+        guard let ballon = balloon else { return }
+        sound.play(.plop, volume: 0.4, rate: 1.6)
+        ticker.squash(ballon, amount: 0.22, duration: 0.45)
+        balloonDrift = SIMD3<Float>(Float.random(in: -0.030...0.030),
+                                    Float.random(in: 0.010...0.028),
+                                    Float.random(in: -0.024...0.024))
+        voice.say(FeestLine.ditBallon, priority: .low)
+    }
+
+    private func floatBalloon(_ dt: Float) {
+        guard let ballon = balloon else { return }
+        // Drift decays, and the balloon eases home. Two lines, and it is the
+        // whole toy.
+        balloonDrift *= 1 - min(1, dt * 0.8)
+        let target = FeestLayout.balloonHome + balloonDrift
+        ballon.position += (target - ballon.position) * min(1, dt * 1.6)
+        // And a slow sway on top, so it is never quite still.
+        ballon.orientation = simd_quatf(angle: sin(beat.phase * 2 * .pi) * 0.10,
+                                        axis: [0, 0, 1])
+    }
+
+    /// A tap on nothing sparkles under her finger. Not optional — a screen that
+    /// eats a tap silently is where she decides the iPad is broken.
+    ///
+    /// **And it is where the dance floor gets its word.** Sixteen tiles cannot
+    /// each be a target — they are 32 mm apart and they would swallow every tap
+    /// meant for a guest standing on them — but a floor with no name is a floor
+    /// she cannot learn. `ROOMS.md` §5's answer for a prop covered by what stands
+    /// on it is to fold its word into the tap that actually lands, and the tap
+    /// that lands on a dance floor with nothing on it is this one.
+    private func tapNothing(at world: SIMD3<Float>) {
+        Sparkles.burst(at: world + [0, 0.004, 0], in: root, ticker: ticker,
+                       colour: FeestLayout.discoColour(beat.count), count: 6,
+                       size: 0.0022, speed: 0.06, life: 0.5, glow: 1)
+        sound.play(.sparkle, volume: 0.22, rate: 1.4)
+
+        let half = FeestLayout.danceFloorSize / 2
+        let onTheFloor = abs(world.x - FeestLayout.floorCentre.x) <= half
+            && abs(world.z - FeestLayout.floorCentre.y) <= half
+        if onTheFloor, Int.random(in: 0..<3) == 0 {
+            voice.say(FeestLine.ditDansvloer, priority: .low)
+        }
+    }
+
+    // MARK: - Room
+
+    func greet() {
+        voice.say(FeestLine.hallo)
+        jobs.append(ticker.after(2.6) { [weak self] in
+            guard let self, !self.beat.hasPlayed else { return }
+            self.voice.sayWhenQuiet(FeestLine.opdracht)
+        })
+    }
+
+    func save() {
+        FeestStore.save(state)
+    }
+
+    /// **Start the party again**, and it has exactly one meaning: the same cake
+    /// and the same friends, back on their feet, with the beat forgotten.
+    ///
+    /// `ROOMS.md` §8 is strict about the one meaning and the kitchen paid for the
+    /// lesson once. Note what it does *not* do: it does not deal a new friend or a
+    /// new cake. She pressed a button that means *again*, and coming back to a
+    /// party full of strangers would make one button mean two things depending on
+    /// whether the cake had been eaten.
+    func restartRound() {
+        state.step = .dansen
+        state.wishMatched = nil
+        beat.forget()
+        saidFirstBeat = false
+        saidFaster = false
+        sound.play(.poof, volume: 0.4)
+        voice.say(FeestLine.opnieuw)
+        save()
+        build(flat: flat)
+    }
+
+    func refreshContactShadows(settings: LightingSettings) {
+        self.settings = settings
+        var props: [Entity?] = [table, popper, speakers?.root, booth?.root]
+        props.append(contentsOf: pads.map { $0.root })
+        props.append(contentsOf: guests.map { $0.root })
+        props.append(djCharacter?.root)
+        for prop in props.compactMap({ $0 }) {
+            guard prop.isEnabled else { continue }
+            ContactShadows.attach(to: prop, radius: 0.020, settings: settings)
+            ContactShadows.update(for: prop, surfaceY: surfaceY(at: prop.position),
+                                  settings: settings)
+        }
+        // **The balloon and the mirror ball deliberately get none.** Both hang in
+        // the air, and `ContactShadows` assumes a horizontal plane underneath —
+        // which for the balloon is the dance floor two hand-widths below it, and
+        // a disc down there is not a shadow, it is a second pool of light in the
+        // wrong colour.
+    }
+
+    /// **This room's surfaces, added the moment the surfaces existed.**
+    /// `ROOMS.md` §3: every surface a prop can stand on must be in the lookup, or
+    /// the cue lands somewhere else. There are three, and one of them is round.
+    private func surfaceY(at point: SIMD3<Float>) -> Float {
+        let toTable = SIMD2<Float>(point.x - FeestLayout.tableCentre.x,
+                                   point.z - FeestLayout.tableCentre.y)
+        if simd_length(toTable) <= FeestLayout.tableRadius + 0.006 {
+            return FeestLayout.tableTopY
+        }
+        if RoomBox.within(point, centre: FeestLayout.boothCentre,
+                          size: FeestLayout.boothSize, margin: 0.006) {
+            return FeestLayout.boothTopY
+        }
+        // The dance floor is 2.8 mm of tile on the floor, which is under the
+        // resolution of a contact shadow — everything standing on it can take the
+        // floor and be right to within a hair.
+        return RoomBox.floorY
+    }
+
+    func leave() {
+        cancelEverything()
+        save()
+    }
+
+    var debugTitle: String { RoomID.feest.title }
+
+    var debugRows: [String] {
+        [
+            "Mode: \(mode == .ronde ? "ronde" : "bezoek")  ·  Stap: \(state.step.rawValue)",
+            "Vriend: \(state.friend.dutchName)  ·  wens: \(Self.describe(state.friend.wish))",
+            "Match: \(state.wishMatched.map { $0 ? "ja" : "nee" } ?? "nog niet")",
+            "Gasten: \(state.everyone.map(\.rawValue).joined(separator: ", "))",
+            "Beat: \(beat.bpm) bpm  ·  \(beat.count) tellen"
+                + (beat.hasPlayed ? "" : "  (nog niet gespeeld)"),
+            "Taart: \(state.cake.kind.rawValue) · \(state.cake.placed.count) stickers",
+        ]
+    }
+
+    private static func describe(_ wish: Wish) -> String {
+        switch wish {
+        case .kleur(let colour): return "kleur \(colour.rawValue)"
+        case .effect(let effect): return "effect \(effect.rawValue)"
+        case .sprinkels(let count): return "\(count) sprinkels"
+        case .stickers(let kind, let count): return "\(count)× \(kind.rawValue)"
+        case .tweeKleuren: return "twee kleuren"
+        }
+    }
+
+    var debugActions: [(String, @MainActor () -> Void)] {
+        [("Nieuw feest", { [weak self] in self?.startFreshParty() }),
+         ("Eet de taart", { [weak self] in self?.tapCake() }),
+         ("Wens laten kloppen", { [weak self] in self?.forceWishForTesting() })]
+    }
+
+    /// Debug only: make today's cake match today's wish, so the special move and
+    /// the extra line can be looked at without baking for one.
+    private func forceWishForTesting() {
+        switch state.friend.wish {
+        case .kleur(let colour):
+            let ingredient = Ingredient.allCases.first { $0.colour == colour }
+            if let ingredient { state.cake.ingredients.append(ingredient) }
+        case .effect(let effect):
+            let ingredient = Ingredient.allCases.first { $0.effect == effect }
+            if let ingredient { state.cake.ingredients.append(ingredient) }
+        case .sprinkels(let count):
+            addStickersForTesting(.sprinkel, count)
+        case .stickers(let kind, let count):
+            addStickersForTesting(kind, count)
+        case .tweeKleuren:
+            state.cake.ingredients.append(contentsOf: [.aardbei, .bosbes])
+        }
+        save()
+        build(flat: flat)
+    }
+
+    private func addStickersForTesting(_ kind: StickerKind, _ count: Int) {
+        var placed = state.cake.placed
+        for i in 0..<count {
+            placed.append(Sticker(kind: kind,
+                                  at: StickerAnchor(tier: i % CakeGeometry.tierCount,
+                                                    face: .zijkant,
+                                                    theta: Float(i) * 0.9,
+                                                    u: 0.5),
+                                  spin: Float(i) * 0.4))
+        }
+        state.cake.stickers = placed
+        state.cake.version = 2
+    }
+
+    // MARK: - Idle
+
+    /// The kitchen's timings, tuned nothing — 25 s, 45 s, 105 s. What is this
+    /// room's own is the line, and that it is **never an instruction**: there is
+    /// nothing she is failing to do, so the nudge is an offer to finish rather
+    /// than a reminder to play.
+    private func startIdleWatch() {
+        ticker.cancel(idleJob)
+        idleTime = 0
+        nudgeStage = 0
+        idleJob = ticker.add { [weak self] dt in
+            guard let self else { return false }
+            self.idleTime += dt
+            if self.nudgeStage == 0, self.idleTime > 45, self.state.step == .dansen {
+                self.nudgeStage = 1
+                self.voice.say(self.alternateNudge ? FeestLine.stil : FeestLine.zullenWeEten,
+                               priority: .low)
+                self.alternateNudge.toggle()
+            }
+            if self.idleTime > 105 { self.idleTime = 0; self.nudgeStage = 0 }
+            return true
+        }
+    }
+
+    private func resetIdle() {
+        idleTime = 0
+        nudgeStage = 0
+    }
+
+    // MARK: - Housekeeping
+
+    /// **Every job id and every halo.** `ROOMS.md` §11: a `Ticker` job a torn-down
+    /// room still holds keeps animating a detached entity forever, and nothing on
+    /// screen says so. The guests own jobs of their own, which is why each of them
+    /// is stopped rather than merely dropped.
+    private func cancelEverything() {
+        for job in jobs { ticker.cancel(job) }
+        jobs.removeAll()
+        ticker.cancel(beatJob)
+        beatJob = nil
+        ticker.cancel(idleJob)
+        idleJob = nil
+        Halo.remove(cakeHalo, ticker: ticker)
+        cakeHalo = nil
+        for guest in guests { guest.stop() }
+        djCharacter?.stop()
+        djCharacter = nil
+        baker?.stop()
+        baker = nil
+        flashColour = nil
+        flashLeft = 0
+        touch.onEmptyTap = nil
+        touch.onAnyTouch = nil
+        touch.onMoved = nil
+    }
+}
+
+// MARK: - Line ids
+
+/// **The party's voice, spelled once.** `script-feest.json`.
+///
+/// `VoiceBank` loads every bundled `script-*.json` automatically, so the room's
+/// script needed no Swift change beyond these constants. `ROOMS.md` §4's
+/// contract: every id here exists in the script, and every id in the script is
+/// referenced from here.
+///
+/// **Three of the game's existing lines are reused rather than duplicated**,
+/// because none of them says anything about a kitchen: `nina.stil` for the
+/// alternating idle nudge, and — through `Friend.thanksLineID` — the eleven
+/// `nina.feest.dank.*` lines, which do double duty as the naming line for a
+/// guest she taps.
+enum FeestLine {
+    static let hallo = "nina.feest.hallo"
+    /// What we are doing today, said once at the top — and only if she has not
+    /// already worked it out and started playing.
+    static let opdracht = "nina.feest.opdracht"
+    static let eersteBeat = "nina.feest.eersteBeat"
+    static let sneller = "nina.feest.sneller"
+    static let dansen = "nina.feest.dansen"
+    static let opeten = "nina.feest.opeten"
+    /// The wish matched. Said after the friend's thanks, never instead of them.
+    static let wensGelukt = "nina.feest.wensGelukt"
+    /// The wall is coming. **Soon, not now** — `ROOMS.md` §9, and it is the one
+    /// line in this room that has to be careful, because §6.6 does not exist.
+    static let muurKomt = "nina.feest.muurKomt"
+    static let nogeen = "nina.feest.nogeen"
+    static let opnieuw = "nina.feest.opnieuw"
+    static let zullenWeEten = "nina.feest.zullenWeEten"
+    /// The kitchen's, reused: *"ik ben er nog, hoor"*.
+    static let stil = "nina.stil"
+
+    // The naming layer — one variant each, deliberately.
+    static let ditDiscobal = "nina.dit.discobal"
+    static let ditDJ = "nina.dit.dj"
+    static let ditDraaideck = "nina.dit.draaideck"
+    static let ditKnop = "nina.dit.knop"
+    static let ditLampen = "nina.dit.lampen"
+    static let ditBoxen = "nina.dit.boxen"
+    static let ditKnaller = "nina.dit.knaller"
+    static let ditBallon = "nina.dit.ballon"
+    static let ditVriendje = "nina.dit.vriendje"
+    /// Said on a tap that lands on the empty dance floor — see
+    /// `FeestRoom.tapNothing`. **There is deliberately no line for the party
+    /// table**: nothing can tap it, because the cake standing on it is the way
+    /// out of the room and its target covers the whole thing. A naming line no
+    /// tap can reach is a line that was generated for nothing.
+    static let ditDansvloer = "nina.dit.dansvloer"
+}
+
+// MARK: -
+
+private extension simd_quatf {
+    /// The rotation about +Y, for a quaternion that only ever turns about it.
+    /// The decorating room has the same extension for the same reason; it is
+    /// `private` in both, which is the cheaper of the two ways to avoid a
+    /// collision until a third room wants it.
+    var angleAboutY: Float {
+        let v = act(SIMD3<Float>(1, 0, 0))
+        return atan2(v.z, v.x)
+    }
+}

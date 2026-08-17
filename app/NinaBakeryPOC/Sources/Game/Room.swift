@@ -60,7 +60,9 @@ protocol Room: AnyObject {
 
 /// Which rooms exist. Also the debug switcher's picker.
 enum RoomID: String, CaseIterable, Identifiable {
-    case tuin, keuken, versieren
+    /// **In the order a round runs**, which is what the picker shows and the one
+    /// thing about this enum that is a decision rather than a list.
+    case tuin, keuken, versieren, feest
 
     var id: String { rawValue }
 
@@ -71,6 +73,7 @@ enum RoomID: String, CaseIterable, Identifiable {
         case .tuin: return "TUIN"
         case .keuken: return "KEUKEN"
         case .versieren: return "VERSIEREN"
+        case .feest: return "FEEST"
         }
     }
 }
@@ -104,6 +107,14 @@ enum RoomExit {
     case keuken([Ingredient])
     /// The kitchen's cake is baked and on the plank; it wants decorating.
     case versieren(CakeSpec)
+    /// **The cake is decorated and there is a party waiting for it.**
+    ///
+    /// The same shape as `.versieren` and carrying the same struct, which is the
+    /// tell that `CakeSpec` was the right contract: the decorating room adds
+    /// stickers and strokes to it and hands on the identical type, and the party
+    /// re-renders every one of them from the polar anchors `Sticker` stores.
+    /// Nothing was added to the spec to get a cake across this doorway.
+    case feest(CakeSpec)
     /// A visit is over, or a round has run out of rooms that exist yet.
     case bakkerij
 }
