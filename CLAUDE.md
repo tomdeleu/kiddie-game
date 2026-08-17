@@ -53,10 +53,16 @@ Debug, twice: once when the kitchen and the decorating room landed, and again
 after De Tuin, the fence, the gate, the potting bench and the reconciliation that
 merged the two branches. Both builds' findings are in `app/README.md`, and both
 are worth the two minutes: **between them they caught eight errors and none of
-them was among the five the project had been predicting.** The container this is
-written in still has no Swift toolchain, so anything added after that second
-build is correct-by-construction again — and the thing to know about
-correct-by-construction is that it has now been wrong eight times.
+them was among the five the project had been predicting.**
+
+**The owner builds in Xcode, regularly.** What the container cannot do is build
+*before handing work over* — it has no Swift toolchain and never will, being
+Linux. So the gap is not "this code is unbuilt", which it is not for long; the
+gap is that **an agent's last look at its own work is never a compiler's**.
+Write as if correct-by-construction, hand over knowing it has been wrong eight
+times, and say plainly which edits are the risky kind — a file move and a new
+call into main-actor code are the two the record actually indicts. `app/README.md`
+keeps that list.
 
 Deliberate deviations from the design are recorded there. The kitchen's: the
 palette gained a blue, an amber and a lilac the locked thirteen do not contain;
@@ -93,7 +99,7 @@ palette and pass criteria are still the standard every new room is held to.
 
 | Path | What |
 |---|---|
-| [`app/`](app/) | **The app.** De Keuken, Versieren and De Tuin: the rounds, the toys, Nina, Otto, the cake and everything she puts on it, the room switcher, the lighting panel. The first two compile; the garden and the merge that joined them came after that build — see its README. |
+| [`app/`](app/) | **The app.** De Keuken, Versieren and De Tuin: the rounds, the toys, Nina, Otto, the cake and everything she puts on it, the room switcher, the lighting panel. All three compiled at the 2026-08-16 build, the garden and the merge included — see its README for what the two builds caught. |
 | [`models/`](models/) | **Props modelled in Blender**, as Python that rebuilds them. Ten so far — the flour sack, the toverbosbes, the crate, the toverklaver, the toverveertje, the maanstof pouch, the sink, the spoon, the cake and the scale, the only props not built in code. Its README has the rules, the export settings, and the test a prop has to pass to belong there. |
 | [`GAMEPLAY.md`](GAMEPLAY.md) | **Storyline and gameplay in detail.** The wall, the eleven friends and their wishes, the cake rules, what each room requires versus what is optional, the timing budget. Reconciled with the built kitchen on 2026-08-16. |
 | [`ROOMS.md`](ROOMS.md) | **How to build a room.** The contract De Keuken established: the box, the camera, the step machine, the halo, the voice rules, touch, carrying, idle, misses, the door — and the traps that have already been paid for once. Read before writing a room. |

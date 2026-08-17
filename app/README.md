@@ -1884,32 +1884,32 @@ long-standing limitation, not a setup problem.
 > The five are kept because they are still the right list for *the SDK moving
 > under the project*, which is the other way this breaks.
 >
-> **Unbuilt since build two: `Surfaces.Occluder`, the kitchen's occluder list
-> and the carry-over rule.** By that lesson's own reckoning this is a change to
-> watch, because it is both of the two risky edits at once — it adds
-> `@MainActor` methods (`Occluder.hides` and `Occluder.isPointedAt`, which read
-> `CameraRig.eye`) and a stored property with a default (`Surfaces.occluders`)
-> that the synthesised memberwise initialiser has to carry, in a struct two
-> rooms construct positionally. If either bites, the fixes are small and known:
-> spell the initialiser out by hand, or mark the nested type's method the way
-> `assertSpacing` had to be. **The geometry itself is not
-> correct-by-construction** — every sweep below was run in Python against the
-> committed camera before being written down, which is how Nina came off the
-> list, how "no work surface is shadowed" became a measurement rather than a
-> claim, and how the chimney got onto the list at all.
+> **What to look at first in the drop-boundaries work**, which was written in
+> the container and so reached Xcode without a compiler having seen it. By that
+> lesson's own reckoning it is both risky edits at once:
 >
-> **Also unbuilt: the wall clearance and Otto's deeper mouth.** The one new
-> runtime API in all of this is `Entity.visualBounds(relativeTo:)` in
-> `CarryController.pickUp` — if it has moved, the fallback is a radius of zero,
-> which is exactly the behaviour before it existed. The `carriedClamp` and
-> `innerWalls` additions are the same memberwise-initialiser risk as
-> `occluders`; `innerWalls` is spelled `= nil` explicitly for that reason.
+> - **New `@MainActor` methods** — `Occluder.hides` and `Occluder.isPointedAt`,
+>   which read `CameraRig.eye`. Exactly the shape that caught
+>   `assertSpacing`. If isolation propagates somewhere unwanted, mark the caller
+>   the way that one had to be.
+> - **New stored properties with defaults** — `Surfaces.occluders` and
+>   `innerWalls`, which the synthesised memberwise initialiser has to carry in a
+>   struct two rooms construct positionally. `innerWalls` is spelled `= nil`
+>   explicitly for that reason. If it bites, write the initialiser out by hand
+>   and every call site stays as it is.
+> - **One new runtime API** — `Entity.visualBounds(relativeTo:)` in
+>   `CarryController.pickUp`. If it has moved, the fallback is a radius of zero,
+>   which is exactly the behaviour before it existed.
 >
-> What has been swept, all against the committed camera: no work surface or home
-> spot is shadowed (2 mm grid); a carried prop is never inside a solid over
-> 26,240 drag directions × four prop sizes; every prop's body stops exactly on
-> the plaster; no home position moves when picked up; and the tin held at Otto's
-> lip stays clear of the dome at every push.
+> **The geometry is not correct-by-construction**, which is the part a build
+> would not have caught either way: every sweep was run in Python against the
+> committed camera before being written down. That is how Nina came off the
+> occluder list, how "no work surface is shadowed" became a measurement rather
+> than a claim, and how the chimney got onto the list at all. What was swept: no
+> work surface or home spot shadowed (2 mm grid); a carried prop never inside a
+> solid over 26,240 drag directions × four prop sizes; every prop's body stops
+> exactly on the plaster; no home position moves when picked up; the tin held at
+> Otto's lip stays clear of the dome at every push.
 
 Five places are the most likely to want a fix, and all five are one line:
 
