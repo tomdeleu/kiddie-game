@@ -62,6 +62,14 @@ instead**, which is the more useful half of that story: ten props built
 correct-by-construction all compiled and five of them were visibly wrong. If the
 next session is back in a container with no toolchain, assume both halves.
 
+**The owner builds in Xcode, regularly**, so "this code is unbuilt" is never the
+right thing for a container session to write down — it is not true for long, and
+it was written into `app/README.md` once and had to be taken back out. The real
+gap is narrower: **an agent's last look at its own work is never a compiler's**.
+Write as if correct-by-construction, and hand over saying plainly which edits are
+the risky kind — a file move and a new call into main-actor code are the two the
+record actually indicts. `app/README.md` keeps that list.
+
 Deliberate deviations from the design are recorded there. The kitchen's: the
 palette gained a blue, an amber and a lilac the locked thirteen do not contain;
 the room box is 0.46 m with the camera pulled back 8%, rather than the 0.4 m and
@@ -97,7 +105,7 @@ palette and pass criteria are still the standard every new room is held to.
 
 | Path | What |
 |---|---|
-| [`app/`](app/) | **The app.** De Keuken, Versieren and De Tuin: the rounds, the toys, Nina, Otto, the cake and everything she puts on it, the room switcher, the lighting panel. The first two compile; the garden and the merge that joined them came after that build — see its README. |
+| [`app/`](app/) | **The app.** De Keuken, Versieren and De Tuin: the rounds, the toys, Nina, Otto, the cake and everything she puts on it, the room switcher, the lighting panel. All three rooms compiled at the 2026-08-16 builds — see its README for what the three caught. |
 | [`models/`](models/) | **Props modelled in Blender**, as Python that rebuilds them. Twenty so far — De Keuken's ten (the flour sack, the toverbosbes, the crate, the toverklaver, the toverveertje, the maanstof pouch, the sink, the spoon, the cake and the scale) and De Tuin's ten (the molehill, the seed bed, the fence and seven of the eight ripe plants). Its README has the rules, the export settings, and the test a prop has to pass to belong there. |
 | [`GAMEPLAY.md`](GAMEPLAY.md) | **Storyline and gameplay in detail.** The wall, the eleven friends and their wishes, the cake rules, what each room requires versus what is optional, the timing budget. Reconciled with the built kitchen on 2026-08-16. |
 | [`ROOMS.md`](ROOMS.md) | **How to build a room.** The contract De Keuken established: the box, the camera, the step machine, the halo, the voice rules, touch, carrying, idle, misses, the door — and the traps that have already been paid for once. Read before writing a room. |

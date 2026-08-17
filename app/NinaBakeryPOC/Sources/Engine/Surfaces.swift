@@ -69,12 +69,149 @@ struct Surfaces {
     /// Wall shelving, for the halo only. See `Shelf`.
     let shelves: [Shelf]
 
+    /// **A solid box the fixed camera cannot see through.**
+    ///
+    /// This is the general form of `hider`, and it exists because `hider` was
+    /// too small a model of the problem in two separate ways. It was **one**
+    /// piece of furniture, where a room has several; and it was a **thin plate**
+    /// tested only against floor-height drops, where what actually hides things
+    /// is a box with a height, and what gets hidden sits at whatever height it
+    /// settled at.
+    ///
+    /// The kitchen paid for both (owner, 2026-08-16: things dropped below the
+    /// table, behind the oven and below the back counter cannot be picked up
+    /// again). Its table was the `hider`, so the floor behind Otto — who is
+    /// 124 mm of mint dome standing on the ground — was never tested at all.
+    ///
+    /// A box rather than the real silhouette on purpose. Otto is a dome, so the
+    /// box around him claims about 18 mm of floor at each front corner that is
+    /// technically visible. That is the right way to be wrong: the cost of
+    /// over-claiming is a prop floating home from a place she could just about
+    /// have seen it, and the cost of under-claiming is a prop she has lost for
+    /// the rest of the round.
+    struct Occluder {
+        /// (x, z), like `Rect.centre`.
+        let centre: SIMD2<Float>
+        let size: SIMD2<Float>
+        /// The box's floor and ceiling. Most stand on the ground, so `bottom` is
+        /// usually the room's `floorY` — a table with visible legs still counts
+        /// as solid all the way down, because at this camera the floor under a
+        /// table is never somewhere a prop can rest anyway: the surface lookup
+        /// puts it on the table top instead.
+        let bottom: Float
+        let top: Float
+
+        /// **Is she pointing at this box at all?**
+        ///
+        /// The same slab test as `hides`, run on the unbounded ray from the eye
+        /// through `anchor` rather than on a segment ending at it — the question
+        /// is not "is something behind this" but "is this box between her eye
+        /// and wherever along that line the prop happens to be". A drag is a
+        /// direction, not a destination.
+        @MainActor
+        func isPointedAt(from anchor: SIMD3<Float>) -> Bool {
+            let eye = CameraRig.eye
+            let low = SIMD3<Float>(centre.x - size.x / 2, bottom, centre.y - size.y / 2)
+            let high = SIMD3<Float>(centre.x + size.x / 2, top, centre.y + size.y / 2)
+            let along = anchor - eye
+            var enter: Float = 0
+            var leave = Float.greatestFiniteMagnitude
+
+            for axis in 0..<3 {
+                let origin = eye[axis], direction = along[axis]
+                guard abs(direction) > 1e-6 else {
+                    if origin < low[axis] || origin > high[axis] { return false }
+                    continue
+                }
+                let a = (low[axis] - origin) / direction
+                let b = (high[axis] - origin) / direction
+                enter = max(enter, min(a, b))
+                leave = min(leave, max(a, b))
+                if enter > leave { return false }
+            }
+            return true
+        }
+
+        /// **Does the sightline from the eye to `point` pass through this box?**
+        ///
+        /// The slab method, run on the *segment* from the eye to the point
+        /// rather than on an infinite ray — a box behind the prop does not hide
+        /// it. `clearance` shortens the far end so a prop standing **on** an
+        /// occluder is not hidden by the thing it is standing on: a rolling pin
+        /// on the table top ends its segment exactly on the table box's ceiling
+        /// face, which without this reads as a hit.
+        @MainActor
+        func hides(_ point: SIMD3<Float>, clearance: Float) -> Bool {
+            let eye = CameraRig.eye
+            let low = SIMD3<Float>(centre.x - size.x / 2, bottom, centre.y - size.y / 2)
+            let high = SIMD3<Float>(centre.x + size.x / 2, top, centre.y + size.y / 2)
+            let along = point - eye
+            let span = simd_length(along)
+            guard span > 1e-5 else { return false }
+
+            // Named rather than spelled `exit`, which is a function in the
+            // standard library and would be shadowed here.
+            var enter: Float = 0
+            var leave = 1 - clearance / span
+            guard leave > enter else { return false }
+
+            for axis in 0..<3 {
+                let origin = eye[axis], direction = along[axis]
+                // Parallel to this pair of faces: either the whole segment is
+                // between them or it can never be inside the box at all.
+                guard abs(direction) > 1e-6 else {
+                    if origin < low[axis] || origin > high[axis] { return false }
+                    continue
+                }
+                let a = (low[axis] - origin) / direction
+                let b = (high[axis] - origin) / direction
+                enter = max(enter, min(a, b))
+                leave = min(leave, max(a, b))
+                if enter > leave { return false }
+            }
+            return true
+        }
+    }
+
     /// Boxes that are solid rather than standable — a drop inside one is worse
     /// than a drop behind one.
     let solids: [Rect]
 
+    /// **Everything in this room the fixed camera cannot see past.** Empty by
+    /// default, so a room that has not been given one behaves exactly as it did
+    /// before this existed. See `Occluder`.
+    var occluders: [Occluder] = []
+
+    /// **The inner faces of the two walls, as the smallest x and z a carried
+    /// prop's _body_ may reach.** `nil` for a room with nothing to clip into.
+    ///
+    /// `clamp` below already stops a prop travelling too far, but it clamps the
+    /// prop's **origin**, and a prop is not a point. The kitchen's bounds stop
+    /// at z = −0.205 against plaster at −0.218, which is 13 mm of room for a
+    /// tin that is 44 mm across — so pushing it back along the counter buried
+    /// 9 mm of it in the wall (owner, 2026-08-17). The rolling pin, which is
+    /// 74 mm long, went in by a third of its length.
+    ///
+    /// It cannot be fixed by pulling `minX`/`minZ` in, and that is worth
+    /// knowing before trying: the ingredients start on the wall shelf at
+    /// x = −0.200 and in the counter pot at z = −0.174, so a bound tight enough
+    /// for the rolling pin would yank a token four centimetres sideways the
+    /// instant she picked it up — the bug `clamp`'s own note is about. The
+    /// clearance has to be **per prop**, so `CarryController` measures what it
+    /// is carrying and asks for that much.
+    /// Spelled `= nil` rather than left bare so the synthesised memberwise
+    /// initialiser certainly carries a default for it, the way `occluders`
+    /// above does — De Tuin constructs this positionally and must go on
+    /// compiling without either.
+    var innerWalls: SIMD2<Float>? = nil
+
     /// The piece of furniture the fixed camera cannot see past. Floor behind it
     /// is floor she could put something into and never get back.
+    ///
+    /// **Superseded by `occluders`**, which is the same idea with a height and a
+    /// plural. Kept because De Tuin still uses it and changing a room nobody
+    /// asked about is how a fix to one room becomes a bug in another
+    /// (`CLAUDE.md`, "always ask which room"). A room declares one or the other.
     let hider: Rect?
 
     /// How far a carried prop travels. The room's own furniture, not round
@@ -142,6 +279,43 @@ struct Surfaces {
         return floorY
     }
 
+    /// **What she is pointing at that has to be gone _over_ rather than
+    /// through**, as the height to carry a prop at.
+    ///
+    /// `pointedAt` above answers with *surfaces*, which is the whole story for
+    /// anything a prop can be put down on and no story at all for anything else.
+    /// Otto is the worked example: he is not a surface, so a prop dragged across
+    /// him was carried at the height of the floor he is standing on, and went
+    /// straight through his dome (owner, 2026-08-17: "it just clips"). The drop
+    /// was already handled — it floats home — but a 4-year-old watches the drag,
+    /// not the drop.
+    ///
+    /// **The top, not where the sightline grazes the box.** Riding the entry
+    /// point would slide a prop up Otto's face, which is prettier and wrong for
+    /// the other two: the table and the counter are boxes here as well, and a
+    /// ray that sneaks in under the table's right edge enters through its *side*
+    /// — so entry-riding would carry a prop up to the height of the table's
+    /// skirt and leave it embedded in the edge. Every one of these is something
+    /// to be lifted over, and the top is the one height that is clear of all of
+    /// them.
+    ///
+    /// Tallest wins, for the same reason `CarryController.containerRim` takes
+    /// the tallest rim, and it is safe for exactly the same reason: **every snap
+    /// test in the game is XZ-only**, so riding higher cannot make a drop harder
+    /// to land. It only changes what she sees on the way there.
+    ///
+    /// A room that wants one prop to reach *into* an occluder — the tin going
+    /// into Otto's mouth — says so through `CarryController.pointedExtra`, which
+    /// is asked first.
+    @MainActor
+    func carryOverTop(from anchor: SIMD3<Float>) -> Float? {
+        var best: Float?
+        for occluder in occluders where occluder.isPointedAt(from: anchor) {
+            if best == nil || occluder.top > best! { best = occluder.top }
+        }
+        return best
+    }
+
     /// **The shelf a prop is standing on, if it is standing on one.**
     ///
     /// Height is what makes it safe to ask: a prop only matches while it is
@@ -184,29 +358,74 @@ struct Surfaces {
         SIMD3<Float>(min(max(p.x, minX), maxX), p.y, min(max(p.z, minZ), maxZ))
     }
 
+    /// **Keep a prop of this radius out of the plaster.** See `innerWalls`.
+    ///
+    /// Only the two walls, because they are the only sides a room box has — the
+    /// other two are open, and a prop reaching past the slab's edge there is a
+    /// prop she can still see and still pick up.
+    func clear(ofWalls p: SIMD3<Float>, radius: Float) -> SIMD3<Float> {
+        guard let innerWalls else { return p }
+        return SIMD3<Float>(max(p.x, innerWalls.x + radius), p.y,
+                            max(p.z, innerWalls.y + radius))
+    }
+
+    /// **How much of the far end of a sightline does not count.**
+    ///
+    /// A prop resting on a surface touches the box that surface belongs to, and
+    /// a prop being let go of keeps a small constant offset from the ray her
+    /// finger is on (`CarryController.pickUp` explains where that comes from).
+    /// Both would read as "hidden by the thing it is sitting on" without a
+    /// little slack at the point end. 12 mm is the same order as that offset,
+    /// and small against the shadows this is actually looking for: the ones it
+    /// found in the kitchen run from a few centimetres deep behind the table to
+    /// most of a quadrant behind Otto.
+    static let sightClearance: Float = 0.012
+
     /// **Somewhere she could put a thing and then not get it back.**
     ///
     /// "It stays where you put it" is right up until she puts it where the
-    /// furniture is in the way. The camera never moves, so there is a fixed
-    /// patch of floor behind the `hider` that is simply not on screen — a
+    /// furniture is in the way. The camera never moves, so behind every solid
+    /// thing in the room there is a fixed patch that is simply not on screen — a
     /// rolling pin left there is gone, and a 4-year-old has no camera control to
     /// go and find it. Those drops float home instead.
     ///
-    /// Only floor-level drops can be lost. Anything on a work surface is above
-    /// the things that would hide it.
+    /// **Ask this about where the prop will come to rest, not about where her
+    /// finger let go of it.** They are different heights — a drop is released at
+    /// carry height, a hand's breadth above the surface it lands on — and only
+    /// one of them is the position she will later be looking for.
     ///
-    /// **Derived rather than typed in**, so it stays true if the furniture or
-    /// the camera ever move: follow the sightline from the eye to the point, see
-    /// where it crosses the height of the hider's top, and ask whether that is
-    /// over the hider. When the kitchen's table grew, this patch grew with it —
-    /// which is the derivation doing its job rather than a regression, because a
-    /// bigger table hides more floor behind it.
+    /// Three ways to lose something, in the order they are worth testing:
+    ///
+    /// - **Inside a solid.** Worse than hidden, and tested against the prop's
+    ///   own height rather than its footprint alone: the top of a solid is
+    ///   usually a perfectly good place to put something down, and the kitchen's
+    ///   counter is both at once.
+    /// - **Behind an occluder.** The general case — see `Occluder`.
+    /// - **Behind the `hider`**, the older single-plate form of the same
+    ///   question, for rooms that still declare one.
+    ///
+    /// **Derived rather than typed in**, all three of them, so they stay true if
+    /// the furniture or the camera ever move. When the kitchen's table grew, its
+    /// hidden patch grew with it — which is the derivation doing its job rather
+    /// than a regression, because a bigger table hides more floor behind it.
     @MainActor
     func isOutOfSight(_ point: SIMD3<Float>) -> Bool {
-        guard y(at: point) <= floorY + 0.001 else { return false }
-        // Inside a solid box is worse than hidden.
-        for solid in solids where Self.within(point, solid, margin: 0.004) { return true }
-        guard let hider else { return false }
+        // Inside a solid box. The height test is what keeps this from claiming
+        // the box's own lid: standing *on* the counter is not being *in* it.
+        for solid in solids
+        where point.y < solid.y - 0.002 && Self.within(point, solid, margin: 0.004) {
+            return true
+        }
+
+        for occluder in occluders
+        where occluder.hides(point, clearance: Self.sightClearance) {
+            return true
+        }
+
+        // The single-plate hider. Floor-only, because a plate has no height to
+        // hide anything standing above it — which is exactly the limitation
+        // `occluders` exists to lift.
+        guard let hider, y(at: point) <= floorY + 0.001 else { return false }
         let eye = CameraRig.eye
         let t = (hider.y - eye.y) / (floorY - eye.y)
         let crossing = SIMD3<Float>(eye.x + (point.x - eye.x) * t, hider.y,

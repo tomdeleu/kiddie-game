@@ -50,6 +50,14 @@ final class CarryController {
     /// which is what the halo needs. See `surfaceUnder`.
     var restingExtra: ((_ point: SIMD3<Float>, _ prop: Entity) -> Float?)?
 
+    /// **A room's last word on where the thing in her hand may be.**
+    ///
+    /// Applied after the play-area clamp and before the walls, and it is about
+    /// *position* where `pointedExtra` is about height. The kitchen uses it for
+    /// one thing: holding the tin at the lip of Otto's mouth so that pushing
+    /// harder settles it into the pocket instead of sliding it on into the dome.
+    var carriedClamp: ((_ position: SIMD3<Float>, _ carried: Entity) -> SIMD3<Float>)?
+
     /// Fired as something is picked up, before the drag begins. The rooms use it
     /// to stop the idle shimmer.
     var onPickUp: ((Entity) -> Void)?
@@ -79,6 +87,11 @@ final class CarryController {
     /// Exactly where the prop was when she took hold of it, so a touch that went
     /// nowhere can put it back exactly — see `settle`.
     private var origin = SIMD3<Float>.zero
+    /// **Half the widest the carried prop is across**, measured once when she
+    /// takes hold of it, so it can be kept out of the walls. Measured rather
+    /// than declared: a table of prop radii is a table that goes stale, and
+    /// RealityKit already knows how big everything is.
+    private var carriedRadius: Float = 0
 
     init(ticker: Ticker, sound: SoundKit, surfaces: Surfaces,
          settings: LightingSettings) {
@@ -108,6 +121,12 @@ final class CarryController {
             - RoomBox.pointOnRay(through: world, atHeight: entity.position.y)
         offset.y = 0
         origin = entity.position
+        // Measured in the room's own space, so a prop that has been scaled —
+        // the cake shrinks onto the plank — reports the size it is now. A prop
+        // with nothing drawable in it yet reports zero, which asks for no
+        // clearance and is the same behaviour as before this existed.
+        let bounds = entity.visualBounds(relativeTo: entity.parent)
+        carriedRadius = max(bounds.extents.x, bounds.extents.z) / 2
         currentY = entity.position.y
         surfaceY = surfaces.y(at: entity.position)
         goalY = currentY
@@ -171,6 +190,12 @@ final class CarryController {
         guard let carried else { return }
         var next = surfaces.clamp(
             RoomBox.pointOnRay(through: anchor, atHeight: currentY) + offset)
+        // The room's own exception first, then the walls — which are plaster
+        // and get the final say. In the kitchen the two never argue, because
+        // the only `carriedClamp` there pushes the tin *out* of the oven, which
+        // is away from both walls.
+        if let hold = carriedClamp { next = hold(next, carried) }
+        next = surfaces.clear(ofWalls: next, radius: carriedRadius)
         // Y is owned by the carry job; the touch only ever moves it about.
         next.y = currentY
         carried.position = next
@@ -179,10 +204,22 @@ final class CarryController {
     // MARK: - What it is over
 
     /// **What she is pointing at**, for a prop being carried.
+    ///
+    /// The last line is the difference between carrying something *over* the
+    /// furniture and carrying it *through* the furniture. `pointedAt` only knows
+    /// about surfaces, so anything solid that cannot be stood on — Otto — was
+    /// answered for by the floor underneath it, and a prop dragged across him
+    /// clipped through his dome. Taking the higher of the two lifts it over
+    /// instead, and cannot cost a drop: every snap test is XZ-only.
+    ///
+    /// `pointedExtra` stays first, so a room can still let one prop reach into
+    /// an occluder rather than over it.
     private func pointedSurface(from anchor: SIMD3<Float>, for entity: Entity) -> Float {
         if let extra = pointedExtra?(anchor, entity) { return extra }
         if let rim = containerRim(from: anchor, carrying: entity) { return rim }
-        return surfaces.pointedAt(from: anchor)
+        let surface = surfaces.pointedAt(from: anchor)
+        guard let over = surfaces.carryOverTop(from: anchor) else { return surface }
+        return max(surface, over)
     }
 
     /// **The rim of a container she is holding something over.**
@@ -264,13 +301,20 @@ final class CarryController {
             return
         }
 
+        // **Where it is about to come to rest**, which is not where she let go
+        // of it: a carried prop rides `surfaces.lift` above its surface, and it
+        // is the landing spot she will be looking for afterwards.
+        let resting = SIMD3<Float>(entity.position.x,
+                                   surfaces.y(at: entity.position),
+                                   entity.position.z)
+
         // **Out of sight is the one place a drop is not allowed to stick.** The
-        // camera is fixed, so the floor behind the furniture is a patch she
-        // could put something into and never get back out of — and she has no
-        // way to look round it. It floats back to where she picked it up, which
-        // is the one case the old float-home behaviour was right about.
-        // Everywhere else on the floor is hers.
-        guard !surfaces.isOutOfSight(entity.position) else {
+        // camera is fixed, so behind the furniture is a patch she could put
+        // something into and never get back out of — and she has no way to look
+        // round it. It floats back to where she picked it up, which is the one
+        // case the old float-home behaviour was right about. Everywhere else in
+        // the room is hers.
+        guard !surfaces.isOutOfSight(resting) else {
             sound.play(.whoosh, volume: 0.35)
             ticker.move(entity, to: from, duration: 0.4, arc: 0.014, ease: Ease.out) {
                 [weak self] in
@@ -282,9 +326,6 @@ final class CarryController {
             return
         }
 
-        let resting = SIMD3<Float>(entity.position.x,
-                                   surfaces.y(at: entity.position),
-                                   entity.position.z)
         ticker.move(entity, to: resting, duration: 0.20, arc: 0, ease: Ease.out) {
             [weak self] in
             guard let self else { return }
