@@ -84,20 +84,30 @@ enum KitchenProps {
         // soffit rather than leaving a seam, and recessed just enough to read
         // as set back rather than painted on.
         //
-        // **The recess cannot be deep, and this is the reason.** The arch is
-        // not a tunnel through the dome — it is a ring stuck on the front of
-        // an ellipsoid that bulges *into* it. The dome reaches z = 0.062 at
-        // the base of the mouth, while the arch face is at 0.076, so anything
-        // set back more than 0.014 sits behind the dome shell and you see
-        // mint through the opening instead of dark. That is exactly what a
-        // 0.022 recess did on the 2026-08-15 build. 0.008 keeps the plug
-        // clear of the bulge with 0.006 to spare, and the hole reads as a
-        // flat dark surface a little way back — which is all it needs to be.
-        // It is solid: the tin slides in and is swallowed by the dark, which
-        // is also how a real oven works.
+        // **How deep the pocket can be, and why it is the arch that decides.**
+        // The arch is not a tunnel through the dome — it is a ring stuck on the
+        // front of an ellipsoid that bulges *into* it. The plug's front face
+        // has to stay in front of the dome's shell or you see mint through the
+        // opening instead of dark, which is exactly what a 0.022 recess did on
+        // the 2026-08-15 build, when the arch face was at 0.076 and the shell
+        // reaches 0.0612 at the base of the mouth.
+        //
+        // So the recess can be at most `archFront - 0.0612`, and the only way
+        // to buy more is to move `archFront` forward — which `mouthDepth` now
+        // does, by 10 mm, with `ovenOrigin` moved back by the same 10 mm so
+        // nothing moves on screen. **0.023 is that budget spent**: the plug
+        // front lands at 0.063, which clears the shell by 1.8 mm at the mouth's
+        // base and by 8.6 mm at the top of the arch, and the faceted dome chords
+        // *inside* the ideal ellipsoid so the real clearance is larger than
+        // both. The arch ring runs from 0.042 to 0.086, so the 23 mm the plug
+        // is set back is walled all the way — a pocket, where it used to be a
+        // dimple, and deep enough for the tin to sit in rather than on.
+        //
+        // The plug is still solid: the tin slides in and is swallowed by the
+        // dark, which is also how a real oven works.
         let oversize: Float = 0.002
         let plugDepth: Float = 0.028
-        let plugRecess: Float = 0.008
+        let plugRecess: Float = 0.023
         let mouth = RoomBuilder.model(.archPlug(radius: KitchenLayout.mouthArchInner + oversize,
                                                 legHeight: KitchenLayout.mouthLegHeight + oversize,
                                                 depth: plugDepth, segments: 6),
@@ -137,23 +147,31 @@ enum KitchenProps {
         // which is exactly what the 2026-08-15 build showed. Grounded, it can
         // never float, whatever the facets do. Boxes are centred, so each y
         // here is the part's centre.
-        let chimneyX: Float = 0.028
-        let chimneyZ: Float = -0.030
+        // **Where it stands and how big it gets are `KitchenLayout`'s**, because
+        // `occluders` has to lift a carried prop over this and a number spelled
+        // in two files is the bug `nearPlank` is a monument to. The cap is the
+        // widest part, so `ovenChimneyWidth` is its width; everything else here
+        // is interior detail nothing outside this function needs.
+        let chimneyX = KitchenLayout.ovenChimneyOffset.x
+        let chimneyZ = KitchenLayout.ovenChimneyOffset.y
+        let capWidth = KitchenLayout.ovenChimneyWidth
 
         let shaft = RoomBuilder.model(.box([0.022, 0.096, 0.022]),
                                       Palette.cream, flat: flat, name: "Chimney")
         shaft.position = [chimneyX, 0.048, chimneyZ]
         body.addChild(shaft)
 
-        let capSlab = RoomBuilder.model(.box([0.034, 0.006, 0.034]),
+        let capSlab = RoomBuilder.model(.box([capWidth, 0.006, capWidth]),
                                         Palette.creamLight, flat: flat, name: "ChimneyCap")
         capSlab.position = [chimneyX, 0.096 + 0.003, chimneyZ]
         body.addChild(capSlab)
 
         // The rim: four walls, outer 0.030, 0.007 thick, leaving a 0.016
-        // square opening.
-        let rimTopY: Float = 0.110
-        let rimWallY: Float = 0.102 + 0.004
+        // square opening. Its top is the chimney's top.
+        let rimTopY = KitchenLayout.ovenChimneyHeight
+        // The walls are 0.008 tall and boxes are centred, so their centre is
+        // half that below the top. Derived, so raising the chimney raises them.
+        let rimWallY = rimTopY - 0.004
         for (i, spec) in [
             (SIMD3<Float>(0.030, 0.008, 0.007), SIMD3<Float>(chimneyX, rimWallY, chimneyZ - 0.0115)),
             (SIMD3<Float>(0.030, 0.008, 0.007), SIMD3<Float>(chimneyX, rimWallY, chimneyZ + 0.0115)),
@@ -210,7 +228,10 @@ enum KitchenProps {
         return Oven(root: root, dome: dome, doorPivot: doorPivot, door: door,
                     eyes: eyes, pupils: pupils, pupilRest: pupilRest,
                     eyeRest: SIMD3<Float>(repeating: 1),
-                    chimneyTop: KitchenLayout.ovenOrigin + SIMD3<Float>(0.028, 0.112, -0.030))
+                    chimneyTop: KitchenLayout.ovenOrigin
+                        + SIMD3<Float>(KitchenLayout.ovenChimneyOffset.x,
+                                       KitchenLayout.ovenChimneyHeight + 0.002,
+                                       KitchenLayout.ovenChimneyOffset.y))
     }
 
     // MARK: - The bake

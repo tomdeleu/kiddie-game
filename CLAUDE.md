@@ -53,12 +53,12 @@ screen — but the way *in* is now visible, because the triple tap it replaced s
 under the opening film and could not be tapped at all. The triple tap still
 works for anyone with the muscle memory.
 
-**Het Feest has not been through a compiler.** It was written on 2026-08-17 in a
-container with no Swift toolchain, which is the situation the first two builds
-below were written in — and between them those two caught eight errors, **none of
-which was a number and none of which was among the five the project had been
-predicting**. Assume this room has its own three. `app/README.md`, "First build",
-has all eight and what they were.
+**Het Feest was written on 2026-08-17 in a container with no Swift toolchain**,
+so it reached Xcode without a compiler having seen it — the situation the first
+two builds below were written in, and between them those two caught eight errors,
+**none of which was a number and none of which was among the five the project had
+been predicting**. Assume this room has its own three, and read `app/README.md`,
+"First build", for all eight and what to look at first.
 
 **The first three rooms compiled clean on 2026-08-16** — Xcode 26.6, iOS Simulator,
 Debug, three times: once when the kitchen and the decorating room landed, again
@@ -73,6 +73,14 @@ that had a compiler on it. It found **five geometry mistakes in a renderer
 instead**, which is the more useful half of that story: ten props built
 correct-by-construction all compiled and five of them were visibly wrong. If the
 next session is back in a container with no toolchain, assume both halves.
+
+**The owner builds in Xcode, regularly**, so "this code is unbuilt" is never the
+right thing for a container session to write down — it is not true for long, and
+it was written into `app/README.md` once and had to be taken back out. The real
+gap is narrower: **an agent's last look at its own work is never a compiler's**.
+Write as if correct-by-construction, and hand over saying plainly which edits are
+the risky kind — a file move and a new call into main-actor code are the two the
+record actually indicts. `app/README.md` keeps that list.
 
 Deliberate deviations from the design are recorded there. The kitchen's: the
 palette gained a blue, an amber and a lilac the locked thirteen do not contain;
@@ -92,6 +100,19 @@ room is a contradiction; **six guests plus a DJ rather than the twelve
 arithmetic in `ROOMS.md` §5 rather than the rig; the friend of the day is
 **dealt** rather than handed over, since there is no hub to hand one over; and
 the guests' thanks are **relayed by Nina** until the eleven friends have voices.
+
+**Two rooms are designed but not built, both decided by the owner on
+2026-08-17.** [`GAMEPLAY.md`](GAMEPLAY.md) §6.1 gives **De Bakkerij** a four-step
+required action — `opendoen`, `kiezen`, `binnenlaten`, `bestellen` — plus a
+two-step return leg that hangs the frame, which settles the long-open question of
+whether hanging it is something she *does*. It is. And §6.4 gives **Versieren** a
+required spine — `insmeren`, `rondom`, `kaarsje`, `klaar` — which **reverses that
+section's own "required: nothing"** and is the largest gap between the design and
+`app/` right now. The reversal keeps the promise underneath the heading: the
+steps *observe rather than gate*, the door stays lit from the first frame, and
+nothing is ever disabled. Prop plates for both are in
+[`references/bakkerij/`](references/bakkerij/) and
+[`references/versieren/`](references/versieren/); no code has changed.
 
 **Next**, per [`GAMEPLAY.md`](GAMEPLAY.md) §9: the wall of twelve frames, which
 is now the last thing between four rooms and a game. The music search is still
@@ -117,7 +138,7 @@ palette and pass criteria are still the standard every new room is held to.
 
 | Path | What |
 |---|---|
-| [`app/`](app/) | **The app.** De Keuken, Versieren, De Tuin and Het Feest: the rounds, the toys, Nina, Otto, the friends, the cake and everything she puts on it, the room switcher, the lighting panel. The first three compile; **the party has not been through a compiler** — see its README. |
+| [`app/`](app/) | **The app.** De Keuken, Versieren, De Tuin and Het Feest: the rounds, the toys, Nina, Otto, the friends, the cake and everything she puts on it, the room switcher, the lighting panel. The first three compiled at the 2026-08-16 builds; the party was written after them — see its README for what the three caught and what to look at first in the fourth. |
 | [`models/`](models/) | **Props modelled in Blender**, as Python that rebuilds them. Twenty so far — De Keuken's ten (the flour sack, the toverbosbes, the crate, the toverklaver, the toverveertje, the maanstof pouch, the sink, the spoon, the cake and the scale) and De Tuin's ten (the molehill, the seed bed, the fence and seven of the eight ripe plants). Its README has the rules, the export settings, and the test a prop has to pass to belong there. |
 | [`GAMEPLAY.md`](GAMEPLAY.md) | **Storyline and gameplay in detail.** The wall, the eleven friends and their wishes, the cake rules, what each room requires versus what is optional, the timing budget. Reconciled with the built kitchen on 2026-08-16. |
 | [`ROOMS.md`](ROOMS.md) | **How to build a room.** The contract De Keuken established: the box, the camera, the step machine, the halo, the voice rules, touch, carrying, idle, misses, the door — and the traps that have already been paid for once. Read before writing a room. |
@@ -133,6 +154,7 @@ palette and pass criteria are still the standard every new room is held to.
 | [`references/versieren/`](references/versieren/) | The decorating room's seventeen plates — the turntable, the two tools, the seven sticker shapes and the toys — and what three attempts at its room box taught about making flux name its own facet counts. |
 | [`references/garden/`](references/garden/) | **De Tuin's twenty-five plates** — the bed, the can, the basket, four plant stages, eight ripe plants, six toys, and the fence, gate and potting bench that replaced its walls. Its README has the job IDs and the three studio plates the room box overruled. |
 | [`references/feest/`](references/feest/) | **Het Feest's fifteen plates** — the disco room box, the DJ booth, the mirror ball, the light bar, the dance floor, the six pads, the speakers, the cake table, two toys, the DJ, and two passes at the guests. Its README has the seeds, the fifth prompt phrase that keeps a disco from going dark, the sixth that lets a shape be round and faceted at once, and why asking for six animals gets five three times running. |
+| [`references/bakkerij/`](references/bakkerij/) | **De Bakkerij's six plates** — the room box, the wall of twelve frames, the blind, the shop door and the order hook, one per step of `GAMEPLAY.md` §6.1. They replace plates 06 and 10, which were drawn in the retired clay style. Its README has the empty-room-box failure and what fixed it. |
 | [`references/ingredients/`](references/ingredients/) | The eight ingredients, the flour sack and the flour cloud — the plates the models were built from. |
 | [`references/moodboard/`](references/moodboard/) | Provenance + licences. Gathered for two retired directions — not the current look. |
 | [`references/FETCHING-ASSETS.md`](references/FETCHING-ASSETS.md) | How to get outside material onto disk here, and what fails. |

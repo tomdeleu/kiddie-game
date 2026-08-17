@@ -409,13 +409,119 @@ throws its own colour, which is what says *that* one went in.
 
 **And nothing gets put back** — with one exception. A prop she drags somewhere
 that is not a target settles onto whatever is underneath it and stays there.
-The rolling pin can live on the floor. The exception is the patch of floor
-*behind the table*: the camera never moves, so that is a place she could put
-something and then genuinely not get it back, with no way to look round the
-table. Drops there float home. `Layout.isOutOfSight` derives the patch from the
-camera and the table rather than hardcoding it — at the committed camera it is
-about 235 × 170 mm between the table and the counter, and it grew when the table
-did, which is the derivation working rather than a regression. This replaced a rule where a missed drop floated home and
+The rolling pin can live on the floor. The exception is anywhere the camera
+cannot see: the camera never moves, so behind each solid thing in the room is a
+place she could put something and then genuinely not get it back, with no way to
+look round it. Drops there float home.
+
+`KitchenLayout.occluders` lists the three — **the table, the counter and
+Otto** — as boxes with a height, and `Surfaces.isOutOfSight` asks whether the
+sightline from the eye to the spot the prop is about to *land on* passes through
+any of them. It was one flat plate at table height tested only against
+floor-level drops, which is why the room shipped with three ways to lose a prop
+(owner, 2026-08-16: below the table, behind the oven and below the back counter
+you cannot pick it up again). The floor behind Otto was the worst of them and
+was in nobody's shadow at all: he is 124 mm of dome standing out in the open to
+the right of the table, and swept at 5 mm he alone hides 1024 cells of floor to
+the table's 798.
+
+Two things about it are worth keeping:
+
+- **It is derived, never typed in**, so it stays true when the furniture moves —
+  the table's patch grew when the table did, which is the derivation working
+  rather than a regression.
+- **Nina is deliberately not on the list**, though she hides a real 75 × 50 mm
+  strip of floor in front of the counter. Adding her also puts a 20 × 15 mm patch
+  of *worktop* 13 mm from the sink in her hat's shadow, and every other surface
+  in the room keeps what is put on it. She moves, too — a fixed box describes
+  furniture and guesses at a person. The sweep that found that also confirmed
+  the cost of the three that stayed: every point of both work surfaces, the
+  whole near foreground and all thirteen prop home spots come back reachable at
+  2.5 mm.
+
+**And the same list says what a carried prop goes _over_.** Fixing the drop
+exposed the other half of it the next day (owner, 2026-08-17: the drop floats
+back as it should, but dragging into the oven "just clips"). It did: a carried
+prop rides on whatever `pointedAt` answers with, that is only ever a *surface*,
+and Otto is not one — so a prop dragged across him was carried at the height of
+the floor he stands on and went through his dome. `Surfaces.carryOverTop`
+returns the tallest occluder top the ray meets, and `CarryController` takes the
+higher of that and the surface, so the prop lifts over Otto instead. It cannot
+cost a landing: every snap test is XZ-only, so riding higher only changes what
+she sees on the way there. Swept over 25,917 drag directions, **a carried prop
+is now never inside any of the four boxes**, and never lifted anywhere in the
+open foreground.
+
+Two details that are the whole difference between this working and looking
+broken:
+
+- **The top of the box, not where the sightline grazes it.** Entry-riding slides
+  a prop up Otto's face, which is prettier — and leaves it embedded in the side
+  of the table, because a ray that reaches under the table's right overhang
+  enters through the *side* face.
+- **Otto's chimney is a fourth box.** It makes no difference to what floats home
+  — it stands behind the dome, so its shadow lands inside the dome's and the
+  swept floor total does not move by one cell. It matters because a prop lifted
+  to clear the dome rides at 0.091 and the chimney reaches 0.114.
+
+**The mouth is the exception, and it goes through `pointedExtra`**, which is
+asked before the occluders — the tin rides on the mouth floor while Otto is
+open, so it slides in at 0.028 against a target of 0.026 instead of sailing over
+his head. It and `dropTin` both ask `KitchenLayout.nearOvenMouth`, so what she
+sees and what counts cannot drift apart.
+
+### Otto's mouth is a pocket, not a dimple
+
+Owner, 2026-08-17: it should extend back a little more, positioning the tin in
+it is difficult. Two things were wrong and only one of them was the depth.
+
+**The depth.** The arch is a ring stuck on the front of an ellipsoid that bulges
+into it, so the recess can only be as deep as the gap between the arch's face
+and the dome's shell — 14 mm, of which 8 were used. The only way to buy more is
+to lengthen the ring forwards, which would push Otto's snout at the table. So
+**he moved back by exactly what the mouth gained**: `ovenOrigin.z` −0.112 →
+−0.122, `mouthDepth` 0.034 → 0.044. Every visible number stays put — the arch
+face at −0.036, `ovenMouth` at −0.038, the front of his occluder box — so none
+of the sightline work above needed redoing. What changed is a **23 mm pocket
+where there was an 8 mm dimple**, and the tin now lands with its back edge 1 mm
+off the dark plug instead of balanced on a lip. The plug still reads dark: it
+clears the dome shell by 1.8 mm at the mouth's base and 8.6 mm at the top of the
+arch, and the faceted dome chords *inside* the ideal ellipsoid, so the real
+clearance is larger than both.
+
+**The pushing.** The drop zone is 81 mm because the drop has to be forgiving —
+which meant she could push the tin on through the arch and watch it disappear
+inside the dome. `KitchenRoom`'s `carriedClamp` holds it at the lip: only z,
+only forwards, so sideways and pulling back out are free. Push harder and it
+settles into the pocket instead of vanishing.
+
+**Still tight:** the opening is 48 mm and the tin is 44, which is 2 mm of
+daylight each side. Widening it is a change to Otto's *face*, so it is noted in
+`mouthArchInner` and left for the owner rather than taken while fixing the
+depth.
+
+### A prop is not a point
+
+`clampToPlayArea` bounds the prop's **origin**, and the bounds stop at
+z = −0.205 against plaster at −0.218. That is 13 mm of room for a tin 44 mm
+across, so pushing it back along the counter buried 9 mm of it in the wall
+(owner, 2026-08-17); the rolling pin, 74 mm long, went in by a third of its
+length.
+
+It cannot be fixed by pulling the bounds in, and that is worth knowing before
+trying: ingredients start on the wall shelf at x = −0.200 and in the counter pot
+at z = −0.174, so a bound tight enough for the rolling pin would yank a token
+four centimetres sideways the instant she picked it up — the bug
+`clampToPlayArea`'s own note is about. So the clearance is **per prop**:
+`Surfaces.innerWalls` holds the two walls' inner faces, `CarryController`
+measures what it is holding with `visualBounds` once at pick-up, and `place`
+keeps that much clear. Measured rather than declared, because a table of prop
+radii is a table that goes stale.
+
+Swept: every prop's body now stops exactly on the plaster and never past it, and
+no prop's home position moves when she picks it up.
+
+This replaced a rule where a missed drop floated home and
 Nina apologised for it, which was wrong twice: it undid the one thing she can
 do with a kitchen full of objects, and it treated every stray drag as a failed
 attempt when most of them are a 4-year-old moving a rolling pin because it is
@@ -787,9 +893,16 @@ table; pointing at the floor in front of it means the floor. And **it makes
 losing a prop behind the table impossible by construction**: a floor point is
 hidden exactly when the sightline to it crosses the table top inside the table's
 footprint, and that sightline *is* this ray — so any route to the hidden strip
-is a ray that hit the table first and got the table. `isOutOfSight` and the
-float-home in `settle` stay as the safety net for the small constant grab offset
-a carried prop keeps off the ray, and should now essentially never fire.
+is a ray that hit the table first and got the table.
+
+**Behind the table, and nothing else** — and the sentence above was read for a
+while as though it said props could not be lost, which is how the room shipped
+with three places they could be. The argument is exactly as wide as `rects`,
+because a *surface* is the only thing this can hand back: Otto is not a surface,
+so no ray ever hits Otto and gets Otto. It goes through him and lands on the
+floor behind. `isOutOfSight` is not a safety net for the small constant grab
+offset a carried prop keeps off the ray — it is the whole answer for everything
+in the room that is solid without being standable.
 
 The camera never moving is what makes this cheap: any world point plus the eye
 is a complete description of the ray through it, so a touch reported on one
@@ -970,6 +1083,38 @@ decision:
   first place. About forty small casters — worth an eye on device, one line to
   undo.
 
+### The tree was a bush, and the trunk is why
+
+Owner, 2026-08-17: *"the tree at the top corner must be bigger — now it looks
+like a bush instead of a tree."* It did. As built it stood **110 mm** against a
+70 mm fence and a 125 mm Nina, and its canopy was 70 mm across — no taller than
+the bushes beside it were wide, and shorter than the child looking at it. That
+is a shrub whatever shape its leaves are.
+
+**The fix is not uniform scale, because what names a tree is the trunk.** The
+trunk nearly doubled to 98 mm; the canopy grew about half again. The whole tree
+is now **174 mm** — 2.5× the fence, 1.4× Nina — and **81 mm of bare trunk shows
+below the lowest lobe**, which is the silhouette a 4-year-old draws when asked
+for a tree. The canopy stayed the wide cluster
+`references/garden/garden-tree.png` is emphatic about, 108 mm across.
+
+Two checks came before the change rather than after it, because a bigger prop in
+an already-full corner is a collision waiting to happen. **Its neighbours**: the
+canopy clears the potting bench's backboard by 11 mm at the nearest lobe, and
+passes over the 86 mm fence posts entirely, so `GardenLayout.treeSpot`'s
+deliberate overhang is still an overhang and not an intersection. **The frame**:
+it reaches ndcY ≈ 0.77 at `CameraRig`'s eye, well short of the top edge — and
+`fovIsVertical` is true, so that margin holds on every aspect ratio rather than
+only on the 4:3 iPad.
+
+**Its tap target moved with it.** The naming marker sat 75 mm up, which was the
+middle of the old canopy and is now bare trunk; it is at 115 mm now, and its
+radius went from the 36 mm every prop gets to 42, because a target a third of
+the prop's width inside a prop 108 mm across reads as a dead zone
+(`CONCEPT.md` §5). The bush's is untouched. The two stay 136 mm apart *as the
+camera sees them* — `RoomBox.screenSeparation`, not `distanceXZ` — against
+78 mm of combined radius, so neither can take the other's tap.
+
 ### The gate says it twice, not three times
 
 `ROOMS.md` §9 has the way out saying the same thing three ways: the leaf off the
@@ -1033,9 +1178,24 @@ is intended and stays: `TouchRouter` picks the nearest centre, so each owns an
 equal band and an imprecise tap always lands on the nearest one. Overlap between
 **unlike** things is the bug, because the wrong kind of answer can win.
 
-Two toy-to-toy pairs are still a few millimetres short (the molehill and a
-puddle, the basket and a puddle). Both resolve by nearest-wins and both answer
-with a word, so they are left alone.
+**The pond re-ran this check three times and it comes out clean.** Every unlike pair
+in the garden was measured again when the two puddles became one pond, and again
+when the pond grew across the bottom and pushed three props: the only pairs still
+short are `plot2`/`greenery1` (6.6 mm) and `plot3`/`greenery1` (4.2 mm), which
+are the bed's holes against the bush behind them and predate all of it. The
+toy-to-toy shortfall that used to be here — a puddle 3 mm inside the butterfly —
+went out with the puddle. The pond's own worst neighbour is the basket at 113 mm
+against the 83 the two radii need.
+
+**Its target is 45 mm, which is far smaller than the prop**, and it hangs on a
+marker rather than on the pond itself: a 249 mm pond with a target to match would
+swallow the basket and the flower row's near end, and the pond's own origin sits
+out under the clipped corner where nobody aims. Same trick as the gate's
+`GateTouchSpot`. A target only has to be big enough to hit; what she aims at is
+the middle of the water she can see.
+
+The check is one script rather than a habit: it is worth re-running whenever a
+prop moves, because every one of these numbers was chosen to *just* fit.
 
 **The measurement is now `RoomBox.screenSeparation(_:_:)`**, so the next room
 does not have to rederive it. `RoomBox.distanceXZ` stays where it is and stays
@@ -1169,7 +1329,66 @@ Six, none of which gate anything:
   because a target big enough to catch every drag would eat every other drag in
   the room. It follows *slowly*: a butterfly that arrives is a cursor.
 - **A bee** that hums when chased.
-- **Two puddles** that splash.
+- **A pond** that splashes — an irregular pool **filling the near corner of the
+  lawn and running off both of its near edges**, 249 mm across the screen and
+  151 mm deep, with faceted stones along its inland bank only. It replaced two
+  puddles on the owner's call, 2026-08-16, and was rebuilt **twice more the same
+  day**, each time from a red line drawn over a screenshot of the running room:
+  first *"the pond must be bigger and totally at the bottom"*, then *"it must
+  stretch to the side of the plateau at the bottom left right, and the shape must
+  be irregular"*.
+
+  **A screenshot is a better brief than a plate, and that is the lesson worth
+  keeping.** Both reference plates were right about what a pond *is* — the ring
+  of separate boulders, the water stepping down in bands — and neither could
+  have said how big it should be or where it should stop, because a plate is
+  shot with nothing beside it. Even the room-box plate is a drawing of the room
+  rather than the room. Scale is a question only the running game can answer, so
+  ask for it in a screenshot and expect two corrections.
+
+  **It is cut by the plateau, deliberately.** The water runs to the mint's edge
+  and stops half a millimetre inside it, with the slab's cream border beyond:
+  155 mm of the right-hand edge and 191 mm of the left-hand one are pond, and
+  the lawn's own corner is under water. Every other prop in the game stands
+  inside the box; this is the one the box slices. The clip is **radial** — each
+  outline vertex is pulled back along its own ray until it lands on the limit —
+  which is what makes the cut come out as one straight edge rather than a stair,
+  and what keeps the outline star-shaped so its top faces can still be fanned
+  from the centre.
+
+  **Irregular means two fixed harmonics, not noise.** A random outline would
+  rebuild differently every time the flat/smooth toggle flips, which is a pond
+  that moved while she was looking. Two lobes and seven ripples give a bank that
+  wanders **32 mm off the straight line between its two ends** over a 250 mm
+  chord — which is the difference between a pond and a ruled arc, and the first
+  attempt at this shape got it wrong by being too gentle.
+
+  **The rim only follows the inland bank.** Where the water runs off the plateau
+  there is nothing to put a stone on, so the eleven stones stop five samples
+  short of each cut and the water meets the lawn's edge bare.
+
+  **Nothing is in the water, and that is now four moves deep.** The basket was
+  in the middle of it and took the molehill's ground in front of the bed — where
+  a basket wants to be anyway, since a picked plant hops into it from the bed;
+  the molehill went out to the lawn in front of the bench; the butterfly hovers
+  over the middle of the open floor. The flower row's near end is the only thing
+  still close, at 34 mm — a flower at the water's edge rather than a flower in
+  it.
+
+  **The water steps down without a hole in the floor.** Sinking it below
+  `floorY` cannot work: the floor is a solid box and geometry inside it is
+  hidden. So the basin stands on the grass, each of the four bands is a closed
+  washer whose top sits 1.4 mm below the one outside it, and the three outer
+  ones are clipped in their own right — so the terraces are cut where they meet
+  the plateau and the step shows in the cut face.
+
+  **The one prop in the game whose mesh is not a `RoomBuilder.Shape`.** An
+  outline that is a wobble clipped by the room is not a primitive and never will
+  be, so `GardenProps` builds its two meshes itself — a solid from an outline and
+  a washer between two — borrowing the windings that `prism` and `annulus`
+  already prove. Adding a case to the shared enum for one room's one prop would
+  have been the worse trade.
+
 - **A rainbow**, which is the one worth describing. `GAMEPLAY.md` §6.2 says
   waving the can in the air makes one, and it is discovered rather than
   explained: a long swing of the can that watered nothing is exactly what a
@@ -1255,9 +1474,10 @@ Nothing structural. The three things it is short of are content and are cheap:
   already migrates a save whose bed is the wrong length.
 - **The wish hint** — a colour wish shimmering its matching jar — is one line
   once the friends exist, because the shimmer is already the jars' cue.
-- **`GAMEPLAY.md` §6.2 lists a bee, a butterfly, a mole, puddles and flowers.**
-  All six are in. The next one or two are free (`ROOMS.md` §8: add one every time
-  you touch a room).
+- **`GAMEPLAY.md` §6.2 lists a bee, a butterfly, a mole, water and flowers.**
+  All six are in — the water as one pond rather than the two puddles §6.2 used
+  to ask for, owner's call 2026-08-16, and §6.2 now says pond. The next one or
+  two are free (`ROOMS.md` §8: add one every time you touch a room).
 
 ## Deliberate deviations from the design
 
@@ -1592,7 +1812,7 @@ x = 0 because past that it starts crossing Otto's chimney.
 | `Engine/TouchRouter.swift` | One finger, two verbs. Targets are generous spheres, not meshes, and each carries the plane its prop is standing on. |
 | `Engine/Sparkles.swift` | Faceted yellow stars that fly out and vanish. The whole reward vocabulary. |
 | `Engine/Halo.swift` | The bright-yellow ring of light on the surface under the prop a step is about — the game's only instruction. |
-| `Engine/Surfaces.swift` | **What is under a point, and what her finger is pointing at.** Two different questions; confusing them cost two failed attempts at the drag. Each room declares its own rectangles. |
+| `Engine/Surfaces.swift` | **What is under a point, what her finger is pointing at, and what she cannot see behind.** The first two are different questions; confusing them cost two failed attempts at the drag. The third is `Occluder` — the solid boxes a drop is not allowed to stick behind. Each room declares its own rectangles and its own occluders. |
 | `Engine/CarryController.swift` | **Carrying, solved once.** Height easing, the ray that keeps a prop under her fingertip, container rims, and the settle rules. Was `KitchenRoom`'s; the kitchen and the garden both use it, and the decorating room does not — it places stickers on a cake rather than carrying props across surfaces. |
 | `Intro/LoadingScreen.swift` | The title plate, and the floor it is held for. |
 | `Intro/IntroMovie.swift` | The opening film: a queue of shots, and two ways out of it. |
@@ -1880,6 +2100,33 @@ long-standing limitation, not a setup problem.
 >
 > The five are kept because they are still the right list for *the SDK moving
 > under the project*, which is the other way this breaks.
+>
+> **What to look at first in the drop-boundaries work**, which was written in
+> the container and so reached Xcode without a compiler having seen it. By that
+> lesson's own reckoning it is both risky edits at once:
+>
+> - **New `@MainActor` methods** — `Occluder.hides` and `Occluder.isPointedAt`,
+>   which read `CameraRig.eye`. Exactly the shape that caught
+>   `assertSpacing`. If isolation propagates somewhere unwanted, mark the caller
+>   the way that one had to be.
+> - **New stored properties with defaults** — `Surfaces.occluders` and
+>   `innerWalls`, which the synthesised memberwise initialiser has to carry in a
+>   struct two rooms construct positionally. `innerWalls` is spelled `= nil`
+>   explicitly for that reason. If it bites, write the initialiser out by hand
+>   and every call site stays as it is.
+> - **One new runtime API** — `Entity.visualBounds(relativeTo:)` in
+>   `CarryController.pickUp`. If it has moved, the fallback is a radius of zero,
+>   which is exactly the behaviour before it existed.
+>
+> **The geometry is not correct-by-construction**, which is the part a build
+> would not have caught either way: every sweep was run in Python against the
+> committed camera before being written down. That is how Nina came off the
+> occluder list, how "no work surface is shadowed" became a measurement rather
+> than a claim, and how the chimney got onto the list at all. What was swept: no
+> work surface or home spot shadowed (2 mm grid); a carried prop never inside a
+> solid over 26,240 drag directions × four prop sizes; every prop's body stops
+> exactly on the plaster; no home position moves when picked up; the tin held at
+> Otto's lip stays clear of the dome at every push.
 
 Five places are the most likely to want a fix, and all five are one line:
 

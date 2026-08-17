@@ -263,19 +263,30 @@ the wall of frames reads, how a wish card scans — all valid. Soft edges, poole
 AO, terracotta palette — all wrong now. Regenerating them against the current
 locked references is a later job, and cheap.
 
-> **Plate 11 is the exception: it has been regenerated, and it is a disco.**
-> `GAMEPLAY.md` §6.5 became a discotheque on the owner's call, 2026-08-17, and
-> the finale is the party — so the old plate was wrong twice over, in style *and*
-> in subject, and the cheapest fix was one credit. The new one is against the
+> **Four of the six are now superseded, 2026-08-17.** Plate 7 was replaced by
+> `plates/07-decorating-roombox-v2.png` when the decorating room was built.
+> Plates **6 and 10** are replaced by [`bakkerij/`](bakkerij/) — the wall of
+> frames, the shop door, the blind, the order hook and the room box, all in the
+> locked style and all drawn to `GAMEPLAY.md` §6.1's required action, which did
+> not exist when plate 6 was made. And **plate 11 has been regenerated, and it is
+> a disco**: §6.5 became a discotheque on the owner's call the same day and the
+> finale is the party, so the old plate was wrong twice over — in style *and* in
+> subject — and the cheapest fix was one credit. The new one is against the
 > current scenes reference: a mirror ball, a lit pastel floor, a DJ at a booth,
 > the cake on its table and the wall of frames filled and glowing. Its row below
-> is the new job.
+> is the new job. All the old files stay as the record.
 >
-> **Plate 4 is now superseded but kept.** It is the old party — bunting, a table,
+> **Plate 4 is superseded but kept.** It is the old party — bunting, a table,
 > five guests, no disco — and it is kept because it is one of the five originals
 > the direction was chosen from and because §3's note about *how* it was produced
 > is still true of it. The party's live plates are
 > [`feest/`](feest/).
+>
+> **Plates 8 and 9 are still clay and still unreplaced.** They are the cast
+> line-up and the cake variants, neither of which is being built yet. Plate 9 has
+> one live dependency: `versieren/taart-onversierd.png` now covers the *bare*
+> cake that `GAMEPLAY.md` §6.4's `insmeren` starts from, which is the one cake
+> state plate 9 never drew.
 
 | # | Subject | File | Aspect | Seed | Job ID |
 |---|---|---|---|---|---|
@@ -383,6 +394,23 @@ drop the last one and it pools shadow into the corners.
 
 Keep `[PROPS]` short. Every extra prop named is another chance for the model to
 add fine detail the style does not want.
+
+**Short *and* early.** `[PROPS]` is a trailing clause, and a trailing clause is
+the first thing flux drops: five prop groups listed there, after "no fine detail,
+no clutter", returned a room box with **two walls, a floor and nothing else** —
+no failure message, just an unfurnished room (`bakkerij/README.md`, 2026-08-17).
+Cutting to three and moving them into the subject sentence — *"…of the inside
+corner of a small bakery shop, furnished: the whole left wall is …, a counter
+stands …, and a door is set into …. These three things fill the room and must all
+be clearly visible."* — fixed it in one attempt. It is the same shape as the
+smooth-clay fix in `versieren/README.md`: **when a room box loses something, say
+it earlier and say it as the subject.**
+
+**And never make a count the thing you are not asking about.** Twelve frames in a
+room box came back as six; twelve characters in a cast sheet came back as eight
+(plate 8); the same twelve frames asked for as a *studio shot of the wall itself*
+came back as twelve, correctly arranged. flux miscounts whenever the count is not
+the subject of the picture. If a number matters, give the number its own plate.
 
 ---
 

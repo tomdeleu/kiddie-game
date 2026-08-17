@@ -135,6 +135,15 @@ whole instruction.** `Engine/Halo.swift`.
   lighting all eight is not an instruction. The rule generalises: **light the end
   that is a fact, and let the idle shimmer cover the end that is a choice** —
   which is also, exactly, where `GAMEPLAY.md` §6.2 puts the wish hint.
+- **When *both* ends are a choice, nothing is lit at all.** The rule above has a
+  floor, and `GAMEPLAY.md` §6.1's `kiezen` step is the first thing to reach it:
+  she picks one of eleven grey ghosts off the wall, and there is no factual end
+  anywhere in the step to put a halo on. So the step carries **no halo**, and the
+  remaining ghosts shimmer on a slow rolling wave instead. That is not a hole in
+  the contract — it is the contract read honestly. One lit ghost would say *that
+  one is the answer*, which is false; eleven lit ghosts are not an instruction.
+  **A step with no fact in it has nothing to point at, and pointing anyway is
+  worse than not pointing.**
 - **It disables nothing.** Every other prop still answers a tap while it is on.
 
 ### Do not re-derive the colour
@@ -365,18 +374,76 @@ That distinction is load-bearing and cost two failed attempts:
 
 Deciding the surface from the ray alone breaks the loop properly, so the prop's
 XZ can be read off that same ray at whatever height it has eased to. **Nothing
-in the chain points backwards.** It also makes losing a prop behind the table
+in the chain points backwards.** It also makes losing a prop behind a *surface*
 impossible by construction: a hidden floor point is exactly one whose sightline
-crosses the table top, and that sightline *is* this ray.
+crosses that surface, and that sightline *is* this ray.
+
+**That argument is exactly as wide as `rects`, and reading it as "props cannot
+be lost" is a trap the kitchen fell into.** A surface is the only thing the ray
+test can hand back, so it protects you from the table and the counter and from
+nothing else. Anything solid that is *not* standable — an oven, a bush, a
+character — the ray sails straight through, and the prop lands on the floor
+behind it where the fixed camera shows her nothing. De Keuken shipped with three
+of those (owner, 2026-08-16: below the table, behind the oven, below the back
+counter) and 46% of its reachable floor turned out to be in one shadow or
+another.
 
 Two more rules:
 
 - **Nothing gets put back.** A prop dropped somewhere that is not a target
   settles onto whatever is under it and stays. The rolling pin can live on the
-  floor. The single exception is `isOutOfSight` — the patch of floor the fixed
-  camera cannot see behind the furniture, derived from the camera and the table
-  rather than hardcoded — where a drop floats home, because that is a place she
-  could put something and genuinely not get it back.
+  floor. The single exception is `isOutOfSight`, where a drop floats home to
+  where it was picked up, because that is a place she could put something and
+  genuinely not get it back. **List every solid thing in the room in
+  `Surfaces.occluders`** — a box with a height, derived from the furniture's own
+  constants rather than hardcoded — and let that test answer for all of them.
+  Two things it is easy to get wrong, both paid for once:
+  - ask about **where the prop will come to rest**, not where her finger let go.
+    They are `surfaces.lift` apart, and only one of them is the position she
+    will be hunting for afterwards.
+  - **check the answer against the work surfaces before believing it.** Sweep
+    every rect at a few millimetres and confirm nothing on one comes back
+    hidden; a drop that floats off a worktop is a worse bug than the one being
+    fixed. That sweep is what kept Nina off De Keuken's list — she hides a real
+    strip of floor, but her hat also crosses the sightline to a corner of the
+    counter, and she moves.
+- **Occluders are furniture, not cast.** A fixed box is a description of a table
+  and a guess about a character, who squashes, bobs and wobbles. Prefer leaving
+  a character out and documenting the strip they hide.
+- **The same list says what a carried prop goes _over_.** `pointedAt` answers
+  with surfaces, so anything solid that cannot be stood on is answered for by
+  the floor underneath it — and a prop dragged across it goes straight through.
+  De Keuken shipped that too (owner, 2026-08-17: "it just clips"), one day after
+  the drop was fixed, which is the tell that these are one problem: **the drop
+  and the drag have to agree about what is solid.** `Surfaces.carryOverTop`
+  returns the tallest occluder top the ray meets and `CarryController` takes the
+  higher of that and the surface. It cannot cost a landing, because every snap
+  test is XZ-only — riding higher only changes what she sees on the way.
+  - Use the **top**, not the point where the sightline grazes the box. Riding
+    the entry point slides a prop prettily up a dome and leaves it embedded in
+    the side of a table.
+  - Include anything that sticks up. Otto's chimney is 35 mm taller than his
+    dome and changes nothing about what floats home, but a prop lifted to clear
+    the dome goes through his hat without it.
+  - A prop that has to reach *into* an occluder — the tin going into Otto's
+    mouth — goes through `pointedExtra`, which is asked first. Share one
+    predicate between that and the drop's snap test so the two cannot disagree
+    about where the opening is. **Riding at the opening's height is only half of
+    it**: the drop zone is deliberately generous, so without a matching
+    `carriedClamp` she can push the prop straight on through the opening and
+    watch it disappear inside. Hold it at the lip and pushing harder settles it
+    in, which is what putting a tin in an oven feels like.
+- **A prop is not a point, and `clamp` clamps its origin.** De Keuken's bounds
+  stop at 13 mm from the plaster, which is fine for a berry and buries a third
+  of the rolling pin (owner, 2026-08-17). Set `Surfaces.innerWalls` to the
+  walls' inner faces; `CarryController` measures what it is holding with
+  `visualBounds` and keeps that much clear.
+  - **Do not fix it by pulling `minX`/`minZ` in.** Props start against the walls
+    — on shelves, in pots — so a bound tight enough for the biggest prop yanks
+    the smallest one sideways the moment she grabs it. The clearance has to be
+    per prop.
+  - Only the two walls. The other two sides are open, and a prop overhanging the
+    slab there is one she can still see and still pick up.
 - **Every tap is also a zero-length drag.** Without a "barely moved" check,
   poking the berry on the top shelf knocks it to the floor, because that is what
   is under a shelf.
@@ -463,6 +530,15 @@ cakes; **the decorating room's is inviting from the first frame**, because it
 has no required action to wait for. `refreshDoorInvitation` still exists there
 and is nearly empty, which is the right shape — a room with nothing to gate on
 should say so in the function that would have gated it, not by deleting it.
+
+> **And it stays inviting from the first frame even now that the room has a
+> required action** (`GAMEPLAY.md` §6.4, decided 2026-08-17). That looks like a
+> contradiction and is the whole point of the design: Versieren's steps
+> **observe rather than gate**. They read what she has already done so Nina has
+> something to answer; they never decide whether the door works. So
+> `refreshDoorInvitation` stays nearly empty while `applyStep` grows — which is
+> the shape to copy for any room that wants an arc without a gate. A step machine
+> and a locked door are separate things, and only one of them is forbidden here.
 
 > **Het Feest has no door at all, and that is the third variation rather than a
 > gap.** `GAMEPLAY.md` §6.5 has always said *she ends the party by tapping the

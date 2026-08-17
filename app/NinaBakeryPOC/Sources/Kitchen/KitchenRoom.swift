@@ -201,17 +201,58 @@ final class KitchenRoom: Room {
             if let crate = self.crate { found.append((crate, 0.022, 0.027)) }
             return found
         }
-        // **The cake plank, the room's one exception to the surface model.** It
-        // hangs above the back of the counter, so as a real surface it would
-        // shadow the counter and fling the sink shelf-high. Only the cake, and
-        // only on the round's last step, can ever reach it.
+        // **The room's two exceptions to the surface model**, both of them a
+        // place exactly one prop can reach and nothing else may.
+        //
+        // The **cake plank** hangs above the back of the counter, so as a real
+        // surface it would shadow the counter and fling the sink shelf-high.
+        // **Otto's mouth** is the opposite problem: he is an occluder, so
+        // `Surfaces.carryOverTop` lifts everything pointed at him clear of his
+        // dome, and the one prop that is supposed to go *inside* him needs to be
+        // let through. The cake needs no step test — it does not exist before
+        // `.klaar`; the tin exists all round, so it carries one.
         carrier.pointedExtra = { [weak self] anchor, entity in
-            guard let self, entity === self.cake else { return nil }
-            let plankHeight = KitchenLayout.cakePlankY + 0.004
-            guard KitchenLayout.nearPlank(RoomBox.pointOnRay(through: anchor,
-                                                       atHeight: plankHeight))
-            else { return nil }
-            return plankHeight
+            guard let self else { return nil }
+            if entity === self.cake {
+                let plankHeight = KitchenLayout.cakePlankY + 0.004
+                guard KitchenLayout.nearPlank(RoomBox.pointOnRay(through: anchor,
+                                                           atHeight: plankHeight))
+                else { return nil }
+                return plankHeight
+            }
+            // **Into Otto's mouth rather than over his head.** Otto is an
+            // occluder, so the carry rule lifts anything pointed at him clear of
+            // his dome — which is right for every prop in the room except the
+            // one whose whole job is to go inside him, and only while he is
+            // open. Asked before the occluders, so this wins where it applies.
+            if entity === self.tin?.root, self.state.step == .inOven {
+                let mouthHeight = KitchenLayout.ovenMouthFloorY
+                guard KitchenLayout.nearOvenMouth(
+                    RoomBox.pointOnRay(through: anchor, atHeight: mouthHeight))
+                else { return nil }
+                return mouthHeight
+            }
+            return nil
+        }
+        // **And the tin stops at the lip once it is there.**
+        //
+        // Riding at mouth height is only half of putting a tin in an oven; the
+        // other half is that it does not keep going. The mouth zone is 81 mm
+        // deep because the *drop* has to be forgiving, so without this she could
+        // push the tin on through the arch and watch it disappear inside Otto's
+        // dome — visible for a moment, then gone, which is exactly the "difficult
+        // to position" the pocket was deepened for (owner, 2026-08-17).
+        //
+        // Only z, and only forwards. Sideways is free, pulling it back out is
+        // free, and at the mouth plane there is no dome to slide into: the shell
+        // starts 22 mm further back. The same `nearOvenMouth` governs the ride,
+        // this hold and the drop, so all three agree about where the mouth is.
+        carrier.carriedClamp = { [weak self] position, entity in
+            guard let self, entity === self.tin?.root, self.state.step == .inOven,
+                  KitchenLayout.nearOvenMouth(position) else { return position }
+            var held = position
+            held.z = max(held.z, KitchenLayout.ovenMouth.z)
+            return held
         }
         // The same exception asked position-based, which is what the halo needs
         // so its ring climbs onto the plank with the cake.
@@ -1457,7 +1498,7 @@ final class KitchenRoom: Room {
         // Otto only takes it once it has batter in it. Before that she can
         // carry the tin around all she likes and put it down anywhere.
         guard state.step == .inOven,
-              RoomBox.distanceXZ(tin.root.position, KitchenLayout.ovenMouth) <= 0.081 else {
+              KitchenLayout.nearOvenMouth(tin.root.position) else {
             settle(tin.root, missed: state.step == .inOven)
             return
         }
