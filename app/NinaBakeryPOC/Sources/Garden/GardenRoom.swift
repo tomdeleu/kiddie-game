@@ -437,12 +437,23 @@ final class GardenRoom: Room {
                 target.onTap = { [weak self] in self?.tapPuddle(index) }
             }
         }
+        // **The marker rides the canopy, not the base.** Both of these name a
+        // thing whose mass is in the air, and she taps the leaves. The tree's
+        // lift moved with it when it grew (`GardenProps.tree`) — 115 mm is the
+        // middle of the new canopy, where 75 mm was the middle of the old one
+        // and is now bare trunk. Its radius grew with it too, from the 36 mm
+        // every prop gets to 42: the canopy is 108 mm across and a target a
+        // third of the prop's width inside a prop that big reads as a dead
+        // zone. The bush is untouched, and the two stay 136 mm apart as the
+        // camera sees them (`RoomBox.screenSeparation`) against 78 mm of
+        // combined radius, so neither can steal the other's tap.
         for (index, spot) in [GardenLayout.treeSpot, GardenLayout.bushSpots[0]].enumerated() {
             let marker = Entity()
             marker.name = "Greenery\(index)"
-            marker.position = spot + [0, index == 0 ? 0.075 : 0.020, 0]
+            marker.position = spot + [0, index == 0 ? 0.115 : 0.020, 0]
             root.addChild(marker)
-            touch.register("greenery\(index)", entity: marker, radius: 0.036,
+            touch.register("greenery\(index)", entity: marker,
+                           radius: index == 0 ? 0.042 : 0.036,
                            planeY: spot.y) { target in
                 target.onTap = { [weak self] in
                     self?.sayName(index == 0 ? Line.Dit.boom : Line.Dit.struik,
