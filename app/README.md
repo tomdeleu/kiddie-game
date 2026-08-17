@@ -2163,11 +2163,41 @@ room must resemble a discoteque with lights and a DJ. And of course cakes and
 friends."*
 
 A mirror ball on a cord, throwing eight pools of light that circle the floor. A
-4×4 grid of light-up tiles. Five coloured lamps on two bars with beams reaching
-down to the dance floor. A DJ behind a booth with two turning decks and a glowing
-front panel. A stack of speakers whose cones push on the beat. Six friends
-dancing. Her cake, decorated exactly as she left it, on a table under a light.
-And **six big pads along the open front edge**, one per instrument.
+6×6 grid of light-up tiles covering four fifths of the floor. Five coloured lamps
+on two bars with beams reaching down onto it. A DJ behind a booth with two
+turning decks and a glowing front panel. A stack of speakers whose cones push on
+the beat. Six friends dancing. Her cake, decorated exactly as she left it, on a
+table under a light. And **six big pads along the open front edge**, one per
+instrument.
+
+### The room box plate overruled two things the room had already got wrong
+
+Owner's call on `references/feest/roombox.png`, after the room was built:
+*"I especially like this one."* Held up against it, two numbers were wrong, and
+both were wrong in the same direction — too timid.
+
+**The lit floor was a rug.** It was 4×4 at 137 mm, sitting in the middle of a
+460 mm room, on the strength of `references/feest/dansvloer.png` — which had been
+asked for a 4×4 grid and had delivered *four slabs*, so it never knew the count
+in the first place. In the room box the tiles run from the back corner nearly to
+the near edges, and that is what makes the picture read as a disco at all. It is
+now 6×6 at 369 mm with a 16–33 mm border of plain floor, which the two end pads
+need anyway: at x = 0.228 they would otherwise straddle the last tile's edge, and
+a button half on a lit tile looks like a mistake rather than like a button.
+
+**The mirror ball was a tenth of the room and should be a quarter.** 44 mm → 60,
+which is still a small prop next to Otto's 124 mm dome. It is the object that
+says *disco* before anything has moved.
+
+Two smaller things came out of the same look: the tile colours are indexed
+`row * 2 + column` rather than flat, because six colours on a six-wide grid puts
+the same colour down every column and that is a barcode; and one tile in four is
+lit at a time rather than one in three, because a third of 36 tiles is most of
+the floor rather than a pattern travelling across it.
+
+**This is the third time a room box has overruled a studio plate** — the garden
+has the other three. The rule that keeps falling out: *a prop plate knows what a
+thing is made of; only the room knows how big it should be.*
 
 **The whole room is one number, and the number is hers.** `FeestBeat` turns the
 interval between her taps into a period, and the guests, the ball, the tiles, the
@@ -2342,6 +2372,12 @@ rides on a tap that lands on the empty floor.
   work the mirror would have done. The regenerated finale plate did not carry the
   "no mirrored chrome" clause and came back with a silver ball, which is the one
   thing in that picture off the direction.
+- **A beam is as long as its lamp is far away.** It was a constant 175 mm, which
+  was right for none of the five: the back lamps are 251–282 mm from the spot they
+  aim at and the two on the left wall are 291–294, so every beam stopped 75–120 mm
+  above the floor and hung there like a stalactite. `FeestProps.lamp` derives the
+  length from `simd_distance(origin, target)` now. What sells a beam is the pool
+  at the end of it landing on something.
 
 ### What it owes
 

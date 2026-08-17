@@ -561,10 +561,12 @@ final class FeestRoom: Room {
         let side = FeestLayout.tilesPerSide
         for (index, tile) in tiles.enumerated() {
             let row = index / side, column = index % side
-            let colour = flashColour ?? FeestLayout.discoColour(index)
-            // A diagonal band that walks across the floor. Three of sixteen lit
-            // at a time, which is what `references/feest/dansvloer.png` shows.
-            let onDiagonal = (row + column + beat.count) % 3 == 0
+            let colour = flashColour ?? FeestLayout.tileColour(row: row, column: column)
+            // A diagonal band that walks across the floor. **One tile in four,
+            // not one in three** — at 4×4 a third of the floor lit was a
+            // scattering, and at 6×6 it is most of the floor, which is a lit
+            // floor rather than a pattern travelling across one.
+            let onDiagonal = (row + column + beat.count) % 4 == 0
             let on = flashColour != nil || onDiagonal
             tile.model?.materials = [on ? FeestProps.lit(colour, 0.9)
                                         : Palette.material(colour)]
@@ -877,9 +879,12 @@ final class FeestRoom: Room {
                        size: 0.0022, speed: 0.06, life: 0.5, glow: 1)
         sound.play(.sparkle, volume: 0.22, rate: 1.4)
 
+        // **`tileGridCentre`, not `floorCentre`.** They were the same point until
+        // the lit floor grew to fill the room, and this is the one place that
+        // would have gone on quietly asking about the old, smaller square.
         let half = FeestLayout.danceFloorSize / 2
-        let onTheFloor = abs(world.x - FeestLayout.floorCentre.x) <= half
-            && abs(world.z - FeestLayout.floorCentre.y) <= half
+        let onTheFloor = abs(world.x - FeestLayout.tileGridCentre.x) <= half
+            && abs(world.z - FeestLayout.tileGridCentre.y) <= half
         if onTheFloor, Int.random(in: 0..<3) == 0 {
             voice.say(FeestLine.ditDansvloer, priority: .low)
         }

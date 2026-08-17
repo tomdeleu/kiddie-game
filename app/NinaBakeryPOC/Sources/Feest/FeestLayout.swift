@@ -51,12 +51,31 @@ enum FeestLayout {
     /// aim at, and the guests stand around.
     static let floorCentre = SIMD2<Float>(0.020, -0.030)
 
-    /// **4×4, which is what `references/feest/dansvloer.png` shows** and what the
-    /// room box plate puts in the middle of the room. Sixteen tiles is the whole
-    /// disco for sixteen boxes, and it is few enough that a colour change reads
-    /// as a *pattern* rather than as noise.
-    static let tilesPerSide = 4
-    static let tileSize: Float = 0.032
+    /// **The lit floor runs nearly wall to wall, and the room box plate is why.**
+    ///
+    /// It was built 4×4 and 137 mm across, centred on the dance area — a lit rug
+    /// in the middle of a 460 mm room. `references/feest/roombox.png` is
+    /// emphatic that this is wrong: in the plate the tiles cover the floor from
+    /// the back corner to the near edges with a narrow border of plain floor
+    /// left, and **that is what makes the picture read as a disco at all.** A
+    /// small square of light in the middle of a cream floor reads as a rug.
+    ///
+    /// **The room box overruled the studio plate**, which is the same thing that
+    /// happened three times in the garden (`references/garden/README.md`).
+    /// `references/feest/dansvloer.png` was asked for a 4×4 grid and delivered
+    /// four thick slabs — useful for what a tile is *made of*, useless for how
+    /// many there are, and it is the shot with the whole room in it that knows
+    /// the answer to that.
+    ///
+    /// 6×6 at a 62 mm pitch spans 369 mm — four fifths of the room — leaving
+    /// 33 mm of plain floor against the walls and 16 mm at the open edges. **The
+    /// border is deliberate and it is not just margin**: the two end pads reach
+    /// x = 0.228 and would otherwise straddle the last tile's edge, and a button
+    /// half on a lit tile and half off it looks like a mistake rather than like a
+    /// button. The tiles are not targets, props stand on them, and 36 materials
+    /// repainted twice a second is the same order of work sixteen were.
+    static let tilesPerSide = 6
+    static let tileSize: Float = 0.059
     static let tileGap: Float = 0.003
     static var tilePitch: Float { tileSize + tileGap }
     /// Thin, and lying on the floor rather than sunk into it: a tile flush with
@@ -65,11 +84,20 @@ enum FeestLayout {
     static var tileTopY: Float { RoomBox.floorY + tileThickness }
     static var danceFloorSize: Float { Float(tilesPerSide) * tilePitch - tileGap }
 
+    /// **The grid is centred on the room, not on the dance area.** They are two
+    /// different points and conflating them is what put the lit floor off-centre
+    /// enough to read as a rug that had slipped. `floorCentre` is where the
+    /// *dancing* happens — the ball hangs over it, the lamps aim at it, the
+    /// guests stand round it — and it is deliberately back and right of the
+    /// middle so the cake has the near-left corner. The tiles are architecture
+    /// and belong to the room.
+    static let tileGridCentre = SIMD2<Float>(0, 0)
+
     static func tileSpot(_ row: Int, _ column: Int) -> SIMD3<Float> {
         let half = (Float(tilesPerSide) - 1) / 2
-        return SIMD3<Float>(floorCentre.x + (Float(column) - half) * tilePitch,
+        return SIMD3<Float>(tileGridCentre.x + (Float(column) - half) * tilePitch,
                             RoomBox.floorY,
-                            floorCentre.y + (Float(row) - half) * tilePitch)
+                            tileGridCentre.y + (Float(row) - half) * tilePitch)
     }
 
     // MARK: - The six pads
@@ -182,9 +210,16 @@ enum FeestLayout {
     // the camera and the room. The cord simply runs up past the wall tops into
     // the same grey backdrop the garden's fence shows.
 
+    /// **60 mm across, which is bigger than it sounds and is what the plate
+    /// shows.** It started at 44 mm — a sensible size for a prop, and about a
+    /// tenth of the room. In `references/feest/roombox.png` the ball is nearer a
+    /// quarter of the room's width and it is the first thing the eye lands on,
+    /// which is right: it is the object that says *disco* before anything has
+    /// moved. Otto's dome is 124 mm across, so this is still a small prop by the
+    /// standards of the game.
     static let ballCentre = SIMD3<Float>(0.020, 0.180, -0.030)
-    static let ballRadius: Float = 0.022
-    static let ballTouchRadius: Float = 0.030
+    static let ballRadius: Float = 0.030
+    static let ballTouchRadius: Float = 0.036
     /// Where the cord stops being drawn — above the wall top, so it reads as
     /// going somewhere rather than as ending in mid-air.
     static let cordTopY: Float = 0.252
@@ -193,8 +228,8 @@ enum FeestLayout {
     /// which is the one thing a mirror ball is *for* and the reason the ball
     /// itself can be a plain faceted sphere. They turn on the beat.
     static let ballSpotCount = 8
-    static let ballSpotOrbit: Float = 0.115
-    static let ballSpotRadius: Float = 0.013
+    static let ballSpotOrbit: Float = 0.135
+    static let ballSpotRadius: Float = 0.016
 
     // MARK: - The light rig
 
@@ -215,12 +250,16 @@ enum FeestLayout {
     }
     static let lampRadius: Float = 0.030
 
-    /// How far down the beam reaches. It stops at the floor rather than passing
-    /// through it, and it is a `Palette.lightMaterial` cone — the halo's
-    /// material, not the water exception in `Palette.waterMaterial`.
-    static let beamLength: Float = 0.175
+    /// The beam's two radii — at the lens and at the pool it makes on the floor.
+    /// **Its length is not here**: `FeestProps.lamp` derives it from how far that
+    /// lamp actually is from what it is aimed at, because the five of them are
+    /// 251 mm and 294 mm away and one constant was wrong for all of them.
+    ///
+    /// It is a `Palette.lightMaterial` cone — the halo's material, not the water
+    /// exception in `Palette.waterMaterial`. A beam is a light, not a second
+    /// licence to use transparency.
     static let beamTopRadius: Float = 0.008
-    static let beamBottomRadius: Float = 0.030
+    static let beamBottomRadius: Float = 0.032
 
     // MARK: - The cake, on its table
     //
@@ -316,6 +355,21 @@ enum FeestLayout {
 
     static func discoColour(_ index: Int) -> UIColorLike {
         discoColours[((index % discoColours.count) + discoColours.count) % discoColours.count]
+    }
+
+    /// **A tile's own colour, and the reason it is not `row * side + column`.**
+    ///
+    /// The obvious index is the flat one, and with six colours on a six-wide grid
+    /// it puts the same colour down every column — six vertical stripes, which is
+    /// a barcode rather than a dance floor. `row * 2 + column` shears the pattern
+    /// into a shallow diagonal that only repeats every third row, which is what
+    /// `references/feest/roombox.png` looks like.
+    ///
+    /// It lives here rather than at the two call sites because the builder and
+    /// the beat's repaint both need it and **a tile that changes colour when it
+    /// lights up is a tile that looks broken.**
+    static func tileColour(row: Int, column: Int) -> UIColorLike {
+        discoColour(row * 2 + column)
     }
 
     // MARK: - The check that keeps the arithmetic honest

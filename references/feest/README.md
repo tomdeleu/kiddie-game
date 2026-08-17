@@ -80,13 +80,28 @@ of *added light* rather than of *removed light*, which is the halo's lesson
   makes it a booth rather than a sideboard, and it is the cheapest emissive
   surface in the room. Its knobs came back charcoal, which is off-palette; the
   built version uses `woodBrown`.
+- **`roombox.png`, again, and it is the plate that overruled two of the others.**
+  Owner's call on seeing it, 2026-08-17: *"I especially like this one."* Two
+  things in it are load-bearing and neither is in any studio plate. **The lit
+  floor runs nearly wall to wall** — the room was built with a 137 mm 4×4 rug in
+  the middle of a 460 mm floor, which reads as a rug, and it is now 6×6 at
+  369 mm with a border. And **the mirror ball is nearer a quarter of the room's
+  width than a tenth**; it went from 44 mm to 60 mm across, because it is the
+  object that says *disco* before anything has moved.
+  This is the third time in the project a room box has overruled a studio plate
+  (`references/garden/README.md` has the other three). The rule that keeps
+  falling out: **a prop plate knows what a thing is made of; only the room knows
+  how big it is and how much of the frame it should take.**
 - **`discobal.png`** — small square facets, each a slightly different pale tone.
   Asking for "no mirrored chrome, no metal reflections" is what keeps it in the
   palette; the finale plate, which did not carry that clause, came back with a
   proper silver mirror ball and it is the one thing in that picture that is off
   the direction.
-- **`dansvloer.png`** — 4×4, thick tiles, narrow gaps, a few glowing brighter.
-  Built at exactly that count.
+- **`dansvloer.png`** — thick tiles, narrow gaps, a few glowing brighter, and
+  that is *all* it settled. It was asked for a 4×4 grid and delivered **four
+  slabs**, which is the same behaviour as `gasten.png` losing an animal: flux is
+  unreliable about counts and reliable about materials. **The room box overruled
+  it**, and the built floor is 6×6 running nearly wall to wall — see below.
 - **`knoppen.png`** — six round pads, domed glowing tops, one colour each. **A
   row of six survived**, where `buttons/README.md`'s row lost every glyph — the
   difference is that these carry no symbol. The rule is narrower than it looked:

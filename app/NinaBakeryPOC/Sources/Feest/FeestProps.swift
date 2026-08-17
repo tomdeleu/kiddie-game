@@ -58,7 +58,7 @@ enum FeestProps {
         let size = FeestLayout.tileSize
         for row in 0..<FeestLayout.tilesPerSide {
             for column in 0..<FeestLayout.tilesPerSide {
-                let colour = FeestLayout.discoColour(row * FeestLayout.tilesPerSide + column)
+                let colour = FeestLayout.tileColour(row: row, column: column)
                 let tile = RoomBuilder.model(
                     .box([size, FeestLayout.tileThickness, size]),
                     colour, flat: flat, name: "Tegel-\(row)-\(column)")
@@ -252,10 +252,18 @@ enum FeestProps {
         // the lamp. Writing it the way it reads (wide at the bottom) builds a
         // beam that gets narrower the further it travels, which is a searchlight
         // seen from the wrong end.
+        //
+        // **And it is as long as the lamp is far away**, rather than a constant.
+        // A fixed 175 mm was right for nothing: the three back lamps are 251 mm
+        // from the spot they aim at and the two on the left wall are 294 mm, so
+        // every beam in the room stopped between 75 and 120 mm above the floor
+        // and hung there like a stalactite. What sells a beam is the *pool* at
+        // the end of it landing on something.
+        let reach = simd_distance(origin, target)
         let beamGeometry = FacetedMesh.taperedPrism(
             bottomRadius: FeestLayout.beamTopRadius,
             topRadius: FeestLayout.beamBottomRadius,
-            height: FeestLayout.beamLength, sides: 8)
+            height: max(0.02, reach - 0.017), sides: 8)
         let beam = ModelEntity(
             mesh: FacetedMesh.mesh(beamGeometry, flat: flat),
             materials: [Palette.lightMaterial(colour, emission: colour,
