@@ -975,13 +975,35 @@ enum GardenProps {
     /// faceted balls on a straight tapered trunk, not one ball. The plate is
     /// emphatic and it is the better shape — a single sphere on a stick is a
     /// lollipop, and the cluster is the same construction `wolkenroom` uses.
+    ///
+    /// **It was built too small and read as a third bush** (owner, 2026-08-17:
+    /// *"the tree at the top corner must be bigger — now it looks like a bush
+    /// instead of a tree"*). It was: 110 mm tall against a 70 mm fence and a
+    /// 125 mm Nina, with 50 mm of trunk under a canopy 70 mm across. A thing
+    /// shorter than the child looking at it, no taller than the bushes beside
+    /// it are wide, is a shrub whatever shape its leaves are.
+    ///
+    /// **What makes it a tree is the trunk, not the height alone**, so the two
+    /// grew by different amounts. The trunk nearly doubled to 98 mm and the
+    /// canopy grew about half again; the whole tree stands 174 mm, which is
+    /// 2.5× the fence and 1.4× Nina, and **81 mm of bare trunk shows below the
+    /// lowest lobe** — the silhouette a 4-year-old draws when asked for a tree.
+    /// The canopy is 108 mm across, still the plate's wide cluster.
+    ///
+    /// Checked against its neighbours before it grew, because a bigger prop in
+    /// a full corner is a collision waiting to happen: the canopy clears the
+    /// potting bench's backboard by 11 mm at the nearest lobe and passes over
+    /// the 86 mm fence posts entirely, so the overhang `GardenLayout.treeSpot`
+    /// asks for is still an overhang. It reaches ndcY ≈ 0.77 at
+    /// `CameraRig`'s eye — well inside the frame, and the FOV is vertical, so
+    /// that holds on every aspect ratio.
     static func tree(flat: Bool) -> Entity {
         let root = Entity()
         root.name = "Tree"
 
-        let trunk = RoomBuilder.model(.taperedPrism(bottomRadius: 0.0092,
-                                                    topRadius: 0.0072,
-                                                    height: 0.052, sides: 6),
+        let trunk = RoomBuilder.model(.taperedPrism(bottomRadius: 0.0132,
+                                                    topRadius: 0.0094,
+                                                    height: 0.098, sides: 6),
                                       Palette.cream, flat: flat, name: "TreeTrunk")
         root.addChild(trunk)
 
@@ -989,14 +1011,14 @@ enum GardenProps {
         // rather than random: a tree that rebuilds differently every time the
         // flat-shading toggle flips is a tree that moved while she was looking.
         let lobes: [(SIMD3<Float>, Float)] = [
-            ([0, 0.0800, 0], 0.0250),
-            ([0.0195, 0.0680, 0.0080], 0.0180),
-            ([-0.0165, 0.0700, -0.0100], 0.0195),
-            ([0.0070, 0.0665, -0.0195], 0.0170),
-            ([-0.0060, 0.0690, 0.0190], 0.0175),
-            ([0.0150, 0.0865, -0.0110], 0.0160),
-            ([-0.0140, 0.0880, 0.0090], 0.0155),
-            ([0.0020, 0.0950, 0.0030], 0.0145),
+            ([0, 0.1280, 0], 0.0370),
+            ([0.0273, 0.1088, 0.0112], 0.0266),
+            ([-0.0231, 0.1120, -0.0140], 0.0289),
+            ([0.0098, 0.1064, -0.0273], 0.0252),
+            ([-0.0084, 0.1104, 0.0266], 0.0259),
+            ([0.0210, 0.1384, -0.0154], 0.0237),
+            ([-0.0196, 0.1408, 0.0126], 0.0229),
+            ([0.0028, 0.1520, 0.0042], 0.0215),
         ]
         for (i, lobe) in lobes.enumerated() {
             let ball = RoomBuilder.model(.icosphere(radius: lobe.1, subdivisions: 1),

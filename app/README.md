@@ -962,6 +962,38 @@ decision:
   first place. About forty small casters — worth an eye on device, one line to
   undo.
 
+### The tree was a bush, and the trunk is why
+
+Owner, 2026-08-17: *"the tree at the top corner must be bigger — now it looks
+like a bush instead of a tree."* It did. As built it stood **110 mm** against a
+70 mm fence and a 125 mm Nina, and its canopy was 70 mm across — no taller than
+the bushes beside it were wide, and shorter than the child looking at it. That
+is a shrub whatever shape its leaves are.
+
+**The fix is not uniform scale, because what names a tree is the trunk.** The
+trunk nearly doubled to 98 mm; the canopy grew about half again. The whole tree
+is now **174 mm** — 2.5× the fence, 1.4× Nina — and **81 mm of bare trunk shows
+below the lowest lobe**, which is the silhouette a 4-year-old draws when asked
+for a tree. The canopy stayed the wide cluster
+`references/garden/garden-tree.png` is emphatic about, 108 mm across.
+
+Two checks came before the change rather than after it, because a bigger prop in
+an already-full corner is a collision waiting to happen. **Its neighbours**: the
+canopy clears the potting bench's backboard by 11 mm at the nearest lobe, and
+passes over the 86 mm fence posts entirely, so `GardenLayout.treeSpot`'s
+deliberate overhang is still an overhang and not an intersection. **The frame**:
+it reaches ndcY ≈ 0.77 at `CameraRig`'s eye, well short of the top edge — and
+`fovIsVertical` is true, so that margin holds on every aspect ratio rather than
+only on the 4:3 iPad.
+
+**Its tap target moved with it.** The naming marker sat 75 mm up, which was the
+middle of the old canopy and is now bare trunk; it is at 115 mm now, and its
+radius went from the 36 mm every prop gets to 42, because a target a third of
+the prop's width inside a prop 108 mm across reads as a dead zone
+(`CONCEPT.md` §5). The bush's is untouched. The two stay 136 mm apart *as the
+camera sees them* — `RoomBox.screenSeparation`, not `distanceXZ` — against
+78 mm of combined radius, so neither can take the other's tap.
+
 ### The gate says it twice, not three times
 
 `ROOMS.md` §9 has the way out saying the same thing three ways: the leaf off the
