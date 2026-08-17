@@ -61,6 +61,34 @@ At token size the facet count *is* the design, so each one got its own plate.
 | `roomtoefje.png` | `4a271b74-f293-41a6-bd6a-42d0d22da653` | **Three stacked rings tapering to a point**, each ~10-sided | One `lathe` profile. The plate is a ready-made profile table |
 | `sprinkel.png` | `7ffc1674-4b7e-4564-a2e9-29b35ac44835` | Short hexagonal rods with mitred ends, scattered loose | `prism(sides: 6)`, ~4 mm long. The shaker emits **one entity per grain** — Pip's wish is ≥ 8 sprinkles, so they have to be countable |
 
+## The two the required spine added
+
+`GAMEPLAY.md` §6.4 gained a required action on 2026-08-17 — cream it, go all the
+way round it, light one candle, carry it out — and it needs two things nothing
+here had drawn. Same recipe, `flux_2` / `pro` / `1k` / 1:1, one credit each.
+
+| File | Job ID | Step | Reads as |
+|---|---|---|---|
+| `taart-onversierd.png` | `8eb22253-7d8d-4a6a-8b80-cf3809c7dec1` | `insmeren` | **The bare cake.** Three ~14-sided tiers, blush pink / mint / cream, standing on a flat square board with **nothing whatever on them** — no icing, no cream, no toppings |
+| `taartkarretje.png` | `1b60e9d3-e8e2-4dee-9c8c-dc82d1a0c6d7` | `klaar` | A trolley: chunky cream shelves on four square blush pink corner posts, four **mint faceted ball wheels**, one straight push handle off the back |
+
+**The bare cake is the more important of the two**, and it is the plate that
+proves the step. Every other cake in this folder and in
+`../plates/09-cake-variants.png` is already decorated, which is exactly why the
+room had no required action to find: a cake that arrives finished is a cake there
+is no reason to touch. This one arrives wanting something.
+
+Getting it took an unusually blunt prompt — *"entirely bare: no icing, no cream,
+no frosting, no sprinkles, no candles, no fruit, no decoration of any kind
+anywhere on it, nothing on top, plain flat sides"* — because **flux decorates a
+cake unless forbidden six ways.** One "undecorated" is not enough; the word
+"cake" carries icing with it.
+
+Two modelling notes. The trolley came back with **three** shelves where two were
+asked for, which is fine and arguably better — take the proportions and drop a
+shelf. Its wheels are faceted balls rather than discs; at this scale that reads,
+and a ball is cheaper than a disc plus an axle.
+
 ## Toys
 
 | File | Job ID | Reads as | Verdict |
@@ -114,6 +142,12 @@ stool that wobbles when tapped is as good a toy as a cloth that flaps.
 ## Cost
 
 Twenty generations, twenty credits: seventeen keepers, two discarded room-box
-attempts, and one plate cut. Balance is checked with `balance` before and after;
-note that **other sessions on the same account spend from the same balance**, so
-a drop larger than the number of images here is not necessarily this work.
+attempts, and one plate cut. Plus **two more on 2026-08-17** for the required
+spine, both keepers — twenty-two in total.
+
+Balance is checked with `balance` before and after; note that **other sessions on
+the same account spend from the same balance**, so a drop larger than the number
+of images here is not necessarily this work. That is no longer a caution but an
+observed fact: on 2026-08-17 the balance fell 13.1 across a batch of 8, and
+`transactions` showed the other 5 were `Voiceover` spend from a concurrent
+session. **Read `transactions`, not the delta.**

@@ -248,6 +248,19 @@ the wall of frames reads, how a wish card scans — all valid. Soft edges, poole
 AO, terracotta palette — all wrong now. Regenerating them against the current
 locked references is a later job, and cheap.
 
+> **Two of the six are now superseded, 2026-08-17.** Plate 7 was replaced by
+> `plates/07-decorating-roombox-v2.png` when the decorating room was built.
+> Plates **6 and 10** are replaced by [`bakkerij/`](bakkerij/) — the wall of
+> frames, the shop door, the blind, the order hook and the room box, all in the
+> locked style and all drawn to `GAMEPLAY.md` §6.1's required action, which did
+> not exist when plate 6 was made. Both old files stay as the record.
+>
+> **Plates 8, 9 and 11 are still clay and still unreplaced.** They are the cast
+> line-up, the cake variants and the finale, none of which is being built yet.
+> Plate 9 has one live dependency: `versieren/taart-onversierd.png` now covers
+> the *bare* cake that `GAMEPLAY.md` §6.4's `insmeren` starts from, which is the
+> one cake state plate 9 never drew.
+
 | # | Subject | File | Aspect | Seed | Job ID |
 |---|---|---|---|---|---|
 | 6 | **The wall of twelve frames** — hub and level select | `plates/06-wall-of-frames.png` | 1:1 | `71143` | `b63007ac-96ff-46c0-9584-91ea8e2421ea` |
@@ -348,6 +361,23 @@ drop the last one and it pools shadow into the corners.
 
 Keep `[PROPS]` short. Every extra prop named is another chance for the model to
 add fine detail the style does not want.
+
+**Short *and* early.** `[PROPS]` is a trailing clause, and a trailing clause is
+the first thing flux drops: five prop groups listed there, after "no fine detail,
+no clutter", returned a room box with **two walls, a floor and nothing else** —
+no failure message, just an unfurnished room (`bakkerij/README.md`, 2026-08-17).
+Cutting to three and moving them into the subject sentence — *"…of the inside
+corner of a small bakery shop, furnished: the whole left wall is …, a counter
+stands …, and a door is set into …. These three things fill the room and must all
+be clearly visible."* — fixed it in one attempt. It is the same shape as the
+smooth-clay fix in `versieren/README.md`: **when a room box loses something, say
+it earlier and say it as the subject.**
+
+**And never make a count the thing you are not asking about.** Twelve frames in a
+room box came back as six; twelve characters in a cast sheet came back as eight
+(plate 8); the same twelve frames asked for as a *studio shot of the wall itself*
+came back as twelve, correctly arranged. flux miscounts whenever the count is not
+the subject of the picture. If a number matters, give the number its own plate.
 
 ---
 

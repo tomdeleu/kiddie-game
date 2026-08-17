@@ -135,6 +135,15 @@ whole instruction.** `Engine/Halo.swift`.
   lighting all eight is not an instruction. The rule generalises: **light the end
   that is a fact, and let the idle shimmer cover the end that is a choice** —
   which is also, exactly, where `GAMEPLAY.md` §6.2 puts the wish hint.
+- **When *both* ends are a choice, nothing is lit at all.** The rule above has a
+  floor, and `GAMEPLAY.md` §6.1's `kiezen` step is the first thing to reach it:
+  she picks one of eleven grey ghosts off the wall, and there is no factual end
+  anywhere in the step to put a halo on. So the step carries **no halo**, and the
+  remaining ghosts shimmer on a slow rolling wave instead. That is not a hole in
+  the contract — it is the contract read honestly. One lit ghost would say *that
+  one is the answer*, which is false; eleven lit ghosts are not an instruction.
+  **A step with no fact in it has nothing to point at, and pointing anyway is
+  worse than not pointing.**
 - **It disables nothing.** Every other prop still answers a tap while it is on.
 
 ### Do not re-derive the colour
@@ -521,6 +530,15 @@ cakes; **the decorating room's is inviting from the first frame**, because it
 has no required action to wait for. `refreshDoorInvitation` still exists there
 and is nearly empty, which is the right shape — a room with nothing to gate on
 should say so in the function that would have gated it, not by deleting it.
+
+> **And it stays inviting from the first frame even now that the room has a
+> required action** (`GAMEPLAY.md` §6.4, decided 2026-08-17). That looks like a
+> contradiction and is the whole point of the design: Versieren's steps
+> **observe rather than gate**. They read what she has already done so Nina has
+> something to answer; they never decide whether the door works. So
+> `refreshDoorInvitation` stays nearly empty while `applyStep` grows — which is
+> the shape to copy for any room that wants an arc without a gate. A step machine
+> and a locked door are separate things, and only one of them is forbidden here.
 
 ### The door says it three ways at once
 
