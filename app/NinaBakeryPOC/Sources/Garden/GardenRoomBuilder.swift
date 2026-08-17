@@ -32,10 +32,12 @@ enum GardenRoomBuilder {
         // rose bed and a rose fence sitting on a rose floor. With the walls gone
         // the ground is most of the frame, and `roombox-v2.png` — the plate
         // generated to answer exactly that question — comes back with a pale
-        // mint lawn and a cream *path*. It is right, and for the reason the
-        // props README already records twice: **a plate cannot answer a question
-        // about the room it is not standing in**, and only the room-box plate is
-        // standing in this one.
+        // mint lawn and a cream *path*. The lawn is right, and for the reason
+        // the props README already records twice: **a plate cannot answer a
+        // question about the room it is not standing in**, and only the
+        // room-box plate is standing in this one. The path the same plate drew
+        // at the gate was built and then removed on the owner's call,
+        // 2026-08-17 — see `GardenRoom.refreshDoorInvitation`.
         //
         // `mintLight` rather than `mint` because the plants' leaves are `sage`
         // and `mint`; the grass has to be the palest green in the room or the
@@ -50,34 +52,12 @@ enum GardenRoomBuilder {
         slab.excludeFromShadowCasting()
         ground.excludeFromShadowCasting()
 
-        root.addChild(buildPath(flat: flat))
         root.addChild(buildBed(flat: flat))
         root.addChild(buildBench(flat: flat))
         root.addChild(buildFence(flat: flat))
         root.addChild(buildGreenery(flat: flat))
 
         return root
-    }
-
-    /// The worn sandy path leading out through the gate.
-    ///
-    /// One flat polygon, in the cream the ground used to be. See
-    /// `GardenLayout.pathCentre` for why it is worth having: the gate lost the
-    /// third of `ROOMS.md` §9's three cues, and a patch of trodden ground is the
-    /// one way left to say *there is somewhere to go* without emitting anything.
-    static func buildPath(flat: Bool) -> Entity {
-        let path = model(.prism(radius: GardenLayout.pathRadius, height: 0.0016,
-                                sides: 7),
-                         Palette.cream, flat: flat, name: "Path")
-        path.position = [GardenLayout.pathCentre.x,
-                         GardenLayout.floorY + 0.0002,
-                         GardenLayout.pathCentre.y]
-        // Turned off-axis so its seven sides do not line up with the fence or
-        // the bed — a path that shares an edge angle with the furniture reads as
-        // a tile rather than as ground.
-        path.orientation = simd_quatf(angle: 0.32, axis: [0, 1, 0])
-        path.excludeFromShadowCasting()
-        return path
     }
 
     // MARK: - The bed

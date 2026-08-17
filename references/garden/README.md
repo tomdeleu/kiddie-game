@@ -84,10 +84,15 @@ anecdote.
 - **The ground and the fence** are the third and the biggest.
   `roombox-v2.png` — asked only for "a garden with a fence instead of walls" —
   came back with a **pale mint lawn**, a **cream fence** and a **sandy path**,
-  where the room had a cream floor and a rose fence. It is right on all three:
-  with the walls gone the ground became most of the frame, cream ground under a
-  cream fence is one colour, and the path is what gives the gate somewhere to
-  lead now that it has no lit doorway behind it.
+  where the room had a cream floor and a rose fence. It is right on the first
+  two: with the walls gone the ground became most of the frame, and cream ground
+  under a cream fence is one colour. **The path it was wrong about, and the room
+  built it anyway** — it went in as the thing that gave the gate somewhere to
+  lead now that it has no lit doorway behind it, and came out again on the
+  owner's call, 2026-08-17, because on screen it was an unnameable pale blob on
+  the lawn rather than ground. Which sharpens the rule this list is about: a
+  plate is evidence about **colour and material**, where it has been right four
+  times, and not about **what objects the room contains**.
 
 - **The pond's stones** are the fourth, and the quickest to settle: sandy
   boulders on grey in `pond.png`, near-white ones on a mint lawn in

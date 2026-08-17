@@ -564,10 +564,15 @@ None of them a word or an arrow, because she cannot read one.
 > straight through it already. It keeps the leaf off the latch and the ring at
 > the threshold, and drops the middle one — owner's call, and
 > `Props.Doorway.glow` is `Optional` to say so rather than being a hidden entity
-> nobody assigns to. What partly stands in for it emits nothing at all: **a worn
-> sandy path leading out through the gate**, which is how ground says somebody
-> goes this way. Take the third cue as *required wherever it is possible*, not as
-> a count.
+> nobody assigns to. Take the third cue as *required wherever it is possible*,
+> not as a count.
+>
+> **And nothing has to stand in for it.** A worn sandy path leading out through
+> the gate did, on the argument that ground somebody has walked on is how the
+> floor says *this way* without emitting anything. It was removed on the owner's
+> call, 2026-08-17: the substitute was reasoning about the rule rather than
+> about the room, and a flat cream polygon lying on the lawn read as a scuff
+> mark, not as a path. Two cues, plainly, beats three with one of them faked.
 
 - **the leaf comes off the latch** and rests ajar at 11° — the smallest angle
   that still shows a slice of the light behind it at this camera. The point is
