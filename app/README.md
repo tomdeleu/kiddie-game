@@ -2531,6 +2531,80 @@ inside the plaster. The booth came forward 30 mm instead, because he has nowhere
 to go and the room needs depth behind him. Their footprints overlap by 10 mm now,
 which is a DJ standing *at* his decks rather than behind them.
 
+### Four things the first look on device caught
+
+All owner's calls, 2026-08-17, after the room was running in Xcode. Every one of
+them is a case of the same thing: **an emissive surface loses its colour**, or a
+number that was checked against the floor plan rather than against the screen.
+
+**The mirror ball was a blob.** It was one 320-face icosphere painted a single
+glowing cream, with six 7 mm squares stuck round the equator — at 60 mm across
+that is a smooth pale ball with specks on it. `references/feest/discobal.png`
+shows what it should be and always did: a **mosaic**, twelve by seven small quads,
+each a different pale tone with a faint seam between them. It is built that way
+now, one `ModelEntity` per tile, because one mesh can only have one material.
+
+And **the tiles are matte**, which is the part worth keeping. The ball glowing is
+exactly what made it featureless: an emissive surface goes above white and loses
+its own hue, so twelve different tones came back as one. A mirror ball is not a
+lamp — it is a matte thing that *throws* light, and what it throws is `ballSpots`
+on the floor. A rotating handful of tiles lights on each beat, which is the
+sparkle, and the other eighty are shaded by their facets like everything else.
+
+**The cord ended in mid-air.** It stopped at y = 0.252, which is above the wall
+tops and sounds like enough. It is not: at this eye and a 26° vertical FOV a point
+over the ball only leaves the top of the frame at **y = 0.308**, so 56 mm of cord
+was hanging inside the shot and the ball read as floating. It runs to 0.45 now —
+far past what the arithmetic needs, because the frame edge moves with the viewport
+aspect and a cord that is *just* out of shot is one iPad away from being back in.
+
+**The dance floor was white.** Same arithmetic as the ball, on the largest surface
+in the room: a pale pastel at `glowPeak` (2.34 emissive) is above white by the time
+it is tonemapped, so all six colours came back identical. Two changes together fix
+it and neither alone would — the intensity comes down to `FeestProps.floorGlow`
+(0.85, a third of what the lamps use), and a tile lights in a **deep** colour
+rather than a pale one, so there is chroma left to survive the exposure.
+
+It is also **random now** rather than a stepping diagonal. The pattern was
+legible, and after two beats you could see the rule — at which point it stopped
+being a disco and became a screensaver. Every tile rolls for itself on every beat,
+two in five lit. The one moment it is not random is a pad tap, which paints the
+whole floor that pad's colour: that is the floor *answering her finger*, and an
+answer that looked like noise would not read as an answer.
+
+**There was one speaker, and a disco has two.** The second sits in the far corner
+and is deliberately **scenery** — every position in that corner fails the screen
+check against the mirror ball by 31–45 mm where two radii need 64, because the
+ball hangs over the middle of the floor and the back-left corner is almost exactly
+behind it along the view direction. Shrinking the ball's target to fit is the
+wrong trade; it is a toy she has to be able to hit. So tapping the right-hand
+stack thumps **both**, which is what a pair of speakers does anyway.
+
+### The DJ has three sounds, and only one of them came from Higgsfield
+
+Owner's call: *"when pressing the dj, it should rotate between dj-esque sounds. a
+beat, a scratch, a vocal. but all with a kid theme. render that via higgsfield."*
+
+Two of the three cannot come from Higgsfield, and it is worth writing down
+because it was checked rather than assumed. `models_explore` lists `sonilo_music`
+and `mirelo_text_to_audio` as **"Game pipeline only"** — they refuse standalone
+use, exactly as `CONCEPT.md` §7.4 has said since the start. So a beat and a
+scratch are `SoundKit`'s synthesised `trom` and `kras`, and **the vocal is the
+part Higgsfield genuinely renders**, because a vocal is speech.
+
+Five Dutch shouts — *"Handjes in de lucht!"*, *"Iedereen dansen!"* — in **Benji**,
+the third voice in the game and the first that is neither Nina nor Otto. Young and
+male, so a 4-year-old can tell all three apart without looking. Like Otto's
+Barrett it was picked without an ear on it; `audio/voices.json` says so and
+re-cutting all five costs 1.5 credits.
+
+Tapping rotates beat → scratch → shout rather than picking at random, and that is
+the one design decision in it. Three items picked at random means a one-in-three
+chance of the same sound twice running, which on the most tapped prop in the room
+reads as broken rather than as chance. The five shouts *within* the vocal do get
+`VoiceBank`'s never-the-same-twice rule, for free. The beat is four hits of the
+drum **at her own tempo**, so even the DJ's own sound is the beat she is making.
+
 ### The way out is the cake
 
 **This room has no door**, and it is the only one that does not. §6.5 has always

@@ -57,7 +57,8 @@ final class FeestRoom: Room {
     private var lamps: [FeestProps.Lamp] = []
     private var lampMarker: Entity?
     private var booth: FeestProps.Booth?
-    private var speakers: FeestProps.Speakers?
+    /// Both stacks, one per back corner. `[0]` is the tappable one.
+    private var speakers: [FeestProps.Speakers] = []
     private var popper: Entity?
     private var balloon: Entity?
     private var table: Entity?
@@ -82,6 +83,9 @@ final class FeestRoom: Room {
     private var flashLeft: Float = 0
     private var lastLitStep = -1
 
+    /// Which of the DJ's three sounds is next. Rotates rather than shuffles —
+    /// see `tapDJ`.
+    private var djTurn = 0
     private var saidFirstBeat = false
     private var saidFaster = false
     private var balloonDrift: SIMD3<Float> = .zero
@@ -263,9 +267,13 @@ final class FeestRoom: Room {
     }
 
     private func buildToys() {
-        let stack = FeestProps.speakers(flat: flat)
-        root.addChild(stack.root)
-        speakers = stack
+        // **A pair, one in each back corner.** A single stack made the back wall
+        // lopsided, and a disco has two — owner's call, 2026-08-17.
+        speakers = [FeestLayout.speakerSpot, FeestLayout.speakerSpotFar].map { spot in
+            let stack = FeestProps.speakers(at: spot, flat: flat)
+            root.addChild(stack.root)
+            return stack
+        }
 
         let knaller = FeestProps.popper(flat: flat)
         root.addChild(knaller)
@@ -548,9 +556,9 @@ final class FeestRoom: Room {
 
         // The cones push out on the beat. A transform, not a material — this runs
         // every frame and the floor's repaint does not.
-        if let cones = speakers?.cones {
-            let push = 1 + beat.swing * 0.22
-            for cone in cones { cone.scale = [1, 1, push] }
+        let push = 1 + beat.swing * 0.22
+        for stack in speakers {
+            for cone in stack.cones { cone.scale = [1, 1, push] }
         }
 
         if flashLeft > 0 {
@@ -571,18 +579,56 @@ final class FeestRoom: Room {
         guard force || beat.count != lastLitStep else { return }
         lastLitStep = beat.count
 
+        // **Random, and coloured — both on the owner's call, 2026-08-17**:
+        // *"the disco floor should be more coloured. now it just looks very
+        // bright and white. and it should vary in time. random."*
+        //
+        // It was a diagonal band stepping one tile in four, painted in the pale
+        // pad colours at `glowPeak`. Two things were wrong with that and they
+        // compounded. The **pattern** was legible, so after two beats you could
+        // see the rule and the floor stopped being a disco and became a screensaver.
+        // And the **colour** was gone: a pale pastel at 2.34 emissive is above
+        // white by the time it is tonemapped, so all six came back the same.
+        //
+        // Now every tile rolls for itself on every beat, lights in a *deep*
+        // colour rather than a pale one, and glows at a third of what the lamps
+        // do — `FeestProps.floorGlow` and `FeestLayout.floorLitColours` have the
+        // arithmetic. Two fifths lit is what leaves it reading as a floor with
+        // lights in it rather than as a lit floor with gaps.
         let side = FeestLayout.tilesPerSide
         for (index, tile) in tiles.enumerated() {
             let row = index / side, column = index % side
-            let colour = flashColour ?? FeestLayout.tileColour(row: row, column: column)
-            // A diagonal band that walks across the floor. **One tile in four,
-            // not one in three** — at 4×4 a third of the floor lit was a
-            // scattering, and at 6×6 it is most of the floor, which is a lit
-            // floor rather than a pattern travelling across one.
-            let onDiagonal = (row + column + beat.count) % 4 == 0
-            let on = flashColour != nil || onDiagonal
-            tile.model?.materials = [on ? FeestProps.lit(colour, 0.9)
-                                        : Palette.material(colour)]
+            let base = FeestLayout.tileColour(row: row, column: column)
+            if let flash = flashColour {
+                // A pad tap paints the whole floor its colour for one beat, which
+                // is the one moment the floor is *not* random — because it is
+                // answering her finger, and an answer that looked like noise
+                // would not read as an answer at all.
+                tile.model?.materials = [FeestProps.lit(flash, FeestProps.floorGlow)]
+                continue
+            }
+            guard Float.random(in: 0..<1) < 0.4 else {
+                tile.model?.materials = [Palette.material(base)]
+                continue
+            }
+            let colour = FeestLayout.floorLitColours.randomElement() ?? base
+            tile.model?.materials = [FeestProps.lit(colour, FeestProps.floorGlow)]
+        }
+
+        // **A handful of the ball's tiles catch the light on each beat.** The
+        // ball itself is matte — that is what stopped it being a glowing blob —
+        // so this is the only thing about it that is not, and it is what a mirror
+        // ball actually does: a few tiles at a time are the ones facing a lamp.
+        // Deterministic per beat rather than random, because the lit tiles should
+        // travel as the ball turns rather than flicker in place.
+        if let ball = mirrorBall {
+            let count = ball.tiles.count
+            for (index, tile) in ball.tiles.enumerated() {
+                let base = ball.tileColours[index]
+                let alight = (index * 7 + beat.count * 5) % count < 6
+                tile.model?.materials = [alight ? FeestProps.lit(Palette.creamLight, 0.7)
+                                                : Palette.material(base)]
+            }
         }
 
         // The lamps step their colour with the floor, so the whole room changes
@@ -781,18 +827,53 @@ final class FeestRoom: Room {
                   priority: .low)
     }
 
+    /// **Tapping the DJ cycles a beat, a scratch and a shout**, in that order and
+    /// round again — owner's call, 2026-08-17: *"it should rotate between
+    /// dj-esque sounds. a beat, a scratch, a vocal. but all with a kid theme."*
+    ///
+    /// It rotates rather than picking at random, and that is the one design
+    /// decision in here. A random pick repeats — three items means a one-in-three
+    /// chance of hearing the same thing twice running, which on the most tapped
+    /// prop in the room reads as broken rather than as chance. It is the same
+    /// argument `VoiceBank.choose` makes for never playing a line variant twice
+    /// running, and the shout goes *through* `VoiceBank` so it gets that for free
+    /// across the five of them.
+    ///
+    /// **The shout is `.low` priority**, so a DJ who is enthusiastic can never
+    /// talk over Nina explaining something.
     private func tapDJ() {
         djCharacter?.jump()
-        sound.play(.kras, volume: 0.6)
         if let decks = booth?.decks {
             for deck in decks { ticker.squash(deck, amount: 0.20, duration: 0.3) }
         }
         if let panel = booth?.panel { ticker.squash(panel, amount: 0.10, duration: 0.3) }
+
+        switch djTurn % 3 {
+        case 0:
+            // Four beats of the drum, on her own tempo — so even the DJ's own
+            // sound is the beat she is making.
+            for i in 0..<4 {
+                let job = ticker.after(Float(i) * beat.period * 0.5) { [weak self] in
+                    self?.sound.play(.trom, volume: 0.6, rate: i == 0 ? 0.9 : 1.05)
+                }
+                jobs.append(job)
+            }
+        case 1:
+            sound.play(.kras, volume: 0.65)
+        default:
+            sound.play(.kras, volume: 0.35, rate: 1.5)
+            voice.say(FeestLine.djRoep, priority: .low)
+        }
+        djTurn += 1
+
         // The booth has no target of its own — it is entirely covered by the DJ
         // standing behind it (`FeestLayout`, and `ROOMS.md` §5) — so its word is
-        // folded in here at the flour sack's ratio.
-        voice.say(Int.random(in: 0..<4) == 0 ? FeestLine.ditDraaideck : FeestLine.ditDJ,
-                  priority: .low)
+        // folded in here at the flour sack's ratio. Not on the shout, though:
+        // two voices on one tap is the thing `.low` priority exists to stop.
+        if djTurn % 3 != 0 {
+            voice.say(Int.random(in: 0..<4) == 0 ? FeestLine.ditDraaideck : FeestLine.ditDJ,
+                      priority: .low)
+        }
     }
 
     private func tapMirrorBall() {
@@ -832,9 +913,13 @@ final class FeestRoom: Room {
         voice.say(FeestLine.ditLampen, priority: .low)
     }
 
+    /// **Both stacks answer**, though only one of them can be tapped. A pair of
+    /// speakers with one side silent would be a stereo that had lost a channel,
+    /// and the far one is untappable for a reason about the *screen* rather than
+    /// about what it is (`FeestLayout.speakerSpotFar`).
     private func tapSpeakers() {
         sound.play(.trom, volume: 0.7, rate: 0.85)
-        if let stack = speakers {
+        for stack in speakers {
             ticker.squash(stack.root, amount: 0.10, duration: 0.4)
             for cone in stack.cones { ticker.squash(cone, amount: 0.30, duration: 0.35) }
         }
@@ -939,7 +1024,8 @@ final class FeestRoom: Room {
 
     func refreshContactShadows(settings: LightingSettings) {
         self.settings = settings
-        var props: [Entity?] = [table, popper, speakers?.root, booth?.root]
+        var props: [Entity?] = [table, popper, booth?.root]
+        props.append(contentsOf: speakers.map { $0.root })
         props.append(contentsOf: pads.map { $0.root })
         props.append(contentsOf: guests.map { $0.root })
         props.append(djCharacter?.root)
@@ -1140,6 +1226,10 @@ enum FeestLine {
     // The naming layer — one variant each, deliberately.
     static let ditDiscobal = "nina.dit.discobal"
     static let ditDJ = "nina.dit.dj"
+    /// **The DJ's own voice, and the only line in the game that is not Nina's or
+    /// Otto's.** Five shouts, rotated by `VoiceBank` so the same one never lands
+    /// twice running. Cast as Benji in `audio/voices.json`.
+    static let djRoep = "dj.feest.roep"
     static let ditDraaideck = "nina.dit.draaideck"
     static let ditKnop = "nina.dit.knop"
     static let ditLampen = "nina.dit.lampen"

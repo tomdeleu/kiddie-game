@@ -24,6 +24,13 @@
       "voice_type": "preset",
       "voice_id": "09878754-f20b-5330-9790-58a8027ab5b2",
       "preset_name": "Gracie"
+    },
+    "dj": {
+      "name": "De DJ",
+      "voice_type": "preset",
+      "voice_id": "e6f9b893-51b1-51d3-afe9-9e0482cb7ac1",
+      "preset_name": "Benji",
+      "_cast": "2026-08-17, for the DJ's shouts. The third voice in the game and the first that is neither Nina nor Otto. Picked for being young and male — clearly not Gracie, and clearly not Otto's older Barrett — and, like Barrett, PICKED WITHOUT AN EAR ON IT. Re-cutting all five costs 1.5 credits and no code."
     }
   },
 
@@ -41,7 +48,8 @@
     "nina.feest.nogeen": "A fresh party is laid out behind the celebration — a new friend, a new cake.",
     "nina.feest.opnieuw": "The restart button. Same cake, same friends, back on their feet.",
     "nina.feest.dank.*": "Eleven, one per friend. Nina relaying the thanks by name. Also what she says when that friend is tapped and the one-in-four lands.",
-    "nina.dit.*": "The naming layer — what a prop is, said when she taps it. One variant each, deliberately."
+    "nina.dit.*": "The naming layer — what a prop is, said when she taps it. One variant each, deliberately.",
+    "dj.feest.roep": "The DJ's shout, one of the three sounds tapping him rotates through. Five variants, and VoiceBank's never-the-same-twice rule is doing real work on the most tapped prop in the room. Played at .low priority so an enthusiastic DJ can never talk over Nina."
   },
 
   "lines": [
@@ -286,6 +294,17 @@
       "character": "nina",
       "variants": [
         { "index": 854, "file": "nina-dit-vriendje-1.mp3", "text": "Dit is een van mijn vriendjes. Kijk eens hoe leuk ze dansen." }
+      ]
+    },
+    {
+      "id": "dj.feest.roep",
+      "character": "dj",
+      "variants": [
+        { "index": 859, "file": "dj-feest-roep-1.mp3", "text": "Handjes in de lucht!" },
+        { "index": 860, "file": "dj-feest-roep-2.mp3", "text": "Iedereen dansen!" },
+        { "index": 861, "file": "dj-feest-roep-3.mp3", "text": "Daar gaan we! Joehoe!" },
+        { "index": 862, "file": "dj-feest-roep-4.mp3", "text": "Wie danst er mee? Hup, hup, hup!" },
+        { "index": 863, "file": "dj-feest-roep-5.mp3", "text": "Zet hem op, vriendjes!" }
       ]
     },
     {

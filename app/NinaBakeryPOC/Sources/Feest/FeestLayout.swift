@@ -234,9 +234,21 @@ enum FeestLayout {
     static let ballCentre = SIMD3<Float>(0.020, 0.180, -0.030)
     static let ballRadius: Float = 0.030
     static let ballTouchRadius: Float = 0.036
-    /// Where the cord stops being drawn — above the wall top, so it reads as
-    /// going somewhere rather than as ending in mid-air.
-    static let cordTopY: Float = 0.252
+    /// **Where the cord stops being drawn, and it has to be off the top of the
+    /// screen rather than merely above the wall.**
+    ///
+    /// It was 0.252 — 17 mm clear of the wall tops, which sounds like enough and
+    /// is not: at this eye and a 26° vertical FOV, a point over the ball only
+    /// leaves the top of the frame at **y = 0.308**. So the cord ended 56 mm
+    /// inside the shot, in mid-air, and the ball read as floating (owner,
+    /// 2026-08-17: *"the cord seems to float mid-air. it should come from very
+    /// high so you don't see the end."*).
+    ///
+    /// 0.45 is far past the 0.308 the arithmetic gives, and the margin is the
+    /// point: the frame edge moves with the viewport aspect, and a cord that is
+    /// merely *just* out of shot is one iPad away from being back in it. It costs
+    /// one long thin box over the grey backdrop.
+    static let cordTopY: Float = 0.45
 
     /// **The spots it throws.** Eight small pools of light circling on the floor,
     /// which is the one thing a mirror ball is *for* and the reason the ball
@@ -327,6 +339,28 @@ enum FeestLayout {
     /// says nothing about a distance on the screen**, and the failure mode is not
     /// a prop that looks wrong, it is a tap that goes to the wrong thing.
     static let speakerSpot = SIMD3<Float>(0.196, RoomBox.floorY, -0.190)
+
+    /// **The other corner, and it deliberately has no target of its own.**
+    ///
+    /// Owner's call, 2026-08-17: *"you should have a second speaker in the other
+    /// corner of the room."* A stereo pair is obviously right — one stack either
+    /// side of the DJ is what a disco looks like, and the room had a lopsided
+    /// single.
+    ///
+    /// Every position in this corner fails the screen check against the **mirror
+    /// ball**, by a lot: 31–45 mm where two radii need 64. The ball hangs at
+    /// y = 0.180 over the middle of the floor and the back-left floor corner sits
+    /// almost exactly behind it along the view direction, so they are the same
+    /// point on screen however the speaker is nudged. Making the ball's target
+    /// smaller to fit is the wrong trade — it is a toy she has to be able to hit.
+    ///
+    /// So this one is **scenery**, and that is `ROOMS.md` §5's sanctioned case
+    /// rather than a concession: a prop that cannot have a target because
+    /// something else covers it on screen folds its behaviour into the tap that
+    /// *does* land. Tapping the right-hand stack thumps **both** — which is what
+    /// a pair of speakers does anyway, and it means nothing is lost by the one on
+    /// the left being untappable.
+    static let speakerSpotFar = SIMD3<Float>(-0.190, RoomBox.floorY, -0.190)
     static let speakerRadius: Float = 0.028
     static let speakerTouchY: Float = 0.030
 
@@ -365,6 +399,29 @@ enum FeestLayout {
         Palette.berryBlue,
         Palette.lilac,
         Palette.sage,
+    ]
+
+    /// **What a tile is painted while it is lit, and it is not the pale set.**
+    ///
+    /// The floor came out *white* (owner, 2026-08-17: *"it just looks very bright
+    /// and white"*), and the cause is arithmetic rather than taste. A lit tile was
+    /// `glowMaterial(pastel, intensity: 2.34)`, and an emissive surface that far
+    /// above white has lost its own hue by the time it is tonemapped — so six
+    /// different pastels all came back the same colour, which is no colour.
+    ///
+    /// Two changes together fix it, and neither alone would. The **intensity
+    /// comes right down** (`FeestProps.floorGlow`), and the tile lights in a
+    /// **deep** colour rather than a pale one, so there is chroma left to survive
+    /// the exposure. It is the halo's lesson read backwards: the halo wanted to
+    /// go above white and be seen against cream, and this wants to stay below it
+    /// and be seen *as a colour*.
+    static let floorLitColours: [UIColorLike] = [
+        Palette.blushPinkDeep,
+        Palette.sageDeep,
+        Palette.berryBlueDeep,
+        Palette.lilacDeep,
+        Palette.honeyAmber,
+        Palette.rose,
     ]
 
     static func discoColour(_ index: Int) -> UIColorLike {

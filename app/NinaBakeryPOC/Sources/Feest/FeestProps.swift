@@ -35,6 +35,20 @@ enum FeestProps {
         Palette.glowMaterial(colour, intensity: glowPeak * max(0, amount))
     }
 
+    /// **How hard a floor tile glows, and it is a third of everything else.**
+    ///
+    /// The floor came out white (owner, 2026-08-17). `glowPeak` is tuned for a
+    /// lamp lens and a booth panel — small bright objects seen against pale
+    /// plaster, where going above white is the whole point. A floor tile is 59 mm
+    /// square and there are 36 of them, so the same intensity is not a highlight,
+    /// it is the largest surface in the room, and above white it has no colour
+    /// left at all.
+    ///
+    /// At 0.85 a lit tile sits just under white and keeps its hue — which is what
+    /// makes the floor *coloured* rather than merely bright, and it is why this is
+    /// a number of its own rather than another `amount` passed to `lit`.
+    static let floorGlow: Float = 0.85
+
     // MARK: - The dance floor
 
     struct DanceFloor {
@@ -113,6 +127,73 @@ enum FeestProps {
         let root: Entity
         /// What spins. The cord does not.
         let ball: Entity
+        /// Every tile, row-major. The room lights a rotating handful of these on
+        /// the beat, which is the only thing about the ball that is not matte.
+        let tiles: [ModelEntity]
+        /// What each tile is painted when it is *not* catching the light.
+        let tileColours: [UIColorLike]
+    }
+
+    // MARK: - The mirror ball's tiles
+
+    static let ballRows = 7
+    static let ballCols = 12
+    /// How much of each tile's angular span is given up to the seam between it
+    /// and its neighbours. The plate has a faint grout line and it is most of
+    /// what makes the ball read as *tiled* rather than as faceted.
+    private static let ballGrout: Float = 0.055
+    private static let ballTileDepth: Float = 0.0022
+
+    /// **The pale spread `references/feest/discobal.png` came back with.** Twelve
+    /// tones rather than one, because a mirror ball whose tiles are all the same
+    /// colour is a ball. Every one of them is already in the game.
+    private static let ballTones: [UIColorLike] = [
+        Palette.creamLight, Palette.cream, Palette.blushPink, Palette.rose,
+        Palette.mintLight, Palette.mint, Palette.sage, Palette.lilac,
+        Palette.berryBlue, Palette.butterYellow, Palette.sandyWood,
+        Palette.blushPinkDeep,
+    ]
+
+    /// Deterministic, and deliberately not `random`: a ball that redealt its
+    /// tiles every time the debug panel toggled flat shading would be a
+    /// different ball each time. The multipliers are coprime with the row and
+    /// column counts so the pattern does not fall into stripes or diagonals.
+    private static func ballTone(row: Int, column: Int) -> UIColorLike {
+        ballTones[(row * 5 + column * 7 + (row * column) % 11) % ballTones.count]
+    }
+
+    /// **One tile: a spherical quad with a little thickness.**
+    ///
+    /// Built as raw positions and indices rather than out of a `Shape`, because
+    /// none of the primitives is a patch of a sphere — a box placed on the
+    /// surface would not converge at the poles and would gap at the equator.
+    ///
+    /// Winding is counter-clockwise seen from outside, which `FacetedMesh`
+    /// derives every normal from. The four side faces are the fiddly part: the
+    /// obvious order (`a, b, b+4, a, b+4, a+4`) sends the top edge's normal
+    /// *down*, so the seam faces are lit from inside the ball. Going round the
+    /// other way is what makes them face out.
+    ///
+    /// At the top and bottom rows two corners coincide, so half the triangles
+    /// are degenerate. `flatShaded` drops those rather than emitting NaNs, which
+    /// is why a pole needs no special case.
+    private static func ballTile(theta0: Float, theta1: Float,
+                                 phi0: Float, phi1: Float,
+                                 radius: Float) -> FacetedMesh.Geometry {
+        func point(_ theta: Float, _ phi: Float, _ r: Float) -> SIMD3<Float> {
+            [sin(theta) * cos(phi) * r, cos(theta) * r, sin(theta) * sin(phi) * r]
+        }
+        let corners = [(theta0, phi0), (theta0, phi1), (theta1, phi1), (theta1, phi0)]
+        var p = corners.map { point($0.0, $0.1, radius) }
+        p += corners.map { point($0.0, $0.1, radius - ballTileDepth) }
+
+        var idx: [UInt32] = [0, 1, 2, 0, 2, 3,   // outer face
+                             4, 6, 5, 4, 7, 6]   // inner face, wound the other way
+        for i in 0..<4 {
+            let a = UInt32(i), b = UInt32((i + 1) % 4)
+            idx.append(contentsOf: [a, a + 4, b + 4, a, b + 4, b])
+        }
+        return (p, idx)
     }
 
     /// **A faceted sphere, and eight pools of light on the floor.**
@@ -138,41 +219,77 @@ enum FeestProps {
         ball.name = "DiscobalBol"
         root.addChild(ball)
 
-        let sphere = RoomBuilder.model(
-            .icosphere(radius: FeestLayout.ballRadius, subdivisions: 2),
-            Palette.creamLight, flat: flat, name: "DiscobalFacetten")
-        sphere.model?.materials = [lit(Palette.creamLight, 0.55)]
-        ball.addChild(sphere)
+        let radius = FeestLayout.ballRadius
 
-        // Six little squares stuck round its equator, one per disco colour, so
-        // the ball turning is visible on a sphere that is otherwise one tone.
-        for i in 0..<6 {
-            let angle = Float(i) / 6 * 2 * .pi
-            let facet = RoomBuilder.model(.box([0.007, 0.007, 0.002]),
-                                          FeestLayout.discoColour(i), flat: flat,
-                                          name: "DiscobalSpiegel\(i)")
-            facet.model?.materials = [lit(FeestLayout.discoColour(i), 0.9)]
-            facet.orientation = simd_quatf(angle: angle, axis: [0, 1, 0])
-            facet.position = [sin(angle) * FeestLayout.ballRadius, 0.002,
-                              cos(angle) * FeestLayout.ballRadius]
-            ball.addChild(facet)
+        // **A core, so a seam never shows daylight.** The tiles stand off the
+        // surface and have gaps between them; without something solid behind, the
+        // ball is a colander seen against a grey backdrop.
+        let core = RoomBuilder.model(.icosphere(radius: radius - ballTileDepth * 1.6,
+                                                subdivisions: 1),
+                                     Palette.cream, flat: flat, name: "DiscobalKern")
+        ball.addChild(core)
+
+        // **The tiles, and they are the whole prop.** It was one 320-face
+        // icosphere painted a single glowing cream, with six 7 mm squares stuck
+        // round the equator — which at this size is a smooth pale blob with
+        // specks on it, and the owner called it (2026-08-17). What
+        // `references/feest/discobal.png` actually shows is a **mosaic**: a
+        // twelve-by-seven grid of small quads, each a different pale tone, with a
+        // faint seam between them. That is the read, and it cannot come from one
+        // mesh because one mesh has one material.
+        var tiles: [ModelEntity] = []
+        var colours: [UIColorLike] = []
+        for row in 0..<ballRows {
+            let t0 = Float(row) / Float(ballRows) * .pi
+            let t1 = Float(row + 1) / Float(ballRows) * .pi
+            let dt = (t1 - t0) * ballGrout
+            for column in 0..<ballCols {
+                let p0 = Float(column) / Float(ballCols) * 2 * .pi
+                let p1 = Float(column + 1) / Float(ballCols) * 2 * .pi
+                let dp = (p1 - p0) * ballGrout
+                let colour = ballTone(row: row, column: column)
+                let geometry = ballTile(theta0: t0 + dt, theta1: t1 - dt,
+                                        phi0: p0 + dp, phi1: p1 - dp, radius: radius)
+                let tile = ModelEntity(mesh: FacetedMesh.mesh(geometry, flat: flat),
+                                       materials: [Palette.material(colour)])
+                tile.name = "Spiegeltje-\(row)-\(column)"
+                ball.addChild(tile)
+                tiles.append(tile)
+                colours.append(colour)
+            }
         }
 
-        // The cord, and the ring it hangs from.
+        // **The tiles are matte, and that is deliberate in a room made of light.**
+        // The ball glowed before and that is exactly what turned it into a blob:
+        // an emissive surface loses its own colour as it goes above white, so
+        // every tile came back the same. A mirror ball is not a lamp — it is a
+        // matte thing that *throws* light, and what it throws is
+        // `ballSpots`. The room lights a rotating handful of tiles on the beat,
+        // which is the sparkle, and the other eighty are shaded by their facets
+        // like everything else in the game.
+
+        // The ring it hangs from.
         let ring = RoomBuilder.model(.annulus(innerRadius: 0.0032, outerRadius: 0.0050,
                                               segments: 10),
                                      Palette.cream, flat: flat, name: "DiscobalRing")
-        ring.position = [0, FeestLayout.ballRadius + 0.002, 0]
+        ring.position = [0, radius + 0.002, 0]
         root.addChild(ring)
 
+        // **The cord runs up out of the frame, and 56 mm of it used to be
+        // missing.** It stopped at y = 0.252, which is above the wall tops and
+        // *inside the shot* — so it ended in mid-air and the ball read as
+        // floating (owner, 2026-08-17). At this eye and a 26° vertical FOV a
+        // point over the ball leaves the top of the frame at **y = 0.308**;
+        // `FeestLayout.cordTopY` is well past that now, so where it comes from is
+        // a question the picture never raises.
         let cordLength = FeestLayout.cordTopY - FeestLayout.ballCentre.y
         let cord = RoomBuilder.model(.box([0.0016, cordLength, 0.0016]),
                                      Palette.cream, flat: flat, name: "DiscobalKoord")
-        cord.position = [0, FeestLayout.ballRadius + cordLength / 2, 0]
+        cord.position = [0, radius + cordLength / 2, 0]
         root.addChild(cord)
         root.excludeFromShadowCasting()
 
-        return MirrorBall(root: root, ball: ball)
+        return MirrorBall(root: root, ball: ball, tiles: tiles, tileColours: colours)
     }
 
     /// The pools of light, built separately because they live on the **floor**
@@ -377,10 +494,15 @@ enum FeestProps {
 
     /// A stack of two, from `references/feest/boxen.png`: square boxes each with
     /// one large recessed cone and a smaller one above it.
-    static func speakers(flat: Bool) -> Speakers {
+    ///
+    /// **Takes its spot**, because there are two of them now — one in each back
+    /// corner (owner, 2026-08-17). They are identical and they thump together;
+    /// only the right-hand one is tappable, and `FeestLayout.speakerSpotFar` has
+    /// the reason.
+    static func speakers(at spot: SIMD3<Float>, flat: Bool) -> Speakers {
         let root = Entity()
         root.name = "Boxen"
-        root.position = FeestLayout.speakerSpot
+        root.position = spot
 
         var cones: [Entity] = []
         let box = SIMD3<Float>(0.044, 0.038, 0.030)
