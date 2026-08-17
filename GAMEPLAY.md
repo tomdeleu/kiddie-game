@@ -458,8 +458,8 @@ She comes back from the party holding the photograph, and this is §6.6:
 | `ophangen` | Drags the photo into that friend's frame | The grey ghost is gone. The frame glows, the sign above the door brightens a shade |
 | `klaar` | — | The curtain closes. The most complete moment in the game |
 
-**That answers §10's open question in favour of *she does it*, and it is the
-owner's call to confirm.** The argument is the plank's own: the kitchen already
+**She does it — DECIDED, 2026-08-17, by the owner.** This was §10's open
+question and it is now closed. The argument is the plank's own: the kitchen already
 ends on her carrying the cake up onto the shelf rather than watching it fly
 there, and the frame is the plank's ceremony. The argument against is still real
 — the round has just ended and she has done enough — and one drag is the smallest
@@ -578,12 +578,13 @@ amber and a lilac the locked thirteen do not contain.
 
 **Required: cream it, go all the way round it, and light one candle.**
 
-> **Designed 2026-08-17, not built — and it reverses this section's own
-> heading.** It used to read *"Required: nothing. The door works immediately.
+> **DECIDED 2026-08-17 by the owner, not built — and it reverses this section's
+> own heading.** It used to read *"Required: nothing. The door works immediately.
 > This is the room she will spend the most time in and it must never ask her for
-> anything."* The owner asked for gameplay here in the kitchen's sense, and the
-> back half of that sentence is the constraint the design below is built to
-> honour rather than the thing it overturns.
+> anything."* The owner asked for gameplay here in the kitchen's sense and
+> confirmed the reversal knowing it changes a shipped room; the back half of that
+> sentence is the constraint the design below is built to honour rather than the
+> thing it overturns.
 >
 > **The room still never asks.** The door is lit from the first frame and works
 > throughout, in both modes, exactly as `ROOMS.md` §9 records. She can walk out
@@ -928,14 +929,12 @@ completed, because until the wall exists there is no reason for a second round.
 - **Whether the basket goes back to three when the garden fills it** — §5. Five
   dealt from six makes every cake a rainbow and four of the eleven wishes
   automatic. Decide before the friends are built.
-- **Whether hanging the frame is something she does or something that happens** —
-  §6.6. Designed as `ophangen`, one drag, in §6.1's return leg; needs the owner's
-  yes.
-- **Whether Versieren should have a required spine at all.** §6.4 now has one,
-  designed 2026-08-17 on the owner's ask, and it reverses that section's own
-  heading. It is built to keep the promise underneath the heading — the door is
-  lit from the first frame and nothing is ever disabled — but it *is* a reversal,
-  and the shipped room does not have it yet.
+- ~~**Whether hanging the frame is something she does or something that
+  happens**~~ — **decided 2026-08-17: she does it**, `ophangen`, one drag, §6.1's
+  return leg.
+- ~~**Whether Versieren should have a required spine at all**~~ — **decided
+  2026-08-17: it should**, §6.4. The shipped room does not have it yet, which is
+  the largest gap between this file and `app/` right now.
 - **Whether the eleven friends are the right eleven.** They are cheap to change
   now and expensive once modelled.
 - **Whether replaying a filled frame should be a full party or a short clip.**

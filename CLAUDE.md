@@ -75,6 +75,19 @@ completes it in both modes; **it has a fence instead of the two walls
 and its gate says `ROOMS.md` §9's three things twice, because a picket fence has
 nothing behind it to light.
 
+**Two rooms are designed but not built, both decided by the owner on
+2026-08-17.** [`GAMEPLAY.md`](GAMEPLAY.md) §6.1 gives **De Bakkerij** a four-step
+required action — `opendoen`, `kiezen`, `binnenlaten`, `bestellen` — plus a
+two-step return leg that hangs the frame, which settles the long-open question of
+whether hanging it is something she *does*. It is. And §6.4 gives **Versieren** a
+required spine — `insmeren`, `rondom`, `kaarsje`, `klaar` — which **reverses that
+section's own "required: nothing"** and is the largest gap between the design and
+`app/` right now. The reversal keeps the promise underneath the heading: the
+steps *observe rather than gate*, the door stays lit from the first frame, and
+nothing is ever disabled. Prop plates for both are in
+[`references/bakkerij/`](references/bakkerij/) and
+[`references/versieren/`](references/versieren/); no code has changed.
+
 **Next**, per [`GAMEPLAY.md`](GAMEPLAY.md) §9: the party, then the wall of
 twelve frames — and start the music search before the party, since it is the one
 genuinely blocked dependency in the project. And **test all three rooms with
@@ -112,6 +125,7 @@ palette and pass criteria are still the standard every new room is held to.
 | [`references/props/`](references/props/) | Prop concept plates for the kitchen, and why `generate_3d` is not usable for this style. |
 | [`references/versieren/`](references/versieren/) | The decorating room's seventeen plates — the turntable, the two tools, the seven sticker shapes and the toys — and what three attempts at its room box taught about making flux name its own facet counts. |
 | [`references/garden/`](references/garden/) | **De Tuin's twenty-five plates** — the bed, the can, the basket, four plant stages, eight ripe plants, six toys, and the fence, gate and potting bench that replaced its walls. Its README has the job IDs and the three studio plates the room box overruled. |
+| [`references/bakkerij/`](references/bakkerij/) | **De Bakkerij's six plates** — the room box, the wall of twelve frames, the blind, the shop door and the order hook, one per step of `GAMEPLAY.md` §6.1. They replace plates 06 and 10, which were drawn in the retired clay style. Its README has the empty-room-box failure and what fixed it. |
 | [`references/ingredients/`](references/ingredients/) | The eight ingredients, the flour sack and the flour cloud — the plates the models were built from. |
 | [`references/moodboard/`](references/moodboard/) | Provenance + licences. Gathered for two retired directions — not the current look. |
 | [`references/FETCHING-ASSETS.md`](references/FETCHING-ASSETS.md) | How to get outside material onto disk here, and what fails. |
