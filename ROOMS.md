@@ -397,7 +397,22 @@ Two more rules:
   - A prop that has to reach *into* an occluder — the tin going into Otto's
     mouth — goes through `pointedExtra`, which is asked first. Share one
     predicate between that and the drop's snap test so the two cannot disagree
-    about where the opening is.
+    about where the opening is. **Riding at the opening's height is only half of
+    it**: the drop zone is deliberately generous, so without a matching
+    `carriedClamp` she can push the prop straight on through the opening and
+    watch it disappear inside. Hold it at the lip and pushing harder settles it
+    in, which is what putting a tin in an oven feels like.
+- **A prop is not a point, and `clamp` clamps its origin.** De Keuken's bounds
+  stop at 13 mm from the plaster, which is fine for a berry and buries a third
+  of the rolling pin (owner, 2026-08-17). Set `Surfaces.innerWalls` to the
+  walls' inner faces; `CarryController` measures what it is holding with
+  `visualBounds` and keeps that much clear.
+  - **Do not fix it by pulling `minX`/`minZ` in.** Props start against the walls
+    — on shelves, in pots — so a bound tight enough for the biggest prop yanks
+    the smallest one sideways the moment she grabs it. The clearance has to be
+    per prop.
+  - Only the two walls. The other two sides are open, and a prop overhanging the
+    slab there is one she can still see and still pick up.
 - **Every tap is also a zero-length drag.** Without a "barely moved" check,
   poking the berry on the top shelf knocks it to the floor, because that is what
   is under a shelf.

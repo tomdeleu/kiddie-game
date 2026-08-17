@@ -409,6 +409,57 @@ open, so it slides in at 0.028 against a target of 0.026 instead of sailing over
 his head. It and `dropTin` both ask `KitchenLayout.nearOvenMouth`, so what she
 sees and what counts cannot drift apart.
 
+### Otto's mouth is a pocket, not a dimple
+
+Owner, 2026-08-17: it should extend back a little more, positioning the tin in
+it is difficult. Two things were wrong and only one of them was the depth.
+
+**The depth.** The arch is a ring stuck on the front of an ellipsoid that bulges
+into it, so the recess can only be as deep as the gap between the arch's face
+and the dome's shell — 14 mm, of which 8 were used. The only way to buy more is
+to lengthen the ring forwards, which would push Otto's snout at the table. So
+**he moved back by exactly what the mouth gained**: `ovenOrigin.z` −0.112 →
+−0.122, `mouthDepth` 0.034 → 0.044. Every visible number stays put — the arch
+face at −0.036, `ovenMouth` at −0.038, the front of his occluder box — so none
+of the sightline work above needed redoing. What changed is a **23 mm pocket
+where there was an 8 mm dimple**, and the tin now lands with its back edge 1 mm
+off the dark plug instead of balanced on a lip. The plug still reads dark: it
+clears the dome shell by 1.8 mm at the mouth's base and 8.6 mm at the top of the
+arch, and the faceted dome chords *inside* the ideal ellipsoid, so the real
+clearance is larger than both.
+
+**The pushing.** The drop zone is 81 mm because the drop has to be forgiving —
+which meant she could push the tin on through the arch and watch it disappear
+inside the dome. `KitchenRoom`'s `carriedClamp` holds it at the lip: only z,
+only forwards, so sideways and pulling back out are free. Push harder and it
+settles into the pocket instead of vanishing.
+
+**Still tight:** the opening is 48 mm and the tin is 44, which is 2 mm of
+daylight each side. Widening it is a change to Otto's *face*, so it is noted in
+`mouthArchInner` and left for the owner rather than taken while fixing the
+depth.
+
+### A prop is not a point
+
+`clampToPlayArea` bounds the prop's **origin**, and the bounds stop at
+z = −0.205 against plaster at −0.218. That is 13 mm of room for a tin 44 mm
+across, so pushing it back along the counter buried 9 mm of it in the wall
+(owner, 2026-08-17); the rolling pin, 74 mm long, went in by a third of its
+length.
+
+It cannot be fixed by pulling the bounds in, and that is worth knowing before
+trying: ingredients start on the wall shelf at x = −0.200 and in the counter pot
+at z = −0.174, so a bound tight enough for the rolling pin would yank a token
+four centimetres sideways the instant she picked it up — the bug
+`clampToPlayArea`'s own note is about. So the clearance is **per prop**:
+`Surfaces.innerWalls` holds the two walls' inner faces, `CarryController`
+measures what it is holding with `visualBounds` once at pick-up, and `place`
+keeps that much clear. Measured rather than declared, because a table of prop
+radii is a table that goes stale.
+
+Swept: every prop's body now stops exactly on the plaster and never past it, and
+no prop's home position moves when she picks it up.
+
 This replaced a rule where a missed drop floated home and
 Nina apologised for it, which was wrong twice: it undid the one thing she can
 do with a kitchen full of objects, and it treated every stray drag as a failed
@@ -1842,10 +1893,23 @@ long-standing limitation, not a setup problem.
 > rooms construct positionally. If either bites, the fixes are small and known:
 > spell the initialiser out by hand, or mark the nested type's method the way
 > `assertSpacing` had to be. **The geometry itself is not
-> correct-by-construction** — both halves were swept in Python against the
+> correct-by-construction** — every sweep below was run in Python against the
 > committed camera before being written down, which is how Nina came off the
 > list, how "no work surface is shadowed" became a measurement rather than a
 > claim, and how the chimney got onto the list at all.
+>
+> **Also unbuilt: the wall clearance and Otto's deeper mouth.** The one new
+> runtime API in all of this is `Entity.visualBounds(relativeTo:)` in
+> `CarryController.pickUp` — if it has moved, the fallback is a radius of zero,
+> which is exactly the behaviour before it existed. The `carriedClamp` and
+> `innerWalls` additions are the same memberwise-initialiser risk as
+> `occluders`; `innerWalls` is spelled `= nil` explicitly for that reason.
+>
+> What has been swept, all against the committed camera: no work surface or home
+> spot is shadowed (2 mm grid); a carried prop is never inside a solid over
+> 26,240 drag directions × four prop sizes; every prop's body stops exactly on
+> the plaster; no home position moves when picked up; and the tin held at Otto's
+> lip stays clear of the dome at every push.
 
 Five places are the most likely to want a fix, and all five are one line:
 

@@ -53,7 +53,19 @@ enum KitchenLayout {
     /// without hanging off it. Moving him back as well clears his footprint out
     /// of the table's depth entirely — the two no longer share any Z at all,
     /// where before the table's corner and his dome were 33 mm apart.
-    static let ovenOrigin = SIMD3<Float>(0.152, RoomBox.floorY, -0.112)
+    ///
+    /// **Then back another 10 mm, to pay for the mouth** (owner, 2026-08-17: it
+    /// should extend back a little bit more, positioning the tin in it is
+    /// difficult). The mouth is a ring stuck on the front of the dome, so the
+    /// only way to deepen it is to lengthen it forwards — and doing that alone
+    /// would push his snout out towards the table. Moving him back by exactly
+    /// what `mouthDepth` gained keeps **every visible number where it was**: the
+    /// arch face stays at z = −0.036, `ovenMouth` stays at −0.038, and his
+    /// occluder box's front face does not move, so none of the sightline work
+    /// above needs redoing. What changes is behind him — the dome's back goes
+    /// from 44 mm off the wall to 34 — and inside him, where there is now a
+    /// 23 mm pocket instead of an 8 mm dimple.
+    static let ovenOrigin = SIMD3<Float>(0.152, RoomBox.floorY, -0.122)
     static let ovenDomeRadius: Float = 0.062
     static let ovenDomeHeight: Float = 0.075
     /// **Otto's chimney**, in his local XZ, and the two sizes anything outside
@@ -66,14 +78,32 @@ enum KitchenLayout {
     static let ovenChimneyHeight: Float = 0.110
 
     /// Mouth opening, in Otto's local space.
+    ///
+    /// **The opening is 48 mm across and the tin is 44 mm**, which is 2 mm of
+    /// daylight each side. That is the tightest fit in the room and the reason
+    /// putting the tin in reads as fiddly even now the pocket is deep; widening
+    /// it is a change to Otto's *face*, so it is left for the owner to call
+    /// rather than taken while fixing the depth.
     static let mouthArchInner: Float = 0.024
     static let mouthLegHeight: Float = 0.012
-    static let mouthDepth: Float = 0.034
+    /// **44 mm, up from 34.** The arch is a ring stuck on the front of an
+    /// ellipsoid that bulges into it, so the pocket inside it can only be as
+    /// deep as the gap between the arch's face and the dome's shell — and at
+    /// 34 mm that gap was 14 mm, of which 8 was being used. Lengthening the ring
+    /// forwards is the only way to make the pocket deeper, and `ovenOrigin`
+    /// moved back by this same 10 mm so nothing moved on screen.
+    static let mouthDepth: Float = 0.044
     static let mouthBackZ: Float = 0.042
     static var mouthFrontZ: Float { mouthBackZ + mouthDepth }
-    /// Where the tin has to land, in world space: at the lip of the mouth, not
-    /// inside it. The dark plug behind is solid, so a target set any deeper
-    /// would make the tin vanish on arrival instead of sliding in.
+    /// **The floor of the mouth**, which is what the tin rides on while she is
+    /// pushing it in and what stops it from being pushed any further.
+    static var ovenMouthFloorY: Float { ovenOrigin.y + mouthLegHeight }
+    /// Where the tin has to land, in world space: in the mouth now rather than
+    /// balanced on its lip. The pocket is 23 mm deep and the tin is 44 mm
+    /// across, so at this z its back edge sits 1 mm off the dark plug and its
+    /// front half stands out of the arch — which is what a tin half-pushed into
+    /// an oven looks like. The plug is solid, so a target set deeper than the
+    /// pocket would make the tin vanish on arrival instead of sliding in.
     static var ovenMouth: SIMD3<Float> {
         ovenOrigin + SIMD3<Float>(0, mouthLegHeight + 0.010, mouthFrontZ - 0.002)
     }
@@ -478,6 +508,11 @@ enum KitchenLayout {
         // day a solid is added that is not also standable.
         solids: [Surfaces.Rect(centre: counterCentre, size: counterSize, y: counterTopY)],
         occluders: occluders,
+        // The two walls' inner faces. `minZ` below stops a prop's *origin* at
+        // −0.205, which left 13 mm for a 44 mm tin and buried 9 mm of it in the
+        // plaster; this is what stops the prop's own body instead.
+        innerWalls: SIMD2<Float>(-RoomBox.half + RoomBox.wallThickness,
+                                 -RoomBox.half + RoomBox.wallThickness),
         // **Superseded by `occluders`.** The table used to be the room's one
         // `hider`, which is the same idea flattened to a single thin plate — and
         // being single is what let three other things in this room hide props
@@ -726,12 +761,6 @@ enum KitchenLayout {
         abs(point.x - cakePlankCentre.x) <= cakePlankLength / 2 + plankSnapRadius
             && abs(point.z - cakePlankCentre.y) <= plankSnapRadius
     }
-
-    /// **The floor of Otto's mouth**, which is what the tin rides on while she
-    /// is pushing it in. `ovenMouth` is where the tin's own origin ends up; this
-    /// is 10 mm below it, so a tin carried at this plus the usual `lift` sits
-    /// within 2 mm of where the drop is about to put it.
-    static var ovenMouthFloorY: Float { ovenOrigin.y + mouthLegHeight }
 
     /// **Near enough to Otto's mouth to count**, in the one step where it does.
     ///

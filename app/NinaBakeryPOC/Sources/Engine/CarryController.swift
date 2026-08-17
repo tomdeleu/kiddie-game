@@ -50,6 +50,14 @@ final class CarryController {
     /// which is what the halo needs. See `surfaceUnder`.
     var restingExtra: ((_ point: SIMD3<Float>, _ prop: Entity) -> Float?)?
 
+    /// **A room's last word on where the thing in her hand may be.**
+    ///
+    /// Applied after the play-area clamp and before the walls, and it is about
+    /// *position* where `pointedExtra` is about height. The kitchen uses it for
+    /// one thing: holding the tin at the lip of Otto's mouth so that pushing
+    /// harder settles it into the pocket instead of sliding it on into the dome.
+    var carriedClamp: ((_ position: SIMD3<Float>, _ carried: Entity) -> SIMD3<Float>)?
+
     /// Fired as something is picked up, before the drag begins. The rooms use it
     /// to stop the idle shimmer.
     var onPickUp: ((Entity) -> Void)?
@@ -79,6 +87,11 @@ final class CarryController {
     /// Exactly where the prop was when she took hold of it, so a touch that went
     /// nowhere can put it back exactly — see `settle`.
     private var origin = SIMD3<Float>.zero
+    /// **Half the widest the carried prop is across**, measured once when she
+    /// takes hold of it, so it can be kept out of the walls. Measured rather
+    /// than declared: a table of prop radii is a table that goes stale, and
+    /// RealityKit already knows how big everything is.
+    private var carriedRadius: Float = 0
 
     init(ticker: Ticker, sound: SoundKit, surfaces: Surfaces,
          settings: LightingSettings) {
@@ -108,6 +121,12 @@ final class CarryController {
             - RoomBox.pointOnRay(through: world, atHeight: entity.position.y)
         offset.y = 0
         origin = entity.position
+        // Measured in the room's own space, so a prop that has been scaled —
+        // the cake shrinks onto the plank — reports the size it is now. A prop
+        // with nothing drawable in it yet reports zero, which asks for no
+        // clearance and is the same behaviour as before this existed.
+        let bounds = entity.visualBounds(relativeTo: entity.parent)
+        carriedRadius = max(bounds.extents.x, bounds.extents.z) / 2
         currentY = entity.position.y
         surfaceY = surfaces.y(at: entity.position)
         goalY = currentY
@@ -171,6 +190,12 @@ final class CarryController {
         guard let carried else { return }
         var next = surfaces.clamp(
             RoomBox.pointOnRay(through: anchor, atHeight: currentY) + offset)
+        // The room's own exception first, then the walls — which are plaster
+        // and get the final say. In the kitchen the two never argue, because
+        // the only `carriedClamp` there pushes the tin *out* of the oven, which
+        // is away from both walls.
+        if let hold = carriedClamp { next = hold(next, carried) }
+        next = surfaces.clear(ofWalls: next, radius: carriedRadius)
         // Y is owned by the carry job; the touch only ever moves it about.
         next.y = currentY
         carried.position = next

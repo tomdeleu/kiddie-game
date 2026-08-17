@@ -182,6 +182,29 @@ struct Surfaces {
     /// before this existed. See `Occluder`.
     var occluders: [Occluder] = []
 
+    /// **The inner faces of the two walls, as the smallest x and z a carried
+    /// prop's _body_ may reach.** `nil` for a room with nothing to clip into.
+    ///
+    /// `clamp` below already stops a prop travelling too far, but it clamps the
+    /// prop's **origin**, and a prop is not a point. The kitchen's bounds stop
+    /// at z = −0.205 against plaster at −0.218, which is 13 mm of room for a
+    /// tin that is 44 mm across — so pushing it back along the counter buried
+    /// 9 mm of it in the wall (owner, 2026-08-17). The rolling pin, which is
+    /// 74 mm long, went in by a third of its length.
+    ///
+    /// It cannot be fixed by pulling `minX`/`minZ` in, and that is worth
+    /// knowing before trying: the ingredients start on the wall shelf at
+    /// x = −0.200 and in the counter pot at z = −0.174, so a bound tight enough
+    /// for the rolling pin would yank a token four centimetres sideways the
+    /// instant she picked it up — the bug `clamp`'s own note is about. The
+    /// clearance has to be **per prop**, so `CarryController` measures what it
+    /// is carrying and asks for that much.
+    /// Spelled `= nil` rather than left bare so the synthesised memberwise
+    /// initialiser certainly carries a default for it, the way `occluders`
+    /// above does — De Tuin constructs this positionally and must go on
+    /// compiling without either.
+    var innerWalls: SIMD2<Float>? = nil
+
     /// The piece of furniture the fixed camera cannot see past. Floor behind it
     /// is floor she could put something into and never get back.
     ///
@@ -333,6 +356,17 @@ struct Surfaces {
     /// generous costs nothing.
     func clamp(_ p: SIMD3<Float>) -> SIMD3<Float> {
         SIMD3<Float>(min(max(p.x, minX), maxX), p.y, min(max(p.z, minZ), maxZ))
+    }
+
+    /// **Keep a prop of this radius out of the plaster.** See `innerWalls`.
+    ///
+    /// Only the two walls, because they are the only sides a room box has — the
+    /// other two are open, and a prop reaching past the slab's edge there is a
+    /// prop she can still see and still pick up.
+    func clear(ofWalls p: SIMD3<Float>, radius: Float) -> SIMD3<Float> {
+        guard let innerWalls else { return p }
+        return SIMD3<Float>(max(p.x, innerWalls.x + radius), p.y,
+                            max(p.z, innerWalls.y + radius))
     }
 
     /// **How much of the far end of a sightline does not count.**

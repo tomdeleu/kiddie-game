@@ -234,6 +234,26 @@ final class KitchenRoom: Room {
             }
             return nil
         }
+        // **And the tin stops at the lip once it is there.**
+        //
+        // Riding at mouth height is only half of putting a tin in an oven; the
+        // other half is that it does not keep going. The mouth zone is 81 mm
+        // deep because the *drop* has to be forgiving, so without this she could
+        // push the tin on through the arch and watch it disappear inside Otto's
+        // dome — visible for a moment, then gone, which is exactly the "difficult
+        // to position" the pocket was deepened for (owner, 2026-08-17).
+        //
+        // Only z, and only forwards. Sideways is free, pulling it back out is
+        // free, and at the mouth plane there is no dome to slide into: the shell
+        // starts 22 mm further back. The same `nearOvenMouth` governs the ride,
+        // this hold and the drop, so all three agree about where the mouth is.
+        carrier.carriedClamp = { [weak self] position, entity in
+            guard let self, entity === self.tin?.root, self.state.step == .inOven,
+                  KitchenLayout.nearOvenMouth(position) else { return position }
+            var held = position
+            held.z = max(held.z, KitchenLayout.ovenMouth.z)
+            return held
+        }
         // The same exception asked position-based, which is what the halo needs
         // so its ring climbs onto the plank with the cake.
         carrier.restingExtra = { [weak self] point, entity in
