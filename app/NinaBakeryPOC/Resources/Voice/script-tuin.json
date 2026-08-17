@@ -30,7 +30,7 @@
     "nina.tuin.opnieuw": "The restart button.",
     "nina.kamer.tuinKlaar": "The garden is finished — the gate is open.",
     "nina.kamer.tuinDeur": "Tapping the open door. Promises the bakery SOON, never NOW.",
-    "nina.speel.*": "The six toys. Chatter, not instruction, all at .low priority.",
+    "nina.speel.*": "The six toys. Chatter, not instruction, all at .low priority. nina.speel.plas became nina.speel.vijver on 2026-08-16, when the two puddles became one pond.",
     "_reused": "nina.oeps (a drag that did not land), nina.stil (the alternating idle nudge), nina.ingredient.* (what a picked ingredient will do to the cake) and nina.dit.<ingredient> (a tap on a seed jar) all come from the kitchen's scripts unchanged. That reuse is the point: the word she learns in the garden is the word she hears in the kitchen."
   },
 
@@ -122,9 +122,9 @@
       { "file": "nina-speel-bloemen-2.mp3", "text": "Tingelingeling! Tik ze allemaal maar aan." }
     ]},
 
-    { "id": "nina.speel.plas", "character": "nina", "variants": [
-      { "file": "nina-speel-plas-1.mp3", "text": "Plons! Lekker in de plas." },
-      { "file": "nina-speel-plas-2.mp3", "text": "Spetter spetter! Wat een natte boel." }
+    { "id": "nina.speel.vijver", "character": "nina", "variants": [
+      { "file": "nina-speel-vijver-1.mp3", "text": "Plons! Het water maakt kringetjes." },
+      { "file": "nina-speel-vijver-2.mp3", "text": "Spetter spetter! Lekker koel water in de vijver." }
     ]},
 
     { "id": "nina.speel.regenboog", "character": "nina", "variants": [

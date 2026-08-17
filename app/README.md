@@ -1025,9 +1025,24 @@ is intended and stays: `TouchRouter` picks the nearest centre, so each owns an
 equal band and an imprecise tap always lands on the nearest one. Overlap between
 **unlike** things is the bug, because the wrong kind of answer can win.
 
-Two toy-to-toy pairs are still a few millimetres short (the molehill and a
-puddle, the basket and a puddle). Both resolve by nearest-wins and both answer
-with a word, so they are left alone.
+**The pond re-ran this check three times and it comes out clean.** Every unlike pair
+in the garden was measured again when the two puddles became one pond, and again
+when the pond grew across the bottom and pushed three props: the only pairs still
+short are `plot2`/`greenery1` (6.6 mm) and `plot3`/`greenery1` (4.2 mm), which
+are the bed's holes against the bush behind them and predate all of it. The
+toy-to-toy shortfall that used to be here — a puddle 3 mm inside the butterfly —
+went out with the puddle. The pond's own worst neighbour is the basket at 113 mm
+against the 83 the two radii need.
+
+**Its target is 45 mm, which is far smaller than the prop**, and it hangs on a
+marker rather than on the pond itself: a 249 mm pond with a target to match would
+swallow the basket and the flower row's near end, and the pond's own origin sits
+out under the clipped corner where nobody aims. Same trick as the gate's
+`GateTouchSpot`. A target only has to be big enough to hit; what she aims at is
+the middle of the water she can see.
+
+The check is one script rather than a habit: it is worth re-running whenever a
+prop moves, because every one of these numbers was chosen to *just* fit.
 
 **The measurement is now `RoomBox.screenSeparation(_:_:)`**, so the next room
 does not have to rederive it. `RoomBox.distanceXZ` stays where it is and stays
@@ -1161,7 +1176,66 @@ Six, none of which gate anything:
   because a target big enough to catch every drag would eat every other drag in
   the room. It follows *slowly*: a butterfly that arrives is a cursor.
 - **A bee** that hums when chased.
-- **Two puddles** that splash.
+- **A pond** that splashes — an irregular pool **filling the near corner of the
+  lawn and running off both of its near edges**, 249 mm across the screen and
+  151 mm deep, with faceted stones along its inland bank only. It replaced two
+  puddles on the owner's call, 2026-08-16, and was rebuilt **twice more the same
+  day**, each time from a red line drawn over a screenshot of the running room:
+  first *"the pond must be bigger and totally at the bottom"*, then *"it must
+  stretch to the side of the plateau at the bottom left right, and the shape must
+  be irregular"*.
+
+  **A screenshot is a better brief than a plate, and that is the lesson worth
+  keeping.** Both reference plates were right about what a pond *is* — the ring
+  of separate boulders, the water stepping down in bands — and neither could
+  have said how big it should be or where it should stop, because a plate is
+  shot with nothing beside it. Even the room-box plate is a drawing of the room
+  rather than the room. Scale is a question only the running game can answer, so
+  ask for it in a screenshot and expect two corrections.
+
+  **It is cut by the plateau, deliberately.** The water runs to the mint's edge
+  and stops half a millimetre inside it, with the slab's cream border beyond:
+  155 mm of the right-hand edge and 191 mm of the left-hand one are pond, and
+  the lawn's own corner is under water. Every other prop in the game stands
+  inside the box; this is the one the box slices. The clip is **radial** — each
+  outline vertex is pulled back along its own ray until it lands on the limit —
+  which is what makes the cut come out as one straight edge rather than a stair,
+  and what keeps the outline star-shaped so its top faces can still be fanned
+  from the centre.
+
+  **Irregular means two fixed harmonics, not noise.** A random outline would
+  rebuild differently every time the flat/smooth toggle flips, which is a pond
+  that moved while she was looking. Two lobes and seven ripples give a bank that
+  wanders **32 mm off the straight line between its two ends** over a 250 mm
+  chord — which is the difference between a pond and a ruled arc, and the first
+  attempt at this shape got it wrong by being too gentle.
+
+  **The rim only follows the inland bank.** Where the water runs off the plateau
+  there is nothing to put a stone on, so the eleven stones stop five samples
+  short of each cut and the water meets the lawn's edge bare.
+
+  **Nothing is in the water, and that is now four moves deep.** The basket was
+  in the middle of it and took the molehill's ground in front of the bed — where
+  a basket wants to be anyway, since a picked plant hops into it from the bed;
+  the molehill went out to the lawn in front of the bench; the butterfly hovers
+  over the middle of the open floor. The flower row's near end is the only thing
+  still close, at 34 mm — a flower at the water's edge rather than a flower in
+  it.
+
+  **The water steps down without a hole in the floor.** Sinking it below
+  `floorY` cannot work: the floor is a solid box and geometry inside it is
+  hidden. So the basin stands on the grass, each of the four bands is a closed
+  washer whose top sits 1.4 mm below the one outside it, and the three outer
+  ones are clipped in their own right — so the terraces are cut where they meet
+  the plateau and the step shows in the cut face.
+
+  **The one prop in the game whose mesh is not a `RoomBuilder.Shape`.** An
+  outline that is a wobble clipped by the room is not a primitive and never will
+  be, so `GardenProps` builds its two meshes itself — a solid from an outline and
+  a washer between two — borrowing the windings that `prism` and `annulus`
+  already prove. Adding a case to the shared enum for one room's one prop would
+  have been the worse trade.
+
 - **A rainbow**, which is the one worth describing. `GAMEPLAY.md` §6.2 says
   waving the can in the air makes one, and it is discovered rather than
   explained: a long swing of the can that watered nothing is exactly what a
@@ -1247,9 +1321,10 @@ Nothing structural. The three things it is short of are content and are cheap:
   already migrates a save whose bed is the wrong length.
 - **The wish hint** — a colour wish shimmering its matching jar — is one line
   once the friends exist, because the shimmer is already the jars' cue.
-- **`GAMEPLAY.md` §6.2 lists a bee, a butterfly, a mole, puddles and flowers.**
-  All six are in. The next one or two are free (`ROOMS.md` §8: add one every time
-  you touch a room).
+- **`GAMEPLAY.md` §6.2 lists a bee, a butterfly, a mole, water and flowers.**
+  All six are in — the water as one pond rather than the two puddles §6.2 used
+  to ask for, owner's call 2026-08-16, and §6.2 now says pond. The next one or
+  two are free (`ROOMS.md` §8: add one every time you touch a room).
 
 ## Deliberate deviations from the design
 
