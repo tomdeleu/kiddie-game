@@ -1,7 +1,14 @@
-# Nina's Toverbakkerij — De Keuken, Versieren en De Tuin
+# Nina's Toverbakkerij — De Keuken, Versieren, De Tuin en Het Feest
 
-Three rooms now. Gameplay, graphics and Dutch voice, in one RealityKit app that
+Four rooms now, and between them a whole round: grow it, bake it, decorate it,
+eat it at a disco. Gameplay, graphics and Dutch voice, in one RealityKit app that
 runs on the iPad.
+
+> **Het Feest is the newest and it has not been compiled.** It was written on
+> 2026-08-17 in a container with no Swift toolchain. Its section is
+> [below](#het-feest--the-party); the short version is that it is a discotheque
+> on the owner's call, that the whole room runs on a beat taken from her taps, and
+> that its way out is the cake rather than a door.
 
 Most of this file is about **the kitchen**, which is the reference
 implementation and the reason everything else is cheap. The decorating room is
@@ -50,6 +57,7 @@ below is still the record of that.
 | **De Tuin** | `GAMEPLAY.md` §6.2 | Plant, water, pick — five ingredients into the basket |
 | **De Keuken** | `GAMEPLAY.md` §6.3 | Roll, fill, stir, pour, bake, and carry the cake onto the plank |
 | **Versieren** | `GAMEPLAY.md` §6.4 | Turn, pipe, shake, press stickers on, light the candle |
+| **Het Feest** | `GAMEPLAY.md` §6.5 | A disco: tap the pads, everyone dances to your beat, tap the cake when you are ready to eat it |
 
 **Switching between them is behind the developer panel**: tap the small grey
 wrench in the top-right corner and use the room picker at the top of the strip.
@@ -2395,20 +2403,310 @@ saying *openable* three ways at once.
   regenerating the kitchen's voice from the canonical script would have silently
   dropped six lines.
 
-## What these three rooms may not conclude
+## Het Feest — the party
 
-Whether the *game* is fun. There is no bakery, no friend at the door, no wish,
-no party, and no wall — and with three rooms and no hub, the chain between them
-is a door tapped at the end of each one rather than something she chooses. What
-they can answer is whether she can drive it: whether the snap radius and the
-target sizes are right, whether stirring works with her hand, whether she can
-sweep a watering can across five plants, whether a sticker lands where she meant
-it to, and whether she taps Otto again.
+`GAMEPLAY.md` §6.5, built 2026-08-17. **It is a disco** — owner's call: *"the
+room must resemble a discoteque with lights and a DJ. And of course cakes and
+friends."*
 
-**The garden inherited every one of the kitchen's touch numbers on the argument
+A mirror ball on a cord, throwing eight pools of light that circle the floor. A
+6×6 grid of light-up tiles covering four fifths of the floor. Five coloured lamps
+on two bars with beams reaching down onto it. A DJ behind a booth with two
+turning decks and a glowing front panel. A stack of speakers whose cones push on
+the beat. Six friends dancing. Her cake, decorated exactly as she left it, on a
+table under a light. And **six big pads along the open front edge**, one per
+instrument.
+
+### The room box plate overruled two things the room had already got wrong
+
+Owner's call on `references/feest/roombox.png`, after the room was built:
+*"I especially like this one."* Held up against it, two numbers were wrong, and
+both were wrong in the same direction — too timid.
+
+**The lit floor was a rug.** It was 4×4 at 137 mm, sitting in the middle of a
+460 mm room, on the strength of `references/feest/dansvloer.png` — which had been
+asked for a 4×4 grid and had delivered *four slabs*, so it never knew the count
+in the first place. In the room box the tiles run from the back corner nearly to
+the near edges, and that is what makes the picture read as a disco at all. It is
+now 6×6 at 369 mm with a 16–33 mm border of plain floor, which the two end pads
+need anyway: at x = 0.228 they would otherwise straddle the last tile's edge, and
+a button half on a lit tile looks like a mistake rather than like a button.
+
+**The mirror ball was a tenth of the room and should be a quarter.** 44 mm → 60,
+which is still a small prop next to Otto's 124 mm dome. It is the object that
+says *disco* before anything has moved.
+
+Two smaller things came out of the same look: the tile colours are indexed
+`row * 2 + column` rather than flat, because six colours on a six-wide grid puts
+the same colour down every column and that is a barcode; and one tile in four is
+lit at a time rather than one in three, because a third of 36 tiles is most of
+the floor rather than a pattern travelling across it.
+
+**This is the third time a room box has overruled a studio plate** — the garden
+has the other three. The rule that keeps falling out: *a prop plate knows what a
+thing is made of; only the room knows how big it should be.*
+
+**The whole room is one number, and the number is hers.** `FeestBeat` turns the
+interval between her taps into a period, and the guests, the ball, the tiles, the
+lamps, the decks and the speaker cones all read it. Not one of them owns a clock,
+which is what makes the room feel like it is following her rather than running
+beside her. It is about eighty lines including the clamps, and it is the party.
+
+### The disco is made of light, not of darkness
+
+**The thing that could have wrecked the art direction, and the rule that stopped
+it.** `references/REFERENCES.md` §1 asks for soft even lighting, no dark corners
+and no occlusion pooling. A disco is the opposite of all three, and the obvious
+build — turn the room's lights down, crank a coloured key — throws the whole
+style away for one room.
+
+So the lighting rig is **untouched**. What the disco adds is emissive surfaces:
+the floor tiles, the lamp lenses, the beams, the booth's front panel and the
+mirror ball's facets are `Palette.glowMaterial` and `Palette.lightMaterial` —
+above white in the HDR buffer, somewhere a base colour cannot reach. The plaster
+stays pale and the corners stay light.
+
+It is the halo's four-attempt lesson (`Engine/Halo.swift`) applied to a whole
+room rather than to a ring: **to make something look like a light, make it one —
+never take the light away from everything else.** And it kept the palette locked:
+the six disco colours are the existing pastels driven up with emission, so
+nothing was added to the thirteen.
+
+The same clause did the same work on the plates. Every disco prompt in
+`references/feest/` carries *"brightly and evenly lit — a daytime pastel toy
+disco, not a dark nightclub"* after the four locked style phrases, and it worked
+first time on all ten.
+
+### The guests are teddy bears, and each does a different dance
+
+Two notes from the owner on seeing the room, 2026-08-17: *"in the reference
+plates they are cute little bears. looks so much better"*, and *"the dance is too
+much of the same. they should be hands in the air and each do a different little
+move."* Both were right and both are now in.
+
+**The body.** The first pass built every friend from a box torso, a box head and
+prism limbs — technically the three-part rig, and a robot.
+`references/feest/beertjes.png` is what it should have been: a plump barrel
+widest low down, a big round head nearly as wide as it sitting straight on the
+shoulders with **no neck at all**, a pale belly patch covering most of the front,
+and arms and legs so short they read as stubs. The head is about **two fifths of
+the whole height**, and that ratio is most of what makes it cute — it is the one
+number in `GuestCharacter`'s proportions block worth protecting.
+
+**The eleven friends did not change.** They are still `GAMEPLAY.md` §4's mouse,
+cat, frog, bird, sheep and the rest, and the plate is what confirms that is
+right: five different animals came back on it and every one is the same barrel
+with different ears and a different muzzle. `buildFace` is where a friend
+differs, which is why eleven friends still cost one builder.
+
+**Round is the silhouette; flat is the surface.** An icosphere at one subdivision
+is 80 flat facets and a six-station lathe is a barrel with six visible bands, so
+nothing here bends the no-smooth-surfaces rule. The plate needed a prompt clause
+saying exactly that or it picked a side at random — `references/feest/README.md`.
+
+**The dance.** Six styles, one per guest, and `DanceStyle.allCases` is exactly
+`guestCount` long so every party has all six on screen with no two alike:
+*zwaaien* rocks side to side, *pompen* punches one arm with the other down,
+*draaien* twists from the waist with arms wide, *springen* jumps clear of the
+floor on every beat, *wiebelen* sends the hips one way and the shoulders the
+other, *knikken* nods deep.
+
+**Hands in the air is a pose, not an animation**, which is what keeps
+`CONCEPT.md` §9.7 intact: each style builds its arms at a fixed angle and then
+never touches them again, and what moves them is the body they are welded to. The
+angle is written as *how far from straight up* — 0 is vertical, π/2 is out
+sideways, π is hanging down — so a style's `raise` reads as how far from
+hands-in-the-air it is. Six visibly different dances cost six closures rather
+than six rigs.
+
+The per-guest phase offset came **down** at the same time, from a sixth of a beat
+to a twentieth. It had been carrying all the variety when every guest had the
+same move; on top of six different moves the same offset reads as six guests who
+cannot hear the music.
+
+One thing the new bodies cost: at 62 mm wide against the old 30, **the DJ no
+longer fitted between his booth and the wall** — his back would have been 9 mm
+inside the plaster. The booth came forward 30 mm instead, because he has nowhere
+to go and the room needs depth behind him. Their footprints overlap by 10 mm now,
+which is a DJ standing *at* his decks rather than behind them.
+
+### The way out is the cake
+
+**This room has no door**, and it is the only one that does not. §6.5 has always
+said *she ends the party by tapping the cake; nothing else ends it*, and a door
+standing open beside the cake would be a second ending — which in a room whose
+whole point is that she decides when it is over is a contradiction rather than a
+convenience.
+
+So the cake carries the cue the door carries everywhere else: **lit from the
+moment she arrives**, exactly as the decorating room's door is, because in a room
+with no required action *you may finish when you like* is a true statement.
+`refreshCakeInvitation` is `refreshDoorInvitation` under another name and is just
+as nearly empty, which is the right shape — a room with nothing to gate on should
+say so in the function that would have gated it.
+
+Tapping it is the ending: everybody eats in three bites with the cake shrinking
+under them, applause, confetti, and the friend of the day thanks her by name.
+Then, because there is no bakery to go to, **the room lays out a fresh party
+behind the celebration** — a new friend, a new cake — the way the kitchen starts
+a fresh round behind its third cake. A room that ends with nowhere to go must not
+end with nothing to do.
+
+### The cake arrives decorated, and that is the handover working
+
+The party is the first thing in the game to collect on the promise `Sticker` was
+written for: *"the party and the wall can re-render the same cake later from the
+spec alone, at their own scale and their own angle."* Every sticker she placed
+and every ribbon she piped is rebuilt from polar anchors at **1.8×** instead of
+the decorating room's 2.5×, and a candle she lit is still lit.
+
+**Nothing was added to `CakeSpec` to get a cake across this doorway.**
+`RoomExit.feest(CakeSpec)` carries the identical struct `.versieren` carries,
+which is the tell that the contract was right. What it cost was three lines in
+`VersierRoom.endRoom` — *"`endRoom()` is the one function the decorating room
+replaces"* (`ROOMS.md` §9), and the party replaced this one in turn.
+
+### Six guests and a DJ, and the screen is why
+
+§6.5 used to ask for up to twelve guests, on the argument that the three-part rig
+was chosen partly because twelve had to be affordable. **The rig was never what
+stopped it.** Twelve targets that each need `CONCEPT.md` §5's ~120 pt inside a
+0.46 m box is arithmetic that does not close whatever the rig costs.
+
+So the room is laid out on the **X−Z diagonal**, which `RoomBox.screenSeparation`
+says is the one direction that keeps all of its spacing at this camera: the six
+pads on one line, the six guests on two short rows. The counts came out of that
+rather than out of a frame-rate measurement, and twelve is still reachable the day
+it is wanted — guests behind the front row can be scenery, since nothing on
+screen has to be tappable.
+
+The DJ is one of the eleven — whichever friend is *not* at the party today —
+rather than a twelfth animal, because inventing one would quietly reopen
+`GAMEPLAY.md` §1's decision that the twelfth frame is Nina's.
+
+### `assertSpacing` earned its keep before the room ever ran
+
+**This is the first room whose spacing check asserts on the screen distance
+rather than warning about it**, and it caught seven overlaps in a layout that
+looked fine on a floor plan.
+
+Six were 0.1–0.7 mm short, all of them from the same wrong assumption:
+`screenSeparation` takes its view direction through the **midpoint of the pair**,
+not through the room's origin, so a row on the diagonal is exactly
+screen-horizontal only where it crosses the middle of the room. At the ends of a
+six-pad row it is a degree or so off. The pad pitch went from 64 mm to 65 and the
+guest rows opened up a little.
+
+The seventh was not a rounding error. **The speaker stack was 23 mm from a guest**
+against the 60 it needed, while sitting 60 mm away from her on the floor — the gap
+between them ran almost exactly along the view direction, so the speaker was
+standing directly *behind* her on screen. Two more positions on the left wall
+failed the same way against a different guest. It is now in the back-right corner
+beside the booth.
+
+None of that is visible in a screenshot and all of it would have shown up as taps
+going to the wrong thing. `ROOMS.md` §5 — *do not let a new room ship in that
+state; it is far cheaper before the props are placed than after* — is the whole
+of the argument, and this room is the first to have followed it.
+
+### The pads answer on the way down
+
+Every other target in the game acts on `onTap`, which fires when she lifts her
+finger. A pad acts on `onDragBegan`, which fires when she puts it down.
+
+It is a one-word change and it is the only place in the game where the difference
+is audible: a drum that sounds when you *stop* hitting it is a drum whose rhythm
+is not yours, and this room is entirely about her rhythm. `onTap` is still wired
+— it says what a pad is called.
+
+### The six pads were not blocked after all
+
+`CONCEPT.md` §7.4 lists "the dance party soundtrack and the six instrument pads"
+as the one thing in the design blocked on an asset nobody has made, and
+`GAMEPLAY.md` §9 says to start the music search *before* the room.
+
+That was not done, and it turned out to be the right call rather than a corner
+cut: five oscillators later the pads are `SoundKit` cases like every other effect
+in the game — `trom`, `toeter`, `klap`, `fluit`, `kras`, plus the sixth borrowed
+from the kitchen's `ding`, and `knabbel` and `applaus` for the ending. They are
+honest placeholders and `SoundKit` still prefers a bundled file, so a CC0 pack
+replaces them one at a time.
+
+**What is still blocked is the party loop, and it is one asset rather than
+seven.** The room also works in silence in a way a room waiting for a backing
+track would not, because the beat is hers.
+
+### The toys
+
+Six, none of which gate anything: the mirror ball (spins up and throws light),
+the confetti popper, the speaker stack (thumps, cones wobble), the DJ (scratches,
+and his decks jump), a balloon that bobs away and comes back, and any guest, who
+jumps.
+
+**The booth has no target of its own.** It is entirely covered by the DJ standing
+behind it, so a target for each would be two targets 30 mm apart needing 64 —
+`ROOMS.md` §5's *"some props cannot have a naming target at all"*. Its word is
+folded into the DJ's tap at the flour sack's ratio: mostly *the DJ*, one time in
+four *the decks*. The **dance floor** is the same problem and gets the same
+answer from the other end — sixteen tiles cannot each be a target, so its word
+rides on a tap that lands on the empty floor.
+
+### Deviations, and things worth knowing
+
+- **No door**, and the cake instead. Above, and `ROOMS.md` §9.
+- **Six guests, not twelve.** Above.
+- **The friend of the day is dealt, not handed over**, because there is no hub to
+  hand one over — the same answer the decorating room gives to a visit with no
+  cake (`CakeSpec.dealt`).
+- **The friends' thanks are relayed by Nina** — *"Pip zegt: dankjewel, Nina!"* —
+  because eleven friend voices do not exist. `Friend.thanksLineID` is derived off
+  the enum case, so casting them is a re-point rather than a rewrite.
+- **`BakerCharacter` grew a `home:` argument.** It eased back to a hardcoded
+  kitchen spot after a cheer, which is wrong in any room that places Nina by
+  writing `root.position` afterwards. The party passes its own; the default is
+  unchanged, so nothing else moved. **Versieren and De Tuin still have that latent
+  bug** and the fix is one argument each — not made here, because this session's
+  room is the party.
+- **The mirror ball is a plain faceted sphere, not chrome.** A style with no
+  reflections in it cannot have a mirror ball, so the *spots on the floor* do the
+  work the mirror would have done. The regenerated finale plate did not carry the
+  "no mirrored chrome" clause and came back with a silver ball, which is the one
+  thing in that picture off the direction.
+- **A beam is as long as its lamp is far away.** It was a constant 175 mm, which
+  was right for none of the five: the back lamps are 251–282 mm from the spot they
+  aim at and the two on the left wall are 291–294, so every beam stopped 75–120 mm
+  above the floor and hung there like a stalactite. `FeestProps.lamp` derives the
+  length from `simd_distance(origin, target)` now. What sells a beam is the pool
+  at the end of it landing on something.
+
+### What it owes
+
+- **Music.** One loop. See above.
+- **Eleven friend voices**, which is most of the game's remaining dialogue.
+- **§6.6, the photograph and the wall**, which is what `nina.feest.muurKomt`
+  promises *straks* rather than *now* — and which is now the last thing between
+  four rooms and a game.
+
+## What these four rooms may not conclude
+
+Whether the *game* is fun. There is no bakery, no friend at the door and no wall
+— and with four rooms and no hub, the chain between them is a door tapped at the
+end of each one rather than something she chooses. What they can answer is
+whether she can drive it: whether the snap radius and the target sizes are right,
+whether stirring works with her hand, whether she can sweep a watering can across
+five plants, whether a sticker lands where she meant it to, whether she can find
+a beat, and whether she taps Otto again.
+
+**Three rooms inherited every one of the kitchen's touch numbers on the argument
 that the box and the chair have not moved.** That is a calculation, not an
-observation, and it is now riding on three rooms instead of one — so the
-afternoon with Nina is worth more than it was, not less.
+observation, and it is now riding on four rooms instead of one — so the afternoon
+with Nina is worth more than it was, not less.
+
+**And the party has not been through a compiler.** It was written in a container
+with no Swift toolchain, which is the situation that produced eight errors across
+the first two builds — none of them a number, all of them scope, actor isolation
+or a type turning out to be a struct. Assume this room has its own three, and see
+[First build](#first-build) for what to look for.
 
 `POC.md` has the testing protocol, and it still applies: her iPad, Guided Access
 on, you not helping and not narrating.

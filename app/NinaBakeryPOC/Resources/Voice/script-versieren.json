@@ -36,8 +36,9 @@
     "nina.versieren.opnieuw": "The restart button — everything comes off the cake, and the cake stays.",
     "nina.versieren.stil": "Idle, alternating with zullenWeGaan. 'I am still here.'",
     "nina.versieren.zullenWeGaan": "Idle. NOT an instruction — see _why above.",
-    "nina.versieren.deurRonde": "The door, mid-round. The party is coming soon, not now.",
-    "nina.versieren.deurBezoek": "The door, on a visit."
+    "nina.versieren.deurRonde": "The door, mid-round, from before the party existed — the party is coming *straks*. SUPERSEDED by naarFeest on 2026-08-17 and kept: it is what this room would have to say again if the party were ever taken out, and ROOMS.md §4's contract is satisfied by VersierLine still naming it.",
+    "nina.versieren.deurBezoek": "The door, on a visit. Still the only thing a visit can end on, because a visit's door goes back to a bakery that does not exist.",
+    "nina.versieren.naarFeest": "The door, mid-round, now that Het Feest is built. The mirror of nina.keuken.naarVersieren: it can promise the party because she is about to be taken to it."
   },
 
   "lines": [
@@ -149,6 +150,15 @@
         { "index": 535, "file": "nina-versieren-deurBezoek-1.mp3", "text": "Wat is hij mooi geworden. Tot de volgende keer!" },
         { "index": 536, "file": "nina-versieren-deurBezoek-2.mp3", "text": "Klaar! Dag taart, dag versierseltjes." },
         { "index": 537, "file": "nina-versieren-deurBezoek-3.mp3", "text": "Mooi gedaan! We komen gauw weer terug." }
+      ]
+    },
+    {
+      "id": "nina.versieren.naarFeest",
+      "character": "nina",
+      "variants": [
+        { "index": 856, "file": "nina-versieren-naarFeest-1.mp3", "text": "Wat is hij mooi geworden! Kom, we gaan feestvieren." },
+        { "index": 857, "file": "nina-versieren-naarFeest-2.mp3", "text": "Klaar! Nu gaan we dansen met de taart." },
+        { "index": 858, "file": "nina-versieren-naarFeest-3.mp3", "text": "Wat een taart zeg. Op naar het feest!" }
       ]
     }
   ]

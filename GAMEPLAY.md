@@ -712,15 +712,32 @@ That also made the debug room switcher and visit mode one code path instead of
 two, which is the tell that it was the right shape: entering the room with no
 cake handed over *is* a visit.
 
-### 6.5 Het Feest — the party
+### 6.5 Het Feest — the party — **BUILT**
 
 **Required:** nothing, until she decides it is over.
 
+> **It is a discotheque — owner's call, 2026-08-17.** This section used to
+> describe a birthday party with lanterns and a disco ball hanging over it. It is
+> now a **disco**: a mirror ball, a rig of coloured lights, a light-up dance
+> floor, a stack of speakers, and **a DJ behind a booth with two decks**. The six
+> instrument pads are the floor buttons. What did *not* change is the whole of
+> what the room is for — the guests still dance to her beat, and she still ends
+> it by tapping the cake — which is the tell that the theme was a skin over a
+> mechanic rather than the mechanic itself.
+>
+> `references/plates/11-finale.png` was regenerated for it, and
+> `references/plates/04-party-roombox.png` is superseded — it is the old bunting
+> and the old table, and it is kept only because plate 4 is one of the five
+> originals the direction was chosen from.
+
+**Built 2026-08-17.** [`app/README.md`](app/README.md), "Het Feest", is the
+record. Everything below is what shipped.
+
 The cake is already on the table when she arrives, and the friend of the day is
-already there with everyone she has baked for so far. **Six big pads along the
-open front edge**, one per instrument. Whatever she taps, the guests dance to —
-the animation clock follows the beat she is actually making, so it is her rhythm
-they are dancing to, not a recording.
+already there with five more of her friends. **Six big pads along the open front
+edge**, one per instrument. Whatever she taps, the whole room dances to — the
+animation clock follows the beat she is actually making, so it is her rhythm the
+guests, the ball, the floor and the lights are all on, not a recording.
 
 **She ends the party by tapping the cake.** Nothing else ends it. There is no
 timer, no song that finishes, no fairy telling her it is time. When she taps it,
@@ -732,35 +749,89 @@ authority she has in the game, and it gives a parent a visible, honest "when you
 tap the cake, we're done" — which is what makes *nog één keer* actually work at
 bedtime.
 
-**Toys:** the disco ball; a confetti popper; the lanterns; any guest, who jumps
-when tapped; a balloon that bobs away and comes back.
+**Toys:** the mirror ball, which spins up and throws light when tapped; the
+confetti popper; the speaker stack, which thumps and wobbles its cones; the DJ,
+who scratches; a balloon that bobs away and comes back; and any guest, who jumps.
 
-#### What this room needs that does not exist yet
+#### The disco is made of light, not of darkness
 
-- **A beat taken from her hands.** The dancing follows the interval between her
-  own taps — a running average, floored and capped so that two taps a second
-  apart do not put the guests into slow motion and a burst does not shake them
-  apart. It is the party's whole idea and it is about thirty lines: a tap
-  timestamp, an interval, and `Ticker` jobs whose period is read from it rather
-  than fixed.
-- **The first room with more than one character in it.** Up to twelve, on
-  `CONCEPT.md` §9.7's three-part rig, which is the rig's real test: it was
-  chosen partly because twelve of them have to be affordable. If it is not, the
-  fix is fewer guests on screen rather than a better rig.
+**The one thing that could have wrecked the art direction, and the rule that
+saved it.** A disco is dark, and `references/REFERENCES.md` §1 asks for soft even
+lighting, no dark corners and no ambient occlusion. Turning the room's lights
+down to make it read as a nightclub would have thrown away the whole style for
+one room.
+
+The answer is the halo's own lesson, applied to a room instead of to a ring:
+**if it has to look like a light, make it one.** The floor tiles, the lamp
+lenses, the beams, the booth's front panel and the facets of the mirror ball are
+all `Palette.lightMaterial` — emissive, above white in the HDR buffer, somewhere
+a base colour cannot reach. The plaster, the floor and the props keep exactly the
+lighting every other room has. So the room reads as a disco because bright things
+are pulsing in it, not because everything else went dark.
+
+That also keeps the palette locked. Nothing new was added to the thirteen (or to
+the six the kitchen derived): the lights are the existing pastels driven up with
+emission, which is the same trick and a great deal cheaper than a disco palette
+of its own.
+
+#### The way out is the cake
+
+**This room has no door**, and it is the only one that does not. §6.5 has always
+said *nothing else ends it*, and a door standing open beside the cake would be a
+second ending — which in a room whose whole point is that she decides when it is
+over is not a convenience, it is a contradiction.
+
+So the cake carries the cue the door carries everywhere else: **it is lit from
+the moment she arrives**, exactly as the decorating room's door is, and for the
+same reason — in a room with no required action, lighting the exit says *you may
+finish when you like*, which is true here and nowhere else. `ROOMS.md` §9 has
+the deviation.
+
+#### Six guests and a DJ, not twelve
+
+This section used to ask for up to twelve guests, on the argument that the
+three-part rig was chosen partly because twelve had to be affordable. **The rig
+is not what stopped it — the screen is.**
+
+`ROOMS.md` §5: a target's real size is measured perpendicular to the camera ray,
+and a row laid along X or Z keeps only about 0.80 of its spacing. Twelve
+characters that each need `CONCEPT.md` §5's ~120 pt inside a 0.46 m box is not
+arithmetic that closes, whatever the rig costs — six of them plus the DJ is
+about what the floor holds with air around each. So the guests are laid out on
+two short rows running along the **X−Z diagonal**, which is the one direction
+that keeps all of its spacing, and the count came out of that rather than out of
+a frame-rate measurement.
+
+Twelve remains reachable the day the room needs it: guests behind the front row
+can be scenery rather than targets. Nothing on screen has to be tappable.
+
+#### What it still owes
+
 - **Per-friend voice.** Eleven friends × 6–8 lines is most of the game's
-  remaining dialogue, and none of it is written. Four voices at different
+  remaining dialogue, and none of it is recorded. Four voices at different
   pitches, assigned so no two friends at the same party sound alike — the
-  assignment goes in `audio/voices.json` as it is decided.
-- **Music that does not exist.** The party is the payoff and it is currently
-  silent in every sense: `CONCEPT.md` §7.4 records that the connector cannot
-  supply music or SFX, so the six instrument pads and the party loop come from
-  GarageBand or a CC0 pack. **This is the one thing in the whole design that is
-  blocked on an asset nobody has made yet**, and it is worth starting before the
-  room is.
+  assignment goes in `audio/voices.json` as it is decided. **In the meantime
+  Nina relays the thanks** — *"Pip zegt: dankjewel, Nina!"* — one line per
+  friend, in her own voice. It is the honest version of §6.5's *thanks her by
+  name* until the friends can say it themselves, and it is what the eleven
+  `nina.feest.dank.*` lines are.
+- **Music that does not exist.** The party is the payoff and it is still silent
+  as *music*: `CONCEPT.md` §7.4 records that the connector cannot supply music,
+  so the party loop comes from GarageBand or a CC0 pack. **This is the one thing
+  in the whole design blocked on an asset nobody has made yet.** The six pads
+  themselves are no longer blocked — they are six synthesised voices in
+  `SoundKit`, on the same terms as every other effect in the game, and they are
+  honest placeholders a bought pack replaces one file at a time.
+- **The friend of the day is dealt, not handed over.** There is no bakery hub to
+  hand one over, so the room deals a friend the way the decorating room deals a
+  cake on a visit. `RoomExit` grows a case the day the hub lands.
 
 **Completion in round mode** is tapping the cake, which hands over to §6.6. In
 visit mode — replaying a filled frame — it is the same tap, and it hands back to
-the wall.
+the wall. Neither exists yet, so both call `RoomExit.bakkerij` and the room
+**lays out a fresh party behind the celebration** — a new friend, and in visit
+mode a new cake — the way the kitchen starts a fresh round behind its third cake.
+A room that ends with nowhere to go must not end with nothing to do.
 
 ### 6.6 Hanging the frame
 
@@ -812,7 +883,7 @@ The gameplay above is mostly reuse. What it genuinely adds over `CONCEPT.md`:
 |---|---|---|
 | Friend characters | 11 | One base faceted body, swapped head and colour. Three-part rig from §9.7 — they only need to dance and jump. |
 | Wish cards | 11 | Flat icons. Trivial. |
-| Room toys | ~28 | One tap, one animation, one sound each. Individually near-free; collectively this is what makes the game. Seven are built. |
+| Room toys | ~28 | One tap, one animation, one sound each. Individually near-free; collectively this is what makes the game. **Twenty-four are built** — seven in the kitchen, five in the decorating room, six in the garden, six at the party. |
 | Seeds and their grown forms | 6 × 3 stages | The garden's only real asset load. The six ingredients themselves are built. |
 | Sticker types | 7 trays | Kenney's Food Kit covers most of it. |
 | Cake variants | 0 extra | Tint, two particle flags, one scale. All from one mesh. Built. |
@@ -830,7 +901,7 @@ assumed. The kitchen is the calibration: 46 line ids across 86 files came to
 | The opening film — **done** | 3 | ~1 |
 | Versieren — **done** | 12 + 15 names | ~11 |
 | De Tuin — **done** | 17 + 15 names | ~16 |
-| Het Feest | ~10 + ~10 names | ~10 |
+| Het Feest — **done** | 11 + 11 friends + 10 names | ~18 |
 | De Bakkerij | ~10 + ~10 names | ~10 |
 | Eleven friends × 6–8 | ~80 | ~24 |
 | The finale | ~4 | ~2 |
@@ -892,8 +963,12 @@ about it. After that:
    one `Room` protocol, the box split out of the kitchen's `Layout`, and a
    debug room switcher behind the existing parent gate. See
    [`app/README.md`](app/README.md).
-4. **The party**, so a round has an ending. Start the music search before the
-   room — it is the only genuinely blocked dependency in the project.
+4. ~~**The party**~~ — **built**, 2026-08-17, as a **disco** (owner's call). A
+   round has an ending. The music search was *not* done first, and that was the
+   right call in the end rather than a corner cut: the six pads turned out not
+   to be blocked at all — they are six synthesised `SoundKit` voices, on the
+   same terms as every other effect in the game — so what is still blocked is
+   **the party loop alone**, which is one asset rather than seven.
 5. **The wall** — twelve frames, the grey ghosts, the level select, and
    persistence. This moves *up*: it is not a reward system bolted on later, it
    is the thing that makes the game a game, and everything else hangs off it.
@@ -922,10 +997,17 @@ completed, because until the wall exists there is no reason for a second round.
   on it. Five auditions are in [`audio/auditions/`](audio/auditions/); playing
   them takes a minute and re-cutting him costs four credits.
 - **The four friend voices.**
-- **Music, and the sound effects.** Six instrument pads and a party loop, from
-  GarageBand or a CC0 library — `CONCEPT.md` §7.4. The kitchen's effects are
-  **synthesised at launch** as a stopgap; a bought or CC0 pack replaces them one
-  file at a time, and `SoundKit` already prefers a bundled file over the synth.
+- **Music.** The party loop, from GarageBand or a CC0 library — `CONCEPT.md`
+  §7.4. **Narrowed by the built party**: the six instrument pads are no longer
+  part of this, because they turned out to be six more synthesised voices rather
+  than six recordings. Every effect in the game is **synthesised at launch** as a
+  stopgap; a bought or CC0 pack replaces them one file at a time, and `SoundKit`
+  already prefers a bundled file over the synth. A *tune* is the one thing the
+  synth cannot honestly stand in for.
+- **What the guests are dancing to, before there is a tune.** The party's beat is
+  hers — it comes from her taps — so the room works in silence in a way a room
+  waiting for a backing track would not. Whether a loop should follow her tempo
+  or run at its own is a decision that cannot be made until there is a loop.
 - **What opens the app**, now that the film and the wall both claim the first
   screen — §2.
 - **Whether the basket goes back to three when the garden fills it** — §5. Five

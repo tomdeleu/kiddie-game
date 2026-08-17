@@ -3,15 +3,18 @@
 **Nina's Toverbakkerij** — a magic-bakery game in Dutch for a 4-year-old, built
 in SwiftUI for iPad.
 
-**Where it is:** two rooms are built. [app/](app/) holds **De Keuken** — one
-full round (ingredients, stir, pour, bake) with seven toys — and **Versieren**,
-where the cake she just baked goes onto a turntable and she covers it in
-sprinkles, candles, hearts, stars, crowns, fruit and cream. 196 Dutch voice
-lines between them. Start at [app/README.md](app/README.md).
+**Where it is:** four rooms are built. [app/](app/) holds **De Tuin**, where she
+sows, waters and picks five magic ingredients; **De Keuken** — one full round
+(roll, fetch, stir, pour, bake) with seven toys; **Versieren**, where the cake
+she just baked goes onto a turntable and she covers it in sprinkles, candles,
+hearts, stars, crowns, fruit and cream; and **Het Feest**, a disco with a mirror
+ball, a DJ, a light-up dance floor and six teddy-bear friends who each dance a
+different little move to whatever beat she taps. 309 Dutch voice lines between
+them. Start at [app/README.md](app/README.md).
 
-**Next:** test it with Nina, then the party — and start looking for music
-first, since it is the one thing in the design blocked on an asset nobody has
-made yet.
+**Next:** test it with Nina, then the wall of twelve frames — which is the last
+thing between four rooms and a game. The one asset still missing is the party's
+backing loop; everything else is in.
 
 See [GAMEPLAY.md](GAMEPLAY.md) for the storyline and gameplay,
 [CONCEPT.md](CONCEPT.md) for the design, [POC.md](POC.md) for why the art

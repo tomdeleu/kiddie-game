@@ -420,6 +420,10 @@ final class GameScene: ObservableObject {
             return VersierRoom(ticker: ticker, touch: touch, voice: voice,
                                sound: sound, settings: settings, mode: mode,
                                handedCake: cake)
+        case .feest:
+            return FeestRoom(ticker: ticker, touch: touch, voice: voice,
+                             sound: sound, settings: settings, mode: mode,
+                             handedCake: cake)
         }
     }
 
@@ -432,6 +436,8 @@ final class GameScene: ObservableObject {
             ticker.after(1.4) { [weak self] in self?.enter(.keuken, picked: basket) }
         case .versieren(let cake):
             ticker.after(1.4) { [weak self] in self?.enter(.versieren, handing: cake) }
+        case .feest(let cake):
+            ticker.after(1.4) { [weak self] in self?.enter(.feest, handing: cake) }
         case .bakkerij:
             // The bakery does not exist yet, so a visit ends back where it
             // started. `ROOMS.md` §9: never promise a room that does not exist.
@@ -525,14 +531,15 @@ struct RoomDebugStrip: View {
             }
             .pickerStyle(.segmented)
 
-            // Which cake `versieren` gets. Only meaningful for that room, so it
-            // only shows there — a control that does nothing is worse than none.
-            if scene.currentRoom == .versieren {
+            // Which cake the room gets. Only meaningful for the two rooms that
+            // take one, so it only shows there — a control that does nothing is
+            // worse than none.
+            if RoomDebugStrip.takesACake(scene.currentRoom) {
                 Picker("Cake", selection: $cakePreset) {
                     ForEach(CakePreset.allCases) { Text($0.title).tag($0) }
                 }
                 .pickerStyle(.menu)
-                Button("Re-enter with this cake") { enter(.versieren) }
+                Button("Re-enter with this cake") { enter(scene.currentRoom) }
                     .buttonStyle(.bordered)
                     .controlSize(.small)
             }
@@ -573,8 +580,16 @@ struct RoomDebugStrip: View {
         .padding(.top, 16)
     }
 
+    /// The two rooms downstream of the oven. Both are handed a `CakeSpec` and
+    /// both deal one when they are not — the party for the same reason the
+    /// decorating room does (`GAMEPLAY.md` §6.4, owner's call): the answer to a
+    /// missing cake is to supply one rather than to refuse her the room.
+    static func takesACake(_ id: RoomID) -> Bool {
+        id == .versieren || id == .feest
+    }
+
     private func enter(_ id: RoomID) {
-        scene.enter(id, handing: id == .versieren ? cakePreset.spec : nil)
+        scene.enter(id, handing: RoomDebugStrip.takesACake(id) ? cakePreset.spec : nil)
     }
 
     /// The cakes worth being able to reach in one tap: one of each `CakeSpec.Kind`

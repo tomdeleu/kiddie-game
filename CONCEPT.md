@@ -76,15 +76,26 @@ cake if she wants.
 
 ### 3.4 Het Feest — the party
 
-The cake is carried to a table. Guests arrive. Music starts.
+**It is a disco** — owner's call, 2026-08-17. A mirror ball, a rig of coloured
+lights, a light-up dance floor, a stack of speakers and **a DJ behind a booth
+with two decks**. `GAMEPLAY.md` §6.5 is the detail and
+`references/feest/` is the look.
 
-Six big pads along the bottom, each an instrument. Whatever she taps, the guests
-dance to — the animation speed follows the beat she is making. Then everyone
-eats the cake with enormous crunching sounds, applause, and the head fairy says:
+The cake is carried to a table. The friends arrive. The DJ starts.
+
+Six big pads along the bottom, each an instrument. Whatever she taps, the room
+dances to — the guests, the ball, the floor and the lights are all on the beat
+she is making. Then everyone eats the cake with enormous crunching sounds,
+applause, and the friend of the day says:
 
 > "Dankjewel, Nina! Dit was de allerlekkerste taart!"
 
 Then the cake is photographed and hung on the bakery wall in a little frame.
+
+> **The line above used to be the head fairy's.** Luna is gone — Nina is the
+> baker and the voice (`GAMEPLAY.md` §1), so the thanks belong to a guest. Until
+> the friends have voices of their own, Nina relays it: *"Pip zegt: dankjewel,
+> Nina!"*
 
 ## 4. The hub and the collection
 
@@ -265,6 +276,18 @@ explicitly refuse standalone use. So it cannot supply:
 - the dance party soundtrack and the six instrument pads,
 - the cake crunches, sparkle chimes, oven ping, watering can, whisk.
 
+> **Half of this turned out not to be a gap, and the party is what proved it.**
+> Every effect in the four built rooms — including **the party's six instrument
+> pads and the cake crunch** — is synthesised at launch by `Audio/SoundKit.swift`:
+> a few hundred lines of oscillators and envelopes rendered to PCM in
+> milliseconds. They are honest placeholders, and `SoundKit` prefers a bundled
+> file over the synth, so a CC0 pack still replaces them one file at a time with
+> no other edit.
+>
+> What the synth cannot honestly stand in for is a **tune**. So the gap is now
+> exactly one asset — the party loop — rather than a list, and the pads were
+> never the blocker they were written down as. `GAMEPLAY.md` §9.
+
 For a game where the party is the payoff, this is not a footnote. Sources, in
 order of pragmatism:
 
@@ -276,7 +299,12 @@ order of pragmatism:
    a Mac in the picture for Xcode, and the built-in loops are royalty-free.
    Six pads is genuinely an evening's work.
 
-Decide this before building the party room.
+Decide this before building the party room. **The party room was built without
+it** (2026-08-17) and that was survivable for one reason worth keeping: the
+party's rhythm is *hers* — the guests dance to the beat she taps, not to a
+recording — so the room is complete in silence in a way a room waiting for a
+backing track would not be. A loop, when it exists, is a layer on top rather than
+the thing that makes it work.
 
 ## 8. Build order
 

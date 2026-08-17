@@ -64,6 +64,21 @@ cheap to produce.
   spec, where AO *was* the signature.
 - No hard shadow edges, no dramatic contrast, no rim lights, no colour grading.
 
+> **Het Feest is a disco and none of this changed** — which is worth stating,
+> because it is the room most likely to be assumed to be an exception. The
+> lighting rig, the key, the fill and the no-AO rule are identical to every other
+> room's. What the disco adds is **emissive surfaces**: the dance floor tiles,
+> the lamp lenses, the beams, the booth's front panel and the mirror ball's
+> facets are all lights rather than lit things (`Palette.lightMaterial`, the
+> halo's material). The plaster stays pale and the corners stay light.
+>
+> The rule that generalises, and it is the halo's: **to make something look like
+> a light, make it one — never take the light away from everything else.** Dimming
+> the room to sell a disco would have thrown the direction away for one room;
+> adding six emissive materials bought the same read for nothing. The generation
+> side of it is a fifth prompt phrase, in
+> [`feest/README.md`](feest/README.md).
+
 ### Palette
 
 - **Soft pastels**, light and desaturated: blush pink, mint, cream, butter
@@ -248,18 +263,30 @@ the wall of frames reads, how a wish card scans — all valid. Soft edges, poole
 AO, terracotta palette — all wrong now. Regenerating them against the current
 locked references is a later job, and cheap.
 
-> **Two of the six are now superseded, 2026-08-17.** Plate 7 was replaced by
+> **Four of the six are now superseded, 2026-08-17.** Plate 7 was replaced by
 > `plates/07-decorating-roombox-v2.png` when the decorating room was built.
 > Plates **6 and 10** are replaced by [`bakkerij/`](bakkerij/) — the wall of
 > frames, the shop door, the blind, the order hook and the room box, all in the
 > locked style and all drawn to `GAMEPLAY.md` §6.1's required action, which did
-> not exist when plate 6 was made. Both old files stay as the record.
+> not exist when plate 6 was made. And **plate 11 has been regenerated, and it is
+> a disco**: §6.5 became a discotheque on the owner's call the same day and the
+> finale is the party, so the old plate was wrong twice over — in style *and* in
+> subject — and the cheapest fix was one credit. The new one is against the
+> current scenes reference: a mirror ball, a lit pastel floor, a DJ at a booth,
+> the cake on its table and the wall of frames filled and glowing. Its row below
+> is the new job. All the old files stay as the record.
 >
-> **Plates 8, 9 and 11 are still clay and still unreplaced.** They are the cast
-> line-up, the cake variants and the finale, none of which is being built yet.
-> Plate 9 has one live dependency: `versieren/taart-onversierd.png` now covers
-> the *bare* cake that `GAMEPLAY.md` §6.4's `insmeren` starts from, which is the
-> one cake state plate 9 never drew.
+> **Plate 4 is superseded but kept.** It is the old party — bunting, a table,
+> five guests, no disco — and it is kept because it is one of the five originals
+> the direction was chosen from and because §3's note about *how* it was produced
+> is still true of it. The party's live plates are
+> [`feest/`](feest/).
+>
+> **Plates 8 and 9 are still clay and still unreplaced.** They are the cast
+> line-up and the cake variants, neither of which is being built yet. Plate 9 has
+> one live dependency: `versieren/taart-onversierd.png` now covers the *bare*
+> cake that `GAMEPLAY.md` §6.4's `insmeren` starts from, which is the one cake
+> state plate 9 never drew.
 
 | # | Subject | File | Aspect | Seed | Job ID |
 |---|---|---|---|---|---|
@@ -268,7 +295,10 @@ locked references is a later job, and cheap.
 | 8 | The friends — cast line-up | `plates/08-twelve-friends.png` | 1:1 | `864078` | `878dabff-812b-415a-90de-c18c05762961` |
 | 9 | **Cake variants** — the colour system made visible | `plates/09-cake-variants.png` | 1:1 | `119583` | `29dc8d73-b2f8-407b-99b5-af5f9fefd841` |
 | 10 | The wish at the door — friend holding a wish card | `plates/10-wish-at-the-door.png` | 1:1 | `871420` | `571d95c4-a277-40c9-aff7-7c8ba6e4dc9c` |
-| 11 | The finale — every friend, wall full and glowing | `plates/11-finale.png` | 1:1 | `645041` | `32a2d5e9-8072-47aa-81a9-62b4a43c414b` |
+| 11 | **The finale — the disco, wall full and glowing** — REGENERATED 2026-08-17 | `plates/11-finale.png` | 1:1 | `9333` | `f6429693-912d-4988-829f-970ceed3cd34` |
+
+The row above replaces seed `645041` / job `32a2d5e9-8072-47aa-81a9-62b4a43c414b`,
+which was the clay-direction birthday party. Git history has the file.
 
 Four findings that survive the style change, because they are about composition
 and about flux's behaviour rather than about surface:
@@ -277,6 +307,9 @@ and about flux's behaviour rather than about surface:
   in two rows of six and delivered eight in two rows of four. Cast sheets need
   splitting into two plates of six, and the next pass should name a distinct
   palette colour per character — bear, cat and dog all came back the same brown.
+  **And six is not safe either**: `feest/gasten.png` asked for six named animals
+  and delivered five. It is not a threshold at twelve — ask for what you need
+  plus one, and expect to lose one. [`feest/README.md`](feest/README.md).
 - **A literal grid comes back as a scatter, and the scatter is better.** Plate 6
   was asked for a neat 3×4 grid and produced an irregular cluster of frames. It
   reads warmer and more hand-made, and still reads instantly as "some filled,
