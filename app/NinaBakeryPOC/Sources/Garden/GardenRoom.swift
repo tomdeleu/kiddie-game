@@ -73,7 +73,8 @@ final class GardenRoom: Room {
     private var molehill: GardenProps.Molehill?
     private var butterfly: Entity?
     private var bee: Entity?
-    private var puddles: [Entity] = []
+    private var pond: Entity?
+    private var pondTouchSpot: Entity?
     private var doorway: Props.Doorway?
     private var doorMarker: Entity?
     private var doorTouchSpot: Entity?
@@ -188,7 +189,8 @@ final class GardenRoom: Room {
         plants.removeAll()
         plotMarkers.removeAll()
         flowers.removeAll()
-        puddles.removeAll()
+        pond = nil
+        pondTouchSpot = nil
         basketTokens.removeAll()
         strays.removeAll()
         strayTargets = 0
@@ -298,13 +300,38 @@ final class GardenRoom: Room {
         root.addChild(buzzer)
         bee = buzzer
 
-        for (index, spot) in GardenLayout.puddleSpots.enumerated() {
-            let pool = GardenProps.puddle(flat: flat)
-            pool.position = spot
-            pool.name = "Puddle\(index)"
-            root.addChild(pool)
-            puddles.append(pool)
-        }
+        // **The pond, and nothing in it.** Two puddles stood out on this floor;
+        // one pond replaces both, on the owner's call, and a second call made it
+        // an oval across the whole front of the lawn. It is built last of the
+        // toys for the same reason it is placed first in `GardenLayout`:
+        // everything else in the near foreground is positioned around it, not
+        // the other way about.
+        //
+        // **It is not turned, and that is the one thing to know about it.**
+        // Every other prop that wants to face the camera is built round its own
+        // axis and turned by `towardsCamera`; this one is built in the room's
+        // own coordinates, because the thing that decides its shape is where the
+        // lawn ends. `GardenProps.pond` lays the long axis on the X−Z diagonal
+        // itself and clips the outline against `pondCut`.
+        let pool = GardenProps.pond(long: GardenLayout.pondLong,
+                                    short: GardenLayout.pondShort,
+                                    cut: GardenLayout.pondCut, flat: flat)
+        pool.position = SIMD3<Float>(GardenLayout.pondCentre.x,
+                                     GardenLayout.floorY,
+                                     GardenLayout.pondCentre.y)
+        pool.name = "Pond"
+        root.addChild(pool)
+        pond = pool
+
+        // The tap goes on a marker in the middle of the *visible* water rather
+        // than on the pond's origin, which sits out under the clipped corner.
+        // Same trick as the gate's `GateTouchSpot`, and for the same reason: a
+        // sphere at a prop's origin is a sphere somewhere she is not aiming.
+        let spot = Entity()
+        spot.name = "PondTouchSpot"
+        spot.position = GardenLayout.pondTouchSpot
+        root.addChild(spot)
+        pondTouchSpot = spot
     }
 
     /// **The gate**, which is what this room has instead of a door.
@@ -431,18 +458,33 @@ final class GardenRoom: Room {
             target.tracksEntity = true
             target.onTap = { [weak self] in self?.tapBee() }
         }
-        for (index, pool) in puddles.enumerated() {
-            touch.register("puddle\(index)", entity: pool, radius: 0.030,
-                           planeY: GardenLayout.floorY) { target in
-                target.onTap = { [weak self] in self?.tapPuddle(index) }
-            }
+        // **45 mm, which is far smaller than the prop and deliberately so.** The
+        // pond is 258 mm across, and a target that matched it would swallow the
+        // basket and the flower row's near end; a target only has to be big
+        // enough to hit (`CONCEPT.md` §5's ~120 pt), and the *visible* pond is
+        // what she aims at. It clears the basket by 108 mm on screen against the
+        // 83 the two radii need, and the nearest flower by 114 against 69.
+        touch.register("pond", entity: pondTouchSpot, radius: 0.045,
+                       planeY: GardenLayout.floorY) { target in
+            target.onTap = { [weak self] in self?.tapPond() }
         }
+        // **The marker rides the canopy, not the base.** Both of these name a
+        // thing whose mass is in the air, and she taps the leaves. The tree's
+        // lift moved with it when it grew (`GardenProps.tree`) — 115 mm is the
+        // middle of the new canopy, where 75 mm was the middle of the old one
+        // and is now bare trunk. Its radius grew with it too, from the 36 mm
+        // every prop gets to 42: the canopy is 108 mm across and a target a
+        // third of the prop's width inside a prop that big reads as a dead
+        // zone. The bush is untouched, and the two stay 136 mm apart as the
+        // camera sees them (`RoomBox.screenSeparation`) against 78 mm of
+        // combined radius, so neither can steal the other's tap.
         for (index, spot) in [GardenLayout.treeSpot, GardenLayout.bushSpots[0]].enumerated() {
             let marker = Entity()
             marker.name = "Greenery\(index)"
-            marker.position = spot + [0, index == 0 ? 0.075 : 0.020, 0]
+            marker.position = spot + [0, index == 0 ? 0.115 : 0.020, 0]
             root.addChild(marker)
-            touch.register("greenery\(index)", entity: marker, radius: 0.036,
+            touch.register("greenery\(index)", entity: marker,
+                           radius: index == 0 ? 0.042 : 0.036,
                            planeY: spot.y) { target in
                 target.onTap = { [weak self] in
                     self?.sayName(index == 0 ? Line.Dit.boom : Line.Dit.struik,
@@ -1046,7 +1088,7 @@ final class GardenRoom: Room {
         swingDoor(doorway, hold: 2.6)
         sound.play(.reward, volume: 0.7)
         save()
-        voice.sayWhenQuiet(Line.Tuin.kamerDeur)
+        voice.sayInstead(Line.Tuin.kamerDeur)
 
         let threshold = doorMarker?.position ?? GardenLayout.gateCentre
         for (i, delay) in [Float(0.45), 1.5].enumerated() {
@@ -1171,16 +1213,24 @@ final class GardenRoom: Room {
         sayToy(Line.Dit.bij, Line.Speel.bij)
     }
 
-    private func tapPuddle(_ index: Int) {
-        guard puddles.indices.contains(index) else { return }
-        let pool = puddles[index]
+    /// **A tap on the pond.** The puddle's splash, scaled to a pond.
+    ///
+    /// Squashing the whole prop would bounce the stone rim, which is a rim of
+    /// stones and does not bounce, so only the water moves — and the droplets
+    /// are thrown from the middle of the pool rather than from its edge.
+    private func tapPond() {
+        guard let pond else { return }
         sound.playVaried(.water, volume: 0.6)
-        ticker.squash(pool, amount: 0.26, duration: 0.5)
-        // Droplets bouncing out of it, in the water's own colour.
-        Sparkles.burst(at: pool.position + [0, 0.006, 0], in: root, ticker: ticker,
-                       colour: Palette.berryBlue, count: 9, size: 0.0022,
-                       speed: 0.075, life: 0.65)
-        sayToy(Line.Dit.plas, Line.Speel.plas)
+        for band in pond.children where band.name.hasPrefix("PondBand")
+                                     || band.name == "PondDeep" {
+            ticker.squash(band, amount: 0.30, duration: 0.55)
+        }
+        // Thrown from the middle of the visible water rather than from the
+        // pond's origin, which is out under the clipped corner.
+        Sparkles.burst(at: GardenLayout.pondTouchSpot + [0, 0.010, 0], in: root,
+                       ticker: ticker, colour: Palette.berryBlue, count: 12,
+                       size: 0.0024, speed: 0.090, life: 0.70)
+        sayToy(Line.Dit.vijver, Line.Speel.vijver)
     }
 
     /// **The butterfly follows her finger and the bee hovers over the flowers.**
@@ -1342,22 +1392,30 @@ final class GardenRoom: Room {
     }
 
     /// **A step transition never opens its mouth while the last line is still
-    /// going.** `sayWhenQuiet`, never `say` — `ROOMS.md` §4, and the reason is
-    /// that playing fast should not cost her the words.
+    /// going.** Never bare `say` — `ROOMS.md` §4, and the reason is that playing
+    /// fast should not cost her the words.
     ///
     /// Only one line can ever be waiting and a newer one replaces it, so five
     /// quick drops earn the most recent thing that is still true rather than a
     /// monologue about things that have already happened.
+    ///
+    /// **`sayInstead` rather than `sayWhenQuiet`, because a step transition is
+    /// not an extra remark — it is the room moving on, and everything queued
+    /// behind the sentence in the air is about where she just was.** The
+    /// greeting is three lines long and she can have the bed sown before it
+    /// finishes; joining that queue means being told to sow, then told the
+    /// basket is full. The sentence sounding now still finishes: this drops the
+    /// queue, never the voice.
     private var lastAnnounced: GardenStep?
     private func announceStep() {
         guard state.step != lastAnnounced else { return }
         lastAnnounced = state.step
         switch state.step {
-        case .zaaien: voice.sayWhenQuiet(Line.Tuin.zaaien)
-        case .gieten: voice.sayWhenQuiet(Line.Tuin.gieten)
-        case .plukken: voice.sayWhenQuiet(Line.Tuin.rijp)
+        case .zaaien: voice.sayInstead(Line.Tuin.zaaien)
+        case .gieten: voice.sayInstead(Line.Tuin.gieten)
+        case .plukken: voice.sayInstead(Line.Tuin.rijp)
         case .klaar:
-            voice.sayWhenQuiet([Line.Tuin.mandjeVol, Line.Tuin.kamerKlaar], gap: 0.35)
+            voice.sayInstead([Line.Tuin.mandjeVol, Line.Tuin.kamerKlaar], gap: 0.35)
         }
     }
 

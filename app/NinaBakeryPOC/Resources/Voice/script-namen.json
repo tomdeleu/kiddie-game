@@ -14,7 +14,7 @@
     "shape": "Name first, then one short thing about it. Never longer than two clauses — she is four, and a tap she has to sit through is a tap she stops making. The longest here is 4.9 s and most are near 3.",
     "priority": "They are all said at .low priority, which VoiceBank drops outright if anyone is already speaking. A naming line must never talk over the step instruction it would be explaining.",
     "de_tuin_gate_and_bench": "Two more when the garden's walls were replaced by a fence — nina.dit.poort for the gate, and nina.dit.werkbank for the potting bench the seed jars moved onto. The garden had been borrowing nina.dit.deur, whose line is 'daarachter is nog een kamer' — true of a door in a kitchen wall, and not of a gate in a garden fence. That id is now the kitchen's alone.",
-    "de_tuin": "Thirteen more added 2026-08-16 for the garden — zaadje, zaaibak, gat, gieter, plantje, hek, bloemen, molshoop, vlinder, bij, plas, boom, struik. The eight seed jars are deliberately NOT among them: a jar of aardbei seeds is named through nina.dit.aardbei, the same line the kitchen says when she taps the berry itself, so the word she learns in the garden is the word she hears in the kitchen. nina.dit.mandje and nina.dit.potje are reused unchanged.",
+    "de_tuin": "Thirteen more added 2026-08-16 for the garden — zaadje, zaaibak, gat, gieter, plantje, hek, bloemen, molshoop, vlinder, bij, vijver, boom, struik. The eight seed jars are deliberately NOT among them: a jar of aardbei seeds is named through nina.dit.aardbei, the same line the kitchen says when she taps the berry itself, so the word she learns in the garden is the word she hears in the kitchen. nina.dit.mandje and nina.dit.potje are reused unchanged.",
     "no_comment_objects_in_lines": "Every element of `lines` must be a real {id, character, variants} object. VoiceBank decodes the array with a non-optional model, so a single `{\"_section\": \"...\"}` marker slipped in for readability makes the WHOLE file fail to decode — and it fails silently, into a room where every naming line is mute. Section notes go here in `_why`, never in `lines`."
   },
   "characters": {
@@ -545,12 +545,12 @@
       ]
     },
     {
-      "id": "nina.dit.plas",
+      "id": "nina.dit.vijver",
       "character": "nina",
       "variants": [
         {
-          "file": "nina-dit-plas-1.mp3",
-          "text": "Dit is een plas water. Lekker om in te spetteren!"
+          "file": "nina-dit-vijver-1.mp3",
+          "text": "Dit is de vijver. Daar komen de vogeltjes drinken."
         }
       ]
     },
@@ -597,6 +597,6 @@
   ],
   "_rooms": {
     "versieren": "Fifteen ids added with room 6.4: the turntable, the two tools, the seven sticker types and the five toys. One variant each, like every other line in this file — a name is a thing you learn by hearing it the same way twice.",
-    "tuin": "Fifteen ids added with room 6.2: the seed, the potting bench, the hole, the watering can, the growing plant, the fence, the gate, and the six toys — flowers, molehill, butterfly, bee, puddle, tree and bush. One variant each, like the rest of the file."
+    "tuin": "Fifteen ids added with room 6.2: the seed, the potting bench, the hole, the watering can, the growing plant, the fence, the gate, and the six toys — flowers, molehill, butterfly, bee, pond, tree and bush. nina.dit.plas went out with the garden's two puddles on 2026-08-16: the pond that replaced them is a vijver, and a naming line that says the wrong word is worse than no naming line. One variant each, like the rest of the file."
   }
 }

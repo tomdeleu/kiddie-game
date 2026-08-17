@@ -1212,7 +1212,7 @@ final class KitchenRoom: Room {
         saidGoodStirring = false
         applyStep(animated: true)
         save()
-        voice.sayWhenQuiet(Line.roeren)
+        voice.sayInstead(Line.roeren)
     }
 
     // MARK: - Step 2: stirring
@@ -1341,7 +1341,7 @@ final class KitchenRoom: Room {
         sound.play(.sparkle)
         baker?.set(.cheering)
         applyStep(animated: true)
-        voice.sayWhenQuiet(Line.beslagKlaar)
+        voice.sayInstead(Line.beslagKlaar)
         ticker.after(2.6) { [weak self] in
             guard let self, self.state.step == .gieten else { return }
             self.voice.say(Line.gieten, priority: .low)
@@ -1486,7 +1486,7 @@ final class KitchenRoom: Room {
             self.state.step = .inOven
             self.save()
             self.applyStep(animated: true)
-            self.voice.sayWhenQuiet([Line.gegoten, Line.ottoWacht])
+            self.voice.sayInstead([Line.gegoten, Line.ottoWacht])
         }
     }
 
@@ -1522,7 +1522,7 @@ final class KitchenRoom: Room {
                 self.save()
                 self.setDoor(open: false, animated: true, oven: oven)
                 self.refreshInteractivity()
-                self.voice.sayWhenQuiet(Line.ottoVormErin)
+                self.voice.sayInstead(Line.ottoVormErin)
                 self.ticker.after(3.0) { [weak self] in
                     guard let self, self.state.step == .bakken else { return }
                     self.voice.say(Line.klopOpOtto, priority: .low)
@@ -1558,7 +1558,7 @@ final class KitchenRoom: Room {
         let dome = oven.dome
         let door = oven.door
         let chimneyTop = oven.chimneyTop
-        voice.sayWhenQuiet(Line.ottoBakken)
+        voice.sayInstead(Line.ottoBakken)
         sound.play(.whoosh, volume: 0.6)
 
         // Four seconds of Otto being delighted. Nothing is being waited for —
@@ -1627,7 +1627,14 @@ final class KitchenRoom: Room {
             // Otto first, then Nina on the colour and at most one effect, and
             // only then where it goes — the last step is not an interruption of
             // her looking at what she made.
-            self.voice.sayWhenQuiet([Line.ottoKlaar] + spec.reactionLines + [Line.opDePlank])
+            //
+            // **`stillTrue` because this chain is fourteen seconds long and she
+            // can finish the round in two of them.** Every line in it is about a
+            // cake standing on the table, and the last is an instruction to put
+            // it somewhere else; the moment she has, none of them is true. The
+            // cake going onto the plank clears `cake`, so that is the premise.
+            self.voice.sayWhenQuiet([Line.ottoKlaar] + spec.reactionLines + [Line.opDePlank],
+                                    stillTrue: { [weak self] in self?.cake != nil })
         }
     }
 
@@ -1733,9 +1740,20 @@ final class KitchenRoom: Room {
         // cake as after the first. `shelf` already counts the one that has just
         // landed, so this asks about the plank she is looking at.
         let finishes = shelf.count >= KitchenLayout.cakesToFinish
-        voice.sayWhenQuiet([Line.klaar, Line.plankGezet,
-                            finishes ? Line.kamerKlaar : Line.plankNogEen], gap: 0.42)
+        // Cleared before she is spoken to, not after: it is the premise the
+        // out-of-the-oven chain is checked against, and there is no longer a
+        // cake on the table.
         self.cake = nil
+        // **`sayInstead`, because the queue behind her is about the table.** She
+        // is allowed to carry the cake up the instant it appears, and until now
+        // doing so bought her the whole out-of-the-oven chain — Otto, the
+        // colour, the effect, and *"zet hem op de plank!"* about a cake already
+        // on the plank — before these three lines even started, and the round
+        // did not reset until all of it had finished, some twenty-four seconds
+        // after she put it there (owner, 2026-08-16). Playing fast should not
+        // cost her the words, but it should not charge her for the old ones.
+        voice.sayInstead([Line.klaar, Line.plankGezet,
+                          finishes ? Line.kamerKlaar : Line.plankNogEen], gap: 0.42)
         touch.target(named: "cake")?.enabled = false
     }
 
@@ -1825,7 +1843,7 @@ final class KitchenRoom: Room {
         save()
 
         let cake = state.cakeToDecorate
-        voice.sayWhenQuiet(cake == nil ? Line.kamerDeur : Line.naarVersieren)
+        voice.sayInstead(cake == nil ? Line.kamerDeur : Line.naarVersieren)
 
         // Light coming through the gap, twice, on the beat of the swing opening
         // and of it standing there.
@@ -1887,9 +1905,11 @@ final class KitchenRoom: Room {
         RoundStore.save(state)
         build(flat: flat)
         // A beat so the new dough is on the table before she is told about it,
-        // and `sayWhenQuiet` in case the celebration is still finishing — the
+        // and `sayInstead` in case the celebration is still finishing — the
         // rebuild is triggered by Nina going quiet, but a re-recorded line or a
-        // timeout could still put the two within a syllable of each other.
+        // timeout could still put the two within a syllable of each other, and
+        // whatever is left of the old round's queue is about a round that no
+        // longer exists.
         ticker.after(0.8) { [weak self] in
             guard let self else { return }
             // **A finished kitchen does not announce another cake.** The last
@@ -1900,7 +1920,7 @@ final class KitchenRoom: Room {
             // if she stands still. Doing nothing here is the whole point — she
             // is being offered the door, not marched through it.
             guard !self.roomComplete else { return }
-            self.voice.sayWhenQuiet([Line.opdracht, Line.uitrollen], gap: 0.35)
+            self.voice.sayInstead([Line.opdracht, Line.uitrollen], gap: 0.35)
         }
     }
 
@@ -2163,7 +2183,7 @@ final class KitchenRoom: Room {
                           colour: Palette.cream, radius: 0.035)
             self.refreshTinBase()
             self.applyStep(animated: true)
-            self.voice.sayWhenQuiet(Line.deegKlaar)
+            self.voice.sayInstead(Line.deegKlaar)
 
             // **She may already have filled the bowl.** Nothing stops her
             // fetching ingredients before rolling — the halo suggests an order,

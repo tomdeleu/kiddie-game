@@ -201,17 +201,39 @@ change.
   happening *this instant*. `.low` is dropped outright while anyone is speaking
   — idle nudges, toy chatter, and every naming line. A name can never talk over
   the instruction it would be explaining.
-- **A step transition uses `sayWhenQuiet`, never `say`.** It holds the line until
-  Nina stops, *including through the quarter-second gaps inside a chain*, which
-  a naive `isSpeaking` check reads as finished. Drop the last ingredient in, and
-  1.1 s later the next step used to talk straight through the four-second line
-  about the ingredient.
+- **A step transition never uses bare `say`.** Nina must not be talked over: the
+  line is held until she stops, *including through the quarter-second gaps
+  inside a chain*, which a naive `isSpeaking` check reads as finished. Drop the
+  last ingredient in, and 1.1 s later the next step used to talk straight
+  through the four-second line about the ingredient.
 - **Only one line can be waiting, and a newer one replaces it.** It is not a
   queue on purpose: three quick actions would earn a twelve-second monologue
   about things that had already happened. What she gets is the line playing now,
   then the most recent thing that is still true. Nothing blocks on it — the step
   has already changed and the halo has already moved — so the worst case is a
   dropped line, never a stalled game.
+- **`sayInstead` for a step transition, `sayWhenQuiet` for an extra remark.**
+  This is the distinction, and getting it wrong is the bug below. Both wait for
+  the sentence in the air to finish; only `sayInstead` also **drops what was
+  queued behind it**. A step transition means the room has moved on, so the
+  queue — which is about where she just was — is no longer true. A reaction
+  (a toy tapped, an ingredient named) is additional, so it joins.
+- **A chain that contains an instruction takes `stillTrue`.** Every link is
+  checked against it immediately before playing, not once at the start.
+  `KitchenRoom.cakeIsReady` is the case: fourteen seconds of Otto, the colour,
+  the effect and *"zet hem op de plank!"*, queued at the moment the plank
+  becomes reachable. Its premise is `cake != nil` — a cake standing on the
+  table — and putting it on the plank ends the chain wherever it had got to.
+
+**The bug this cost, written down so the next room does not re-earn it**
+(owner, 2026-08-16): `sayWhenQuiet` replaces the line *waiting*, and there was
+no way at all to replace the ones *queued*. Finish a cake and carry it straight
+up onto the plank — two seconds — and Nina worked through all fourteen seconds
+of the out-of-the-oven chain, told you to put the cake on the plank it was
+already on, and only then started the twelve seconds about having put it there.
+The round did not reset until she stopped, some **twenty-four seconds** after
+the last thing Nina did. Every symptom of it was in one missing verb: *this
+replaces that*.
 
 ### Writing the lines
 

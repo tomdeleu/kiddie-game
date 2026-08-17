@@ -15,11 +15,14 @@ pastel low-poly direction survive real-time rendering without baked ambient
 occlusion?* — is answered and stays answered. [Approved lighting](#approved-lighting)
 below is still the record of that.
 
-> **Compiled twice, both on 2026-08-16** — Xcode 26.6, iOS Simulator, Debug —
-> after everything up to each point had been written in a Linux container with no
-> Swift toolchain. Five errors the first time, all the same mistake (`[weak]` on
-> a struct); three the second, all different from each other and from the first
-> five. See [First build](#first-build), which now covers both.
+> **Compiled three times, all on 2026-08-16** — Xcode 26.6, iOS Simulator,
+> Debug — after everything up to each point had been written in a Linux
+> container with no Swift toolchain. Five errors the first time, all the same
+> mistake (`[weak]` on a struct); three the second, all different from each
+> other and from the first five; **none the third**, which was the garden's ten
+> Blender props and the four call sites that load them, and which is also the
+> first build written on a machine that had a compiler on it. See
+> [First build](#first-build), which covers all three.
 >
 > **Everything in this file has now been through a compiler**, including the
 > fence, the gate, the potting bench and the reconciliation that merged the
@@ -328,7 +331,7 @@ fast cost her the words.
 
 `VoiceBank.sayWhenQuiet` holds the line until Nina stops — including through the
 quarter-second gaps *inside* a chain, which a naive `isSpeaking` check reads as
-finished. Every step transition goes through it.
+finished. Every step transition waits like this.
 
 **Only one line can ever be waiting, and a newer one replaces it.** That is the
 whole reason it is not a queue: three quick drops would otherwise earn a
@@ -337,6 +340,56 @@ than the interruption it fixed. What she gets is the line playing now, and then
 the most recent thing that is still true. Nothing blocks on any of it — the step
 has already changed and the halo has already moved — so the worst case is a
 dropped line rather than a stalled game.
+
+#### …and nobody is talked *at*, either
+
+**A chain was the hole in that, and it was a twenty-four second hole**
+(owner, 2026-08-16: *"if you happen to immediately put the cake onto the shelf,
+the audio keeps on playing long after you finished that"*).
+
+"The line playing now" is one line when Nina is speaking one and **up to four
+when a chain is in flight**, and `sayWhenQuiet` only ever replaced the one
+*waiting*. The cake coming out of the oven queues Otto, the colour, at most one
+effect and *"zet hem op de plank!"* — measured against the real mp3s, **fourteen
+seconds** — and the plank becomes reachable on the same frame that chain starts.
+Carry the cake straight up, which takes about two seconds, and she heard all
+twelve remaining seconds of it, including an instruction to put the cake on the
+plank it was already standing on; only then did the twelve seconds about having
+put it there begin; and since the rebuild waits on `whenQuiet`, the round did
+not start again until roughly **twenty-four seconds after the last thing she
+did**.
+
+Two additions, both in `VoiceBank`, and neither ever cuts her off mid-word —
+they cut the queue, not the voice:
+
+- **`sayInstead`** — `sayWhenQuiet` plus `dropQueued()`, which throws away the
+  rest of an in-flight chain and any held line. **This is now what a step
+  transition calls**, in all three rooms; `sayWhenQuiet` is left for a remark
+  that is genuinely *additional* (an ingredient named, a sticker praised) and so
+  should join rather than replace.
+- **`stillTrue`** — an optional premise checked immediately before *every* link
+  of a chain, not once at the start. `cakeIsReady` passes `cake != nil`, so the
+  out-of-the-oven chain stops wherever it had got to the moment the cake is no
+  longer on the table, and the instruction at the end of it can never be said to
+  someone who has already obeyed it.
+
+Worst case is now the one sentence already sounding, which is the rule the whole
+mechanism exists to protect.
+
+**It was never only the kitchen.** The garden greets her with a three-line chain
+and she can have the bed sown before it finishes, and every `endRoom` in the
+game queued its handover line behind whatever the room was still saying — with a
+room teardown 2.3 s later that stops the voice outright, so the line was not
+delayed, it was **lost**. All three rooms now use `sayInstead` at their step
+transitions and at their door.
+
+> **Still open, and not fixed here:** that 2.3 s is a fixed timer
+> (`endRoom`'s 0.9 s to `onExit`, plus `GameScene.handle`'s 1.4 s) racing a
+> variable-length line. `nina.keuken.naarVersieren`'s three variants measure
+> 1.75 s, 1.99 s and **3.11 s**, so the longest is still cut mid-word even with
+> nothing queued in front of it. The fix is to hand over on the voice rather
+> than on a stopwatch, and it changes how rooms cross a doorway — a decision,
+> not a patch.
 
 **Sparkles are yellow stars.** They were `creamLight` icospheres, which at
 sparkle size is a grey dot — an unlit cream ball two millimetres across against
@@ -1022,6 +1075,38 @@ decision:
   first place. About forty small casters — worth an eye on device, one line to
   undo.
 
+### The tree was a bush, and the trunk is why
+
+Owner, 2026-08-17: *"the tree at the top corner must be bigger — now it looks
+like a bush instead of a tree."* It did. As built it stood **110 mm** against a
+70 mm fence and a 125 mm Nina, and its canopy was 70 mm across — no taller than
+the bushes beside it were wide, and shorter than the child looking at it. That
+is a shrub whatever shape its leaves are.
+
+**The fix is not uniform scale, because what names a tree is the trunk.** The
+trunk nearly doubled to 98 mm; the canopy grew about half again. The whole tree
+is now **174 mm** — 2.5× the fence, 1.4× Nina — and **81 mm of bare trunk shows
+below the lowest lobe**, which is the silhouette a 4-year-old draws when asked
+for a tree. The canopy stayed the wide cluster
+`references/garden/garden-tree.png` is emphatic about, 108 mm across.
+
+Two checks came before the change rather than after it, because a bigger prop in
+an already-full corner is a collision waiting to happen. **Its neighbours**: the
+canopy clears the potting bench's backboard by 11 mm at the nearest lobe, and
+passes over the 86 mm fence posts entirely, so `GardenLayout.treeSpot`'s
+deliberate overhang is still an overhang and not an intersection. **The frame**:
+it reaches ndcY ≈ 0.77 at `CameraRig`'s eye, well short of the top edge — and
+`fovIsVertical` is true, so that margin holds on every aspect ratio rather than
+only on the 4:3 iPad.
+
+**Its tap target moved with it.** The naming marker sat 75 mm up, which was the
+middle of the old canopy and is now bare trunk; it is at 115 mm now, and its
+radius went from the 36 mm every prop gets to 42, because a target a third of
+the prop's width inside a prop 108 mm across reads as a dead zone
+(`CONCEPT.md` §5). The bush's is untouched. The two stay 136 mm apart *as the
+camera sees them* — `RoomBox.screenSeparation`, not `distanceXZ` — against
+78 mm of combined radius, so neither can take the other's tap.
+
 ### The gate says it twice, not three times
 
 `ROOMS.md` §9 has the way out saying the same thing three ways: the leaf off the
@@ -1085,9 +1170,24 @@ is intended and stays: `TouchRouter` picks the nearest centre, so each owns an
 equal band and an imprecise tap always lands on the nearest one. Overlap between
 **unlike** things is the bug, because the wrong kind of answer can win.
 
-Two toy-to-toy pairs are still a few millimetres short (the molehill and a
-puddle, the basket and a puddle). Both resolve by nearest-wins and both answer
-with a word, so they are left alone.
+**The pond re-ran this check three times and it comes out clean.** Every unlike pair
+in the garden was measured again when the two puddles became one pond, and again
+when the pond grew across the bottom and pushed three props: the only pairs still
+short are `plot2`/`greenery1` (6.6 mm) and `plot3`/`greenery1` (4.2 mm), which
+are the bed's holes against the bush behind them and predate all of it. The
+toy-to-toy shortfall that used to be here — a puddle 3 mm inside the butterfly —
+went out with the puddle. The pond's own worst neighbour is the basket at 113 mm
+against the 83 the two radii need.
+
+**Its target is 45 mm, which is far smaller than the prop**, and it hangs on a
+marker rather than on the pond itself: a 249 mm pond with a target to match would
+swallow the basket and the flower row's near end, and the pond's own origin sits
+out under the clipped corner where nobody aims. Same trick as the gate's
+`GateTouchSpot`. A target only has to be big enough to hit; what she aims at is
+the middle of the water she can see.
+
+The check is one script rather than a habit: it is worth re-running whenever a
+prop moves, because every one of these numbers was chosen to *just* fit.
 
 **The measurement is now `RoomBox.screenSeparation(_:_:)`**, so the next room
 does not have to rederive it. `RoomBox.distanceXZ` stays where it is and stays
@@ -1221,7 +1321,66 @@ Six, none of which gate anything:
   because a target big enough to catch every drag would eat every other drag in
   the room. It follows *slowly*: a butterfly that arrives is a cursor.
 - **A bee** that hums when chased.
-- **Two puddles** that splash.
+- **A pond** that splashes — an irregular pool **filling the near corner of the
+  lawn and running off both of its near edges**, 249 mm across the screen and
+  151 mm deep, with faceted stones along its inland bank only. It replaced two
+  puddles on the owner's call, 2026-08-16, and was rebuilt **twice more the same
+  day**, each time from a red line drawn over a screenshot of the running room:
+  first *"the pond must be bigger and totally at the bottom"*, then *"it must
+  stretch to the side of the plateau at the bottom left right, and the shape must
+  be irregular"*.
+
+  **A screenshot is a better brief than a plate, and that is the lesson worth
+  keeping.** Both reference plates were right about what a pond *is* — the ring
+  of separate boulders, the water stepping down in bands — and neither could
+  have said how big it should be or where it should stop, because a plate is
+  shot with nothing beside it. Even the room-box plate is a drawing of the room
+  rather than the room. Scale is a question only the running game can answer, so
+  ask for it in a screenshot and expect two corrections.
+
+  **It is cut by the plateau, deliberately.** The water runs to the mint's edge
+  and stops half a millimetre inside it, with the slab's cream border beyond:
+  155 mm of the right-hand edge and 191 mm of the left-hand one are pond, and
+  the lawn's own corner is under water. Every other prop in the game stands
+  inside the box; this is the one the box slices. The clip is **radial** — each
+  outline vertex is pulled back along its own ray until it lands on the limit —
+  which is what makes the cut come out as one straight edge rather than a stair,
+  and what keeps the outline star-shaped so its top faces can still be fanned
+  from the centre.
+
+  **Irregular means two fixed harmonics, not noise.** A random outline would
+  rebuild differently every time the flat/smooth toggle flips, which is a pond
+  that moved while she was looking. Two lobes and seven ripples give a bank that
+  wanders **32 mm off the straight line between its two ends** over a 250 mm
+  chord — which is the difference between a pond and a ruled arc, and the first
+  attempt at this shape got it wrong by being too gentle.
+
+  **The rim only follows the inland bank.** Where the water runs off the plateau
+  there is nothing to put a stone on, so the eleven stones stop five samples
+  short of each cut and the water meets the lawn's edge bare.
+
+  **Nothing is in the water, and that is now four moves deep.** The basket was
+  in the middle of it and took the molehill's ground in front of the bed — where
+  a basket wants to be anyway, since a picked plant hops into it from the bed;
+  the molehill went out to the lawn in front of the bench; the butterfly hovers
+  over the middle of the open floor. The flower row's near end is the only thing
+  still close, at 34 mm — a flower at the water's edge rather than a flower in
+  it.
+
+  **The water steps down without a hole in the floor.** Sinking it below
+  `floorY` cannot work: the floor is a solid box and geometry inside it is
+  hidden. So the basin stands on the grass, each of the four bands is a closed
+  washer whose top sits 1.4 mm below the one outside it, and the three outer
+  ones are clipped in their own right — so the terraces are cut where they meet
+  the plateau and the step shows in the cut face.
+
+  **The one prop in the game whose mesh is not a `RoomBuilder.Shape`.** An
+  outline that is a wobble clipped by the room is not a primitive and never will
+  be, so `GardenProps` builds its two meshes itself — a solid from an outline and
+  a washer between two — borrowing the windings that `prism` and `annulus`
+  already prove. Adding a case to the shared enum for one room's one prop would
+  have been the worse trade.
+
 - **A rainbow**, which is the one worth describing. `GAMEPLAY.md` §6.2 says
   waving the can in the air makes one, and it is discovered rather than
   explained: a long swing of the can that watered nothing is exactly what a
@@ -1287,8 +1446,9 @@ are exactly that pair.
 **`Game/Room.swift` and the room picker.** `GameScene` used to hold a
 `KitchenRoom`; it holds an `any Room` now, and `enter(_:handing:picked:)` is the
 one entry point — leave, detach, clear the targets, stop the voice, build, greet.
-Stopping the voice is not tidiness: `VoiceBank` holds at most one pending line,
-and Nina saying "put the tin in Otto" over a garden is worse than silence.
+Stopping the voice is not tidiness: `VoiceBank` holds a pending line and can
+have a chain of them in flight, and Nina saying "put the tin in Otto" over a
+garden is worse than silence.
 
 `leave()` is the part to be careful with. **A `Ticker` job a torn-down room
 still holds keeps animating a detached entity forever, and nothing on screen says
@@ -1306,9 +1466,10 @@ Nothing structural. The three things it is short of are content and are cheap:
   already migrates a save whose bed is the wrong length.
 - **The wish hint** — a colour wish shimmering its matching jar — is one line
   once the friends exist, because the shimmer is already the jars' cue.
-- **`GAMEPLAY.md` §6.2 lists a bee, a butterfly, a mole, puddles and flowers.**
-  All six are in. The next one or two are free (`ROOMS.md` §8: add one every time
-  you touch a room).
+- **`GAMEPLAY.md` §6.2 lists a bee, a butterfly, a mole, water and flowers.**
+  All six are in — the water as one pond rather than the two puddles §6.2 used
+  to ask for, owner's call 2026-08-16, and §6.2 now says pond. The next one or
+  two are free (`ROOMS.md` §8: add one every time you touch a room).
 
 ## Deliberate deviations from the design
 
@@ -1648,7 +1809,7 @@ x = 0 because past that it starts crossing Otto's chimney.
 | `Intro/LoadingScreen.swift` | The title plate, and the floor it is held for. |
 | `Intro/IntroMovie.swift` | The opening film: a queue of shots, and two ways out of it. |
 | `Audio/SoundKit.swift` | All fifteen sound effects, synthesised at launch. |
-| `Audio/VoiceBank.swift` | Nina and Otto, driven by every bundled `script-*.json`. Also `sayWhenQuiet` and `whenQuiet`, which are why nobody gets talked over. |
+| `Audio/VoiceBank.swift` | Nina and Otto, driven by every bundled `script-*.json`. Also `sayWhenQuiet`, `sayInstead` and `whenQuiet`, which are why nobody gets talked over — or talked at about a step they have left. |
 | `Game/Room.swift` | What a room is, seen from outside: the protocol, the `RoomID` the developer panel switches between, the `RoomMode` flag, and the `RoomExit` a room ends with. |
 | `Game/CakeSpec.swift` | Eight ingredients → colour, effects, and what Nina says about them. |
 | `Game/CakeGeometry.swift` | The cake as numbers, so the kitchen and the decorating room build the same one. |
@@ -1740,11 +1901,12 @@ control in the app.
 
 ### Props modelled in Blender
 
-**Ten props are not built in code**: the flour sack, the toverbosbes, the
-crate, the toverklaver, the toverveertje, the maanstof pouch, the sink, the
-spoon, the cake and the scale. All are USDZ files in `Resources/Models/`,
-modelled by the scripts in [`models/`](../models/README.md) and loaded by
-`ModelLibrary`.
+**Twenty props are not built in code.** Ten in De Keuken: the flour sack, the
+toverbosbes, the crate, the toverklaver, the toverveertje, the maanstof pouch,
+the sink, the spoon, the cake and the scale. Ten in De Tuin: the molehill, the
+seed bed, the fence, and seven of the eight ripe plants. All are USDZ files in
+`Resources/Models/`, modelled by the scripts in
+[`models/`](../models/README.md) and loaded by `ModelLibrary`.
 
 They are a trial of a second authoring route, and each was picked on the same
 test — the prop where the `FacetedMesh` vocabulary visibly runs out against its
@@ -1800,7 +1962,39 @@ plate, not the prop that would be fun to model.
   lying, as the reference draws it, with the **inverse of the room's tip on its
   root** so both poses still come out right.
 
-All ten carry the game's only ambient occlusion — see the deviations above.
+**De Tuin's ten went differently, and the difference is worth knowing before the
+next room.** The kitchen picked its props one at a time, each because one plate
+asked for one thing. The garden's were asked for as a batch, so the useful
+question was not *which prop* but what this room kept needing that the last one
+did not — and there were three answers, which is now `models/garden.py`: **the
+fold** (every garden plate creases its leaves down the midrib, and a bed has
+thirty of them), **the bend** (`plant-aardbei.png`'s arched stalk and
+`plant-klaver.png`'s two curved stems; there is no bend in `FacetedMesh` at all),
+and **a point on the end of things**.
+
+Three of them are worth calling out here:
+
+- **The molehill fixed a bug rather than a shape.** `tapMolehill` lifts Mo to
+  y = 0.0135; his head sat at his pivot's origin with a 9.2 mm radius against a
+  19.5 mm hill, so at full pop it cleared the earth by 3.2 mm and the **nose
+  never came up at all**. The model builds him 11.2 mm up his own pivot, so the
+  room's two tween positions — gameplay numbers that have been played against —
+  are untouched.
+- **The fence is the whole L, in world coordinates, at the origin.** It is the
+  room's boundary rather than a thing standing in the room, and it turns
+  forty-odd pickets, eleven posts and six rails into three meshes.
+- **The bed's holes are wells without a boolean**: the soil sits 3 mm below
+  `bedSoilY` and each ring stands 2.2 mm above it, so she looks into a 5 mm well
+  made of two convex solids that happen to overlap. A boolean would hand back a
+  fan of triangles where there was one facet, in the one prop the room's
+  required action happens on.
+
+**`plant-bosbes` is the gap.** It was not in the batch that was asked for, so
+one of the five holes in the bed grows a plant built the old way — visible if
+you look for it, because its leaves alternate two greens where the other seven
+are one.
+
+All twenty carry the game's only ambient occlusion — see the deviations above.
 
 What the route costs is a round trip through a file, and what it buys is shapes
 that have to be built vertex by vertex. `models/README.md` has the rules a
@@ -1845,7 +2039,7 @@ long-standing limitation, not a setup problem.
 
 ### First build
 
-> **It has now happened twice**, and both times are worth reading, because
+> **It has now happened three times**, and all three are worth reading, because
 > together they are the only evidence this project has about what
 > correct-by-construction actually misses.
 >
@@ -1873,13 +2067,28 @@ long-standing limitation, not a setup problem.
 >    the main actor, so the fix cost nothing — but nothing in a grep would have
 >    found it.
 >
-> **The pattern across all eight: none of them was a number, and none of them was
-> a prediction.** The five below did not fire either time. Every one of the eight
-> was *scope, isolation, or a type's kind* — which is precisely the category a
-> careful reader cannot check and a compiler settles in a second. The lesson for
-> the next room written in this container is not "check the constants harder";
-> the constants have been fine twice. It is that **a file move and a new call
-> into main-actor code are the two edits that most need a build behind them.**
+> **Build three** — De Tuin's ten Blender props and the four call sites that
+> load them. **No errors**, and the reason is not that the work got easier: it
+> is the first change written on a machine with a compiler on it, so the edits
+> that would have been errors were fixed before anything was committed.
+>
+> It is not a null result. It came with **five findings of its own, and every
+> one of them came from a render rather than from a build** — the honey pot that
+> read as a pie from a 34° camera, a strawberry hung so far out it landed on the
+> next plant, a feather made as wide as it was tall, a mole with his paws inside
+> the hill, and rails buried 3.5 mm inside every picket they passed. A compiler
+> would have passed all five. `models/README.md` has them.
+>
+> **The pattern across all eight compiler errors: none of them was a number, and
+> none of them was a prediction.** The five below did not fire on any build.
+> Every one of the eight was *scope, isolation, or a type's kind* — which is
+> precisely the category a careful reader cannot check and a compiler settles in
+> a second. The lesson for the next room written without a toolchain is not
+> "check the constants harder"; the constants have been fine three times. It is
+> that **a file move and a new call into main-actor code are the two edits that
+> most need a build behind them** — and, from build three, that **geometry needs
+> an eye rather than a compiler**: ten props built correct-by-construction were
+> all compile-clean and five of them were visibly wrong.
 >
 > The five are kept because they are still the right list for *the SDK moving
 > under the project*, which is the other way this breaks.

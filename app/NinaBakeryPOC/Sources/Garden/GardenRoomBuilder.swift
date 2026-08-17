@@ -94,7 +94,32 @@ enum GardenRoomBuilder {
     /// millimetre proud of the soil catches the key light on its own facets, so
     /// an empty hole is legible from across the room without being lit. It has
     /// to be, because the halo can only ever be on one of them.
+    ///
+    /// **Modelled in Blender**, `models/garden-bed.py`, which takes three more
+    /// things off the plate that the code below does not have: **two board
+    /// bands** with a groove between them rather than one 40 mm slab, **posts
+    /// standing proud** of the boards rather than flush with them, and **holes
+    /// with a wall** — a ring you can see into, over soil dropped 3 mm, rather
+    /// than a flat annulus laid on top. Every dimension is still
+    /// `GardenLayout`'s, because the rim is what a carried seed rides over and
+    /// the five holes are `plotSpot` to the millimetre.
     static func buildBed(flat: Bool) -> Entity {
+        if flat, let modelled = ModelLibrary.load(
+                "garden-bed",
+                tint: ["BedBoards": Palette.blushPinkDeep,
+                       "BedFrame": Palette.rose,
+                       "BedSoil": Palette.woodBrown,
+                       "BedHoles": Palette.mix(Palette.woodBrown,
+                                               Palette.sandyWood, 0.35)]) {
+            modelled.position = [GardenLayout.bedCentre.x, 0,
+                                 GardenLayout.bedCentre.y]
+            return modelled
+        }
+        return buildProceduralBed(flat: flat)
+    }
+
+    /// The code-built bed. See `buildBed(flat:)` for when it runs.
+    static func buildProceduralBed(flat: Bool) -> Entity {
         let bed = Entity()
         bed.name = "SeedBed"
         bed.position = [GardenLayout.bedCentre.x, 0, GardenLayout.bedCentre.y]
@@ -260,7 +285,34 @@ enum GardenRoomBuilder {
     /// *ground*, which is the grounding case that section wanted from the key
     /// light in the first place. It is about forty small casters — worth an eye
     /// on device, and one line to undo if the stripes read as clutter.
+    ///
+    /// **Modelled in Blender**, `models/garden-fence.py` — and unlike every
+    /// other prop in this game the model is **the whole L, in world
+    /// coordinates**, dropped at the origin. It is the room's own boundary
+    /// rather than a thing standing in the room, and the payoff is that forty-odd
+    /// pickets, eleven posts and six rails stop being forty-odd entities: three
+    /// meshes carry the lot. The script computes the same post positions, the
+    /// same 19 mm picket spacing and the same gate gap that `addRun` below does,
+    /// deliberately as a transcription of it.
+    ///
+    /// What it takes from the plate is the **chamfered picket**: the code cuts a
+    /// flat board, which gives a picket two faces and both of them flat, where
+    /// the plate draws turned timber with the corners taken off. The footprint
+    /// is unchanged, so the 11 mm gap — the thing that makes this a fence and
+    /// not a low wall — is unchanged too.
     static func buildFence(flat: Bool) -> Entity {
+        if flat, let modelled = ModelLibrary.load(
+                "garden-fence",
+                tint: ["FencePickets": Palette.cream,
+                       "FencePosts": Palette.creamLight,
+                       "FenceRails": Palette.creamLight]) {
+            return modelled
+        }
+        return buildProceduralFence(flat: flat)
+    }
+
+    /// The code-built fence. See `buildFence(flat:)` for when it runs.
+    static func buildProceduralFence(flat: Bool) -> Entity {
         let fence = Entity()
         fence.name = "Fence"
 

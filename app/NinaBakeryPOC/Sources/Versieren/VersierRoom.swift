@@ -985,7 +985,7 @@ final class VersierRoom: Room {
         // transition, and Nina says the next room is coming *soon* rather than
         // *now*. `ROOMS.md` §9: a 4-year-old told she is going somewhere and
         // then not taken there has been lied to.
-        voice.sayWhenQuiet(mode == .ronde ? VersierLine.deurRonde : VersierLine.deurBezoek)
+        voice.sayInstead(mode == .ronde ? VersierLine.deurRonde : VersierLine.deurBezoek)
 
         let threshold = VersierLayout.doorHaloSpot
         for (i, delay) in [Float(0.45), 1.5].enumerated() {

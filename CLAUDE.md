@@ -49,20 +49,26 @@ under the opening film and could not be tapped at all. The triple tap still
 works for anyone with the muscle memory.
 
 **All three rooms compiled clean on 2026-08-16** — Xcode 26.6, iOS Simulator,
-Debug, twice: once when the kitchen and the decorating room landed, and again
+Debug, three times: once when the kitchen and the decorating room landed, again
 after De Tuin, the fence, the gate, the potting bench and the reconciliation that
-merged the two branches. Both builds' findings are in `app/README.md`, and both
-are worth the two minutes: **between them they caught eight errors and none of
-them was among the five the project had been predicting.**
+merged the two branches, and a third time after the garden's ten Blender props.
+All three builds' findings are in `app/README.md`, and they are worth the two
+minutes: **between them they caught eight errors and none of them was among the
+five the project had been predicting.**
 
-**The owner builds in Xcode, regularly.** What the container cannot do is build
-*before handing work over* — it has no Swift toolchain and never will, being
-Linux. So the gap is not "this code is unbuilt", which it is not for long; the
-gap is that **an agent's last look at its own work is never a compiler's**.
-Write as if correct-by-construction, hand over knowing it has been wrong eight
-times, and say plainly which edits are the risky kind — a file move and a new
-call into main-actor code are the two the record actually indicts. `app/README.md`
-keeps that list.
+The third build found none, because it was the first change written on a machine
+that had a compiler on it. It found **five geometry mistakes in a renderer
+instead**, which is the more useful half of that story: ten props built
+correct-by-construction all compiled and five of them were visibly wrong. If the
+next session is back in a container with no toolchain, assume both halves.
+
+**The owner builds in Xcode, regularly**, so "this code is unbuilt" is never the
+right thing for a container session to write down — it is not true for long, and
+it was written into `app/README.md` once and had to be taken back out. The real
+gap is narrower: **an agent's last look at its own work is never a compiler's**.
+Write as if correct-by-construction, and hand over saying plainly which edits are
+the risky kind — a file move and a new call into main-actor code are the two the
+record actually indicts. `app/README.md` keeps that list.
 
 Deliberate deviations from the design are recorded there. The kitchen's: the
 palette gained a blue, an amber and a lilac the locked thirteen do not contain;
@@ -99,8 +105,8 @@ palette and pass criteria are still the standard every new room is held to.
 
 | Path | What |
 |---|---|
-| [`app/`](app/) | **The app.** De Keuken, Versieren and De Tuin: the rounds, the toys, Nina, Otto, the cake and everything she puts on it, the room switcher, the lighting panel. All three compiled at the 2026-08-16 build, the garden and the merge included — see its README for what the two builds caught. |
-| [`models/`](models/) | **Props modelled in Blender**, as Python that rebuilds them. Ten so far — the flour sack, the toverbosbes, the crate, the toverklaver, the toverveertje, the maanstof pouch, the sink, the spoon, the cake and the scale, the only props not built in code. Its README has the rules, the export settings, and the test a prop has to pass to belong there. |
+| [`app/`](app/) | **The app.** De Keuken, Versieren and De Tuin: the rounds, the toys, Nina, Otto, the cake and everything she puts on it, the room switcher, the lighting panel. All three rooms compiled at the 2026-08-16 builds — see its README for what the three caught. |
+| [`models/`](models/) | **Props modelled in Blender**, as Python that rebuilds them. Twenty so far — De Keuken's ten (the flour sack, the toverbosbes, the crate, the toverklaver, the toverveertje, the maanstof pouch, the sink, the spoon, the cake and the scale) and De Tuin's ten (the molehill, the seed bed, the fence and seven of the eight ripe plants). Its README has the rules, the export settings, and the test a prop has to pass to belong there. |
 | [`GAMEPLAY.md`](GAMEPLAY.md) | **Storyline and gameplay in detail.** The wall, the eleven friends and their wishes, the cake rules, what each room requires versus what is optional, the timing budget. Reconciled with the built kitchen on 2026-08-16. |
 | [`ROOMS.md`](ROOMS.md) | **How to build a room.** The contract De Keuken established: the box, the camera, the step machine, the halo, the voice rules, touch, carrying, idle, misses, the door — and the traps that have already been paid for once. Read before writing a room. |
 | [`POC.md`](POC.md) | Step 0 proof of concept — answered. Kept for the palette, the geometry specs and the pass criteria. |
