@@ -276,17 +276,17 @@ locked references is a later job, and cheap.
 > the cake on its table and the wall of frames filled and glowing. Its row below
 > is the new job. All the old files stay as the record.
 >
-> **Plate 4 is superseded but kept.** It is the old party — bunting, a table,
-> five guests, no disco — and it is kept because it is one of the five originals
-> the direction was chosen from and because §3's note about *how* it was produced
-> is still true of it. The party's live plates are
-> [`feest/`](feest/).
->
 > **Plates 8 and 9 are still clay and still unreplaced.** They are the cast
-> line-up and the cake variants, neither of which is being built yet. Plate 9 has
-> one live dependency: `versieren/taart-onversierd.png` now covers the *bare*
-> cake that `GAMEPLAY.md` §6.4's `insmeren` starts from, which is the one cake
-> state plate 9 never drew.
+> line-up and the cake variants, neither of which is being built yet. Two live
+> dependencies have been covered elsewhere rather than by redrawing them: plate 9's
+> missing *bare* cake — the state `GAMEPLAY.md` §6.4's `insmeren` starts from — is
+> `versieren/taart-onversierd.png`, and plate 8's animals are superseded for the
+> party by `feest/beertjes.png`, which is what `GuestCharacter` is built from.
+>
+> **Plate 4 is superseded but kept.** It is the old party — bunting, a table, five
+> guests, no disco — and it stays because it is one of the five originals the
+> direction was chosen from, and because §3's note about *how* it was produced is
+> still true of it. The party's live plates are [`feest/`](feest/).
 
 | # | Subject | File | Aspect | Seed | Job ID |
 |---|---|---|---|---|---|

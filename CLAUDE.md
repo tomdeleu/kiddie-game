@@ -53,13 +53,6 @@ screen — but the way *in* is now visible, because the triple tap it replaced s
 under the opening film and could not be tapped at all. The triple tap still
 works for anyone with the muscle memory.
 
-**Het Feest was written on 2026-08-17 in a container with no Swift toolchain**,
-so it reached Xcode without a compiler having seen it — the situation the first
-two builds below were written in, and between them those two caught eight errors,
-**none of which was a number and none of which was among the five the project had
-been predicting**. Assume this room has its own three, and read `app/README.md`,
-"First build", for all eight and what to look at first.
-
 **The first three rooms compiled clean on 2026-08-16** — Xcode 26.6, iOS Simulator,
 Debug, three times: once when the kitchen and the decorating room landed, again
 after De Tuin, the fence, the gate, the potting bench and the reconciliation that
@@ -81,6 +74,13 @@ gap is narrower: **an agent's last look at its own work is never a compiler's**.
 Write as if correct-by-construction, and hand over saying plainly which edits are
 the risky kind — a file move and a new call into main-actor code are the two the
 record actually indicts. `app/README.md` keeps that list.
+
+**Het Feest was handed over to that rule, and this is its risky list.** The room
+came from a container, so: `VersierRoom.endRoom` gained a call into `onExit` — a
+new call into main-actor code, which is one of the two the record indicts;
+`BakerCharacter` gained an argument now used from a fourth room; and `SoundKit`'s
+`Synth.render` gained seven cases to an exhaustive switch. Everything else is new
+files that nothing outside the room calls.
 
 Deliberate deviations from the design are recorded there. The kitchen's: the
 palette gained a blue, an amber and a lilac the locked thirteen do not contain;
@@ -114,16 +114,22 @@ nothing is ever disabled. Prop plates for both are in
 [`references/bakkerij/`](references/bakkerij/) and
 [`references/versieren/`](references/versieren/); no code has changed.
 
-**Next**, per [`GAMEPLAY.md`](GAMEPLAY.md) §9: the wall of twelve frames, which
-is now the last thing between four rooms and a game. The music search is still
-open but it is **one asset rather than seven** — the party's six pads turned out
-to be six more synthesised `SoundKit` voices, so only the party *loop* is
-blocked. And **test all four rooms with Nina first** — `POC.md` has the protocol,
-and what it says about the snap radius and target sizes is the thing worth
-knowing before another room is built on the same numbers. Every room after the
-kitchen inherited its touch radii on the argument that the box and the chair have
-not moved, which is a calculation rather than an observation and now rides on
-four rooms instead of one.
+**Het Feest is built, so §6.5 is no longer one of them** — the party landed on
+2026-08-17 and `app/` has four rooms. Note what that does to §6.4's new spine: the
+decorating room's door now *hands its cake to the party*, so the room that is
+about to grow a required action is also the room with a live handover on the
+other side of it. Read `VersierRoom.endRoom` before adding steps in front of it.
+
+**Next**, per [`GAMEPLAY.md`](GAMEPLAY.md) §9: **the wall of twelve frames**,
+which is the last thing between four rooms and a game — and De Bakkerij's §6.1,
+which is where the wall lives. The music search is still open but it is **one
+asset rather than seven**: the party's six pads turned out to be six more
+synthesised `SoundKit` voices, so only the party *loop* is blocked. And **test all
+four rooms with Nina first** — `POC.md` has the protocol, and what it says about
+the snap radius and target sizes is the thing worth knowing before another room is
+built on the same numbers. Every room after the kitchen inherited its touch radii
+on the argument that the box and the chair have not moved, which is a calculation
+rather than an observation and now rides on four rooms instead of one.
 
 **Before writing a room, read [`ROOMS.md`](ROOMS.md).** It is the contract the
 kitchen established and the garden was the first to be built against — the box
@@ -138,7 +144,7 @@ palette and pass criteria are still the standard every new room is held to.
 
 | Path | What |
 |---|---|
-| [`app/`](app/) | **The app.** De Keuken, Versieren, De Tuin and Het Feest: the rounds, the toys, Nina, Otto, the friends, the cake and everything she puts on it, the room switcher, the lighting panel. The first three compiled at the 2026-08-16 builds; the party was written after them — see its README for what the three caught and what to look at first in the fourth. |
+| [`app/`](app/) | **The app.** De Keuken, Versieren, De Tuin and Het Feest: the rounds, the toys, Nina, Otto, the friends, the cake and everything she puts on it, the room switcher, the lighting panel. The first three rooms compiled at the 2026-08-16 builds — see its README for what those caught, and for which of the party's edits are the risky kind. |
 | [`models/`](models/) | **Props modelled in Blender**, as Python that rebuilds them. Twenty so far — De Keuken's ten (the flour sack, the toverbosbes, the crate, the toverklaver, the toverveertje, the maanstof pouch, the sink, the spoon, the cake and the scale) and De Tuin's ten (the molehill, the seed bed, the fence and seven of the eight ripe plants). Its README has the rules, the export settings, and the test a prop has to pass to belong there. |
 | [`GAMEPLAY.md`](GAMEPLAY.md) | **Storyline and gameplay in detail.** The wall, the eleven friends and their wishes, the cake rules, what each room requires versus what is optional, the timing budget. Reconciled with the built kitchen on 2026-08-16. |
 | [`ROOMS.md`](ROOMS.md) | **How to build a room.** The contract De Keuken established: the box, the camera, the step machine, the halo, the voice rules, touch, carrying, idle, misses, the door — and the traps that have already been paid for once. Read before writing a room. |
@@ -153,8 +159,8 @@ palette and pass criteria are still the standard every new room is held to.
 | [`references/props/`](references/props/) | Prop concept plates for the kitchen, and why `generate_3d` is not usable for this style. |
 | [`references/versieren/`](references/versieren/) | The decorating room's seventeen plates — the turntable, the two tools, the seven sticker shapes and the toys — and what three attempts at its room box taught about making flux name its own facet counts. |
 | [`references/garden/`](references/garden/) | **De Tuin's twenty-five plates** — the bed, the can, the basket, four plant stages, eight ripe plants, six toys, and the fence, gate and potting bench that replaced its walls. Its README has the job IDs and the three studio plates the room box overruled. |
-| [`references/feest/`](references/feest/) | **Het Feest's fifteen plates** — the disco room box, the DJ booth, the mirror ball, the light bar, the dance floor, the six pads, the speakers, the cake table, two toys, the DJ, and two passes at the guests. Its README has the seeds, the fifth prompt phrase that keeps a disco from going dark, the sixth that lets a shape be round and faceted at once, and why asking for six animals gets five three times running. |
 | [`references/bakkerij/`](references/bakkerij/) | **De Bakkerij's six plates** — the room box, the wall of twelve frames, the blind, the shop door and the order hook, one per step of `GAMEPLAY.md` §6.1. They replace plates 06 and 10, which were drawn in the retired clay style. Its README has the empty-room-box failure and what fixed it. |
+| [`references/feest/`](references/feest/) | **Het Feest's fifteen plates** — the disco room box, the DJ booth, the mirror ball, the light bar, the dance floor, the six pads, the speakers, the cake table, two toys, the DJ, and two passes at the guests. Its README has the seeds, the fifth prompt phrase that keeps a disco from going dark, the sixth that lets a shape be round and faceted at once, and why asking for six animals gets five three times running. |
 | [`references/ingredients/`](references/ingredients/) | The eight ingredients, the flour sack and the flour cloud — the plates the models were built from. |
 | [`references/moodboard/`](references/moodboard/) | Provenance + licences. Gathered for two retired directions — not the current look. |
 | [`references/FETCHING-ASSETS.md`](references/FETCHING-ASSETS.md) | How to get outside material onto disk here, and what fails. |

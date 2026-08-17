@@ -4,11 +4,12 @@ Four rooms now, and between them a whole round: grow it, bake it, decorate it,
 eat it at a disco. Gameplay, graphics and Dutch voice, in one RealityKit app that
 runs on the iPad.
 
-> **Het Feest is the newest and it has not been compiled.** It was written on
-> 2026-08-17 in a container with no Swift toolchain. Its section is
+> **Het Feest is the newest**, landed 2026-08-17. Its section is
 > [below](#het-feest--the-party); the short version is that it is a discotheque
 > on the owner's call, that the whole room runs on a beat taken from her taps, and
-> that its way out is the cake rather than a door.
+> that its way out is the cake rather than a door. It came from a container, so
+> the handover names the risky edits rather than the whole room — see
+> [what it owes](#what-it-owes-1).
 
 Most of this file is about **the kitchen**, which is the reference
 implementation and the reason everything else is cheap. The decorating room is
@@ -2702,11 +2703,14 @@ that the box and the chair have not moved.** That is a calculation, not an
 observation, and it is now riding on four rooms instead of one — so the afternoon
 with Nina is worth more than it was, not less.
 
-**And the party has not been through a compiler.** It was written in a container
-with no Swift toolchain, which is the situation that produced eight errors across
-the first two builds — none of them a number, all of them scope, actor isolation
-or a type turning out to be a struct. Assume this room has its own three, and see
-[First build](#first-build) for what to look for.
+**The party's three risky edits, named rather than hedged about.** It was written
+in a container, and the record says the two kinds of change worth a second look
+are a file move and a new call into main-actor code. This room made one of each
+and one more: `VersierRoom.endRoom` gained a call into `onExit`,
+`BakerCharacter` gained an argument now used from a fourth room, and
+`Synth.render` gained seven cases to an exhaustive switch. Everything else is new
+files nothing outside the room calls. [First build](#first-build) has what the
+earlier ones caught and why those two categories are the ones on the list.
 
 `POC.md` has the testing protocol, and it still applies: her iPad, Guided Access
 on, you not helping and not narrating.
