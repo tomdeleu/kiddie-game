@@ -4,11 +4,12 @@ Four rooms now, and between them a whole round: grow it, bake it, decorate it,
 eat it at a disco. Gameplay, graphics and Dutch voice, in one RealityKit app that
 runs on the iPad.
 
-> **Het Feest is the newest and it has not been compiled.** It was written on
-> 2026-08-17 in a container with no Swift toolchain. Its section is
+> **Het Feest is the newest**, landed 2026-08-17. Its section is
 > [below](#het-feest--the-party); the short version is that it is a discotheque
 > on the owner's call, that the whole room runs on a beat taken from her taps, and
-> that its way out is the cake rather than a door.
+> that its way out is the cake rather than a door. It came from a container, so
+> the handover names the risky edits rather than the whole room — see
+> [what it owes](#what-it-owes-1).
 
 Most of this file is about **the kitchen**, which is the reference
 implementation and the reason everything else is cheap. The decorating room is
@@ -2573,6 +2574,127 @@ inside the plaster. The booth came forward 30 mm instead, because he has nowhere
 to go and the room needs depth behind him. Their footprints overlap by 10 mm now,
 which is a DJ standing *at* his decks rather than behind them.
 
+### Four things the first look on device caught
+
+All owner's calls, 2026-08-17, after the room was running in Xcode. Every one of
+them is a case of the same thing: **an emissive surface loses its colour**, or a
+number that was checked against the floor plan rather than against the screen.
+
+**The mirror ball was a blob.** It was one 320-face icosphere painted a single
+glowing cream, with six 7 mm squares stuck round the equator — at 60 mm across
+that is a smooth pale ball with specks on it. `references/feest/discobal.png`
+shows what it should be and always did: a **mosaic**, twelve by seven small quads,
+each a different pale tone with a faint seam between them. It is built that way
+now, one `ModelEntity` per tile, because one mesh can only have one material.
+
+And **the tiles are matte**, which is the part worth keeping. The ball glowing is
+exactly what made it featureless: an emissive surface goes above white and loses
+its own hue, so twelve different tones came back as one. A mirror ball is not a
+lamp — it is a matte thing that *throws* light, and what it throws is `ballSpots`
+on the floor. A rotating handful of tiles lights on each beat, which is the
+sparkle, and the other eighty are shaded by their facets like everything else.
+
+**The cord ended in mid-air.** It stopped at y = 0.252, which is above the wall
+tops and sounds like enough. It is not: at this eye and a 26° vertical FOV a point
+over the ball only leaves the top of the frame at **y = 0.308**, so 56 mm of cord
+was hanging inside the shot and the ball read as floating. It runs to 0.45 now —
+far past what the arithmetic needs, because the frame edge moves with the viewport
+aspect and a cord that is *just* out of shot is one iPad away from being back in.
+
+**The dance floor was white.** Same arithmetic as the ball, on the largest surface
+in the room: a pale pastel at `glowPeak` (2.34 emissive) is above white by the time
+it is tonemapped, so all six colours came back identical. Two changes together fix
+it and neither alone would — the intensity comes down to `FeestProps.floorGlow`
+(0.85, a third of what the lamps use), and a tile lights in a **deep** colour
+rather than a pale one, so there is chroma left to survive the exposure.
+
+It is also **random now** rather than a stepping diagonal. The pattern was
+legible, and after two beats you could see the rule — at which point it stopped
+being a disco and became a screensaver. Every tile rolls for itself on every beat,
+two in five lit. The one moment it is not random is a pad tap, which paints the
+whole floor that pad's colour: that is the floor *answering her finger*, and an
+answer that looked like noise would not read as an answer.
+
+**There was one speaker, and a disco has two.** The second sits in the far corner
+and is deliberately **scenery** — every position in that corner fails the screen
+check against the mirror ball by 31–45 mm where two radii need 64, because the
+ball hangs over the middle of the floor and the back-left corner is almost exactly
+behind it along the view direction. Shrinking the ball's target to fit is the
+wrong trade; it is a toy she has to be able to hit. So tapping the right-hand
+stack thumps **both**, which is what a pair of speakers does anyway.
+
+### The stutter, and it was two things
+
+Owner, 2026-08-17: *"there is a very visible loop that stutters in everything
+visible. the dancing; the rotating mirror ball, the dj etc. its as if the
+computer can't keep up."*
+
+It was not the computer. **The word that identified it is *loop*** — a periodic
+hitch, not a low frame rate — and once you are looking for a period there are
+only two clocks in the room to check.
+
+**The beat was the period, and the cause was allocation.** Every beat the room
+rebuilt every material it owns: 36 floor tiles, 84 mirror-ball tiles and 10 lamp
+surfaces, so **130 `PhysicallyBasedMaterial`s constructed twice a second**.
+Building one is not free and 130 in a single frame is a spike — landing, by
+construction, exactly on the beat.
+
+Two changes fix it and the second is the one that matters. Every material the
+room can need is **built once at build time** — there are only six lit floor
+colours, one lit ball colour and six lamp colours, so a few dozen materials cover
+every state the room has. And each surface **remembers what it is wearing**, so a
+beat assigns only to what changed: about fourteen floor tiles, twelve ball tiles,
+and nothing at all on the lamps unless the colour stepped. The general form, and
+it is not about discos: **a thing that changes on a beat should cost the change,
+not the count.**
+
+The same pass took the room from **120 near-duplicate meshes to 8**. Every floor
+tile is the same box and every mirror-ball tile in a row is the same spherical
+quad turned about Y, but `RoomBuilder.model` builds a fresh `MeshResource` per
+call — so the obvious loop had handed the renderer 120 things it could not batch.
+
+**The other clock was the game's own, and it is shared by all four rooms.**
+`Ticker` ran on a `Timer` at 1/60 s. A timer is not synchronised to the screen
+refresh, so its ticks drift against vsync and every second or so a frame gets two
+or none — which looks like a regular hitch rather than a slow game. Three rooms
+hid it because a kitchen is mostly still; a room where six dancers, a mirror ball,
+two decks and thirty-six tiles all move at once did not.
+
+It is a `CADisplayLink` in `.common` mode now. **The reason the timer was there
+survives**: `ROOMS.md` §7 chose it so animation keeps running while a finger is
+down, and `.common` is what buys that — a display link added the same way has the
+same property. That was the requirement; the timer was one way of meeting it.
+
+This is the one change in the room that reaches outside it, and it is worth
+saying plainly: **it affects the kitchen, the garden and the decorating room
+too.** Nothing about them changes except that their animation is now paced to the
+display.
+
+### The DJ has three sounds, and only one of them came from Higgsfield
+
+Owner's call: *"when pressing the dj, it should rotate between dj-esque sounds. a
+beat, a scratch, a vocal. but all with a kid theme. render that via higgsfield."*
+
+Two of the three cannot come from Higgsfield, and it is worth writing down
+because it was checked rather than assumed. `models_explore` lists `sonilo_music`
+and `mirelo_text_to_audio` as **"Game pipeline only"** — they refuse standalone
+use, exactly as `CONCEPT.md` §7.4 has said since the start. So a beat and a
+scratch are `SoundKit`'s synthesised `trom` and `kras`, and **the vocal is the
+part Higgsfield genuinely renders**, because a vocal is speech.
+
+Five Dutch shouts — *"Handjes in de lucht!"*, *"Iedereen dansen!"* — in **Benji**,
+the third voice in the game and the first that is neither Nina nor Otto. Young and
+male, so a 4-year-old can tell all three apart without looking. Like Otto's
+Barrett it was picked without an ear on it; `audio/voices.json` says so and
+re-cutting all five costs 1.5 credits.
+
+Tapping rotates beat → scratch → shout rather than picking at random, and that is
+the one design decision in it. Three items picked at random means a one-in-three
+chance of the same sound twice running, which on the most tapped prop in the room
+reads as broken rather than as chance. The five shouts *within* the vocal do get
+`VoiceBank`'s never-the-same-twice rule, for free. The beat is four hits of the
+drum **at her own tempo**, so even the DJ's own sound is the beat she is making.
+
 ### The way out is the cake
 
 **This room has no door**, and it is the only one that does not. §6.5 has always
@@ -2745,11 +2867,14 @@ that the box and the chair have not moved.** That is a calculation, not an
 observation, and it is now riding on four rooms instead of one — so the afternoon
 with Nina is worth more than it was, not less.
 
-**And the party has not been through a compiler.** It was written in a container
-with no Swift toolchain, which is the situation that produced eight errors across
-the first two builds — none of them a number, all of them scope, actor isolation
-or a type turning out to be a struct. Assume this room has its own three, and see
-[First build](#first-build) for what to look for.
+**The party's three risky edits, named rather than hedged about.** It was written
+in a container, and the record says the two kinds of change worth a second look
+are a file move and a new call into main-actor code. This room made one of each
+and one more: `VersierRoom.endRoom` gained a call into `onExit`,
+`BakerCharacter` gained an argument now used from a fourth room, and
+`Synth.render` gained seven cases to an exhaustive switch. Everything else is new
+files nothing outside the room calls. [First build](#first-build) has what the
+earlier ones caught and why those two categories are the ones on the list.
 
 `POC.md` has the testing protocol, and it still applies: her iPad, Guided Access
 on, you not helping and not narrating.

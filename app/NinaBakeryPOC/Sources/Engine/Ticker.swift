@@ -1,6 +1,21 @@
 import Foundation
 import RealityKit
 import simd
+#if os(iOS) || os(tvOS)
+import QuartzCore
+#endif
+
+#if os(iOS) || os(tvOS)
+/// **`CADisplayLink` needs a target and a selector**, not a closure, so this is
+/// the smallest object that can be one. It is retained by the link, and it holds
+/// the callback weakly on the far side — so `Ticker` → link → proxy → `[weak
+/// self]` is not a cycle, and `stop()` breaks it anyway.
+private final class DisplayLinkProxy: NSObject {
+    private let onTick: () -> Void
+    init(onTick: @escaping () -> Void) { self.onTick = onTick }
+    @objc func step() { onTick() }
+}
+#endif
 
 /// The one clock in the game.
 ///
@@ -14,9 +29,10 @@ import simd
 /// - squash-and-stretch (`CONCEPT.md` §9.7) is a curve on a scale, which is
 ///   easier to write as three lines of maths than as a keyframe asset.
 ///
-/// It runs on a run-loop timer rather than `SceneEvents.Update` so it is
-/// independent of the render loop's plumbing, and so it keeps ticking while a
-/// finger is down — `.common` mode is load-bearing for that.
+/// It runs on a **`CADisplayLink` in `.common` mode** — in step with the screen,
+/// so animation cannot drift against vsync, and still ticking while a finger is
+/// down, which is the property `.common` buys and the reason this was a run-loop
+/// timer for the first four rooms. `start()` has the whole argument.
 @MainActor
 final class Ticker {
 
@@ -38,23 +54,69 @@ final class Ticker {
     private var cancelled: Set<Int> = []
     private var nextID = 1
     private var timer: Timer?
+    #if os(iOS) || os(tvOS)
+    private var displayLink: CADisplayLink?
+    private var linkProxy: AnyObject?
+    #endif
     private var lastTime = CFAbsoluteTimeGetCurrent()
     private var ticking = false
 
     // MARK: - Lifecycle
 
+    /// **Driven by the display, not by a timer** — and that is a change worth
+    /// reading, because the file used to say the opposite deliberately.
+    ///
+    /// It was a `Timer` at 1/60 s in `.common` mode. A timer is not synchronised
+    /// to the screen refresh, so its ticks drift against vsync: every second or
+    /// so a frame gets two ticks or none, and what you see is a **regular hitch**
+    /// — not a slow game, a *lurching* one. It went unnoticed for three rooms
+    /// because a kitchen is mostly still, and became obvious in a room where six
+    /// dancers, a mirror ball, two decks and thirty-six tiles are all moving at
+    /// once (owner, 2026-08-17: *"a very visible loop that stutters in everything
+    /// visible… as if the computer can't keep up."*).
+    ///
+    /// `CADisplayLink` fires once per frame, in step with the screen, and on a
+    /// ProMotion iPad it fires at that panel's rate rather than at a hardcoded 60.
+    /// Everything downstream is already `dt`-based, so nothing else changes.
+    ///
+    /// **The reason the timer was chosen in the first place survives intact.**
+    /// `ROOMS.md` §7 records it: *"it runs on a run-loop timer in `.common` mode…
+    /// which is load-bearing: it keeps ticking while a finger is down."* A display
+    /// link added in `.common` mode has exactly that property, so a drag still
+    /// animates. That was the requirement; the timer was one way of meeting it and
+    /// not the only one.
+    ///
+    /// macOS keeps the timer. `CADisplayLink` exists there only from macOS 14, the
+    /// app is an iPad app, and the debug builds that run on the Mac do not need
+    /// frame-perfect pacing.
     func start() {
+        #if os(iOS) || os(tvOS)
+        guard displayLink == nil else { return }
+        lastTime = CFAbsoluteTimeGetCurrent()
+        let proxy = DisplayLinkProxy { [weak self] in
+            MainActor.assumeIsolated { self?.tick() }
+        }
+        let link = CADisplayLink(target: proxy, selector: #selector(DisplayLinkProxy.step))
+        link.add(to: .main, forMode: .common)
+        linkProxy = proxy
+        displayLink = link
+        #else
         guard timer == nil else { return }
         lastTime = CFAbsoluteTimeGetCurrent()
         let t = Timer(timeInterval: 1.0 / 60.0, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.tick() }
         }
-        // `.common` so animation does not freeze while she is dragging.
         RunLoop.main.add(t, forMode: .common)
         timer = t
+        #endif
     }
 
     func stop() {
+        #if os(iOS) || os(tvOS)
+        displayLink?.invalidate()
+        displayLink = nil
+        linkProxy = nil
+        #endif
         timer?.invalidate()
         timer = nil
     }

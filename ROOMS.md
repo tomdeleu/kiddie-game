@@ -459,8 +459,22 @@ nothing animates itself into a state the round has already left, and because
 squash-and-stretch (`CONCEPT.md` §9.7) is three lines of maths rather than a
 keyframe asset.
 
-It runs on a run-loop timer in `.common` mode rather than on `SceneEvents.Update`,
-which is load-bearing: it keeps ticking while a finger is down.
+It runs on a **`CADisplayLink` in `.common` mode**, which is two requirements at
+once: in step with the screen, and still ticking while a finger is down.
+
+> **It was a `Timer` at 1/60 s until 2026-08-17**, and the `.common` half was
+> always the point — a run-loop timer in the default mode stops while a drag is
+> tracking. What the timer could not do is stay in step with the display: its
+> ticks drift against vsync, so every second or so a frame gets two or none, and
+> what that looks like is a **regular hitch** rather than a slow game. Three
+> rooms hid it because a kitchen is mostly still; the party, where six dancers, a
+> mirror ball and thirty-six floor tiles all move at once, did not.
+>
+> A display link added in `.common` mode keeps the property the timer was chosen
+> for and fixes the pacing, so nothing about any room changed. The general form:
+> **anything animating every frame belongs on the display's clock, not on one of
+> your own** — and if you are tempted to write your own, check first whether the
+> reason is a requirement (touch tracking) that the display link also meets.
 
 **`Ticker.Pose` exists because of a real bug and you will hit it again.** A
 transform animation that "restores what it found" compounds when it is

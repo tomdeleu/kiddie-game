@@ -287,6 +287,15 @@ explicitly refuse standalone use. So it cannot supply:
 > What the synth cannot honestly stand in for is a **tune**. So the gap is now
 > exactly one asset — the party loop — rather than a list, and the pads were
 > never the blocker they were written down as. `GAMEPLAY.md` §9.
+>
+> **Re-checked on 2026-08-17 rather than inherited**, when the DJ was asked
+> for a beat, a scratch and a vocal *rendered via Higgsfield*.
+> `models_explore` still lists `sonilo_music` and `mirelo_text_to_audio` as
+> **"Game pipeline only"**, so the first two are synth and the third is
+> speech — which Higgsfield does supply, and did. The useful form of this
+> constraint: **anything that can be phrased as somebody saying something is
+> reachable; anything that is a noise is not.** A DJ's shout is speech. A
+> record scratch is not.
 
 For a game where the party is the payoff, this is not a footnote. Sources, in
 order of pragmatism:

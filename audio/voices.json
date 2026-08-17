@@ -32,6 +32,23 @@
       "lines_generated": 14,
       "note": "Must be clearly distinct from Luna so Nina can tell who is talking without looking. Low and rumbly is the obvious read. PROVISIONAL: chosen without an ear on it - the session that generated his kitchen lines could not listen to the audition. Five candidates are in audio/auditions/ with the same line; play them and, if another one wins, put its voice_id here and in audio/script-keuken.json and regenerate Otto's 14 lines (~4 credits). Nothing else changes - the filenames are what the app looks up."
     },
+    "dj": {
+      "name": "De DJ",
+      "role": "Behind the decks at Het Feest. Not a separate character in the story - he is whichever of the eleven friends is not at the party that day (FeestRoom.buildBooth), so this is a voice for a *job* rather than for a person. Five shouts, no dialogue.",
+      "status": "provisional",
+      "model": "text2speech_v2",
+      "variant": "elevenlabs",
+      "voice_type": "preset",
+      "voice_id": "e6f9b893-51b1-51d3-afe9-9e0482cb7ac1",
+      "preset_name": "Benji",
+      "age": "young",
+      "gender": "male",
+      "line_estimate": 5,
+      "lines_generated": 5,
+      "note": "The third voice in the game, and the first that is neither Nina nor Otto. Picked for being young and male: clearly not Gracie, and clearly not Otto's older Barrett, so a 4-year-old can tell all three apart without looking. His lines are shouts rather than sentences - 'Handjes in de lucht!' - and they play at .low priority so an enthusiastic DJ can never talk over Nina.",
+      "_provisional": "PICKED WITHOUT AN EAR ON IT, exactly like Barrett and for the same reason: the session that generated them could not listen. Re-cutting all five costs 1.5 credits and no code - the filenames dj-feest-roep-1..5.mp3 are what the app looks up.",
+      "_open": "When the eleven friends are cast, decide whether the DJ keeps a voice of his own or simply speaks in whichever friend's voice is behind the decks that day. The second is more correct and costs nothing to switch to, because the id is already the character's rather than the room's."
+    },
     "friends": {
       "_comment": "The twelve friends whose parties fill the wall. They do not need twelve separate voices - four presets, pitch-shifted and assigned so that no two friends who appear together sound alike, is enough. Record the assignment here as it is decided. ~6-8 lines each: arrival, their wish, matched thanks, unmatched thanks, a couple of idle noises.",
       "status": "uncast",

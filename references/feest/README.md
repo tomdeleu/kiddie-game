@@ -122,6 +122,16 @@ describes the plate and the mesh, which is the sign it is the right sentence.
   palette; the finale plate, which did not carry that clause, came back with a
   proper silver mirror ball and it is the one thing in that picture that is off
   the direction.
+  **And it was read too quickly the first time.** The room built the ball as one
+  icosphere in a single glowing cream, which is a *faceted sphere* — but the plate
+  is not showing facets, it is showing **tiles**: a twelve-by-seven grid of small
+  quads with a seam between them, each its own tone. Those are different objects
+  and only one of them needs a mesh per tile. Owner's call on seeing the built
+  one, 2026-08-17: *"that mirror ball looks like shit."* It was rebuilt as the
+  mosaic the plate had drawn all along.
+  The lesson is about reading a plate rather than about this ball: **count the
+  things.** "Faceted sphere" and "sphere covered in facets" are the same phrase
+  and not the same prop, and the difference is visible in the picture.
 - **`dansvloer.png`** — thick tiles, narrow gaps, a few glowing brighter, and
   that is *all* it settled. It was asked for a 4×4 grid and delivered **four
   slabs**, which is the same behaviour as `gasten.png` losing an animal: flux is
