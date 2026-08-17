@@ -464,6 +464,21 @@ has no required action to wait for. `refreshDoorInvitation` still exists there
 and is nearly empty, which is the right shape — a room with nothing to gate on
 should say so in the function that would have gated it, not by deleting it.
 
+> **Het Feest has no door at all, and that is the third variation rather than a
+> gap.** `GAMEPLAY.md` §6.5 has always said *she ends the party by tapping the
+> cake; nothing else ends it*, and a door standing open beside the cake would be
+> a second ending — in a room whose entire point is that she decides when it is
+> over, that is a contradiction rather than a convenience. So **the cake is the
+> way out**, and it carries the cue the door carries everywhere else: lit from
+> the moment she arrives, exactly as the decorating room's door is, because in a
+> room with no required action *you may finish when you like* is a true statement
+> and lighting the exit is the honest use of the halo.
+>
+> The general form, now that three rooms have answered it differently: **the way
+> out is whatever object means "this is finished", and the cue belongs on that
+> object.** In two rooms that object is a door; in one it is a cake. What must not
+> happen is a room with two of them.
+
 ### The door says it three ways at once
 
 None of them a word or an arrow, because she cannot read one.
