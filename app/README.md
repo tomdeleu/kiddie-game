@@ -2580,6 +2580,53 @@ behind it along the view direction. Shrinking the ball's target to fit is the
 wrong trade; it is a toy she has to be able to hit. So tapping the right-hand
 stack thumps **both**, which is what a pair of speakers does anyway.
 
+### The stutter, and it was two things
+
+Owner, 2026-08-17: *"there is a very visible loop that stutters in everything
+visible. the dancing; the rotating mirror ball, the dj etc. its as if the
+computer can't keep up."*
+
+It was not the computer. **The word that identified it is *loop*** — a periodic
+hitch, not a low frame rate — and once you are looking for a period there are
+only two clocks in the room to check.
+
+**The beat was the period, and the cause was allocation.** Every beat the room
+rebuilt every material it owns: 36 floor tiles, 84 mirror-ball tiles and 10 lamp
+surfaces, so **130 `PhysicallyBasedMaterial`s constructed twice a second**.
+Building one is not free and 130 in a single frame is a spike — landing, by
+construction, exactly on the beat.
+
+Two changes fix it and the second is the one that matters. Every material the
+room can need is **built once at build time** — there are only six lit floor
+colours, one lit ball colour and six lamp colours, so a few dozen materials cover
+every state the room has. And each surface **remembers what it is wearing**, so a
+beat assigns only to what changed: about fourteen floor tiles, twelve ball tiles,
+and nothing at all on the lamps unless the colour stepped. The general form, and
+it is not about discos: **a thing that changes on a beat should cost the change,
+not the count.**
+
+The same pass took the room from **120 near-duplicate meshes to 8**. Every floor
+tile is the same box and every mirror-ball tile in a row is the same spherical
+quad turned about Y, but `RoomBuilder.model` builds a fresh `MeshResource` per
+call — so the obvious loop had handed the renderer 120 things it could not batch.
+
+**The other clock was the game's own, and it is shared by all four rooms.**
+`Ticker` ran on a `Timer` at 1/60 s. A timer is not synchronised to the screen
+refresh, so its ticks drift against vsync and every second or so a frame gets two
+or none — which looks like a regular hitch rather than a slow game. Three rooms
+hid it because a kitchen is mostly still; a room where six dancers, a mirror ball,
+two decks and thirty-six tiles all move at once did not.
+
+It is a `CADisplayLink` in `.common` mode now. **The reason the timer was there
+survives**: `ROOMS.md` §7 chose it so animation keeps running while a finger is
+down, and `.common` is what buys that — a display link added the same way has the
+same property. That was the requirement; the timer was one way of meeting it.
+
+This is the one change in the room that reaches outside it, and it is worth
+saying plainly: **it affects the kitchen, the garden and the decorating room
+too.** Nothing about them changes except that their animation is now paced to the
+display.
+
 ### The DJ has three sounds, and only one of them came from Higgsfield
 
 Owner's call: *"when pressing the dj, it should rotate between dj-esque sounds. a

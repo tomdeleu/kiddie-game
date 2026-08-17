@@ -56,6 +56,12 @@ enum FeestProps {
         /// Row-major, `tilesPerSide²` of them. The room repaints these on the
         /// beat and needs them in a flat array to do it cheaply.
         let tiles: [ModelEntity]
+        /// **Built once, at build time.** One per tile, in its own pale colour —
+        /// what a tile wears when it is not lit.
+        let dark: [RealityKit.Material]
+        /// One per entry in `FeestLayout.floorLitColours`. A lit tile is assigned
+        /// one of these rather than having a material constructed for it.
+        let glowing: [RealityKit.Material]
     }
 
     /// **Sixteen thin boxes, and it is the whole disco.**
@@ -69,13 +75,22 @@ enum FeestProps {
         root.name = "Dansvloer"
 
         var tiles: [ModelEntity] = []
+        var dark: [RealityKit.Material] = []
         let size = FeestLayout.tileSize
+        // **One mesh, thirty-six tiles.** They are identical boxes, and
+        // `RoomBuilder.model` builds a fresh `MeshResource` per call — so the
+        // obvious loop was generating 36 copies of the same geometry and giving
+        // the renderer 36 things it cannot batch.
+        let mesh = FacetedMesh.mesh(FacetedMesh.box([size, FeestLayout.tileThickness, size]),
+                                    flat: flat)
+        let glowing = FeestLayout.floorLitColours.map { lit($0, floorGlow) }
         for row in 0..<FeestLayout.tilesPerSide {
             for column in 0..<FeestLayout.tilesPerSide {
                 let colour = FeestLayout.tileColour(row: row, column: column)
-                let tile = RoomBuilder.model(
-                    .box([size, FeestLayout.tileThickness, size]),
-                    colour, flat: flat, name: "Tegel-\(row)-\(column)")
+                let material = Palette.material(colour)
+                dark.append(material)
+                let tile = ModelEntity(mesh: mesh, materials: [material])
+                tile.name = "Tegel-\(row)-\(column)"
                 var spot = FeestLayout.tileSpot(row, column)
                 spot.y = RoomBox.floorY + FeestLayout.tileThickness / 2
                 tile.position = spot
@@ -87,7 +102,7 @@ enum FeestProps {
                 tiles.append(tile)
             }
         }
-        return DanceFloor(root: root, tiles: tiles)
+        return DanceFloor(root: root, tiles: tiles, dark: dark, glowing: glowing)
     }
 
     // MARK: - The six pads
@@ -130,8 +145,13 @@ enum FeestProps {
         /// Every tile, row-major. The room lights a rotating handful of these on
         /// the beat, which is the only thing about the ball that is not matte.
         let tiles: [ModelEntity]
-        /// What each tile is painted when it is *not* catching the light.
-        let tileColours: [UIColorLike]
+        /// **Built once**, one per tile: what it wears when it is not catching
+        /// the light.
+        let dark: [RealityKit.Material]
+        /// The one material a tile catching the light wears. There is only one,
+        /// because a mirror tile with a lamp on it is white whatever it is
+        /// painted underneath.
+        let glowing: RealityKit.Material
     }
 
     // MARK: - The mirror ball's tiles
@@ -237,25 +257,30 @@ enum FeestProps {
         // twelve-by-seven grid of small quads, each a different pale tone, with a
         // faint seam between them. That is the read, and it cannot come from one
         // mesh because one mesh has one material.
+        // **One mesh per row, not one per tile.** Every tile in a row is the
+        // same spherical quad turned about Y, so building it once and rotating
+        // the entity takes the ball from 84 unique meshes to 7 — and 84 meshes
+        // that cannot be batched is a real cost for a prop 60 mm across.
         var tiles: [ModelEntity] = []
-        var colours: [UIColorLike] = []
+        var dark: [RealityKit.Material] = []
+        let span = 2 * Float.pi / Float(ballCols)
         for row in 0..<ballRows {
             let t0 = Float(row) / Float(ballRows) * .pi
             let t1 = Float(row + 1) / Float(ballRows) * .pi
             let dt = (t1 - t0) * ballGrout
+            let dp = span * ballGrout
+            let mesh = FacetedMesh.mesh(ballTile(theta0: t0 + dt, theta1: t1 - dt,
+                                                 phi0: dp, phi1: span - dp,
+                                                 radius: radius),
+                                        flat: flat)
             for column in 0..<ballCols {
-                let p0 = Float(column) / Float(ballCols) * 2 * .pi
-                let p1 = Float(column + 1) / Float(ballCols) * 2 * .pi
-                let dp = (p1 - p0) * ballGrout
-                let colour = ballTone(row: row, column: column)
-                let geometry = ballTile(theta0: t0 + dt, theta1: t1 - dt,
-                                        phi0: p0 + dp, phi1: p1 - dp, radius: radius)
-                let tile = ModelEntity(mesh: FacetedMesh.mesh(geometry, flat: flat),
-                                       materials: [Palette.material(colour)])
+                let material = Palette.material(ballTone(row: row, column: column))
+                dark.append(material)
+                let tile = ModelEntity(mesh: mesh, materials: [material])
                 tile.name = "Spiegeltje-\(row)-\(column)"
+                tile.orientation = simd_quatf(angle: Float(column) * span, axis: [0, 1, 0])
                 ball.addChild(tile)
                 tiles.append(tile)
-                colours.append(colour)
             }
         }
 
@@ -289,7 +314,8 @@ enum FeestProps {
         root.addChild(cord)
         root.excludeFromShadowCasting()
 
-        return MirrorBall(root: root, ball: ball, tiles: tiles, tileColours: colours)
+        return MirrorBall(root: root, ball: ball, tiles: tiles, dark: dark,
+                          glowing: lit(Palette.creamLight, 0.7))
     }
 
     /// The pools of light, built separately because they live on the **floor**
@@ -328,6 +354,20 @@ enum FeestProps {
         let root: Entity
         let lens: ModelEntity
         let beam: ModelEntity
+    }
+
+    /// **Every colour a lamp can be, built once at build time.**
+    ///
+    /// Five lamps re-coloured on every beat is ten materials, and a
+    /// `PhysicallyBasedMaterial` is not free to construct — it was ten of the 130
+    /// the room was building twice a second. There are only six colours a lamp
+    /// ever wears, so there only ever need to be twelve materials.
+    static func lampMaterials() -> (lens: [RealityKit.Material], beam: [RealityKit.Material]) {
+        let lens = FeestLayout.discoColours.map { lit($0) }
+        let beam = FeestLayout.discoColours.map {
+            Palette.lightMaterial($0, emission: $0, intensity: glowPeak * 0.5, opacity: 0.16)
+        }
+        return (lens, beam)
     }
 
     /// One stage lamp: a short faceted cone with a glowing lens, and a beam

@@ -76,12 +76,23 @@ final class FeestRoom: Room {
 
     // MARK: - Interaction state
 
-    /// Which colour the floor is flashing, and for how much longer. A pad tap
-    /// paints every tile its own colour for a beat, which is what ties her finger
-    /// to the room.
-    private var flashColour: UIColorLike?
+    /// **Which of `FeestLayout.floorLitColours` the whole floor is flashing**, and
+    /// for how much longer. A pad tap paints every tile one colour for a beat,
+    /// which is what ties her finger to the room.
+    ///
+    /// An *index* rather than a colour, so the repaint can reach straight into
+    /// the cached materials instead of constructing one.
+    private var flashColourIndex: Int?
     private var flashLeft: Float = 0
     private var lastLitStep = -1
+    private var lastLampStep = -2
+    /// **What each surface is currently wearing**, so a beat can assign only to
+    /// the ones that changed. `-1` is unlit; otherwise an index into the cached
+    /// glowing materials. See `repaintFloor`.
+    private var floorWear: [Int] = []
+    private var ballWear: [Bool] = []
+    private var lampLens: [RealityKit.Material] = []
+    private var lampBeam: [RealityKit.Material] = []
 
     /// Which of the DJ's three sounds is next. Rotates rather than shuffles —
     /// see `tapDJ`.
@@ -149,6 +160,10 @@ final class FeestRoom: Room {
 
         registerTargets()
         applyStep(animated: false)
+        // **After every lit thing exists**, not inside `buildDanceFloor` — the
+        // first paint touches the floor, the ball and the lamps, and two of the
+        // three are built later.
+        repaintFloor(force: true)
         startBeat()
         startIdleWatch()
     }
@@ -158,7 +173,9 @@ final class FeestRoom: Room {
         root.addChild(floor.root)
         danceFloor = floor
         lastLitStep = -1
-        repaintFloor(force: true)
+        lastLampStep = -2
+        floorWear.removeAll()
+        ballWear.removeAll()
     }
 
     private func buildPads() {
@@ -171,6 +188,10 @@ final class FeestRoom: Room {
     }
 
     private func buildLightRig() {
+        let cached = FeestProps.lampMaterials()
+        lampLens = cached.lens
+        lampBeam = cached.beam
+
         let aim = SIMD3<Float>(FeestLayout.floorCentre.x, FeestLayout.tileTopY,
                                FeestLayout.floorCentre.y)
 
@@ -563,7 +584,7 @@ final class FeestRoom: Room {
 
         if flashLeft > 0 {
             flashLeft -= dt
-            if flashLeft <= 0 { flashColour = nil; repaintFloor(force: true) }
+            if flashLeft <= 0 { flashColourIndex = nil; repaintFloor(force: true) }
         }
         if beat.justLanded { repaintFloor(force: false) }
 
@@ -574,8 +595,27 @@ final class FeestRoom: Room {
     /// second.** A travelling diagonal of lit tiles, stepped on the beat and
     /// repainted only then. Building a `PhysicallyBasedMaterial` per tile per
     /// frame is the one thing in this room that could cost a frame.
+    /// **Only the tiles that changed are touched**, and that is the whole of why
+    /// the room stopped stuttering.
+    ///
+    /// It used to rebuild every material on every beat: 36 floor tiles, 84 mirror
+    /// ball tiles and 10 lamp surfaces, so **130 `PhysicallyBasedMaterial`s
+    /// constructed twice a second**. Constructing one is not free, and 130 in a
+    /// single frame is a spike — *a periodic one, landing exactly on the beat*,
+    /// which is what the owner saw and described as a visible loop that stutters
+    /// (2026-08-17).
+    ///
+    /// Two changes, and the second is the one that matters. Every material the
+    /// room can ever need is now **built once at build time** and kept — there
+    /// are only six lit floor colours, one lit ball colour and six lamp colours,
+    /// so a few dozen materials cover every state the room has. And each surface
+    /// **remembers what it is wearing**, so a beat assigns only to the handful
+    /// that actually changed: about fourteen floor tiles, twelve ball tiles and
+    /// nothing at all on the lamps unless the colour stepped.
+    ///
+    /// The general form, and it is not specific to a disco: **a thing that
+    /// changes on a beat should cost the change, not the count.**
     private func repaintFloor(force: Bool) {
-        guard let tiles = danceFloor?.tiles else { return }
         guard force || beat.count != lastLitStep else { return }
         lastLitStep = beat.count
 
@@ -586,33 +626,33 @@ final class FeestRoom: Room {
         // It was a diagonal band stepping one tile in four, painted in the pale
         // pad colours at `glowPeak`. Two things were wrong with that and they
         // compounded. The **pattern** was legible, so after two beats you could
-        // see the rule and the floor stopped being a disco and became a screensaver.
-        // And the **colour** was gone: a pale pastel at 2.34 emissive is above
-        // white by the time it is tonemapped, so all six came back the same.
-        //
-        // Now every tile rolls for itself on every beat, lights in a *deep*
-        // colour rather than a pale one, and glows at a third of what the lamps
-        // do — `FeestProps.floorGlow` and `FeestLayout.floorLitColours` have the
-        // arithmetic. Two fifths lit is what leaves it reading as a floor with
-        // lights in it rather than as a lit floor with gaps.
-        let side = FeestLayout.tilesPerSide
-        for (index, tile) in tiles.enumerated() {
-            let row = index / side, column = index % side
-            let base = FeestLayout.tileColour(row: row, column: column)
-            if let flash = flashColour {
-                // A pad tap paints the whole floor its colour for one beat, which
-                // is the one moment the floor is *not* random — because it is
-                // answering her finger, and an answer that looked like noise
-                // would not read as an answer at all.
-                tile.model?.materials = [FeestProps.lit(flash, FeestProps.floorGlow)]
-                continue
+        // see the rule and the floor stopped being a disco and became a
+        // screensaver. And the **colour** was gone: a pale pastel at 2.34
+        // emissive is above white by the time it is tonemapped, so all six came
+        // back the same.
+        if let floor = danceFloor {
+            if floorWear.count != floor.tiles.count {
+                floorWear = Array(repeating: -1, count: floor.tiles.count)
             }
-            guard Float.random(in: 0..<1) < 0.4 else {
-                tile.model?.materials = [Palette.material(base)]
-                continue
+            for (index, tile) in floor.tiles.enumerated() {
+                // -1 is unlit; 0..<n is an index into `floor.glowing`.
+                let wanted: Int
+                if let flash = flashColourIndex {
+                    // A pad tap paints the whole floor one colour for a beat,
+                    // which is the one moment the floor is *not* random — because
+                    // it is answering her finger, and an answer that looked like
+                    // noise would not read as an answer at all.
+                    wanted = flash
+                } else if Float.random(in: 0..<1) < 0.4 {
+                    wanted = Int.random(in: 0..<floor.glowing.count)
+                } else {
+                    wanted = -1
+                }
+                guard wanted != floorWear[index] else { continue }
+                floorWear[index] = wanted
+                tile.model?.materials = [wanted < 0 ? floor.dark[index]
+                                                    : floor.glowing[wanted]]
             }
-            let colour = FeestLayout.floorLitColours.randomElement() ?? base
-            tile.model?.materials = [FeestProps.lit(colour, FeestProps.floorGlow)]
         }
 
         // **A handful of the ball's tiles catch the light on each beat.** The
@@ -622,24 +662,30 @@ final class FeestRoom: Room {
         // Deterministic per beat rather than random, because the lit tiles should
         // travel as the ball turns rather than flicker in place.
         if let ball = mirrorBall {
+            if ballWear.count != ball.tiles.count {
+                ballWear = Array(repeating: false, count: ball.tiles.count)
+            }
             let count = ball.tiles.count
             for (index, tile) in ball.tiles.enumerated() {
-                let base = ball.tileColours[index]
-                let alight = (index * 7 + beat.count * 5) % count < 6
-                tile.model?.materials = [alight ? FeestProps.lit(Palette.creamLight, 0.7)
-                                                : Palette.material(base)]
+                let wanted = (index * 7 + beat.count * 5) % count < 6
+                guard wanted != ballWear[index] else { continue }
+                ballWear[index] = wanted
+                tile.model?.materials = [wanted ? ball.glowing : ball.dark[index]]
             }
         }
 
         // The lamps step their colour with the floor, so the whole room changes
-        // at once rather than in two conversations.
-        for (index, lamp) in lamps.enumerated() {
-            let colour = flashColour ?? FeestLayout.discoColour(index + beat.count)
-            lamp.lens.model?.materials = [FeestProps.lit(colour)]
-            lamp.beam.model?.materials = [
-                Palette.lightMaterial(colour, emission: colour,
-                                      intensity: FeestProps.glowPeak * 0.5, opacity: 0.16)
-            ]
+        // at once rather than in two conversations — and they only change when
+        // the step does, which under a flash is not at all.
+        let lampStep = flashColourIndex ?? beat.count
+        if lampStep != lastLampStep || force {
+            lastLampStep = lampStep
+            for (index, lamp) in lamps.enumerated() {
+                let slot = ((index + lampStep) % FeestLayout.discoColours.count
+                            + FeestLayout.discoColours.count) % FeestLayout.discoColours.count
+                lamp.lens.model?.materials = [lampLens[slot]]
+                lamp.beam.model?.materials = [lampBeam[slot]]
+            }
         }
     }
 
@@ -655,7 +701,7 @@ final class FeestRoom: Room {
         resetIdle()
 
         let colour = FeestLayout.discoColour(index)
-        flashColour = colour
+        flashColourIndex = index % FeestLayout.floorLitColours.count
         flashLeft = min(0.28, beat.period * 0.55)
         repaintFloor(force: true)
 
@@ -909,6 +955,7 @@ final class FeestRoom: Room {
         // A colour change now rather than on the next beat, which is the whole
         // response: five lamps all changing at once is a visible thing.
         lastLitStep = -1
+        lastLampStep = -2
         repaintFloor(force: true)
         voice.say(FeestLine.ditLampen, priority: .low)
     }
@@ -1181,8 +1228,10 @@ final class FeestRoom: Room {
         djCharacter = nil
         baker?.stop()
         baker = nil
-        flashColour = nil
+        flashColourIndex = nil
         flashLeft = 0
+        floorWear.removeAll()
+        ballWear.removeAll()
         touch.onEmptyTap = nil
         touch.onAnyTouch = nil
         touch.onMoved = nil
