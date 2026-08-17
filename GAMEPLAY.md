@@ -145,8 +145,8 @@ long she chooses to linger.
 
 | Step | Where | Required time | Can stretch to |
 |---|---|---|---|
-| Pick a grey frame | Bakery | 0:30 | 2:00 |
-| The friend arrives and wishes | Bakery door | 0:30 | 1:00 |
+| Open the shop, pick a grey frame | Bakery | 0:30 | 2:00 |
+| Let the friend in, hang the wish card | Bakery door | 0:30 | 1:00 |
 | Grow five ingredients | Garden | 3:00 | 8:00 |
 | Roll, fill, stir, pour, bake | Kitchen | 3:00 | 7:00 |
 | Decorate | Decorating | 3:00 | 12:00 |
@@ -395,7 +395,75 @@ below.
 
 ### 6.1 De Bakkerij — the hub
 
-**Required:** tap a grey frame.
+**Required: open the shop, choose who is coming, let them in, take the order.**
+
+> **Designed 2026-08-17, not built.** This section used to say *"required: tap a
+> grey frame"*, which is not a required action — it is a menu with a room drawn
+> round it. What follows is a step machine in the kitchen's sense:
+> `ROOMS.md` §1's named steps, one lit thing at a time, nothing failable.
+
+Four steps, and the whole leg is **~40 seconds**. It has to be the leanest step
+machine in the game and not the second-fattest, because it is the only room she
+passes through **twice in every round**.
+
+| Step | She does | It answers with |
+|---|---|---|
+| `opendoen` | Drags the shutter cord — the blind goes up | Daylight floods the room and **the wall of frames lights up**. The shop is open |
+| `kiezen` | Taps a grey ghost on the wall | That friend's outline colours in a little and steps forward. Today is theirs |
+| `binnenlaten` | The bell dings by itself and a shape shows at the glass. She drags the front door open | The friend walks in, crosses to the counter, and says hello |
+| `bestellen` | The friend holds out the wish card. She drags it onto the order hook by the back door | It hangs, then flies to the screen corner and **becomes the wish card §4 keeps there all round**. The back door lights |
+
+Four things about that table are load-bearing:
+
+- **`opendoen` is what makes an empty bakery playable.** The hardest thing about
+  this room is that on first launch it contains twelve grey ghosts and nothing
+  else, and a room with nothing in it still has to be worth standing in. Pulling
+  the blind up gives her something to *do* in the second before she has anything
+  to choose, and it buys the wall a reveal rather than a fade-in.
+- **`kiezen` is the first step in the game with no halo at all**, and that is the
+  rule rather than an exception to it. `ROOMS.md` §3 says to light the end that
+  is a fact and let the shimmer cover the end that is a choice; here **both ends
+  are her choice** — eleven ghosts, all equally right. So nothing is lit, and the
+  remaining ghosts breathe on a slow rolling wave, one after another, which says
+  *any of these* truthfully where one halo would lie and eleven would not be an
+  instruction.
+- **The wish card is something she hangs**, not something that appears. §4 makes
+  it the only persistent interface element in the game; earning it with a drag is
+  what stops it reading as chrome.
+- **None of the five toys is consumed.** The bell is rung by the *friend*, not by
+  her, so it stays a toy on her side — the trap `ROOMS.md` §8 records as the
+  rolling pin's ("rolling is a required step, not a toy") is avoided here rather
+  than paid again.
+
+**The ritual runs only when the shop is shut**, which is once per sitting. Come
+back from a finished round and the blind is already up, so the second round of an
+afternoon starts at `kiezen`. One boolean in the save.
+
+**The exit carries the friend and their wish**, which closes a hole that exists
+today: §6.2's garden hint — *the matching seed jar shimmers* — has nothing to
+read, because nothing upstream has ever chosen a friend. `RoomExit` grows a
+`.tuin(Friend)` and the wish travels with it.
+
+**Visit mode is free play.** The bakery is the hub, so "back to the bakery" is
+not a thing it can do. What it has instead is §2's after-the-twelfth state: a
+friend turns up at random, `kiezen` is skipped because there is no ghost left to
+pick, and the other three steps run unchanged.
+
+#### The return leg — two more steps
+
+She comes back from the party holding the photograph, and this is §6.6:
+
+| Step | She does | It answers with |
+|---|---|---|
+| `ophangen` | Drags the photo into that friend's frame | The grey ghost is gone. The frame glows, the sign above the door brightens a shade |
+| `klaar` | — | The curtain closes. The most complete moment in the game |
+
+**That answers §10's open question in favour of *she does it*, and it is the
+owner's call to confirm.** The argument is the plank's own: the kitchen already
+ends on her carrying the cake up onto the shelf rather than watching it fly
+there, and the frame is the plank's ceremony. The argument against is still real
+— the round has just ended and she has done enough — and one drag is the smallest
+version of doing it that exists.
 
 **Toys:** the shop bell above the door (ding, and Nina looks up); the cat asleep
 on the counter (stretches, then resettles); the little radio (plays a loop,
@@ -508,8 +576,72 @@ amber and a lilac the locked thirteen do not contain.
 
 ### 6.4 Versieren — decorating — **BUILT**
 
-**Required:** nothing. The door works immediately. This is the room she will
-spend the most time in and it must never ask her for anything.
+**Required: cream it, go all the way round it, and light one candle.**
+
+> **Designed 2026-08-17, not built — and it reverses this section's own
+> heading.** It used to read *"Required: nothing. The door works immediately.
+> This is the room she will spend the most time in and it must never ask her for
+> anything."* The owner asked for gameplay here in the kitchen's sense, and the
+> back half of that sentence is the constraint the design below is built to
+> honour rather than the thing it overturns.
+>
+> **The room still never asks.** The door is lit from the first frame and works
+> throughout, in both modes, exactly as `ROOMS.md` §9 records. She can walk out
+> with a bare cake and nothing anywhere says so.
+
+The difference from every other room is one word, and it is the whole design:
+**these steps observe rather than gate.** The kitchen's steps are a sequence —
+you cannot stir before you fill. Versieren's are a *reading* of what she has
+already done, so that Nina has something to answer and the room has an arc.
+Nothing is disabled at any point, in any step, ever.
+
+| Step | She does | It answers with |
+|---|---|---|
+| `insmeren` | Drags the piping bag over the bare cake — it only lays cream while the nozzle is actually over it | A band of cream follows her hand. Done at roughly two-thirds of the walls, and it bends to her hands the way stirring does |
+| `rondom` | Puts at least one thing in each of the cake's **four quarters** — which means turning the turntable | The bare quarter shimmers as it comes round. Nina notices the back of the cake out loud the first time it appears |
+| `kaarsje` | Drags a candle on, then taps it | It lights. The cake is a cake for a party rather than a cake |
+| `klaar` | **Carries the cake off the turntable onto the trolley by the door** | It wheels through to the party — the plank's ending, and the same verb |
+
+Why these three and not three others:
+
+- **`insmeren` gives the piping bag a job**, and it is `uitrollen` in a different
+  room: a coverage step, not a count, so waving does nothing and going back and
+  forth does everything. It also means **the cake comes out of Otto unfrosted** —
+  in her colours, per §5, but bare — which is what creates the wanting. A cake
+  that arrives finished is a cake there is no reason to touch.
+- **`rondom` is the only thing in the design that teaches her the cake has a
+  back.** The turntable is this room's signature prop and it is currently
+  entirely optional, so the ordinary round decorates one face of a cylinder. Four
+  quarters is the smallest rule that makes turning necessary, and it has seven
+  right answers per quarter so it never becomes a puzzle.
+- **`kaarsje` is the universal "it is done" gesture**, and it gives the room an
+  ending object the way the plank gives the kitchen one.
+
+**Two of them need the halo rule stated carefully**, and both land on
+`ROOMS.md` §3's garden ruling rather than on a new exception:
+
+- `insmeren` lights the piping bag. One tool, one fact.
+- `rondom` lights **the turntable handle** — turning is the fact — and lets the
+  seven trays shimmer, because *which sticker* is her choice between seven
+  equally right answers and lighting one of them would be a lie.
+
+#### Three things this costs that are worth knowing before it is built
+
+- **The bag must not run out during `insmeren`.** `pipingCapacity` and
+  `bagRanOut` already ship, and §6.4's own note says the cap has to read as the
+  bag running out rather than as the game refusing her. A cap during a required
+  step is exactly the game refusing her. **The bag refills itself until the cake
+  is creamed** and can only run dry afterwards, when cream is decoration rather
+  than a task.
+- **The step is derived, never stored** — `ROOMS.md` §11.2, the garden's rule.
+  Coverage, quarters and the lit candle are all pure functions of the `CakeSpec`
+  that already exists, so `VersierState` gains nothing and the step can never
+  disagree with what is on screen.
+- **Mo's wish does not change.** `CakeSpec.litCandles` carries a comment saying
+  that lighting a candle is a toy and that making a *wish* depend on it would
+  smuggle a required action into this room. That comment is still right and is
+  not overruled: Mo's wish stays **three candles placed, lit or not**. What the
+  step reads is the room's own arc, not the brief.
 
 The cake sits on a turntable with a big handle; dragging the handle turns it.
 Trays around the edge hold sprinkles, candles, hearts, stars, crowns, fruit and
@@ -637,11 +769,13 @@ sign above the door brightens a shade, and the curtain closes.
 moment in the game. `CONCEPT.md` §5 asks for a clear ending; this is it.
 
 The kitchen's plank is the rehearsal for this and it went in already: she
-carries the finished cake up onto the shelf herself. Whether the photograph
-should also be something she *does* — carry the frame to the wall — or something
-that happens to her, is open. The argument for doing it is the plank's own
-argument. The argument against is that the round has just ended and she has done
-enough.
+carries the finished cake up onto the shelf herself.
+
+**Whether the photograph is also something she *does* is answered in §6.1's
+return leg, pending the owner** — `ophangen`, one drag of the photo into its
+frame. The argument for doing it is the plank's own argument. The argument
+against is that the round has just ended and she has done enough, and one drag
+is the smallest version of doing it there is.
 
 ## 7. Rules that hold in every room
 
@@ -795,7 +929,13 @@ completed, because until the wall exists there is no reason for a second round.
   dealt from six makes every cake a rainbow and four of the eleven wishes
   automatic. Decide before the friends are built.
 - **Whether hanging the frame is something she does or something that happens** —
-  §6.6.
+  §6.6. Designed as `ophangen`, one drag, in §6.1's return leg; needs the owner's
+  yes.
+- **Whether Versieren should have a required spine at all.** §6.4 now has one,
+  designed 2026-08-17 on the owner's ask, and it reverses that section's own
+  heading. It is built to keep the promise underneath the heading — the door is
+  lit from the first frame and nothing is ever disabled — but it *is* a reversal,
+  and the shipped room does not have it yet.
 - **Whether the eleven friends are the right eleven.** They are cheap to change
   now and expensive once modelled.
 - **Whether replaying a filled frame should be a full party or a short clip.**
