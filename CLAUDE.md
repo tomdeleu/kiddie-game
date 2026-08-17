@@ -82,6 +82,14 @@ new call into main-actor code, which is one of the two the record indicts;
 `Synth.render` gained seven cases to an exhaustive switch. Everything else is new
 files that nothing outside the room calls.
 
+**And one edit reaches every room, which is worth its own line**:
+`Engine/Ticker.swift` runs on a `CADisplayLink` rather than a `Timer` as of
+2026-08-17, because a timer drifts against vsync and the party is the first room
+busy enough to show it as a regular hitch. Nothing about any room changes except
+that animation is paced to the display — but it is the game's one clock, so if
+*anything* anywhere stops moving, look there first. `ROOMS.md` §7 has the
+argument.
+
 Deliberate deviations from the design are recorded there. The kitchen's: the
 palette gained a blue, an amber and a lilac the locked thirteen do not contain;
 the room box is 0.46 m with the camera pulled back 8%, rather than the 0.4 m and
@@ -145,7 +153,7 @@ palette and pass criteria are still the standard every new room is held to.
 | Path | What |
 |---|---|
 | [`app/`](app/) | **The app.** De Keuken, Versieren, De Tuin and Het Feest: the rounds, the toys, Nina, Otto, the friends, the cake and everything she puts on it, the room switcher, the lighting panel. The first three rooms compiled at the 2026-08-16 builds — see its README for what those caught, and for which of the party's edits are the risky kind. |
-| [`models/`](models/) | **Props modelled in Blender**, as Python that rebuilds them. Twenty so far — De Keuken's ten (the flour sack, the toverbosbes, the crate, the toverklaver, the toverveertje, the maanstof pouch, the sink, the spoon, the cake and the scale) and De Tuin's ten (the molehill, the seed bed, the fence and seven of the eight ripe plants). Its README has the rules, the export settings, and the test a prop has to pass to belong there. |
+| [`models/`](models/) | **Props modelled in Blender**, as Python that rebuilds them. Twenty-two so far — De Keuken's ten (the flour sack, the toverbosbes, the crate, the toverklaver, the toverveertje, the maanstof pouch, the sink, the spoon, the cake and the scale) and De Tuin's twelve (the molehill, the seed bed, the fence, seven of the eight ripe plants, the tree and the harvest basket). Its README has the rules, the export settings, and the test a prop has to pass to belong there. |
 | [`GAMEPLAY.md`](GAMEPLAY.md) | **Storyline and gameplay in detail.** The wall, the eleven friends and their wishes, the cake rules, what each room requires versus what is optional, the timing budget. Reconciled with the built kitchen on 2026-08-16. |
 | [`ROOMS.md`](ROOMS.md) | **How to build a room.** The contract De Keuken established: the box, the camera, the step machine, the halo, the voice rules, touch, carrying, idle, misses, the door — and the traps that have already been paid for once. Read before writing a room. |
 | [`POC.md`](POC.md) | Step 0 proof of concept — answered. Kept for the palette, the geometry specs and the pass criteria. |

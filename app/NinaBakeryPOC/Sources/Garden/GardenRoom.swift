@@ -470,21 +470,28 @@ final class GardenRoom: Room {
         }
         // **The marker rides the canopy, not the base.** Both of these name a
         // thing whose mass is in the air, and she taps the leaves. The tree's
-        // lift moved with it when it grew (`GardenProps.tree`) — 115 mm is the
-        // middle of the new canopy, where 75 mm was the middle of the old one
-        // and is now bare trunk. Its radius grew with it too, from the 36 mm
-        // every prop gets to 42: the canopy is 108 mm across and a target a
-        // third of the prop's width inside a prop that big reads as a dead
-        // zone. The bush is untouched, and the two stay 136 mm apart as the
-        // camera sees them (`RoomBox.screenSeparation`) against 78 mm of
-        // combined radius, so neither can steal the other's tap.
+        // lift tracks its canopy every time it grows (`GardenProps.tree`):
+        // 160 mm is the middle of the 225 mm tree, where 75 mm was the middle
+        // of the 110 mm one and is now bare trunk. Its radius tracks the canopy
+        // too — 50 mm against a canopy 139 mm across, where every other prop
+        // gets 36: a target a third of the prop's width inside a prop that big
+        // reads as a dead zone, and `CONCEPT.md` §5's floor is a minimum rather
+        // than a cap. The bush keeps its 36.
+        //
+        // **Its two nearest rivals both clear it comfortably**, measured as the
+        // camera sees them (`RoomBox.screenSeparation`, not `distanceXZ` — this
+        // is a question about telling targets apart). The bush sits 169 mm away
+        // against 86 mm of combined radius; the top-left seed jar, the tighter
+        // of the two and the one worth naming, sits 116 mm away against 76 mm.
+        // Growing the canopy pushed this marker *up* the screen and away from
+        // both, so it is looser here than it was at half the height.
         for (index, spot) in [GardenLayout.treeSpot, GardenLayout.bushSpots[0]].enumerated() {
             let marker = Entity()
             marker.name = "Greenery\(index)"
-            marker.position = spot + [0, index == 0 ? 0.115 : 0.020, 0]
+            marker.position = spot + [0, index == 0 ? 0.160 : 0.020, 0]
             root.addChild(marker)
             touch.register("greenery\(index)", entity: marker,
-                           radius: index == 0 ? 0.042 : 0.036,
+                           radius: index == 0 ? 0.050 : 0.036,
                            planeY: spot.y) { target in
                 target.onTap = { [weak self] in
                     self?.sayName(index == 0 ? Line.Dit.boom : Line.Dit.struik,
@@ -630,9 +637,11 @@ final class GardenRoom: Room {
         // fence has no wall to hold one, and she can already see straight
         // through it — so the garden says it twice, on the owner's call.
         //
-        // What partly stands in for it is not lit at all: the sandy path leading
-        // out through the gate (`GardenLayout.pathCentre`). Ground people have
-        // walked on is the one way left to say *there is somewhere to go*.
+        // **Nothing stands in for it any more.** A worn sandy path across the
+        // ground at the gate used to, on the argument that ground people have
+        // walked on is the one way left to say *there is somewhere to go* — it
+        // was removed on the owner's call, 2026-08-17. Two cues, and the room
+        // is the honest test of whether two is enough.
 
         guard done else {
             Halo.remove(doorHalo, ticker: ticker)

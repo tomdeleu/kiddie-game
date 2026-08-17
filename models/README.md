@@ -13,7 +13,8 @@ This folder is for the shapes that vocabulary cannot reach.
 | `lowpoly.py` | The shared rules: flat shading, palette colours, ring/bridge/tube/box builders, the AO bake, and the export. A prop script is then only its shape. |
 | `garden.py` | **De Tuin's own vocabulary**, on top of `lowpoly.py`: a pointed lathe, a folded leaf, a swept curve, an arbitrary-section column, a chamfered octagon, and the plant anatomy the seven plants share. Nothing outside the garden imports it. |
 | `flour-sack.py`, `bosbes.py`, `crate.py`, `klaver.py`, `sink.py`, `cake.py`, `scale.py`, `veertje.py`, `maanstof.py`, `spoon.py` | De Keuken's ten. Run one to rebuild and re-export it. |
-| `molehill.py`, `garden-bed.py`, `garden-fence.py`, `plant-*.py` × 7 | De Tuin's ten. |
+| `molehill.py`, `garden-bed.py`, `garden-fence.py`, `plant-*.py` × 7 | De Tuin's first ten. |
+| `garden-tree.py`, `harvest-basket.py` | De Tuin's other two, added 2026-08-17. |
 | `*.blend` | The same things, openable. **Not the source of truth** — a convenience for looking at and for nudging a number before it goes back into the `.py`. |
 | → `app/NinaBakeryPOC/Resources/Models/*.usdz` | What ships. |
 
@@ -41,6 +42,9 @@ blender --background --python models/plant-maanstof.py
 blender --background --python models/plant-sterrensuiker.py
 blender --background --python models/plant-veertje.py
 blender --background --python models/plant-wolkenroom.py
+
+blender --background --python models/garden-tree.py
+blender --background --python models/harvest-basket.py
 ```
 
 Each writes its USDZ and saves its `.blend`. Add `-- --no-save` to export
@@ -310,14 +314,16 @@ the rest — 5.5 mm. At 2.5 and 4 it found nothing, which is the honest answer f
 a shape this open: the handle leaves the rim along a tangent instead of burying
 itself in the bowl, so there is barely a crevice to find.
 
-## De Tuin's ten
+## De Tuin's twelve
 
 The garden went second, and it went differently: De Keuken picked ten props one
 at a time, each because that one plate asked for one thing the vocabulary could
-not say. The garden's ten were asked for as a batch — the molehill, the bed, the
-fence and seven of the eight ripe plants — so the useful question was not *which
-prop* but **what does this room keep needing that the last one did not**. There
-were three answers, and they are `garden.py`.
+not say. The garden's first ten were asked for as a batch — the molehill, the
+bed, the fence and seven of the eight ripe plants — so the useful question was
+not *which prop* but **what does this room keep needing that the last one did
+not**. There were three answers, and they are `garden.py`. The tree and the
+basket came a day later, one at a time again, and are at the end of this
+section.
 
 ### What the room needed, three times over
 
@@ -438,6 +444,74 @@ of decision:
   plate cannot answer a question about the room it is not standing in* — and
   this time the room-box plate does not answer it either.
 
+### The tree, and a canopy that can be measured against itself
+
+`references/garden/garden-tree.png` and `GardenProps.tree` already agree about
+the shape — a **cluster**, because a single sphere on a stick is a lollipop.
+What the model buys is the thing eight separate `ModelEntity` spheres cannot
+have: **the seam**. Where two lobes push into each other the crease is invisible
+to the facets, since both surfaces face outwards and come back the same tone, so
+the code paints alternate lobes `sage` and `mint` — a tint standing in for a
+shape, and at 139 mm across it reads as a bag of two-coloured balls. One mesh
+can be measured against itself. The canopy is **one colour** here, which is what
+the plate draws, and the creases are shaded.
+
+The count follows from the same fact: fourteen lobes rather than eight, because
+in one mesh a lobe is not a draw call. The plate asks for a dozen.
+
+**The envelope is asserted, not described.** The tree was sized twice by the
+owner on 2026-08-17 and `GardenLayout.treeSpot` clears the fence posts, the
+potting bench's backboard and the base slab's back edge by margins measured
+against the result — 225 mm tall, 128 mm of trunk, canopy from 105 mm, 139 mm
+across. `check_envelope()` fails the build if a lobe breaks any of the three,
+because a lobe nudged out by two millimetres is a canopy through a fence post
+and nothing in Blender would say so. It fired on the first run.
+
+**One trap, and it is a trap for every prop after this one:
+`subdivisions` does not mean the same thing on the two sides.** Blender's
+`create_icosphere(subdivisions=1)` is the bare 20-face icosahedron;
+`FacetedMesh.icosphere(subdivisions: 1)` has already subdivided once, at 80.
+Transcribing the number gave a canopy of spiky 20-face lumps — a visible
+regression against the tree already in the game, and the render is what caught
+it. The model passes 2.
+
+### The basket, which is a container, and a container has an inside
+
+Four things off `references/garden/harvest-basket.png`, and they are all that
+one fact:
+
+- **A lining in its own colour.** `FacetedMesh.bowl` is the vocabulary's one
+  double-walled primitive and it is one mesh with one tone, so the code's basket
+  is sandy inside and out. The plate lines it in rose, and from a camera looking
+  down at 31° the lining is most of what you see.
+- **A rim with a thickness.** The code lays a flat `annulus` across the top — a
+  plate resting on a tub. The plate draws a band 6.5 mm tall standing 2.1 mm
+  proud, which therefore has an **underside**, and that underside is the only
+  shadow on this prop that reads from across the room.
+- **One handle**, swept and mitred, rather than seven boxes overlapping at their
+  corners with every end cut square.
+- **The handle spans the diagonal the camera looks across.** The code stands it
+  along the world X, which the fixed camera on the +X+Z diagonal sees end-on;
+  the plate draws it corner to corner, square to the eye.
+
+The tub is three open shells that together close one surface — outside and
+bottom, rim, lining — rather than one solid split afterwards. `flat_obj` leaves
+an open shell's winding alone, so each is wound by hand and the assembly is
+watertight: 16 outward faces and a floor on the tub, 8 outward and 8 up on the
+rim, 16 **inward** and a floor on the lining.
+
+**A 3.4 mm brim hides a basket**, which cost one render. The first build ran the
+body up to 19.2 mm under a rim at 22.6, and from the room's own camera the
+overhang covered the tub: the render came back as a green tray with a sliver of
+basket under it. The plate stands its band on a body that reaches nearly the
+same width, so the body is 20.5 mm now — which is `GardenProps.basket`'s own
+29 mm corner radius, i.e. the number that was already right.
+
+It is built **axis-aligned and the Swift side drops its `towardsCamera`**, which
+is the crate's rule for the crate's reason: the camera looks down the +X+Z
+diagonal, so a box square to the world already shows two sides and the corner
+between them.
+
 ## Ambient occlusion, on these props
 
 It started on the berry. Standing the crown up cost something: the crown and
@@ -474,6 +548,8 @@ What it finds, at the settings each prop is exported with:
 | Maanstof | 10 on the pod, 9 on the opening | the ring where the teeth stand out of the neck |
 | Molehill | 6 on the head, 6 on the nose, 13 on the paws | where he comes out of the earth, and under the nose |
 | Bed | 12 on the frame, 90 on the holes | the butt joints at each post, and the inside of every well |
+| Tree | 150 one step, 405 two on the canopy | every seam where two of the fourteen lobes push into each other — and most of that count is faces already buried inside a neighbour |
+| Basket | 8 on the rim, 6 on the handle | the underside of the rim's overhang, and where each foot of the handle stands on the band |
 | Fence | **nothing** | see below — and that is the right answer |
 | Sterrensuiker | nothing | a ridged star is convex; every crease on it is a ridge |
 
@@ -496,7 +572,8 @@ against it:
   cost — the result is still one flat tone per face, which is what the whole
   style is made of. `app/LIGHTMAPS.md` is the texture route, and it is not this.
 - **Its reach is short**: 2.2 mm on the berry and the cake, 2.5 mm on the
-  clover, 3 mm on the sink, 4 mm on the crate, 6 mm on the sack — roughly the
+  clover, 3 mm on the sink and the basket, 4 mm on the crate, 5 mm on a 139 mm
+  tree, 6 mm on the sack — roughly the
   same *proportion* of each prop, and always chosen against the size of the part
   it must stay inside. On the crate the 4 mm is set against a 6 mm board depth,
   so it never reaches out onto the flat of a board.
@@ -550,6 +627,24 @@ Each of these came from a bake that looked wrong, and each is a knob on
   gave coplanar faces inside solid geometry **and** a bake measuring the join
   from inside it — the rails came back uniformly dark and the pickets untouched.
   Butted flush, both problems go away.
+
+### And one the tree and the basket added
+
+**The distance is chosen against the facet, not against the prop.** The tree's
+lobes are 30–47 mm across, five times the cloud's, and the first bake reached
+9 mm on that reasoning. It looks identical from outside to the 5 mm it ships
+with: every extra face 9 mm found was one already buried inside a neighbouring
+lobe. What sets the number is the size of the facet the shading has to sit
+inside, and a subdivided icosphere's facet is 11 mm — near enough the cloud's
+own, which is why the cloud's own number is nearly right.
+
+The basket is the other half of it, and it is the fence again in a smaller
+room: **its lining measures nothing.** The inside of the tub is genuinely the
+darkest place on the prop, but each wall is one 20 mm quad, so the crease where
+two of them meet is averaged away to nothing. The honest answer is to record the
+zero — the four walls face four different ways and the facets shade them, which
+is what the style is for — rather than to raise the distance until the whole
+inside goes dark, which is a basket lined in brown.
 
 ## Rules a model has to hold to
 
