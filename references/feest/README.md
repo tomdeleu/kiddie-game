@@ -4,10 +4,10 @@ Concept plates for `GAMEPLAY.md` §6.5, generated 2026-08-17 for the room the
 owner asked for: **a discotheque, with lights and a DJ, and of course cakes and
 friends.**
 
-Thirteen plates, `flux_2` / `pro`, 1k, one credit each. Twelve of them are this
-room; the thirteenth is
-[`../plates/11-finale.png`](../plates/11-finale.png), regenerated because the
-finale is the party and the party is now a disco.
+Sixteen plates, `flux_2` / `pro`, 1k, one credit each. Fifteen of them are this
+room — three of those a **second pass at the guests**, see `beertjes.png` below —
+and the sixteenth is [`../plates/11-finale.png`](../plates/11-finale.png),
+regenerated because the finale is the party and the party is now a disco.
 
 **Read these for shape and for what a thing is made of.** They are the brief for
 `FeestProps.swift`, not assets — nothing here goes into the app
@@ -29,11 +29,15 @@ and none of them is a prop).
 | The confetti popper | `knaller.png` | 1:1 | `282546` | `6c9aee60-1c5f-4ebe-8ebc-5881fe852a1c` | scenes |
 | The balloon | `ballon.png` | 1:1 | `636893` | `8edc1d76-625f-4836-9cf4-76f8ec6e13c6` | scenes |
 | **The DJ** | `dj.png` | 3:4 | `215924` | `5a975394-aa91-4496-aca7-30a1baf8bdc0` | **characters** |
-| **The guests** | `gasten.png` | 16:9 | `196279` | `17ef0f76-f670-4ffd-9a17-bd5608f7b960` | **characters** |
+| **The guests** — superseded | `gasten.png` | 16:9 | `196279` | `17ef0f76-f670-4ffd-9a17-bd5608f7b960` | **characters** |
+| **The guests, rebuilt** | `beertjes.png` | 16:9 | `314116` | `10e00dce-fcb5-4686-8c76-cf3491035a1f` | **characters** |
+| The dance poses | `beertjes-dansen.png` | 16:9 | `971082` | `562e7144-fefb-4481-a4f9-d6b6b8849c24` | **characters** |
+| One bear, large | `beertje-solo.png` | 3:4 | `753928` | `e32fc1a8-b7e0-4bbb-925b-5ae247050dac` | **characters** |
 | The finale | `../plates/11-finale.png` | 1:1 | `9333` | `f6429693-912d-4988-829f-970ceed3cd34` | scenes |
 
-Full prompts are on the job records. All thirteen carry `CLAUDE.md`'s four style
-phrases, and the ten disco ones carry a fifth clause — see below.
+Full prompts are on the job records. All sixteen carry `CLAUDE.md`'s four style
+phrases; the ten disco ones carry a fifth clause and the three bear plates carry
+a sixth — both are below.
 
 ## The fifth phrase: *not a dark nightclub*
 
@@ -64,6 +68,27 @@ emissive, above white in the HDR buffer — while the plaster and the props keep
 the lighting every other room has. The style survives because the disco is made
 of *added light* rather than of *removed light*, which is the halo's lesson
 (`ROOMS.md` §3) applied to a whole room. `GAMEPLAY.md` §6.5 has the argument.
+
+## The sixth phrase: *a faceted sphere, never a smooth one*
+
+The three bear plates carry one more clause, and without it they are unbuildable.
+
+"Chubby, round, cute, teddy-bear proportions" and "no smooth curved surfaces, no
+rounded bevels, no subdivision" are, read literally, a contradiction — and flux
+resolves a contradiction by picking a side at random. Half the time you get a
+crisply faceted robot; the other half you get exactly the soft clay the whole
+direction was chosen to avoid.
+
+The clause that resolves it names the *thing* rather than restating both rules:
+
+> *Adorable and soft-looking in silhouette, but the whole shape is built from
+> flat untextured polygon facets with visible straight polygon edges — a faceted
+> low-poly sphere, never a smooth one.*
+
+**Round is the silhouette; flat is the surface.** That is also exactly what
+`GuestCharacter` builds: an icosphere at one subdivision is 80 flat facets, and a
+lathe with six stations is a barrel with six visible bands. The same sentence
+describes the plate and the mesh, which is the sign it is the right sentence.
 
 ## What each plate settled
 
@@ -106,11 +131,46 @@ of *added light* rather than of *removed light*, which is the halo's lesson
   row of six survived**, where `buttons/README.md`'s row lost every glyph — the
   difference is that these carry no symbol. The rule is narrower than it looked:
   *flux cannot assemble a compound glyph*, not *flux cannot draw a row*.
-- **`gasten.png`** — the best plate in the set, and it settled the friends. Five
-  faceted animals in five distinct pastels, each told apart by **ears and muzzle
-  alone** on one shared blocky body. That is `CONCEPT.md` §9.7's three-part rig
-  with a head swap, drawn: `FeestProps.guest` builds one body and changes the
-  ears, the muzzle and the colour, and eleven friends cost one builder.
+- **`gasten.png`** — settled that a friend is *one body with a swapped head*, and
+  was then **overruled on the body itself**. Five faceted animals in five
+  distinct pastels, each told apart by ears and muzzle alone, which is
+  `CONCEPT.md` §9.7's three-part rig with a head swap, drawn. What it got wrong
+  was the proportions: box torso, box head, prism limbs with separated fingers —
+  a robot. Owner's call on seeing it in the room, 2026-08-17: *"in the reference
+  plates they are cute little bears. looks so much better."* Superseded by
+  `beertjes.png`; kept, because the head-swap idea is still the reason eleven
+  friends cost one builder.
+
+- **`beertjes.png`** — **the plate the guests are actually built from.** A
+  teddy-bear body: a plump barrel widest low down, a big round head nearly as
+  wide as it sitting straight on the shoulders with no neck at all, a pale belly
+  patch covering most of the front, and arms and legs so short they read as
+  stubs. The head is about **two fifths of the whole height**, which is most of
+  what makes it cute and is the one number in `GuestCharacter` worth protecting.
+  Five animals again out of the six asked for — no mouse — which is the third
+  time in this folder, so the rule below has now paid for itself three times.
+
+  It is also the answer to *round versus faceted*: the silhouette is soft and
+  every surface on it is flat. The prompt has to say so explicitly — *"a faceted
+  low-poly sphere, never a smooth one"* — or "chubby and round" and "no smooth
+  curved surfaces" fight each other and one of them wins at random.
+
+- **`beertjes-dansen.png`** — asked for six bears each in a different dance pose
+  with their arms in the air, and **it is the weakest plate in the set.** The
+  poses came back broadly the same (arms out, not up), it lost an animal, and it
+  put a fairy in a mint apron in the middle of the row — Nina, who was not asked
+  for and who is a character plate away in the same reference. Useful for one
+  thing only, and that thing was worth a credit: it confirms **what a raised arm
+  needs to look like** — a stubby limb with an open paw on the end, angled out
+  from the shoulder rather than straight up beside the head.
+
+  The generalisable half: **flux will give you a pose, and it will not give you
+  six different poses.** The six dance styles in `GuestCharacter.DanceStyle` were
+  written from the note rather than from the plate.
+
+- **`beertje-solo.png`** — one bear, large, arms up, for reading the construction
+  off. The reference every measurement in `GuestCharacter`'s proportions block
+  came from.
 
 ## Two findings that generalise
 

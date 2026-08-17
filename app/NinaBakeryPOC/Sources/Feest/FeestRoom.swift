@@ -230,18 +230,31 @@ final class FeestRoom: Room {
         let dj = Friend.allCases.first { !onTheFloor.contains($0) } ?? .bas
         let character = GuestCharacter(friend: dj, role: .dj, at: FeestLayout.djSpot,
                                        phase: 0, ticker: ticker, flat: flat)
+        // His arm pose and his motion are both `.dj`'s own — the style is only
+        // here because the initialiser takes one, and `.dj` ignores it.
         root.addChild(character.root)
         djCharacter = character
     }
 
+    /// **Six guests, six different dances, one each.**
+    ///
+    /// `DanceStyle.allCases` is exactly `FeestLayout.guestCount` long and the
+    /// index picks straight off it, so every party has all six moves on screen
+    /// and no two guests are doing the same one. That is deliberate rather than
+    /// convenient: owner's call, 2026-08-17 — *"the dance is too much of the same.
+    /// they should be hands in the air and each do a different little move."*
+    ///
+    /// **The phase offset came down to almost nothing** at the same time. It was
+    /// a sixth of a beat, which was carrying all the variety when every guest had
+    /// the identical move; on top of six different moves the same offset reads as
+    /// six guests who cannot hear the music. The styles carry it now and the
+    /// offset only takes the edge off the unison.
     private func buildGuests() {
+        let styles = GuestCharacter.DanceStyle.allCases
         for (index, friend) in state.everyone.enumerated() {
-            // A sixth of a beat apart across the six, so the row reads as a crowd
-            // rather than as a chorus line — and it is a constant per guest, not
-            // a random per frame, so a guest does not change character when the
-            // room is rebuilt.
-            let phase = Float(index) / Float(FeestLayout.guestCount) / 6
+            let phase = Float(index) / Float(FeestLayout.guestCount) / 22
             let character = GuestCharacter(friend: friend, role: .gast,
+                                           style: styles[index % styles.count],
                                            at: FeestLayout.guestSpot(index),
                                            phase: phase, ticker: ticker, flat: flat)
             root.addChild(character.root)
@@ -975,6 +988,7 @@ final class FeestRoom: Room {
             "Vriend: \(state.friend.dutchName)  ·  wens: \(Self.describe(state.friend.wish))",
             "Match: \(state.wishMatched.map { $0 ? "ja" : "nee" } ?? "nog niet")",
             "Gasten: \(state.everyone.map(\.rawValue).joined(separator: ", "))",
+            "Dansjes: \(guests.map { "\($0.style)" }.joined(separator: ", "))",
             "Beat: \(beat.bpm) bpm  ·  \(beat.count) tellen"
                 + (beat.hasPlayed ? "" : "  (nog niet gespeeld)"),
             "Taart: \(state.cake.kind.rawValue) · \(state.cake.placed.count) stickers",

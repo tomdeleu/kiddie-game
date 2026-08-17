@@ -189,14 +189,28 @@ enum FeestLayout {
     // flour sack's ratio — so tapping the DJ mostly says *the DJ* and now and
     // then says *the decks*.
 
-    static let boothCentre = SIMD2<Float>(0.100, -0.170)
+    /// **Pulled 30 mm forward when the guests got chubby**, and it is a good
+    /// illustration of a footprint being a fact about the props rather than about
+    /// the plan. The blocky first pass was a 30 mm-wide box, so a DJ fitted
+    /// comfortably in the 24 mm between the booth's back and the plaster. A
+    /// `beertjes.png` body is **62 mm wide**, and he did not — his back would have
+    /// been 9 mm inside the wall, which at this camera is a bear with a slice
+    /// missing.
+    ///
+    /// The booth came forward instead of the DJ, because the DJ has nowhere to
+    /// go: he has to be against the wall for the room to have any depth behind
+    /// him. Their footprints now overlap by 10 mm, which is not a collision — it
+    /// is a DJ standing *at* his decks rather than behind them.
+    static let boothCentre = SIMD2<Float>(0.100, -0.140)
     static let boothSize = SIMD2<Float>(0.110, 0.048)
     static let boothTopY: Float = 0.070
     /// The two platters on the top, off the centre line either way.
     static let deckOffset: Float = 0.030
     static let deckRadius: Float = 0.017
 
-    static let djSpot = SIMD3<Float>(0.100, RoomBox.floorY, -0.204)
+    /// As far back as a 62 mm-wide body goes: his back lands at z = −0.216
+    /// against a wall face at −0.218.
+    static let djSpot = SIMD3<Float>(0.100, RoomBox.floorY, -0.185)
     /// Generous, and deliberately covering the booth as well as its DJ.
     static let djRadius: Float = 0.045
     static let djTouchY: Float = 0.075

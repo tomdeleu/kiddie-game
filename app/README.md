@@ -2230,6 +2230,59 @@ The same clause did the same work on the plates. Every disco prompt in
 disco, not a dark nightclub"* after the four locked style phrases, and it worked
 first time on all ten.
 
+### The guests are teddy bears, and each does a different dance
+
+Two notes from the owner on seeing the room, 2026-08-17: *"in the reference
+plates they are cute little bears. looks so much better"*, and *"the dance is too
+much of the same. they should be hands in the air and each do a different little
+move."* Both were right and both are now in.
+
+**The body.** The first pass built every friend from a box torso, a box head and
+prism limbs — technically the three-part rig, and a robot.
+`references/feest/beertjes.png` is what it should have been: a plump barrel
+widest low down, a big round head nearly as wide as it sitting straight on the
+shoulders with **no neck at all**, a pale belly patch covering most of the front,
+and arms and legs so short they read as stubs. The head is about **two fifths of
+the whole height**, and that ratio is most of what makes it cute — it is the one
+number in `GuestCharacter`'s proportions block worth protecting.
+
+**The eleven friends did not change.** They are still `GAMEPLAY.md` §4's mouse,
+cat, frog, bird, sheep and the rest, and the plate is what confirms that is
+right: five different animals came back on it and every one is the same barrel
+with different ears and a different muzzle. `buildFace` is where a friend
+differs, which is why eleven friends still cost one builder.
+
+**Round is the silhouette; flat is the surface.** An icosphere at one subdivision
+is 80 flat facets and a six-station lathe is a barrel with six visible bands, so
+nothing here bends the no-smooth-surfaces rule. The plate needed a prompt clause
+saying exactly that or it picked a side at random — `references/feest/README.md`.
+
+**The dance.** Six styles, one per guest, and `DanceStyle.allCases` is exactly
+`guestCount` long so every party has all six on screen with no two alike:
+*zwaaien* rocks side to side, *pompen* punches one arm with the other down,
+*draaien* twists from the waist with arms wide, *springen* jumps clear of the
+floor on every beat, *wiebelen* sends the hips one way and the shoulders the
+other, *knikken* nods deep.
+
+**Hands in the air is a pose, not an animation**, which is what keeps
+`CONCEPT.md` §9.7 intact: each style builds its arms at a fixed angle and then
+never touches them again, and what moves them is the body they are welded to. The
+angle is written as *how far from straight up* — 0 is vertical, π/2 is out
+sideways, π is hanging down — so a style's `raise` reads as how far from
+hands-in-the-air it is. Six visibly different dances cost six closures rather
+than six rigs.
+
+The per-guest phase offset came **down** at the same time, from a sixth of a beat
+to a twentieth. It had been carrying all the variety when every guest had the
+same move; on top of six different moves the same offset reads as six guests who
+cannot hear the music.
+
+One thing the new bodies cost: at 62 mm wide against the old 30, **the DJ no
+longer fitted between his booth and the wall** — his back would have been 9 mm
+inside the plaster. The booth came forward 30 mm instead, because he has nowhere
+to go and the room needs depth behind him. Their footprints overlap by 10 mm now,
+which is a DJ standing *at* his decks rather than behind them.
+
 ### The way out is the cake
 
 **This room has no door**, and it is the only one that does not. §6.5 has always

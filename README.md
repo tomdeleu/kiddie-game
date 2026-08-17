@@ -8,9 +8,9 @@ sows, waters and picks five magic ingredients; **De Keuken** — one full round
 (roll, fetch, stir, pour, bake) with seven toys; **Versieren**, where the cake
 she just baked goes onto a turntable and she covers it in sprinkles, candles,
 hearts, stars, crowns, fruit and cream; and **Het Feest**, a disco with a mirror
-ball, a DJ, a light-up dance floor and six friends who dance to whatever beat she
-taps. 309 Dutch voice lines between them. Start at
-[app/README.md](app/README.md).
+ball, a DJ, a light-up dance floor and six teddy-bear friends who each dance a
+different little move to whatever beat she taps. 309 Dutch voice lines between
+them. Start at [app/README.md](app/README.md).
 
 **Next:** test it with Nina, then the wall of twelve frames — which is the last
 thing between four rooms and a game. The one asset still missing is the party's

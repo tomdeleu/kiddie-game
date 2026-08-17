@@ -26,9 +26,9 @@ toys — **De Tuin**, the garden: eight seed jars on a potting bench, five
 holes, a watering can that grows whatever it sweeps over, six more toys, and a
 picket fence with a gate in it where its walls used to be — and **Het Feest**,
 the party, which is **a disco**: a mirror ball, a light rig, a light-up dance
-floor, a DJ at a booth with two decks, six friends dancing, and six pads whose
-beat is the one she is tapping. 309 Dutch line variants across 170 line ids.
-No other room exists.
+floor, a DJ at a booth with two decks, six teddy-bear friends each dancing a
+different little move, and six pads whose beat is the one she is tapping.
+309 Dutch line variants across 170 line ids. No other room exists.
 
 ## → Start here: [`app/README.md`](app/README.md)
 
@@ -132,7 +132,7 @@ palette and pass criteria are still the standard every new room is held to.
 | [`references/props/`](references/props/) | Prop concept plates for the kitchen, and why `generate_3d` is not usable for this style. |
 | [`references/versieren/`](references/versieren/) | The decorating room's seventeen plates — the turntable, the two tools, the seven sticker shapes and the toys — and what three attempts at its room box taught about making flux name its own facet counts. |
 | [`references/garden/`](references/garden/) | **De Tuin's twenty-five plates** — the bed, the can, the basket, four plant stages, eight ripe plants, six toys, and the fence, gate and potting bench that replaced its walls. Its README has the job IDs and the three studio plates the room box overruled. |
-| [`references/feest/`](references/feest/) | **Het Feest's twelve plates** — the disco room box, the DJ booth, the mirror ball, the light bar, the dance floor, the six pads, the speakers, the cake table, two toys, the DJ and the guests. Its README has the seeds, the fifth prompt phrase that keeps a disco from going dark, and why asking for six animals gets five. |
+| [`references/feest/`](references/feest/) | **Het Feest's fifteen plates** — the disco room box, the DJ booth, the mirror ball, the light bar, the dance floor, the six pads, the speakers, the cake table, two toys, the DJ, and two passes at the guests. Its README has the seeds, the fifth prompt phrase that keeps a disco from going dark, the sixth that lets a shape be round and faceted at once, and why asking for six animals gets five three times running. |
 | [`references/ingredients/`](references/ingredients/) | The eight ingredients, the flour sack and the flour cloud — the plates the models were built from. |
 | [`references/moodboard/`](references/moodboard/) | Provenance + licences. Gathered for two retired directions — not the current look. |
 | [`references/FETCHING-ASSETS.md`](references/FETCHING-ASSETS.md) | How to get outside material onto disk here, and what fails. |
