@@ -383,11 +383,15 @@ enum GardenLayout {
     /// wants. The tree overhangs the fence and that is right rather than a
     /// clash: a tree leaning over a garden fence is what a tree does.
     ///
-    /// **The spot did not move when the tree grew** (2026-08-17, owner: it read
-    /// as a bush — `GardenProps.tree`). It did not have to: the canopy is 174 mm
-    /// up and the fence posts stop at 86, so a canopy half again as wide passes
-    /// over the fence rather than into it, and the nearest lobe still clears the
-    /// potting bench's backboard by 11 mm.
+    /// **The spot did not move through either time the tree grew** (2026-08-17,
+    /// owner: it read as a bush, then it was still too short —
+    /// `GardenProps.tree`). It did not have to, and moving it would have made
+    /// things worse rather than better: pushing the tree away from the eye
+    /// raises its base on screen faster than the extra distance shrinks it, so
+    /// the far corner costs headroom instead of buying it. Where it stands, a
+    /// 225 mm tree hangs its canopy from 105 mm up — over the 86 mm fence posts
+    /// and over the potting bench's 90 mm backboard, both by a clear margin, so
+    /// the overhang stays an overhang and never becomes an intersection.
     static let treeSpot = SIMD3<Float>(-0.115, floorY, -0.172)
     static let bushSpots = [SIMD3<Float>(-0.020, floorY, -0.192),
                             SIMD3<Float>(0.170, floorY, -0.185)]

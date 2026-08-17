@@ -983,27 +983,41 @@ enum GardenProps {
     /// shorter than the child looking at it, no taller than the bushes beside
     /// it are wide, is a shrub whatever shape its leaves are.
     ///
-    /// **What makes it a tree is the trunk, not the height alone**, so the two
-    /// grew by different amounts. The trunk nearly doubled to 98 mm and the
-    /// canopy grew about half again; the whole tree stands 174 mm, which is
-    /// 2.5× the fence and 1.4× Nina, and **81 mm of bare trunk shows below the
-    /// lowest lobe** — the silhouette a 4-year-old draws when asked for a tree.
-    /// The canopy is 108 mm across, still the plate's wide cluster.
+    /// **What makes it a tree is the trunk, not the height alone.** The first
+    /// pass took it to 174 mm and was still short (owner, 2026-08-17: *"the
+    /// tree needs to still be double the height"*). It stands **225 mm** now —
+    /// 3.2× the fence, 1.8× Nina, a little taller than the room's own 235 mm
+    /// walls would be — on a **128 mm trunk**, with **105 mm of bare trunk
+    /// below the lowest lobe**. The canopy is 139 mm across, still the plate's
+    /// wide cluster.
+    ///
+    /// **225 rather than the 348 that doubling asks for, and that is the one
+    /// deviation here.** The camera is locked game-wide (`ROOMS.md` §0), and
+    /// above `GardenLayout.treeSpot` the frame runs out at 238 mm: at 348 the
+    /// top 110 mm is off screen, which is about 60% of the foliage, leaving a
+    /// long trunk under a hedge sitting on the top edge. Moving the tree does
+    /// not buy the headroom back — pushing it away from the eye raises its base
+    /// on screen faster than distance shrinks it, so the far corner is *worse*.
+    /// So this is the tallest tree that fits whole, at **ndcY ≈ 0.95**, and the
+    /// FOV is vertical so that margin holds on every aspect ratio rather than
+    /// only on the 4:3 iPad. Owner's call, having been shown all three.
     ///
     /// Checked against its neighbours before it grew, because a bigger prop in
-    /// a full corner is a collision waiting to happen: the canopy clears the
-    /// potting bench's backboard by 11 mm at the nearest lobe and passes over
-    /// the 86 mm fence posts entirely, so the overhang `GardenLayout.treeSpot`
-    /// asks for is still an overhang. It reaches ndcY ≈ 0.77 at
-    /// `CameraRig`'s eye — well inside the frame, and the FOV is vertical, so
-    /// that holds on every aspect ratio.
+    /// a full corner is a collision waiting to happen — and this size is
+    /// **easier** to clear than the last, not harder, because the canopy went
+    /// up as well as out. Its underside sits at 105 mm: that is 15 mm above the
+    /// potting bench's backboard and 19 mm above the fence posts, so it passes
+    /// over both entirely and `treeSpot`'s deliberate overhang is still an
+    /// overhang. The widest lobe reaches 10 mm past the room box's back edge
+    /// and stays over the base slab, which is a tree leaning out over a garden
+    /// fence and is the point.
     static func tree(flat: Bool) -> Entity {
         let root = Entity()
         root.name = "Tree"
 
-        let trunk = RoomBuilder.model(.taperedPrism(bottomRadius: 0.0132,
-                                                    topRadius: 0.0094,
-                                                    height: 0.098, sides: 6),
+        let trunk = RoomBuilder.model(.taperedPrism(bottomRadius: 0.0171,
+                                                    topRadius: 0.0122,
+                                                    height: 0.128, sides: 6),
                                       Palette.cream, flat: flat, name: "TreeTrunk")
         root.addChild(trunk)
 
@@ -1011,14 +1025,14 @@ enum GardenProps {
         // rather than random: a tree that rebuilds differently every time the
         // flat-shading toggle flips is a tree that moved while she was looking.
         let lobes: [(SIMD3<Float>, Float)] = [
-            ([0, 0.1280, 0], 0.0370),
-            ([0.0273, 0.1088, 0.0112], 0.0266),
-            ([-0.0231, 0.1120, -0.0140], 0.0289),
-            ([0.0098, 0.1064, -0.0273], 0.0252),
-            ([-0.0084, 0.1104, 0.0266], 0.0259),
-            ([0.0210, 0.1384, -0.0154], 0.0237),
-            ([-0.0196, 0.1408, 0.0126], 0.0229),
-            ([0.0028, 0.1520, 0.0042], 0.0215),
+            ([0, 0.1655, 0], 0.0478),
+            ([0.0353, 0.1407, 0.0145], 0.0344),
+            ([-0.0299, 0.1448, -0.0181], 0.0374),
+            ([0.0127, 0.1376, -0.0353], 0.0326),
+            ([-0.0109, 0.1427, 0.0344], 0.0335),
+            ([0.0272, 0.1790, -0.0199], 0.0306),
+            ([-0.0253, 0.1820, 0.0163], 0.0296),
+            ([0.0036, 0.1965, 0.0054], 0.0278),
         ]
         for (i, lobe) in lobes.enumerated() {
             let ball = RoomBuilder.model(.icosphere(radius: lobe.1, subdivisions: 1),
