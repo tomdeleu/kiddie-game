@@ -143,13 +143,22 @@ final class VoiceBank {
 
     /// Say lines one after another, with a breath between them. The cake
     /// reaction uses it: colour first, then the effect that stacked on top.
-    func say(_ ids: [String], gap: Float = 0.25) {
+    ///
+    /// **`stillTrue` is checked before every link, not once at the start.** A
+    /// chain takes upwards of ten seconds to get through and she can undo its
+    /// premise in two of them — the cake reaction ends with *"zet hem op de
+    /// plank!"* and she is perfectly capable of having already put it there. A
+    /// link whose premise has expired is not delayed or shortened, it is simply
+    /// never said, and the chain stops there.
+    func say(_ ids: [String], gap: Float = 0.25,
+             stillTrue: (@MainActor () -> Bool)? = nil) {
         guard let first = ids.first else { return }
+        guard stillTrue?() ?? true else { return }
         let duration = say(first)
         let rest = Array(ids.dropFirst())
         guard !rest.isEmpty else { return }
         chainJob = ticker.after(duration + gap) { [weak self] in
-            self?.say(rest, gap: gap)
+            self?.say(rest, gap: gap, stillTrue: stillTrue)
         }
     }
 
@@ -173,11 +182,19 @@ final class VoiceBank {
     /// the line she is speaking now, and then the most recent thing that is
     /// still true.
     ///
+    /// **A chain is the hole in that.** "The line she is speaking now" is one
+    /// line when she is speaking one, and up to four when a chain is in flight —
+    /// and this only ever replaces the one *waiting*. Where the new line is the
+    /// thing the old queue was leading up to, call `sayInstead`, which drops the
+    /// queue first. Where a line in the chain can stop being true before it is
+    /// reached, pass `stillTrue`.
+    ///
     /// The timeout is the escape hatch. Nothing in the game blocks on this — the
     /// step has already changed and the halo has already moved — so the worst
     /// case is a line that is dropped rather than a game that stops.
     func sayWhenQuiet(_ ids: [String], gap: Float = 0.3,
-                      breath: Float = 0.3, timeout: Float = 12) {
+                      breath: Float = 0.3, timeout: Float = 12,
+                      stillTrue: (@MainActor () -> Bool)? = nil) {
         guard !ids.isEmpty else { return }
         ticker.cancel(pendingJob)
         var waited: Float = 0
@@ -188,7 +205,7 @@ final class VoiceBank {
             quiet = self.isTalking ? 0 : quiet + dt
             guard quiet >= breath || waited > timeout else { return true }
             self.pendingJob = nil
-            self.say(ids, gap: gap)
+            self.say(ids, gap: gap, stillTrue: stillTrue)
             return false
         }
     }
@@ -217,11 +234,54 @@ final class VoiceBank {
         }
     }
 
-    func stop() {
+    // MARK: - Getting out of the way
+
+    /// **Forget everything that has not been said yet.** The sentence sounding
+    /// right now finishes; nothing follows it — not the rest of a chain, not a
+    /// line `sayWhenQuiet` is holding.
+    ///
+    /// This is the half `sayWhenQuiet` was missing. Its own rule is that Nina
+    /// gets *"the line she is speaking now, and then the most recent thing that
+    /// is still true"*, and that is exactly what it delivers for a single line
+    /// and quietly fails to deliver for a chain: a newer line replaces the one
+    /// **waiting**, and there is no way at all to replace the four **queued**.
+    /// So a chain that started when the cake came out of the oven ran to the
+    /// end whatever she did next, and the reaction to what she did next lined up
+    /// politely behind it.
+    ///
+    /// It never cuts her off mid-word, which is the rule that made
+    /// `sayWhenQuiet` exist in the first place (owner, 2026-08-16). It cuts the
+    /// queue, not the voice.
+    func dropQueued() {
         ticker.cancel(chainJob)
         chainJob = nil
         ticker.cancel(pendingJob)
         pendingJob = nil
+    }
+
+    /// **Say this next instead of whatever was going to come next.**
+    ///
+    /// The step-transition call. `sayWhenQuiet` is right when the new line is
+    /// *additional* — she tapped a toy, something else is worth saying — and
+    /// wrong when the new line is what the old queue was leading up to, because
+    /// then she hears the whole run-up to a thing she has already done and only
+    /// then hears about having done it.
+    ///
+    /// Use it wherever the room moves on: the queue is about where she was.
+    func sayInstead(_ ids: [String], gap: Float = 0.3,
+                    breath: Float = 0.3, timeout: Float = 12) {
+        dropQueued()
+        sayWhenQuiet(ids, gap: gap, breath: breath, timeout: timeout)
+    }
+
+    func sayInstead(_ id: String, breath: Float = 0.3, timeout: Float = 12) {
+        sayInstead([id], breath: breath, timeout: timeout)
+    }
+
+    /// Silence, now — the queue *and* the voice. What a room change uses, since
+    /// the outgoing room's lines are about a room that is no longer on screen.
+    func stop() {
+        dropQueued()
         player?.stop()
         player = nil
     }

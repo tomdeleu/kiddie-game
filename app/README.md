@@ -331,7 +331,7 @@ fast cost her the words.
 
 `VoiceBank.sayWhenQuiet` holds the line until Nina stops — including through the
 quarter-second gaps *inside* a chain, which a naive `isSpeaking` check reads as
-finished. Every step transition goes through it.
+finished. Every step transition waits like this.
 
 **Only one line can ever be waiting, and a newer one replaces it.** That is the
 whole reason it is not a queue: three quick drops would otherwise earn a
@@ -340,6 +340,56 @@ than the interruption it fixed. What she gets is the line playing now, and then
 the most recent thing that is still true. Nothing blocks on any of it — the step
 has already changed and the halo has already moved — so the worst case is a
 dropped line rather than a stalled game.
+
+#### …and nobody is talked *at*, either
+
+**A chain was the hole in that, and it was a twenty-four second hole**
+(owner, 2026-08-16: *"if you happen to immediately put the cake onto the shelf,
+the audio keeps on playing long after you finished that"*).
+
+"The line playing now" is one line when Nina is speaking one and **up to four
+when a chain is in flight**, and `sayWhenQuiet` only ever replaced the one
+*waiting*. The cake coming out of the oven queues Otto, the colour, at most one
+effect and *"zet hem op de plank!"* — measured against the real mp3s, **fourteen
+seconds** — and the plank becomes reachable on the same frame that chain starts.
+Carry the cake straight up, which takes about two seconds, and she heard all
+twelve remaining seconds of it, including an instruction to put the cake on the
+plank it was already standing on; only then did the twelve seconds about having
+put it there begin; and since the rebuild waits on `whenQuiet`, the round did
+not start again until roughly **twenty-four seconds after the last thing she
+did**.
+
+Two additions, both in `VoiceBank`, and neither ever cuts her off mid-word —
+they cut the queue, not the voice:
+
+- **`sayInstead`** — `sayWhenQuiet` plus `dropQueued()`, which throws away the
+  rest of an in-flight chain and any held line. **This is now what a step
+  transition calls**, in all three rooms; `sayWhenQuiet` is left for a remark
+  that is genuinely *additional* (an ingredient named, a sticker praised) and so
+  should join rather than replace.
+- **`stillTrue`** — an optional premise checked immediately before *every* link
+  of a chain, not once at the start. `cakeIsReady` passes `cake != nil`, so the
+  out-of-the-oven chain stops wherever it had got to the moment the cake is no
+  longer on the table, and the instruction at the end of it can never be said to
+  someone who has already obeyed it.
+
+Worst case is now the one sentence already sounding, which is the rule the whole
+mechanism exists to protect.
+
+**It was never only the kitchen.** The garden greets her with a three-line chain
+and she can have the bed sown before it finishes, and every `endRoom` in the
+game queued its handover line behind whatever the room was still saying — with a
+room teardown 2.3 s later that stops the voice outright, so the line was not
+delayed, it was **lost**. All three rooms now use `sayInstead` at their step
+transitions and at their door.
+
+> **Still open, and not fixed here:** that 2.3 s is a fixed timer
+> (`endRoom`'s 0.9 s to `onExit`, plus `GameScene.handle`'s 1.4 s) racing a
+> variable-length line. `nina.keuken.naarVersieren`'s three variants measure
+> 1.75 s, 1.99 s and **3.11 s**, so the longest is still cut mid-word even with
+> nothing queued in front of it. The fix is to hand over on the voice rather
+> than on a stopwatch, and it changes how rooms cross a doorway — a decision,
+> not a patch.
 
 **Sparkles are yellow stars.** They were `creamLight` icospheres, which at
 sparkle size is a grey dot — an unlit cream ball two millimetres across against
@@ -1177,8 +1227,9 @@ are exactly that pair.
 **`Game/Room.swift` and the room picker.** `GameScene` used to hold a
 `KitchenRoom`; it holds an `any Room` now, and `enter(_:handing:picked:)` is the
 one entry point — leave, detach, clear the targets, stop the voice, build, greet.
-Stopping the voice is not tidiness: `VoiceBank` holds at most one pending line,
-and Nina saying "put the tin in Otto" over a garden is worse than silence.
+Stopping the voice is not tidiness: `VoiceBank` holds a pending line and can
+have a chain of them in flight, and Nina saying "put the tin in Otto" over a
+garden is worse than silence.
 
 `leave()` is the part to be careful with. **A `Ticker` job a torn-down room
 still holds keeps animating a detached entity forever, and nothing on screen says
@@ -1538,7 +1589,7 @@ x = 0 because past that it starts crossing Otto's chimney.
 | `Intro/LoadingScreen.swift` | The title plate, and the floor it is held for. |
 | `Intro/IntroMovie.swift` | The opening film: a queue of shots, and two ways out of it. |
 | `Audio/SoundKit.swift` | All fifteen sound effects, synthesised at launch. |
-| `Audio/VoiceBank.swift` | Nina and Otto, driven by every bundled `script-*.json`. Also `sayWhenQuiet` and `whenQuiet`, which are why nobody gets talked over. |
+| `Audio/VoiceBank.swift` | Nina and Otto, driven by every bundled `script-*.json`. Also `sayWhenQuiet`, `sayInstead` and `whenQuiet`, which are why nobody gets talked over — or talked at about a step they have left. |
 | `Game/Room.swift` | What a room is, seen from outside: the protocol, the `RoomID` the developer panel switches between, the `RoomMode` flag, and the `RoomExit` a room ends with. |
 | `Game/CakeSpec.swift` | Eight ingredients → colour, effects, and what Nina says about them. |
 | `Game/CakeGeometry.swift` | The cake as numbers, so the kitchen and the decorating room build the same one. |
