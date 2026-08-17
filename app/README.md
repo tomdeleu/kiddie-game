@@ -1497,7 +1497,8 @@ Nothing structural. The three things it is short of are content and are cheap:
 
 ## Deliberate deviations from the design
 
-**There is ambient occlusion on the ten Blender props, and nowhere else.**
+**There is ambient occlusion on the twenty-two Blender props, and nowhere
+else.**
 `references/REFERENCES.md` bans it outright — the facets are supposed to do the
 shading and corners are supposed to stay light — and that holds everywhere a
 facet can answer the question. The modelled props are where it cannot: the berry's crown
@@ -1925,10 +1926,11 @@ control in the app.
 
 ### Props modelled in Blender
 
-**Twenty props are not built in code.** Ten in De Keuken: the flour sack, the
-toverbosbes, the crate, the toverklaver, the toverveertje, the maanstof pouch,
-the sink, the spoon, the cake and the scale. Ten in De Tuin: the molehill, the
-seed bed, the fence, and seven of the eight ripe plants. All are USDZ files in
+**Twenty-two props are not built in code.** Ten in De Keuken: the flour sack,
+the toverbosbes, the crate, the toverklaver, the toverveertje, the maanstof
+pouch, the sink, the spoon, the cake and the scale. Twelve in De Tuin: the
+molehill, the seed bed, the fence, seven of the eight ripe plants, and — added
+2026-08-17 — the tree and the harvest basket. All are USDZ files in
 `Resources/Models/`, modelled by the scripts in
 [`models/`](../models/README.md) and loaded by `ModelLibrary`.
 
@@ -2018,7 +2020,27 @@ one of the five holes in the bed grows a plant built the old way — visible if
 you look for it, because its leaves alternate two greens where the other seven
 are one.
 
-All twenty carry the game's only ambient occlusion — see the deviations above.
+**The tree and the basket came a day later, one at a time**, and both are the
+same argument as the clover's fold: a shape whose reading depends on a crease
+the facets cannot answer.
+
+- **The tree**: fourteen lobes in **one mesh**, so the seam where two of them
+  push into each other can be measured and shaded. The code has eight separate
+  spheres, which cannot be measured against each other at all, and stands in for
+  the crease by painting alternate lobes `sage` and `mint` — a tint doing a
+  shape's job, and at 139 mm across it reads as a bag of two-coloured balls. The
+  modelled canopy is one colour, which is what the plate draws. Its envelope —
+  225 mm tall, 128 mm of trunk, canopy from 105 mm, 139 mm across, all of it
+  measured against the fence posts and the bench — is asserted by the build
+  script rather than trusted.
+- **The basket**: a **rose lining**, which `FacetedMesh.bowl` cannot have
+  because it is one mesh with one tone; a **rim band with an underside** where
+  the code lays a flat `annulus` on top; and one swept handle instead of seven
+  overlapping boxes, spanning the diagonal the fixed camera actually looks
+  across rather than the world X it sees end-on.
+
+All twenty-two carry the game's only ambient occlusion — see the deviations
+above.
 
 What the route costs is a round trip through a file, and what it buys is shapes
 that have to be built vertex by vertex. `models/README.md` has the rules a

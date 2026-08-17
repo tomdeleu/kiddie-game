@@ -9,12 +9,13 @@ Same rule as [`../props/README.md`](../props/README.md) and
 [`../ingredients/README.md`](../ingredients/README.md): **generate images for
 reference, model the geometry.** Nothing here ships.
 
-**Ten of these plates now feed Blender rather than Swift.** `molehill.png`,
+**Twelve of these plates now feed Blender rather than Swift.** `molehill.png`,
 `garden-bed.png`, `garden-fence.png` and seven of the eight `plant-*.png` were
-rebuilt as models on 2026-08-16 — [`models/`](../../models/README.md) has what
-each one asked for that `FacetedMesh` could not say, and the three things the
-garden kept needing that the kitchen did not. `plant-bosbes.png` is the one ripe
-plant still built in code.
+rebuilt as models on 2026-08-16, and `garden-tree.png` and
+`harvest-basket.png` on 2026-08-17 — [`models/`](../../models/README.md) has
+what each one asked for that `FacetedMesh` could not say, and the three things
+the garden kept needing that the kitchen did not. `plant-bosbes.png` is the one
+ripe plant still built in code.
 
 All `flux_2` / `pro` / `1k`, one credit each, generated 2026-08-16. Every prompt
 is the shared style prompt from [`../REFERENCES.md`](../REFERENCES.md) §3 —
