@@ -2548,6 +2548,21 @@ is 80 flat facets and a six-station lathe is a barrel with six visible bands, so
 nothing here bends the no-smooth-surfaces rule. The plate needed a prompt clause
 saying exactly that or it picked a side at random — `references/feest/README.md`.
 
+**The Blender pass was redone against the lineup on 2026-08-18.** The first
+modelled version still preserved too much of the procedural placeholder: a head
+narrower than the body, a cream panel wrapping almost the whole visible torso,
+peg feet, generic ball paws, and species distinguished mainly by ears. The
+shipping eleven now have a 52 mm head against the 56 mm barrel, bounded oval
+bellies only on the furry animals, broad forward feet, inset paw pads, facial
+marks on the cat and dog, a wide low frog skull, and the bird's broad two-part
+bill. The outer 62 mm footprint and every animation pivot are unchanged.
+
+The DJ wears a twelfth **asset**, not a twelfth character: one separately
+modelled headset with a bent faceted arch, deep mint cups, dark cushions and
+pale outer panels. It is parented to the dealt friend's head pivot, so it nods
+with any of the eleven species. Both the friends and the headset use Het Feest's
+30 mm, ten-level facet AO ramp; there is still no texture or runtime AO.
+
 **The dance.** Six styles, one per guest, and `DanceStyle.allCases` is exactly
 `guestCount` long so every party has all six on screen with no two alike:
 *zwaaien* rocks side to side, *pompen* punches one arm with the other down,

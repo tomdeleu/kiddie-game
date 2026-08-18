@@ -471,9 +471,27 @@ def build_guests():
 
     soort, coat, accent = DJ_TODAY
     parts = beertje.build(soort)
-    repaint(parts, {"GastCoat": coat, "GastAccent": accent}, suffix=soort)
+    repaint(parts, {"GastCoat": coat, "GastAccent": accent,
+                    "GastGold": feest.BUTTER_YELLOW,
+                    "GastRose": feest.ROSE}, suffix=soort)
     made += instance(parts, "DJ-%s" % soort, DJ_SPOT, turn=0.10)
     for ob in parts:
+        bpy.data.objects.remove(ob, do_unlink=True)
+
+    # The DJ is one of the eleven friends with one separate modelled accessory,
+    # parented to the head pivot in the app. Stage it at that same pivot here so
+    # the room render does not silently review a guest without his headphones.
+    headphones = load_prop("dj-headphones")
+    phone_parts, _ = headphones.build()
+    repaint(phone_parts, {"DJMint": feest.MINT_LIGHT,
+                          "DJDark": feest.WOOD_BROWN,
+                          "DJCream": feest.CREAM_LIGHT,
+                          "DJRose": feest.ROSE}, suffix="dj")
+    made += instance(
+        phone_parts, "DJ-Koptelefoon",
+        (DJ_SPOT[0], DJ_SPOT[1] + beertje.BODY_BASE + beertje.HEAD_Y, DJ_SPOT[2]),
+        turn=0.10)
+    for ob in phone_parts:
         bpy.data.objects.remove(ob, do_unlink=True)
     return made
 

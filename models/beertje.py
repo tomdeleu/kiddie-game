@@ -9,19 +9,21 @@ References: `references/feest/beertje-solo.png` for the construction,
 `GAMEPLAY.md` §4's whole cast, because the room deals six guests and a DJ out of
 eleven friends and a friend with no head is not an option.
 
-## What a model buys that `GuestCharacter` could not say
+## What the rebuild takes from the plate
 
-The code version is already built from `beertjes.png` and its proportions are
-what the owner signed off on in the room, so they are transcribed here to the
-millimetre rather than re-derived. **Note in passing that they are not the
-plate's**: `references/feest/README.md` records the head as two fifths of the
-height, and the built guest's is nearer three fifths — the first version of the
-envelope check in `main` asserted the plate's ratio and failed on the very first
-friend. The rig is the thing a replacement has to match, so the rig wins, and
-the discrepancy is recorded rather than quietly corrected in either direction.
+The first modelled pass preserved the procedural guest too literally. In the
+room it still read as a generic barrel with a cluster of face parts: 46 mm head
+against a 56 mm body, a cream panel wrapping almost the whole visible torso,
+radial peg feet, and the same round skull under every species.
 
-So the case for modelling is not the silhouette. It is **the joins**, and there
-are four of them on every friend:
+`beertjes.png` is the source of truth now, while the animation pivots and 62 mm
+room footprint stay fixed. The head is 52 mm and nearly the body's width; the
+belly is a bounded oval on the furry animals only; feet project forward; paws
+have inset pads; the frog is wide and low; the bird is an upright egg with a
+broad two-part bill; and the cat and dog carry the markings the lineup actually
+uses to identify them.
+
+Modelling also buys **the joins**, and there are four of them on every friend:
 
   * **The belly is a patch, not a ball.** `GuestCharacter` sticks a squashed
     icosphere onto the front of the barrel; on the plate the pale front is a
@@ -54,10 +56,11 @@ placement as an **object transform** rather than baked into their vertices —
   * `…Arm0…` / `…Arm1…` are the arms, posed once at build time;
   * `…Been0…` / `…Been1…` are the legs, which swing from the hip.
 
-**A name's first word is its colour.** `Coat…`, `Accent…`, `Cream…` and `Dark…`
-are the four tints, so `ModelLibrary.load` paints eleven different friends from
-one four-entry table and no species needs a line of Swift. `Friend.colour` and
-`Friend.accent` stay the only place a friend's colours are written down.
+**A name's first word is its colour.** `Coat…`, `Accent…`, `Cream…`, `Dark…`,
+`Gold…` and `Rose…` are the six tints, so `ModelLibrary.load` paints eleven
+different friends without species-specific Swift geometry. `Friend.colour` and
+`Friend.accent` stay the only place each friend's coat colours are written down;
+gold and rose are the bird's shared beak, crest and lower bill.
 
 ## Eleven files rather than one with eleven heads
 
@@ -113,7 +116,10 @@ BODY_WIDEST = 0.028
 #: Head centre, in body space. Chosen so the head's underside sits ~4 mm into the
 #: torso's top: enough to read as "no neck", far too little to fuse.
 HEAD_Y = 0.064
-HEAD_RADIUS = 0.023
+# The lineup plate makes the head almost as wide as the 56 mm body. 23 mm left
+# a conspicuous waist at the neck and made the face a cluster of tiny parts;
+# 26 mm restores the teddy-bear silhouette without changing the footprint.
+HEAD_RADIUS = 0.026
 SHOULDER_Y = 0.038      # in body space, just under the head
 ARM_LENGTH = 0.024
 
@@ -137,6 +143,8 @@ def build(soort):
     accent = feest.material("GastAccent", feest.BLUSH_PINK_DEEP)
     cream = feest.material("GastCream", feest.CREAM_LIGHT)
     dark = feest.material("GastDark", feest.WOOD_BROWN)
+    gold = feest.material("GastGold", feest.BUTTER_YELLOW)
+    rose = feest.material("GastRose", feest.ROSE)
 
     parts = []
     w = BODY_WIDEST
@@ -169,10 +177,14 @@ def build(soort):
     parts.append(feest.lathe("CoatRomp", coat, torso, 14,
                              at=(0.0, 0.0, BODY_BASE)))
 
-    # **The pale belly, and it is not decoration.** Every animal on the plate has
-    # one and it covers most of the front; without it a guest is one colour from
-    # the chin down and reads as a bollard. Pressed into the barrel so only its
-    # front stands out — the seam that leaves is what the bake measures.
+    # **The pale belly, and it is not decoration.** The three furry animals on
+    # `beertjes.png` wear one; the frog and bird do not. The former panel wrapped
+    # 136° around the torso and ran from its foot to its neck, so from the game
+    # camera it replaced the body instead of sitting on it. This one is an oval:
+    # 42° either side at its widest, closed above the hips and below the chin.
+    #
+    # Pressed into the barrel so only its front stands out — the seam that leaves
+    # is what the bake measures.
     # **A panel cut from the body's own surface**, over the front 150° and the
     # middle of the torso's height. `feest.patch` has the argument for why a
     # squashed ball cannot do this job at any setting.
@@ -180,21 +192,31 @@ def build(soort):
     # The front of the character is the game's +Z, which is Blender −Y — so the
     # sector is centred on −90°, not on 0.
     front = -math.pi / 2
-    # Half-angle per station: a point at the chin, widest across the middle, a
-    # point again at the bottom. `feest.patch` records why a constant angle is
-    # wrong — it makes a band with a hard horizontal edge rather than a panel.
-    spread = [0.00, 0.42, 0.80, 1.00, 0.94, 0.58, 0.00]
-    widest = math.radians(68)
-    parts.append(feest.patch(
-        "CreamBuik", cream,
-        [(r, z + BODY_BASE, widest * spread[i]) for i, (r, z) in enumerate(torso)],
-        front))
+    if soort not in ("kikker", "vogel"):
+        widest = math.radians(42)
+        belly = [
+            (w * 0.74, BODY_BASE + 0.006, widest * 0.16),
+            (w * 0.86, BODY_BASE + 0.010, widest * 0.48),
+            (w * 0.97, BODY_BASE + 0.017, widest * 0.82),
+            (w * 1.00, BODY_BASE + 0.024, widest),
+            (w * 0.95, BODY_BASE + 0.032, widest * 0.78),
+            (w * 0.82, BODY_BASE + 0.039, widest * 0.42),
+            (w * 0.70, BODY_BASE + 0.042, widest * 0.14),
+        ]
+        parts.append(feest.patch("CreamBuik", cream, belly, front))
 
     # ------------------------------------------------------------------ head
     # Big, round, and sitting straight on the shoulders. It carries the whole
     # face with it, which is why every part of it has `Kop` in its name.
+    # The five heads are not five spheres. The common furry head is a slightly
+    # squashed ball; the frog is broad and low, and the bird is the one upright
+    # egg in the lineup. The old shared 0.94 vertical scale erased those reads.
+    skull_scale = {
+        "kikker": (1.10, 0.94, 0.76),
+        "vogel": (0.96, 0.93, 1.00),
+    }.get(soort, (1.0, 0.95, 0.88))
     skull = feest.blob("CoatKop", coat, HEAD_RADIUS, subdivisions=2,
-                       scale=(1.0, 0.95, 0.94))
+                       scale=skull_scale)
     feest.animated(skull, g(0, BODY_BASE + HEAD_Y, 0))
     parts.append(skull)
 
@@ -204,10 +226,11 @@ def build(soort):
         # The frog's eyes stand on top of its head instead, which is the whole
         # of what makes a frog a frog at this size.
         for i, dx in enumerate([-0.0098, 0.0098]):
-            head.append(feest.blob("DarkKopOog%d" % i, dark, 0.0030,
-                                   subdivisions=2, at=g(dx, 0.005, 0.0232)))
+            head.append(feest.blob(
+                "DarkKopOog%d" % i, dark, 0.0027, subdivisions=2,
+                at=g(dx, 0.0045, HEAD_RADIUS * skull_scale[1] + 0.0012)))
             # (reference-sized, like everything `face` builds)
-    head += face(soort, coat, accent, cream, dark)
+    head += face(soort, coat, accent, cream, dark, gold, rose)
 
     # **Every number in `face` is tuned at a 26 mm head**, which is the radius
     # the first pass used. Rather than convert forty literals by hand — and get
@@ -236,20 +259,26 @@ def build(soort):
         # Blender +Y, i.e. the game's −Z: both arms lay backwards into the
         # character's own back, which is what the first render showed.
         arm = feest.lathe("CoatArm%d" % i, coat, [
-            (0.0064, 0.0), (0.0074, ARM_LENGTH * 0.22),
-            (0.0070, ARM_LENGTH * 0.62), (0.0076, ARM_LENGTH * 0.88),
+            (0.0060, 0.0), (0.0070, ARM_LENGTH * 0.22),
+            (0.0067, ARM_LENGTH * 0.62), (0.0072, ARM_LENGTH * 0.88),
             (0.0058, ARM_LENGTH),
         ], 10)
         feest.animated(arm, g(dx, BODY_BASE + SHOULDER_Y, 0))
         parts.append(arm)
 
-        # A paw on the end, which is what makes a raised arm read as a hand in
-        # the air rather than as a stick. Sunk into the arm so the two are a
-        # join rather than a ball balanced on a tube.
-        paw = feest.blob("AccentArm%dHand" % i, accent, 0.0072, subdivisions=1,
-                         at=g(0, ARM_LENGTH - 0.0016, 0))
+        # A coat-coloured paw with a small accent pad, as on the solo bear. The
+        # old whole-accent ball looked like a pom-pom and lost the hand/arm join.
+        paw = feest.blob(
+            "CoatArm%dHand" % i, coat, 0.0078, subdivisions=1,
+            scale=(1.06, 0.92, 0.86), at=g(0, ARM_LENGTH - 0.0018, 0))
         feest.animated(paw, g(dx, BODY_BASE + SHOULDER_Y, 0))
         parts.append(paw)
+        palm = feest.blob(
+            "AccentArm%dPalm" % i, accent, 0.0046, subdivisions=1,
+            scale=(1.0, 0.20, 0.82),
+            at=g(0, ARM_LENGTH - 0.0010, 0.0065))
+        feest.animated(palm, g(dx, BODY_BASE + SHOULDER_Y, 0))
+        parts.append(palm)
 
     # ------------------------------------------------------------------ legs
     # Stubs, and the only parts that move independently. **The origin is the
@@ -257,8 +286,8 @@ def build(soort):
     # position, and a leg whose origin is on the floor swings about its toes.
     for i, dx in enumerate([-0.0140, 0.0140]):
         leg = feest.lathe("CoatBeen%d" % i, coat, [
-            (0.0086, -LEG_HEIGHT), (0.0096, -LEG_HEIGHT + 0.004),
-            (0.0090, -0.002), (0.0074, 0.0),
+            (0.0072, -LEG_HEIGHT), (0.0080, -LEG_HEIGHT + 0.004),
+            (0.0078, -0.002), (0.0068, 0.0),
         ], 10)
         # Pushed 3 mm forward of the body's axis. Directly under the barrel the
         # feet sit inside the belly's own bulge and are invisible from a camera
@@ -266,10 +295,22 @@ def build(soort):
         feest.animated(leg, g(dx, LEG_HEIGHT, 0.008))
         parts.append(leg)
 
+        # A real foot in front of the leg. In the plate the legs are short
+        # columns ending in broad horizontal feet; the former radial lathe ended
+        # in another column and made every friend stand on two pegs.
+        foot_material = gold if soort == "vogel" else coat
+        foot_prefix = "Gold" if soort == "vogel" else "Coat"
+        foot = feest.blob(
+            "%sBeen%dVoet" % (foot_prefix, i), foot_material, 0.0100,
+            subdivisions=1, scale=(1.10, 1.18, 0.50),
+            at=g(0, -LEG_HEIGHT + 0.0050, 0.006))
+        feest.animated(foot, g(dx, LEG_HEIGHT, 0.008))
+        parts.append(foot)
+
     return parts
 
 
-def face(soort, coat, accent, cream, dark):
+def face(soort, coat, accent, cream, dark, gold, rose):
     """**Ears and a muzzle, and nothing else.**
 
     Two to five primitives each, all hung on the same round head at the same
@@ -280,23 +321,55 @@ def face(soort, coat, accent, cream, dark):
     r = FACE_REFERENCE_RADIUS
     out = []
 
-    def muzzle(width, nose=True):
+    def mark(name, material, width, height, at, angle=0.0):
+        """One thin solid mark laid over the face.
+
+        Eyes can be little balls; brows, whiskers and mouths are lines in the
+        plate. Giving those lines 0.8 mm of thickness keeps them real geometry
+        without turning them into black rods at room scale.
+        """
+        out.append(feest.boxes(
+            name, material,
+            [((-width / 2, width / 2), (-0.00045, 0.00045),
+              (-height / 2, height / 2))],
+            at=g(*at), rot=(0, angle, 0)))
+
+    def brows():
+        for i, dx in enumerate([-0.010, 0.010]):
+            mark("DarkKopWenkbrauw%d" % i, dark, 0.0070, 0.0010,
+                 (dx, 0.0125, r * 0.945), -0.15 if dx < 0 else 0.15)
+
+    def muzzle(width, nose=True, mouth=True):
         # `width` is measured off `beertje-solo.png`, where the snout is about a
         # third of the head's width and sits low on the face. At the first
         # setting it was 23% and read as a chip of white rather than a snout.
         """The pale rounded snout every animal on the plate has, plus its dark
         nose. It does as much work as the ears: it breaks the head's silhouette
         and it is where the face *is*."""
+        # Place the muzzle *on* the skull rather than mostly inside it. The first
+        # rebuilt render left only three cream tips showing because 68% of the
+        # radius plus the muzzle depth did not clear the head's 95% front.
+        centre_z = r * 0.96
         out.append(feest.blob("CreamKopSnuit", cream, width, subdivisions=2,
-                              scale=(1.20, 0.78, 0.86),
-                              at=g(0, -0.009, r * 0.66)))
+                              scale=(1.20, 0.55, 0.86),
+                              at=g(0, -0.0085, centre_z)))
         if nose:
-            # A quarter of the snout's width, sat high on it — in the plate the
+            # A third of the snout's width, sat high on it — in the plate the
             # nose is a small dark cap near the top of the muzzle, not a ball
             # filling it.
             out.append(feest.blob("DarkKopNeus", dark, width * 0.26,
                                   subdivisions=2, scale=(1.15, 0.85, 0.9),
-                                  at=g(0, 0.0005, r * 0.66 + width * 0.74)))
+                                  at=g(0, 0.0005, centre_z + width * 0.66)))
+        if mouth:
+            front_z = centre_z + width * 0.76
+            # A short stem and two smile strokes. Three boxes are cheaper and
+            # more legible here than a curve with a sub-millimetre bevel.
+            mark("DarkKopMondSteel", dark, 0.0010, 0.0040,
+                 (0, -0.0105, front_z))
+            mark("DarkKopMond0", dark, 0.0055, 0.0009,
+                 (-0.0023, -0.0132, front_z), -0.28)
+            mark("DarkKopMond1", dark, 0.0055, 0.0009,
+                 (0.0023, -0.0132, front_z), 0.28)
 
     def round_ear(dx, i, radius, y, flatten=1.0):
         """A round ear with a paler inner disc — the bear, the cat and the mouse
@@ -314,12 +387,14 @@ def face(soort, coat, accent, cream, dark):
 
     if soort == "beer":
         pair(0.017, lambda dx, i: round_ear(dx, i, 0.0088, 0.020))
-        muzzle(0.0150)
+        brows()
+        muzzle(0.0090)
 
     elif soort == "muis":
         # Big flat round ears, which is the whole mouse.
         pair(0.021, lambda dx, i: round_ear(dx, i, 0.0125, 0.014, flatten=0.30))
-        muzzle(0.0122)
+        brows()
+        muzzle(0.0076)
 
     elif soort == "kat":
         # Pointed ears: a four-sided cone is a triangle from every angle this
@@ -327,17 +402,36 @@ def face(soort, coat, accent, cream, dark):
         pair(0.014, lambda dx, i: out.append(feest.lathe(
             "CoatKopOor%d" % i, coat, [(0.0078, 0.0), (0.0, 0.013)], 4,
             at=g(dx, 0.018, 0), rot=(0, 0, math.pi / 4))))
-        muzzle(0.0132)
+        brows()
+        muzzle(0.0080)
+        # Three forehead stripes and six whiskers are the entire cat read in the
+        # supplied lineup. Ears and a muzzle alone left a pink bear with points.
+        for i, dx in enumerate([-0.006, 0.0, 0.006]):
+            mark("DarkKopStreep%d" % i, dark, 0.0020, 0.0070,
+                 (dx, 0.0155 - abs(dx) * 0.25, r * 0.935),
+                 -dx * 18.0)
+        for side in (-1, 1):
+            for row in range(3):
+                mark("DarkKopSnor%d%d" % (side, row), dark, 0.0110, 0.00075,
+                     (side * 0.0160, -0.0055 - row * 0.0030, r * 0.955),
+                     side * (row - 1) * 0.11)
 
     elif soort == "hond":
         # Floppy ears down the sides — the only pair that hangs rather than
         # stands, and the reason a dog is not a bear.
-        pair(0.023, lambda dx, i: out.append(feest.lathe(
-            "AccentKopOor%d" % i, accent, [
-                (0.0060, 0.0), (0.0082, -0.006), (0.0074, -0.016),
-                (0.0030, -0.021)], 6,
-            at=g(dx, 0.010, 0), rot=(0, -0.20 if dx > 0 else 0.20, 0))))
-        muzzle(0.0157)
+        for i, dx in enumerate([-0.026, 0.026]):
+            ear = feest.blob(
+                "CoatKopOor%d" % i, coat, 0.0110, subdivisions=2,
+                scale=(0.70, 0.35, 1.30), at=g(dx, 0.003, 0.004))
+            ear.rotation_euler[1] = -0.16 if dx > 0 else 0.16
+            out.append(ear)
+        # The white blaze is the dog plate's strongest mark. A thin flattened
+        # ellipsoid sits on the skull and disappears cleanly under the muzzle.
+        out.append(feest.blob(
+            "CreamKopBles", cream, 0.0100, subdivisions=2,
+            scale=(0.62, 0.18, 1.35), at=g(0, 0.008, r * 0.93)))
+        brows()
+        muzzle(0.0097)
 
     elif soort == "kikker":
         # Eyes on bulges on top, which is the one animal whose eyes are not in
@@ -348,27 +442,28 @@ def face(soort, coat, accent, cream, dark):
         pair(0.013, lambda dx, i: out.append(feest.blob(
             "DarkKopPupil%d" % i, dark, 0.0032, subdivisions=1,
             at=g(dx, 0.022, 0.011))))
-        # A wide flat mouth across the whole face.
-        out.append(feest.boxes("AccentKopMond", accent, [
-            ((-0.014, 0.014), (-0.0015, 0.0015), (-0.002, 0.002))],
-            at=g(0, -0.008, r * 0.86)))
+        # Nostrils and a wide, thin mouth — dark marks rather than a pale bar.
+        for i, dx in enumerate([-0.004, 0.004]):
+            out.append(feest.blob("DarkKopNeus%d" % i, dark, 0.0013,
+                                  subdivisions=1, at=g(dx, -0.001, r * 0.955)))
+        mark("DarkKopMond", dark, 0.0180, 0.0010,
+             (0, -0.0100, r * 0.955))
 
     elif soort == "vogel":
-        # A beak on the front and a crest of three plates, tallest in the
-        # middle. The lathe is turned so its point leaves the face.
-        # **+π/2 about X, not −π/2** — `GuestCharacter` records the same trap
-        # from the other side of the axis swap. A lathe stands on Blender +Z,
-        # and only a positive quarter-turn about X sends +Z to Blender −Y, which
-        # is the game's +Z and therefore out of the face. The negative turn
-        # buries the beak in the skull, where it is invisible rather than
-        # wrong-looking, and that is the harder mistake to spot.
-        out.append(feest.lathe("AccentKopSnavel", accent, [
-            (0.0075, 0.0), (0.0055, 0.006), (0.0, 0.012)], 6,
-            at=g(0, -0.002, r * 0.80), rot=(math.pi / 2, 0, 0)))
-        for i, dx in enumerate([-0.006, 0.0, 0.006]):
-            out.append(feest.boxes("AccentKopKuif%d" % i, accent, [
-                ((-0.0018, 0.0018), (-0.0018, 0.0018),
-                 (0.0, 0.013 if i == 1 else 0.009))], at=g(dx, 0.024, -0.002)))
+        # A broad two-part beak, not the old front-on cone that read as a tiny
+        # yellow diamond. The upper bill is a low faceted ellipsoid and the rose
+        # lower bill peeks out beneath it, exactly as in `beertjes.png`.
+        out.append(feest.blob(
+            "GoldKopSnavel", gold, 0.0092, subdivisions=1,
+            scale=(1.45, 0.82, 0.62), at=g(0, -0.005, r * 0.82)))
+        out.append(feest.blob(
+            "RoseKopOndSnavel", rose, 0.0055, subdivisions=1,
+            scale=(1.15, 0.72, 0.48), at=g(0, -0.013, r * 0.86)))
+        # One simple crest: the plate has one gold tuft, not three blue aerials.
+        out.append(feest.lathe(
+            "GoldKopKuif", gold, [(0.0040, 0.0), (0.0030, 0.012),
+                                  (0.0, 0.015)], 5,
+            at=g(0, r * 0.92, -0.002)))
 
     elif soort == "schaap":
         # A fleece: five small spheres crowding the crown. The one head that is
@@ -383,7 +478,8 @@ def face(soort, coat, accent, cream, dark):
         pair(0.024, lambda dx, i: out.append(feest.blob(
             "CoatKopOor%d" % i, coat, 0.0062, subdivisions=1,
             scale=(1.5, 0.7, 0.6), at=g(dx, 0.004, 0))))
-        muzzle(0.0140)
+        brows()
+        muzzle(0.0088)
 
     elif soort == "mol":
         # A long snout and almost no ears, which is a mole seen from a metre
@@ -408,7 +504,8 @@ def face(soort, coat, accent, cream, dark):
                 (0.0042, 0.0), (0.0, 0.014)], 4,
                 at=g(t * 0.020, 0.020, -0.006),
                 rot=(-0.55 + t * 0.4, -t * 0.8, 0)))
-        muzzle(0.0122)
+        brows()
+        muzzle(0.0078)
 
     elif soort == "vlinder":
         # Two flat petal wings behind the head, and antennae with knobs. They
@@ -422,7 +519,7 @@ def face(soort, coat, accent, cream, dark):
                 at=g(dx, 0.019, 0), rot=(0, 0.25 if dx > 0 else -0.25, 0))),
             out.append(feest.blob("AccentKopSprietKnop%d" % i, accent, 0.0026,
                                   subdivisions=1, at=g(dx, 0.031, 0)))))
-        muzzle(0.0114, nose=False)
+        muzzle(0.0072, nose=False)
 
     elif soort == "slak":
         # A shell on the back, and two eye-stalks. The shell is a lathe with a
@@ -440,7 +537,7 @@ def face(soort, coat, accent, cream, dark):
                 at=g(dx, 0.018, 0.005), rot=(0, 0.22 if dx > 0 else -0.22, 0))),
             out.append(feest.blob("DarkKopStok%d" % i, dark, 0.0028,
                                   subdivisions=1, at=g(dx, 0.032, 0.005)))))
-        muzzle(0.0112, nose=False)
+        muzzle(0.0070, nose=False)
 
     else:
         feest.check(False, "no face for %r" % soort)
@@ -453,21 +550,16 @@ def main():
     wanted = [a for a in args if a in SOORTEN] or SOORTEN
 
     for soort in wanted:
-        feest.fresh("Beertje", "Coat", "Accent", "Cream", "Dark", "Gast")
+        feest.fresh("Beertje", "Coat", "Accent", "Cream", "Dark", "Gold",
+                    "Rose", "Gast")
         parts = build(soort)
 
-        # **The envelope `GuestCharacter` already stands in**, asserted rather
-        # than described — `garden-tree.py`'s rule, and it earned itself here
-        # immediately. The first version of this check asserted the plate's
-        # "head is two fifths of the height" instead and failed at 0.71, because
-        # that ratio is a description of `beertjes.png` and not of the rig: the
-        # built guest's head is nearer three fifths of it.
+        # **The room envelope, asserted rather than described.** The plate now
+        # wins inside it — 52 mm head, broader feet and species-specific skulls —
+        # while the 62 mm footprint and ~102 mm standing height stay fixed. A
+        # friend growing outside that box would break `FeestLayout`'s screen
+        # spacing and put the DJ into the plaster.
         #
-        # **The rig wins.** These proportions are what the owner signed off on
-        # in the room on 2026-08-17, and a model whose job is to replace a code
-        # prop has to stand exactly where the code prop stood — a friend who
-        # grew 10 mm would break the screen-separation arithmetic in
-        # `FeestLayout.assertSpacing`, which is measured against her head.
         # `matrix_world` is cached, and the head, the arms and the legs were
         # placed with `feest.animated` — setting `.location` does not refresh it.
         # Measured without this the whole character is 48 mm tall, which is the
@@ -516,7 +608,7 @@ def main():
         # invisible on them.
         shade = [ob for ob in parts if ob.name in
                  ("CoatRomp", "CreamBuik", "CoatKop", "CreamKopSnuit")
-                 or ob.name.startswith(("CoatArm", "CoatBeen"))]
+                 or ob.name.startswith(("CoatArm", "CoatBeen", "GoldBeen"))]
         objects = feest.finish("Beertje", parts, shade=shade)
         shaded = sum(1 for ob in objects
                      if ob.type == 'MESH' and "Shade" in ob.name)

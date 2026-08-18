@@ -12,6 +12,7 @@ This folder is for the shapes that vocabulary cannot reach.
 |---|---|
 | `lowpoly.py` | The shared rules: flat shading, palette colours, ring/bridge/tube/box builders, the AO bake, and the export. A prop script is then only its shape. |
 | `feest-scene.py`, `feest-ao.py` | **The odd pair out: they build no prop.** The first stands the *whole disco* up at the game's own coordinates — shell, tiles, props, guests, camera and the five lights — and the second measures ambient occlusion against it. They are the 2026-08-18 AO investigation; its findings and its verdict are in [`app/AMBIENT-OCCLUSION.md`](../app/AMBIENT-OCCLUSION.md). Neither exports anything. |
+| `beertje.py`, `dj-headphones.py` | Het Feest's cast: eleven complete species sharing one teddy-bear construction, plus the separate baked headset worn by whichever friend is DJ today. Both preserve `GuestCharacter`'s head/arm/leg pivots. |
 | `garden.py` | **De Tuin's own vocabulary**, on top of `lowpoly.py`: a pointed lathe, a folded leaf, a swept curve, an arbitrary-section column, a chamfered octagon, and the plant anatomy the seven plants share. Nothing outside the garden imports it. |
 | `flour-sack.py`, `bosbes.py`, `crate.py`, `klaver.py`, `sink.py`, `cake.py`, `scale.py`, `veertje.py`, `maanstof.py`, `spoon.py` | De Keuken's ten. Run one to rebuild and re-export it. |
 | `molehill.py`, `garden-bed.py`, `garden-fence.py`, `plant-*.py` × 7 | De Tuin's first ten. |
@@ -579,9 +580,10 @@ against side, belly over feet, one speaker section over another. Those gaps are
 - **0.80 strength**, quantised to the nearest `0.88ⁿ` palette step;
 - **ten Shade levels**, putting fully enclosed facets at `0.88¹⁰ = 0.279`.
 
-The eleven `beertje-*.usdz` assets, the booth, speaker, mirror ball, light bar
-and stage lamp were rebuilt through that path. The shared cake uses the same
-arguments directly, so the kitchen and decorating room see the same cake. The
+The eleven `beertje-*.usdz` assets, the DJ headset, the booth, speaker, mirror
+ball, light bar and stage lamp were rebuilt through that path. The shared cake
+uses the same arguments directly, so the kitchen and decorating room see the
+same cake. The
 dance tile remains the honest zero: it has no self-occlusion, and its existing
 Shade1/2 names are an authored fallback rather than an AO measurement. The
 shipping tile top is a UV plane with the smooth generated rectangular gradient

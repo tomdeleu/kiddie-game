@@ -183,6 +183,14 @@ describes the plate and the mesh, which is the sign it is the right sentence.
   low-poly sphere, never a smooth one"* — or "chubby and round" and "no smooth
   curved surfaces" fight each other and one of them wins at random.
 
+  **The 2026-08-18 Blender rebuild reads this plate literally.** Head width is
+  now 52 mm against the 56 mm barrel; the cream front is a bounded oval rather
+  than most of the visible torso; paws have inset pads; feet project forward;
+  the frog and bird no longer inherit the furry belly or skull; and the cat,
+  dog and bird carry the stripes, blaze and two-part bill that identify them in
+  this lineup. The 62 mm room footprint and the existing animation pivots did
+  not move.
+
 - **`beertjes-dansen.png`** — asked for six bears each in a different dance pose
   with their arms in the air, and **it is the weakest plate in the set.** The
   poses came back broadly the same (arms out, not up), it lost an animal, and it
@@ -199,6 +207,10 @@ describes the plate and the mesh, which is the sign it is the right sentence.
 - **`beertje-solo.png`** — one bear, large, arms up, for reading the construction
   off. The reference every measurement in `GuestCharacter`'s proportions block
   came from.
+
+- **`dj.png`** — the headset, not a twelfth body. The room's DJ is still one of
+  the eleven friends; `models/dj-headphones.py` contributes the bent arch, deep
+  cups, dark cushions and pale outer panels around that friend's head pivot.
 
 ## Two findings that generalise
 

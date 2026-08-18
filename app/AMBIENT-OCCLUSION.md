@@ -11,13 +11,13 @@ an opinion. Everything in it can be rebuilt from
 
 **Implemented 2026-08-18:** the unconditional first step in §6 now ships in the
 model assets: 30 mm per-prop AO, 0.80 strength, quantised to ten `ShadeN`
-levels. All eleven friends, the booth, speakers, mirror ball, light bar, stage
-lamp and the shared cake were rebuilt. The 0.55/six and 0.65/eight in-app passes
-were both too washed out in the simulator, so the deeper ramp is paired with a
-lower Het Feest emission peak (2.6 → 1.1). Its floor contact shadows also
-compensate for the helper applying opacity twice, restoring the intended 0.22
-final opacity. The shell texture remains the conditional second step and was
-not added.
+levels. All eleven friends, the DJ headset, booth, speakers, mirror ball, light
+bar, stage lamp and the shared cake were rebuilt. The 0.55/six and 0.65/eight
+in-app passes were both too washed out in the simulator, so the deeper ramp is
+paired with a lower Het Feest emission peak (2.6 → 1.1). Its floor contact
+shadows also compensate for the helper applying opacity twice, restoring the
+intended 0.22 final opacity. The shell texture remains the conditional second
+step and was not added.
 [`11-shipping-ramp.png`](ao-study/11-shipping-ramp.png) is the adjusted ramp
 rendered back in the assembled room. It has not yet been checked on iPad; the
 draw-call warning below still applies.
@@ -299,7 +299,7 @@ adjective.
 1. **The long-reach per-prop facet bake ships.** 30 mm, ten rungs at **0.80**
    strength. `lowpoly.bake_ao_facets` maps `1 - 0.80·ao` to the nearest
    `0.88ⁿ` palette level, capped at `Shade10`; `feest.finish` owns those settings.
-   The ramp itself needed no loader Swift, textures or UVs. Seventeen USDZs were
+   The ramp itself needed no loader Swift, textures or UVs. Eighteen USDZs were
    rebuilt through the Blender MCP; Het Feest separately lowers emission and
    restores its intended contact-shadow opacity. Check the mesh count on device
    first — it roughly doubles.

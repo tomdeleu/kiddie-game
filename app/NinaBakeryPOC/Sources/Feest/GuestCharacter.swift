@@ -153,7 +153,7 @@ final class GuestCharacter {
     /// the barrel — there is no neck on the plate — but only a few: sunk to its
     /// centre it stops being a head.
     private static let headY: Float = 0.064
-    private static let headRadius: Float = 0.023
+    private static let headRadius: Float = 0.026
     private static let shoulderY: Float = 0.038
     private static let armLength: Float = 0.024
     /// Where an arm hangs off the body, and where the model puts it.
@@ -203,7 +203,8 @@ final class GuestCharacter {
         if flat, let modelled = ModelLibrary.load(
                 "beertje-\(friend.soort.rawValue)",
                 tint: ["Coat": coat, "Accent": accent,
-                       "Cream": Palette.creamLight, "Dark": Palette.woodBrown]) {
+                       "Cream": Palette.creamLight, "Dark": Palette.woodBrown,
+                       "Gold": Palette.butterYellow, "Rose": Palette.rose]) {
             root.addChild(modelled)
 
             body.name = "GastBody"
@@ -254,21 +255,34 @@ final class GuestCharacter {
         legs = builtLegs
 
         if role == .dj {
-            // Two cups and a band. It is the one prop in the room that says
-            // *this animal is working* rather than dancing, and it is three
-            // pieces. Modelled friends do not carry them: eleven files would
-            // each need a DJ variant to say what three primitives say here.
-            for dx in [Float(-0.022), 0.022] {
-                let cup = RoomBuilder.model(.prism(radius: 0.0068, height: 0.006, sides: 8),
-                                            Palette.woodBrown, flat: flat, name: "DJCup")
-                cup.orientation = simd_quatf(angle: .pi / 2, axis: [0, 0, 1])
-                cup.position = [dx, 0.002, 0]
-                head.addChild(cup)
+            // The DJ is still whichever one of the eleven friends is not on the
+            // floor today. What distinguishes the role is one modelled accessory
+            // around the shared head pivot: a bent band, deep cups and cushions
+            // from `references/feest/dj.png`. One separate asset avoids eleven
+            // near-identical DJ variants and moves with every nod automatically.
+            if flat, let headphones = ModelLibrary.load(
+                "dj-headphones",
+                tint: ["DJMint": Palette.mintLight, "DJDark": Palette.woodBrown,
+                       "DJCream": Palette.creamLight, "DJRose": Palette.rose]) {
+                headphones.name = "DJKoptelefoon"
+                head.addChild(headphones)
+            } else {
+                // The debug smooth-shading A/B and a missing bundle asset still
+                // get a complete, tappable DJ.
+                for dx in [Float(-0.027), 0.027] {
+                    let cup = RoomBuilder.model(
+                        .prism(radius: 0.0090, height: 0.006, sides: 8),
+                        Palette.mintLight, flat: flat, name: "DJCup")
+                    cup.orientation = simd_quatf(angle: .pi / 2, axis: [0, 0, 1])
+                    cup.position = [dx, 0.002, 0]
+                    head.addChild(cup)
+                }
+                let band = RoomBuilder.model(.box([0.052, 0.005, 0.007]),
+                                             Palette.woodBrown, flat: flat,
+                                             name: "DJBand")
+                band.position = [0, 0.027, -0.004]
+                head.addChild(band)
             }
-            let band = RoomBuilder.model(.box([0.042, 0.005, 0.007]),
-                                         Palette.woodBrown, flat: flat, name: "DJBand")
-            band.position = [0, 0.018, 0]
-            head.addChild(band)
         }
 
         start()
