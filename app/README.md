@@ -2574,6 +2574,11 @@ inside the plaster. The booth came forward 30 mm instead, because he has nowhere
 to go and the room needs depth behind him. Their footprints overlap by 10 mm now,
 which is a DJ standing *at* his decks rather than behind them.
 
+The booth is now turned **180°** so that relationship is also right in geometry,
+not only in the floor plan. And the DJ stands on a visible 24 mm faceted riser:
+on the floor the 70 mm booth top crossed his face; on the riser his head and
+headphones clear the decks. His touch marker and contact shadow moved with him.
+
 ### Four things the first look on device caught
 
 All owner's calls, 2026-08-17, after the room was running in Xcode. Every one of
@@ -2608,6 +2613,13 @@ it and neither alone would — the intensity comes down to `FeestProps.floorGlow
 (0.85, a third of what the lamps use), and a tile lights in a **deep** colour
 rather than a pale one, so there is chroma left to survive the exposure.
 
+**The room-box tile falloff is now genuinely smooth.** Two and then four
+concentric `ShadeN` bands drew visible rectangles; neither was the continuous
+soft centre in `references/feest/roombox.png`. The shipping top is one shared
+UV plane and one generated 128² greyscale superellipse texture, multiplied by
+each tile's colour and emission. The old three-band USDZ remains the fallback if
+texture creation fails.
+
 It is also **random now** rather than a stepping diagonal. The pattern was
 legible, and after two beats you could see the rule — at which point it stopped
 being a disco and became a screensaver. Every tile rolls for itself on every beat,
@@ -2622,6 +2634,12 @@ ball hangs over the middle of the floor and the back-left corner is almost exact
 behind it along the view direction. Shrinking the ball's target to fit is the
 wrong trade; it is a toy she has to be able to hit. So tapping the right-hand
 stack thumps **both**, which is what a pair of speakers does anyway.
+
+**Each speaker asset is now the complete two-cabinet stack.** Loading one
+cabinet twice looked assembled but could not model the stack as one prop. The
+rebuilt 114 mm stack cuts real 14-sided holes through both baffles, puts a deep
+cone and separate faceted sphere behind each, and applies the AO ramp only to
+the cone walls. One pivot per driver remains, so all four still push on the beat.
 
 ### The stutter, and it was two things
 

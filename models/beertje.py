@@ -495,11 +495,13 @@ def main():
                     "%s is %.4f m wide — the DJ has 24 mm behind his booth"
                     % (soort, wide))
 
-        # 2 mm, against a 5.2 mm ear, a 21 mm arm and a 52 mm head. The rule is
-        # the tree's: chosen against the facet the shading sits inside, not
-        # against the character. It finds the four joins the docstring names —
-        # the head into the shoulders, the muzzle and ears off the skull, the
-        # belly seam, and each paw on its arm.
+        # **30 mm, the long-reach character bake from
+        # `app/AMBIENT-OCCLUSION.md`.** The 2 mm contact bake found the joins;
+        # the room study showed that the missing readable term is larger: under
+        # the chin, between each arm and the side, between the legs, and the
+        # belly over the feet. Ten ShadeN rungs preserve those broad
+        # transitions and restore contrast under RealityKit without turning
+        # isolated facets into dark blemishes.
         # **Only the big forms may be darkened; the small features cast but are
         # never shaded**, which is `garden.finish`'s `shade` argument doing the
         # honey pot's job (`models/README.md`).
@@ -515,7 +517,7 @@ def main():
         shade = [ob for ob in parts if ob.name in
                  ("CoatRomp", "CreamBuik", "CoatKop", "CreamKopSnuit")
                  or ob.name.startswith(("CoatArm", "CoatBeen"))]
-        objects = feest.finish("Beertje", parts, distance=0.002, shade=shade)
+        objects = feest.finish("Beertje", parts, shade=shade)
         shaded = sum(1 for ob in objects
                      if ob.type == 'MESH' and "Shade" in ob.name)
         print("%-9s %3d parts, %2d shaded" %

@@ -1,13 +1,16 @@
-"""De box — one cabinet of Het Feest's speaker stacks.
+"""De boxen — one complete two-cabinet speaker stack for Het Feest.
 
     blender --background --python models/speaker.py
 
 Reference: `references/feest/boxen.png`. Writes
 `app/NinaBakeryPOC/Resources/Models/speaker.usdz`.
 
-**One cabinet, and the room stacks two of it** — which is what the plate draws
-and what `FeestProps.speakers` already builds. There are two stacks in the room,
-one in each back corner (owner, 2026-08-17), so this file is loaded four times.
+**Both cabinets are in one asset.** The first model contained one cabinet and
+`FeestProps` stacked two copies at runtime. That made the geometry look right but
+made its AO blind to the strongest contact in `boxen.png`: the dark seam where
+the lilac upper cabinet stands over the peach lower one. One full-stack USDZ lets
+the same bake see cabinet-to-cabinet and driver-to-baffle contact. There are two
+identical stacks in the room, one in each back corner.
 
 Two things the plate has that the code version could not say, and they are the
 only two:
@@ -49,8 +52,14 @@ import math
 import os
 import sys
 
+import bpy
+import bmesh
+import mathutils
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import feest
+import garden
+import lowpoly
 
 NAME = "Box"
 
@@ -61,15 +70,14 @@ NAME = "Box"
 # a ratio of **0.65** — and a squat box with a small driver on it is most of why
 # the built speaker "looks very flat" and unlike the plate.
 #
-# Taken literally the plate gives a 68 mm-tall cabinet, and two of those stacked
-# would stand 136 mm against a 102 mm guest, which is a tower rather than a
-# speaker in a corner. 48 mm is the compromise: a ratio of 0.87, much nearer the
-# plate than 1.16, and a stack that comes to about a guest's height.
+# Taken literally the plate gives a 68 mm-tall cabinet. 56 mm keeps the plate's
+# tall silhouette while putting the 114 mm stack only just above a 102 mm guest.
 #
 # `FeestProps.speakers` follows these when the Swift side is wired up.
 HALF_X = 0.042 / 2
 HALF_Y = 0.030 / 2
-HEIGHT = 0.048
+HEIGHT = 0.056
+STACK_GAP = 0.002
 CHAMFER = 0.0042
 
 #: Blender +Y is the game's −Z, so the baffle — the face the drivers are in —
@@ -101,7 +109,7 @@ SINK = 0.0004
 #: a loudspeaker and a box with a button on it: in `boxen.png` the driver nearly
 #: fills the front, leaving only a narrow margin either side, and the tweeter
 #: sits in the gap above it almost touching.
-DRIVERS = [(0.0158, 0.0180), (0.0058, 0.0396)]
+DRIVERS = [(0.0158, 0.0210), (0.0058, 0.0460)]
 
 
 def driver(name, material, radius):
@@ -131,8 +139,8 @@ def driver(name, material, radius):
     Numbers, in units of the outer radius, measured off a 3× crop of the plate:
 
         cone mouth   0.86      the rim's inner edge
-        cap base     0.36      overhanging a 0.26 throat
-        cap apex     +0.08     proud of the baffle, just under the rim
+        cap radius   0.32      a small faceted sphere
+        cap centre  -0.10      inside the funnel; front reaches +0.22
     """
     r = radius
     cone = feest.lathe(name, material, [
@@ -140,62 +148,69 @@ def driver(name, material, radius):
         (r * 1.00, r * 0.07),     # its outer wall, flaring a little
         (r * 0.95, r * 0.13),     # the rim's outer edge
         (r * 0.86, r * 0.13),     # the flat rim band — a narrow lip, not a collar
-        (r * 0.62, r * 0.02),     # the cone, falling back
-        (r * 0.30, -r * 0.20),    # a narrow throat, so the cap overhangs it
-        (r * 0.29, -r * 0.22),    # and a floor, so it is not a hole
+        (r * 0.62, r * 0.02),     # the cone, beginning its long fall
+        (r * 0.30, -r * 0.52),    # a genuinely deep narrow throat
+        (r * 0.29, -r * 0.54),    # and a floor, so it is not a hole
     ], 14)
-    # The dome, standing on the throat and reaching back out past the baffle.
-    # Its apex stops short of the rim so the rim's inner edge still crosses in
-    # front of it, which is how the plate reads and is what keeps the cone deep.
-    # **An egg nested in the cone, reaching almost to the rim.**
-    #
-    # Three shapes have been tried here and only the third is the plate. A tall
-    # narrow spire is invisible — the cone is wider than it everywhere but the
-    # throat, so only its tip shows. A flat hemisphere sunk on the throat is the
-    # bump this had until now, which reads as a dimple rather than a cap. What
-    # `boxen.png` draws, measured on the crop, is:
-    #
-    #     cap width    0.36 r    = 42% of the cone's mouth
-    #     cap height   0.46 r    taller than half its width — an egg, not a dish
-    #     apex         +0.08 r   proud of the baffle, just shy of the rim
-    #
-    # And its base is **wider than the throat it stands on**, so it overhangs.
-    # That overhang is the hard dark ring the plate draws all round the cap, and
-    # it is real geometry rather than a painted line: the bake finds it because
-    # the cone's floor is genuinely tucked under the egg.
-    #
-    # **The cone is shallow on purpose, and that is the last thing this prop
-    # taught.** Built 0.35 r deep, the cap measured the right size and still
-    # rendered at a third of it — because a deep funnel *hides the bottom of
-    # whatever is in it*. The room's camera is 42° off the baffle normal, so the
-    # near wall covers 0.9 × its own depth of the floor, and at 0.35 r that ate
-    # the widest part of the egg and left only its narrow tip showing. At 0.22 r
-    # the whole cap clears the near wall. The plate's funnel is shallow for the
-    # same reason; what makes it *look* deep is the 42° view and the shading.
-    dome = feest.lathe(name + "Dop", material, [
-        (r * 0.36, -r * 0.22),
-        (r * 0.355, -r * 0.15),
-        (r * 0.33, -r * 0.07),
-        (r * 0.27, 0.0),
-        (r * 0.18, r * 0.06),
-        (0.0, r * 0.10),
-    ], 14)
+    # The dust cap is a **small faceted sphere**, not another lathe. The long
+    # egg profiles repeatedly collapsed into a broad pale disc at the game
+    # camera — exactly the failure visible in the owner's simulator crop. A
+    # 0.32 r icosphere centred 0.10 r behind the baffle leaves most of the 0.54 r
+    # funnel visible, while its front reaches +0.22 r. Subdivision 2 gives eighty
+    # broad triangular facets: round enough to read at room scale, still visibly
+    # low-poly in a close-up.
+    dome = feest.balls(
+        name + "Dop", material,
+        [(r * 0.32, (0.0, 0.0, -r * 0.10))],
+        subdivisions=2)
     return [cone, dome]
 
 
-def build():
-    coat = feest.material("BoxCoat", feest.SANDY_WOOD)
+def _cut_driver_holes(cabinet, z0):
+    """Cut real circular openings through the cabinet's front baffle.
+
+    The first five speaker passes put recessed cone geometry *behind a complete
+    cabinet face*. That face won the depth test and covered the funnel, so every
+    screenshot still showed a flat disc however deep the cone profile became.
+    These two short 14-sided cylinders remove only the front 13 mm of the box:
+    enough to expose each cone, while leaving the rear cabinet wall intact.
+    """
+    cutters = bmesh.new()
+    for radius, z in DRIVERS:
+        transform = (
+            mathutils.Matrix.Translation((0.0, -0.0090, z0 + z))
+            @ mathutils.Matrix.Rotation(math.pi / 2, 4, "X")
+        )
+        bmesh.ops.create_cone(
+            cutters, cap_ends=True, cap_tris=False, segments=14,
+            radius1=radius * 0.82, radius2=radius * 0.82,
+            depth=0.0130, matrix=transform)
+    cutters.normal_update()
+    cutter = lowpoly.flat_obj("BoxBaffleCutters", cutters, cabinet.data.materials[0])
+
+    boolean = cabinet.modifiers.new("DriverHoles", "BOOLEAN")
+    boolean.operation = "DIFFERENCE"
+    boolean.solver = "EXACT"
+    boolean.object = cutter
+    lowpoly.apply_modifiers(cabinet)
+    bpy.data.objects.remove(cutter, do_unlink=True)
+    return cabinet
+
+
+def _cabinet(prefix, coat, z0):
+    """One plate cabinet, positioned inside the full-stack asset."""
     parts = []
 
     # The cabinet: chamfered on the verticals by the section, and on the top and
     # bottom rims by pulling the section in at the first and last station.
     pull = 0.0026
-    parts.append(feest.octa_column("BoxKast", coat, [
-        (HALF_X - pull, HALF_Y - pull, CHAMFER, 0.0),
-        (HALF_X, HALF_Y, CHAMFER, pull),
-        (HALF_X, HALF_Y, CHAMFER, HEIGHT - pull),
-        (HALF_X - pull, HALF_Y - pull, CHAMFER, HEIGHT),
-    ]))
+    cabinet = feest.octa_column(prefix + "Kast", coat, [
+        (HALF_X - pull, HALF_Y - pull, CHAMFER, z0),
+        (HALF_X, HALF_Y, CHAMFER, z0 + pull),
+        (HALF_X, HALF_Y, CHAMFER, z0 + HEIGHT - pull),
+        (HALF_X - pull, HALF_Y - pull, CHAMFER, z0 + HEIGHT),
+    ])
+    parts.append(_cut_driver_holes(cabinet, z0))
 
     # The drivers. Built on the axis and then turned to look out of the baffle:
     # a +90° turn about X sends the lathe's +Z to −Y, which is out towards the
@@ -206,61 +221,50 @@ def build():
         # Turned to look out of the baffle: a +90° turn about X sends +Z to −Y,
         # which is out towards the camera. The negative turn points them into the
         # cabinet, where they are invisible rather than obviously wrong.
-        for ob in driver("BoxConus%d" % i, coat, radius):
+        for ob in driver("%sConus%d" % (prefix, i), coat, radius):
             ob.rotation_euler = (math.pi / 2, 0.0, 0.0)
-            feest.animated(ob, (0.0, BAFFLE + SINK, z))
+            feest.animated(ob, (0.0, BAFFLE + SINK, z0 + z))
             parts.append(ob)
 
     return parts
 
 
+def build():
+    lower = feest.material("BoxOnderCoat", feest.ROSE)
+    upper = feest.material("BoxBovenCoat", feest.LILAC)
+    return (_cabinet("BoxOnder", lower, 0.0)
+            + _cabinet("BoxBoven", upper, HEIGHT + STACK_GAP))
+
+
 def main():
-    feest.fresh(NAME, "Box")
+    feest.fresh("Boxen", "Box")
     parts = build()
 
     corners = [ob.matrix_world @ v.co for ob in parts for v in ob.data.vertices]
-    feest.check(max(p.z for p in corners) <= HEIGHT + 1e-6,
-                "the cabinet is taller than the 38 mm the room stacks")
+    stack_height = HEIGHT * 2 + STACK_GAP
+    feest.check(max(p.z for p in corners) <= stack_height + 1e-6,
+                "the stack is taller than %.1f mm" % (stack_height * 1000))
     feest.check(max(abs(p.x) for p in corners) <= HALF_X + 1e-6,
-                "the cabinet is wider than the 44 mm the room stacks")
+                "the cabinet is wider than the 42 mm the room stacks")
 
-    # **2.5 mm, against a cone 7 mm deep and a chamfer 4 mm across.** The rule is
-    # the tree's (`models/README.md`): the distance is chosen against the facet
-    # the shading has to sit inside, not against the prop. Reach further and the
-    # chamfer strips — which are 4 mm of a 44 mm box — tip over the threshold
-    # whole, and a cabinet with every edge darkened is a cabinet painted brown.
-    # **The cabinet is shaded; the drivers cast but are never darkened.**
+    # **30 mm, 0.35 strength and four rungs.** The room-wide ten-rung ramp was
+    # needed before the baffle had holes; after the boolean cut it turned the
+    # exposed cone nearly black. Real depth now does most of the work and this
+    # gentler ramp carries the cabinet hue through the recess like the plate.
     #
-    # Baked at 2.5 mm the woofer came back with 33 of its 40 faces on `Shade2`
-    # and the tweeter with 61 of 73 — a cone is concave, so nearly every face on
-    # it is within 2.5 mm of another face on it, and the honest measurement is
-    # "all of it". That is `models/README.md`'s rule pointing straight at this
-    # prop: *a part shaded uniformly is not shaded at all.* What it produced was
-    # a driver painted a darker brown, with the dust cap — the brightest thing on
-    # the cabinet in the plate — dark along with everything else.
-    #
-    # So the drivers get the honey pool's treatment (`garden.finish`'s `shade`):
-    # they cast into the bake, and the chamfered cabinet receives it. The cone's
-    # depth is then read from its facet normals, which is what the whole style is
-    # for, and the dome stays the bright note it is in `boxen.png`.
-    # **3 mm, chosen by trying three.** The bake is what supplies the cone's
-    # tonal separation, because the room's own lighting cannot: the speakers
-    # stand in the back corners with their baffles towards the camera and
-    # `LightingSettings` puts the key at azimuth 135° — *behind* them — so their
-    # fronts only ever see fill and the ambient dome.
-    #
-    #     1.5 mm   85 / 12 / 44   the cone barely separates from the rim
-    #     3.0 mm   42 / 30 / 69   a real three-step gradient down the funnel
-    #     4.5 mm   42 /  0 / 99   level 1 empties: the whole cone goes one tone,
-    #                             which is the honey pot's failure again
-    #
-    # 3 mm keeps unshaded faces on the rim and the dome's front while the wall
-    # falls away in two steps, which is what `boxen.png` shows.
-    # **The domes cast but are never darkened.** They are the bright note of the
-    # prop and the reason the driver reads at all; shaded along with the cone
-    # they vanish into it, which is what the split in `driver` exists to prevent.
-    shade = [ob for ob in parts if not ob.name.endswith("Dop")]
-    objects = feest.finish(NAME, parts, distance=0.0030, shade=shade)
+    # Only the cone walls receive the ramp. The boolean-cut baffle is one large
+    # n-gon whose centre lies over a dark opening; face-centre AO therefore
+    # classified the *entire cabinet front* as Shade10 and turned it black in the
+    # simulator. Cabinets and domes still cast into the cones, but remain at
+    # their palette colours.
+    shade = [ob for ob in parts
+             if "Conus" in ob.name and not ob.name.endswith("Dop")]
+    # The actual holes now provide the depth cue; Het Feest's full 0.80/ten-step
+    # ramp turned the exposed cone walls almost black. The plate keeps their
+    # cabinet hue, so speakers use the measured gentler end of the study range.
+    objects = garden.finish(
+        "Boxen", parts, distance=feest.AO_REACH, shade=shade,
+        ramp_strength=0.35, ramp_levels=4)
     for ob in objects:
         if ob.type == 'MESH':
             print("  %-22s %3d faces" % (ob.name, len(ob.data.polygons)))

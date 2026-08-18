@@ -1,3 +1,5 @@
+import CoreGraphics
+import Foundation
 import RealityKit
 import simd
 
@@ -26,10 +28,11 @@ import simd
 enum FeestProps {
 
     /// How hard the glowing things glow. One number, because the whole room's
-    /// disco-ness is a single dial and it is the thing most likely to need
-    /// turning once this is on an iPad. `Halo.emissionPeak` is the precedent: the
-    /// geometry and the profile are right, the value is the lever.
-    static let glowPeak: Float = 2.6
+    /// disco-ness is a single dial. The first simulator pass at 2.6 pushed the
+    /// floor, mirror ball and pale props into the same white register, and 1.6
+    /// still left too much of the floor there. At 1.1 the lenses cross white,
+    /// while a floor tile at `floorGlow` emits at 0.935 and retains its colour.
+    static let glowPeak: Float = 1.1
 
     static func lit(_ colour: UIColorLike, _ amount: Float = 1) -> RealityKit.Material {
         Palette.glowMaterial(colour, intensity: glowPeak * max(0, amount))
@@ -73,15 +76,13 @@ enum FeestProps {
         let root: Entity
         /// Row-major, `tilesPerSide²` of them.
         ///
-        /// **A tile is several meshes, not one**, because `models/dance-tile.py`
-        /// splits its top into three concentric bands so the tile can be brighter
-        /// in the middle than at its edge. Each is paired with the matte material
-        /// the loader gave it, so lighting a tile is a swap and unlighting it is
-        /// a restore — no material is ever rebuilt on the beat.
-        let tiles: [[(mesh: ModelEntity, dark: RealityKit.Material)]]
-        /// One per entry in `FeestLayout.floorLitColours`. A lit tile is assigned
-        /// one of these rather than having a material constructed for it.
-        let glowing: [RealityKit.Material]
+        /// The shipping path has one UV-mapped gradient plane per tile. The
+        /// `shadeStep` remains for `models/dance-tile.py`'s three-band fallback,
+        /// so either path can swap cached materials on the beat.
+        let tiles: [[(mesh: ModelEntity, dark: RealityKit.Material, shadeStep: Int)]]
+        /// One three-step ladder per entry in `FeestLayout.floorLitColours`.
+        /// The direct index keeps the beat path branchless and the cache tiny.
+        let glowing: [[RealityKit.Material]]
     }
 
     /// **Thirty-six tiles, and it is the whole disco.**
@@ -91,60 +92,90 @@ enum FeestProps {
     /// floor in the room's own colours, with three or four brighter than the rest
     /// at any moment. A chequer would have been a second palette.
     ///
-    /// ## The gradient, and why it costs no new code
+    /// ## The gradient is actually smooth
     ///
-    /// The plates show a soft square falloff on each tile — brighter in the
-    /// middle, dimming to the edge — and that is most of what makes
-    /// `roombox.png`'s floor read as *lit* rather than painted. It is not a
-    /// texture: this game has none, and the floor is the largest surface in the
-    /// room and so the worst place to start. `models/dance-tile.py` quantises the
-    /// falloff onto facets instead, and names the bands `TegelVlak`,
-    /// `TegelVlakShade1` and `TegelVlakShade2` — the suffix `ModelLibrary`
-    /// already reads as "this many steps darker". The whole gradient therefore
-    /// arrives through the occlusion path with no new Swift at all.
+    /// `references/feest/roombox.png` shows one continuous rectangular falloff:
+    /// a broad pale centre flowing into the tile colour at the edge. The former
+    /// `Shade1/2` meshes drew two hard outlines and were not a gradient.
     ///
-    /// **A lit tile glows uniformly**, which is deliberate: the gradient says
-    /// *this tile is a panel*, and a tile that has just lit up is a lamp. Keeping
-    /// the ladder while lit would have meant a second set of thirty-six
-    /// materials to say something the light already says.
+    /// This is the room's deliberate texture exception: one generated 128²
+    /// greyscale superellipse, mapped over a shared plane and multiplied by each
+    /// tile's tint. The same map drives emission, so the beat brightens the broad
+    /// centre without flattening the falloff. It is generated once, has no file
+    /// asset, and the modelled three-band tile remains the failure fallback.
+    @MainActor
     static func danceFloor(flat: Bool) -> DanceFloor {
         let root = Entity()
         root.name = "Dansvloer"
 
-        var tiles: [[(mesh: ModelEntity, dark: RealityKit.Material)]] = []
-        let glowing = FeestLayout.floorLitColours.map { lit($0, floorGlow) }
+        var tiles: [[(mesh: ModelEntity, dark: RealityKit.Material,
+                      shadeStep: Int)]] = []
+        let gradient = tileGradientTexture()
+        let glowing = FeestLayout.floorLitColours.map { colour in
+            (0...2).map { step in
+                let shaded = Palette.occluded(colour, steps: step)
+                if let gradient {
+                    return tileGradientMaterial(shaded, texture: gradient,
+                                                emission: glowPeak * floorGlow)
+                }
+                return lit(shaded, floorGlow)
+            }
+        }
         let size = FeestLayout.tileSize
-        // **One mesh, thirty-six tiles**, for the procedural path. They are
-        // identical boxes and `RoomBuilder.model` builds a fresh `MeshResource`
-        // per call, so the obvious loop generated 36 copies of one geometry.
-        let fallbackMesh = FacetedMesh.mesh(
+        let slabMesh = FacetedMesh.mesh(
             FacetedMesh.box([size, FeestLayout.tileThickness, size]), flat: flat)
+        let gradientMesh = gradient.map { _ in
+            MeshResource.generatePlane(width: size, depth: size)
+        }
 
         for row in 0..<FeestLayout.tilesPerSide {
             for column in 0..<FeestLayout.tilesPerSide {
                 let colour = FeestLayout.tileColour(row: row, column: column)
-                var spot = FeestLayout.tileSpot(row, column)
-                var built: [(mesh: ModelEntity, dark: RealityKit.Material)] = []
+                let spot = FeestLayout.tileSpot(row, column)
+                var built: [(mesh: ModelEntity, dark: RealityKit.Material,
+                             shadeStep: Int)] = []
 
-                if flat, let modelled = ModelLibrary.load("dance-tile",
-                                                          tint: ["Tegel": colour]) {
+                if let gradient, let gradientMesh {
+                    let holder = Entity()
+                    holder.name = "Tegel-\(row)-\(column)"
+                    holder.position = [spot.x, RoomBox.floorY, spot.z]
+
+                    let slab = ModelEntity(
+                        mesh: slabMesh,
+                        materials: [Palette.material(Palette.occluded(colour, steps: 1))])
+                    slab.name = "TegelBlok"
+                    slab.position.y = FeestLayout.tileThickness / 2
+                    holder.addChild(slab)
+
+                    let dark = tileGradientMaterial(colour, texture: gradient)
+                    let top = ModelEntity(mesh: gradientMesh, materials: [dark])
+                    top.name = "TegelVlak"
+                    top.position.y = FeestLayout.tileThickness + 0.0002
+                    holder.addChild(top)
+                    holder.excludeFromShadowCasting()
+                    root.addChild(holder)
+                    built = [(top, dark, 0)]
+                } else if flat, let modelled = ModelLibrary.load(
+                    "dance-tile", tint: ["Tegel": colour]) {
                     // The model sits on its own floor, so it is placed by its
                     // base rather than by its middle.
-                    spot.y = RoomBox.floorY
-                    modelled.position = spot
+                    modelled.position = [spot.x, RoomBox.floorY, spot.z]
                     modelled.name = "Tegel-\(row)-\(column)"
                     modelled.excludeFromShadowCasting()
                     root.addChild(modelled)
                     collectTileMeshes(modelled, into: &built)
                 } else {
-                    spot.y = RoomBox.floorY + FeestLayout.tileThickness / 2
                     let material = Palette.material(colour)
-                    let tile = ModelEntity(mesh: fallbackMesh, materials: [material])
+                    let tile = ModelEntity(mesh: slabMesh, materials: [material])
                     tile.name = "Tegel-\(row)-\(column)"
-                    tile.position = spot
+                    tile.position = [
+                        spot.x,
+                        RoomBox.floorY + FeestLayout.tileThickness / 2,
+                        spot.z,
+                    ]
                     tile.excludeFromShadowCasting()
                     root.addChild(tile)
-                    built = [(tile, material)]
+                    built = [(tile, material, 0)]
                 }
 
                 // A lit floor casting a shadow of itself onto the floor it is
@@ -156,14 +187,79 @@ enum FeestProps {
         return DanceFloor(root: root, tiles: tiles, glowing: glowing)
     }
 
+    @MainActor
+    private static func tileGradientTexture() -> TextureResource? {
+        let side = 128
+        var pixels = [UInt8](repeating: 255, count: side * side * 4)
+
+        for y in 0..<side {
+            for x in 0..<side {
+                let sx = abs((Double(x) + 0.5) / Double(side) * 2 - 1)
+                let sy = abs((Double(y) + 0.5) / Double(side) * 2 - 1)
+                // A high-order superellipse gives the plate's rectangular
+                // contours without the mathematically sharp corners of max(x,y).
+                let distance = pow(pow(sx, 8) + pow(sy, 8), 1.0 / 8.0)
+                let t = max(0, min(1, (distance - 0.16) / 0.84))
+                let smooth = t * t * (3 - 2 * t)
+                let value = UInt8((255 * (1 - 0.22 * smooth)).rounded())
+                let offset = (y * side + x) * 4
+                pixels[offset] = value
+                pixels[offset + 1] = value
+                pixels[offset + 2] = value
+            }
+        }
+
+        guard let provider = CGDataProvider(data: Data(pixels) as CFData),
+              let image = CGImage(
+                width: side, height: side,
+                bitsPerComponent: 8, bitsPerPixel: 32, bytesPerRow: side * 4,
+                space: CGColorSpaceCreateDeviceRGB(),
+                bitmapInfo: [.byteOrder32Big,
+                             CGBitmapInfo(rawValue:
+                                CGImageAlphaInfo.premultipliedLast.rawValue)],
+                provider: provider, decode: nil, shouldInterpolate: true,
+                intent: .defaultIntent)
+        else { return nil }
+
+        return try? TextureResource.generate(
+            from: image, withName: "DanceTileRectangularGradient",
+            options: .init(semantic: .color))
+    }
+
+    private static func tileGradientMaterial(
+        _ colour: UIColorLike,
+        texture: TextureResource,
+        emission: Float = 0
+    ) -> RealityKit.Material {
+        let mapped = MaterialParameters.Texture(texture)
+        var material = PhysicallyBasedMaterial()
+        material.baseColor = .init(tint: colour, texture: mapped)
+        material.roughness = .init(floatLiteral: 0.9)
+        material.metallic = .init(floatLiteral: 0)
+        material.specular = .init(floatLiteral: 0.1)
+        if emission > 0 {
+            material.emissiveColor = .init(color: colour, texture: mapped)
+            material.emissiveIntensity = emission
+        }
+        return material
+    }
+
     /// Every mesh under a loaded tile, with the material the loader painted it.
     private static func collectTileMeshes(
         _ entity: Entity,
-        into found: inout [(mesh: ModelEntity, dark: RealityKit.Material)]) {
+        into found: inout [(mesh: ModelEntity, dark: RealityKit.Material,
+                            shadeStep: Int)]) {
         if let model = entity as? ModelEntity, let first = model.model?.materials.first {
-            found.append((model, first))
+            found.append((model, first, shadeStep(in: model.name)))
         }
         for child in entity.children { collectTileMeshes(child, into: &found) }
+    }
+
+    private static func shadeStep(in name: String) -> Int {
+        guard let marker = name.range(of: "Shade", options: .backwards),
+              marker.upperBound < name.endIndex,
+              let step = Int(name[marker.upperBound...]) else { return 0 }
+        return max(0, min(2, step))
     }
 
     // MARK: - The six pads
@@ -556,6 +652,16 @@ enum FeestProps {
 
     // MARK: - The DJ booth
 
+    static func djPedestal(flat: Bool) -> Entity {
+        RoomBuilder.model(
+            .taperedPrism(
+                bottomRadius: FeestLayout.djPedestalRadius,
+                topRadius: FeestLayout.djPedestalRadius * 0.88,
+                height: FeestLayout.djPedestalHeight,
+                sides: 8),
+            Palette.berryBlueDeep, flat: flat, name: "DJPodium")
+    }
+
     struct Booth {
         let root: Entity
         /// The two platters, which turn on the beat.
@@ -572,6 +678,10 @@ enum FeestProps {
         let root = Entity()
         root.name = "DJBooth"
         root.position = [FeestLayout.boothCentre.x, RoomBox.floorY, FeestLayout.boothCentre.y]
+        // The first build put the back rail towards the dance floor and left the
+        // DJ standing against the lightbox side. Turn the complete console so he
+        // stands behind its controls.
+        root.orientation = simd_quatf(angle: .pi, axis: [0, 1, 0])
 
         if flat, let modelled = ModelLibrary.load("dj-booth", tint: boothTint),
            let panel = ModelLibrary.mesh("BoothPaneel", in: modelled) {
@@ -594,17 +704,21 @@ enum FeestProps {
     /// — `dj-booth.png` puts them off-palette and `references/feest/README.md`
     /// already recorded the substitution.
     private static let boothTint: [String: UIColorLike] = [
-        "BoothKast": Palette.cream,
-        "BoothVoet": Palette.woodBrown,
+        "BoothKast": Palette.berryBlue,
+        "BoothVoet": Palette.berryBlueDeep,
         "BoothLijst": Palette.creamLight,
         "BoothPaneel": Palette.butterYellow,
         "BoothBlad": Palette.rose,
         "BoothRand": Palette.rose,
-        "BoothDek": Palette.lilac,
-        "BoothMenger": Palette.creamLight,
+        "BoothStop": Palette.woodBrown,
+        "BoothDek": Palette.berryBlue,
+        "BoothMenger": Palette.berryBlue,
         "BoothScherm": Palette.woodBrown,
         "BoothKnop": Palette.woodBrown,
         "BoothFader": Palette.woodBrown,
+        "BoothKanaal": Palette.creamLight,
+        "BoothSchuif": Palette.woodBrown,
+        "BoothLampje": Palette.rose,
         "Plaat": Palette.creamLight,
     ]
 
@@ -677,8 +791,9 @@ enum FeestProps {
         let cones: [Entity]
     }
 
-    /// **The modelled cabinet, stacked twice** — `models/speaker.py`, built from
-    /// `references/feest/boxen.png` and measured off a 3× crop of it.
+    /// **One modelled two-cabinet stack** — `models/speaker.py`, built from
+    /// `references/feest/boxen.png` and measured off a 3× crop of it. Both
+    /// cabinets share one AO bake, so the seam between them finally shades.
     ///
     /// **Takes its spot**, because there are two stacks — one in each back corner
     /// (owner, 2026-08-17). They are identical and they thump together; only the
@@ -713,27 +828,22 @@ enum FeestProps {
         root.position = spot
 
         var cones: [Entity] = []
-        for level in 0..<2 {
-            let y = Float(level) * (cabinetSize.y + 0.0015)
-            let colour = level == 0 ? Palette.sandyWood : Palette.lilac
-
-            if flat, let cabinet = ModelLibrary.load("speaker", tint: ["Box": colour]) {
-                cabinet.name = "Box\(level)"
-                cabinet.position = [0, y, 0]
-                root.addChild(cabinet)
-                // **Each driver on its own pivot**, because `FeestRoom` pushes it
-                // out with `cone.scale = [1, 1, push]`. `ModelLibrary.pivot` puts
-                // the holder at the part's own position and takes its baked shade
-                // siblings with it — without that the cone would stretch away
-                // from the cabinet's foot and leave its shading behind.
+        if flat, let modelled = ModelLibrary.load(
+            "speaker",
+            tint: ["BoxOnder": Palette.sandyWood, "BoxBoven": Palette.lilac]) {
+            root.addChild(modelled)
+            for level in ["BoxOnder", "BoxBoven"] {
                 for i in 0..<2 {
-                    if let cone = driverPivot("BoxConus\(i)", in: cabinet) {
+                    if let cone = driverPivot("\(level)Conus\(i)", in: modelled) {
                         cones.append(cone)
                     }
                 }
-                continue
             }
+            return Speakers(root: root, cones: cones)
+        }
 
+        for level in 0..<2 {
+            let y = Float(level) * (cabinetSize.y + 0.002)
             buildProceduralCabinet(into: root, level: level, y: y, flat: flat,
                                    cones: &cones)
         }
@@ -746,7 +856,8 @@ enum FeestProps {
     /// **`ModelLibrary.pivot` cannot do this one**, and the reason is worth
     /// stating rather than working around silently: it collects a part by
     /// *exact* base name, which is right for the scale's pan and wrong here. A
-    /// driver is two parts — `BoxConus0` and `BoxConus0Dop` — because
+    /// driver is two parts — e.g. `BoxOnderConus0` and
+    /// `BoxOnderConus0Dop` — because
     /// `models/speaker.py` splits the dome out so the bake can darken the cone
     /// around it without darkening the dome. Matched exactly, the dome would be
     /// left behind on the baffle while its cone pushed out on the beat.
@@ -782,13 +893,13 @@ enum FeestProps {
 
     /// The cabinet's envelope, kept in step with `models/speaker.py`.
     ///
-    /// **42 × 48 × 30, where the code version was 44 × 38 × 30.** Every cabinet
+    /// **42 × 56 × 30, where the code version was 44 × 38 × 30.** Every cabinet
     /// in `boxen.png` is taller than it is wide — 230 px across a 355 px face, a
     /// ratio of 0.65 — and the old box was the other way round at 1.16. A squat
     /// box with a small disc on it is most of why the built speaker did not look
-    /// like the plate. Taken literally the plate gives a 68 mm cabinet, and two
-    /// of those would stand 136 mm against a 102 mm guest; 48 is the compromise.
-    static let cabinetSize = SIMD3<Float>(0.042, 0.048, 0.030)
+    /// like the plate. Taken literally the plate gives a 68 mm cabinet; 56 keeps
+    /// the stack just above a 102 mm guest without turning it into a tower.
+    static let cabinetSize = SIMD3<Float>(0.042, 0.056, 0.030)
 
     /// The code-built cabinet. See `speakers(at:flat:)` for when it runs: the
     /// USDZ missing from the bundle, or the debug panel's flat-shading toggle
@@ -797,13 +908,14 @@ enum FeestProps {
     private static func buildProceduralCabinet(into root: Entity, level: Int, y: Float,
                                                flat: Bool, cones: inout [Entity]) {
         let box = cabinetSize
-        let cabinet = RoomBuilder.model(.box(box), Palette.sandyWood, flat: flat,
+        let colour = level == 0 ? Palette.sandyWood : Palette.lilac
+        let cabinet = RoomBuilder.model(.box(box), colour, flat: flat,
                                         name: "Box\(level)")
         cabinet.position = [0, y + box.y / 2, 0]
         root.addChild(cabinet)
 
-        for (i, spec) in [(Float(0.0158), Float(0.018)),
-                          (Float(0.0058), Float(0.0396))].enumerated() {
+        for (i, spec) in [(Float(0.0158), Float(0.021)),
+                          (Float(0.0058), Float(0.046))].enumerated() {
             let cone = Entity()
             cone.name = "Conus\(level)-\(i)"
             cone.position = [0, y + spec.1, box.z / 2 + 0.001]
@@ -812,12 +924,12 @@ enum FeestProps {
             let disc = RoomBuilder.model(
                 .taperedPrism(bottomRadius: spec.0, topRadius: spec.0 * 0.45,
                               height: 0.004, sides: 12),
-                Palette.sandyWood, flat: flat, name: "ConusPlaat")
+                colour, flat: flat, name: "ConusPlaat")
             disc.orientation = simd_quatf(angle: -.pi / 2, axis: [1, 0, 0])
             cone.addChild(disc)
 
             let cap = RoomBuilder.model(.icosphere(radius: spec.0 * 0.30, subdivisions: 0),
-                                        Palette.sandyWood, flat: flat, name: "ConusDop")
+                                        colour, flat: flat, name: "ConusDop")
             cap.position = [0, 0, -0.0035]
             cone.addChild(cap)
 

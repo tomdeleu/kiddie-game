@@ -604,7 +604,8 @@ def root_for(name, parts):
     return root
 
 
-def finish(name, parts, distance, shade=None, min_faces=3):
+def finish(name, parts, distance, shade=None, min_faces=3,
+           ramp_strength=None, ramp_levels=6):
     """Bake the contact shading and return everything the export wants.
 
     `distance` is short by design and is chosen against the size of the part it
@@ -616,11 +617,17 @@ def finish(name, parts, distance, shade=None, min_faces=3):
     way: a part that is small, enclosed and *the bright note of the prop* comes
     back uniformly dark, which is correct as physics and wrong as a picture. The
     honey pool is the case that wanted it.
+
+    `ramp_strength` and `ramp_levels` opt a prop into `lowpoly`'s long-reach
+    multi-rung mapping. They default off, so the garden and kitchen keep their
+    short two-step contact bake.
     """
     root = root_for(name, parts)
     shades = lowpoly.bake_ao_facets(parts if shade is None else shade,
                                     distance=distance, occluders=parts,
-                                    min_faces=min_faces)
+                                    min_faces=min_faces,
+                                    ramp_strength=ramp_strength,
+                                    ramp_levels=ramp_levels)
     return [root] + parts + shades
 
 

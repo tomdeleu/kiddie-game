@@ -208,12 +208,18 @@ enum FeestLayout {
     static let deckOffset: Float = 0.030
     static let deckRadius: Float = 0.017
 
+    /// A low faceted riser, visible under his feet and high enough that his face
+    /// clears the 70 mm booth top. He used to stand on the floor with the decks
+    /// crossing his muzzle.
+    static let djPedestalHeight: Float = 0.024
+    static let djPedestalRadius: Float = 0.032
     /// As far back as a 62 mm-wide body goes: his back lands at z = −0.216
     /// against a wall face at −0.218.
-    static let djSpot = SIMD3<Float>(0.100, RoomBox.floorY, -0.185)
+    static let djSpot = SIMD3<Float>(
+        0.100, RoomBox.floorY + djPedestalHeight, -0.185)
     /// Generous, and deliberately covering the booth as well as its DJ.
     static let djRadius: Float = 0.045
-    static let djTouchY: Float = 0.075
+    static let djTouchY: Float = 0.075 + djPedestalHeight
 
     // MARK: - The mirror ball
     //

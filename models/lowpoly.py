@@ -154,7 +154,8 @@ def _basis(n):
 
 
 def bake_ao_facets(objects, thresholds=(0.12, 0.30), distance=0.005, samples=48,
-                   min_faces=3, occluders=None):
+                   min_faces=3, occluders=None, ramp_strength=None,
+                   ramp_levels=6):
     """Bake ambient occlusion **into the facets**, and split by how dark.
 
     Every face gets rays cast over its hemisphere against the whole prop; the
@@ -174,6 +175,15 @@ def bake_ao_facets(objects, thresholds=(0.12, 0.30), distance=0.005, samples=48,
     that touch — a crown standing in its calyx — not global darkening of a prop,
     which is the thing that was rejected.
 
+    `ramp_strength` switches from the original two thresholds to a gentle
+    multi-rung ramp. The measured AO is first turned into the target multiplier
+    `1 - ramp_strength * ao`, then quantised to the nearest
+    `Palette.occluded` / `OCCLUSION_STEP` level, capped at `ramp_levels`.
+    Het Feest uses 0.80 over ten levels: fully enclosed reaches Shade10
+    (`0.88 ** 10 == 0.279`) after two simulator passes proved too washed out,
+    while open facets remain untouched. `ModelLibrary` already accepts
+    every integer after `Shade`, so this needs no runtime change.
+
     `min_faces` demotes a level that catches fewer faces than that into the one
     below. One facet a step darker than everything around it does not read as
     occlusion, it reads as a blemish on the model.
@@ -185,6 +195,12 @@ def bake_ao_facets(objects, thresholds=(0.12, 0.30), distance=0.005, samples=48,
     as a different colour, which is the one visual signal the game actually
     carries. So the tiers occlude the icing and are never shaded themselves.
     """
+    if ramp_strength is not None:
+        if not 0.0 <= ramp_strength <= 1.0:
+            raise ValueError("ramp_strength must be between zero and one")
+        if ramp_levels < 1:
+            raise ValueError("ramp_levels must be at least one")
+
     deps = bpy.context.evaluated_depsgraph_get()
     verts, polys = [], []
     for ob in (occluders or objects):
@@ -201,6 +217,11 @@ def bake_ao_facets(objects, thresholds=(0.12, 0.30), distance=0.005, samples=48,
     # how far the rays travel. A fixed epsilon that works on a 20 mm berry is
     # inside the floating-point noise of a 56 mm sack.
     lift = max(2e-5, distance * 0.03)
+    if ramp_strength is not None:
+        # A 30 mm reach would otherwise lift the ray 0.9 mm — enough to start
+        # above a mirror-ball groove or a cake pearl. The long-reach study uses
+        # 0.15 mm: clear of floating point, still inside the smallest facet.
+        lift = min(lift, 1.5e-4)
 
     produced = []
     for ob in objects:
@@ -216,7 +237,10 @@ def bake_ao_facets(objects, thresholds=(0.12, 0.30), distance=0.005, samples=48,
                 if bvh.ray_cast(origin, basis @ mathutils.Vector(d), distance)[0] is not None:
                     hit += 1
             ao = hit / float(len(dirs))
-            level = sum(1 for t in thresholds if ao >= t)
+            if ramp_strength is None:
+                level = sum(1 for t in thresholds if ao >= t)
+            else:
+                level = _ramp_level(ao, ramp_strength, ramp_levels)
             buckets.setdefault(level, []).append(poly.index)
 
         # Demote thin levels, darkest first, so a straggler joins the band below
@@ -254,6 +278,14 @@ def bake_ao_facets(objects, thresholds=(0.12, 0.30), distance=0.005, samples=48,
 # so this factor only exists so the model looks in Blender like it will look in
 # the game. If one moves, move the other.
 OCCLUSION_STEP = 0.88
+
+
+def _ramp_level(ao, strength, max_level):
+    """Nearest `ShadeN` level to a linear AO-strength multiplier."""
+    target = max(1.0 - strength,
+                 1.0 - strength * max(0.0, min(1.0, ao)))
+    exact = math.log(target) / math.log(OCCLUSION_STEP)
+    return max(0, min(max_level, int(round(exact))))
 
 
 def _shade_material(base, level):

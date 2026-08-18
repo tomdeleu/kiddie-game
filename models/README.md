@@ -11,6 +11,7 @@ This folder is for the shapes that vocabulary cannot reach.
 | | |
 |---|---|
 | `lowpoly.py` | The shared rules: flat shading, palette colours, ring/bridge/tube/box builders, the AO bake, and the export. A prop script is then only its shape. |
+| `feest-scene.py`, `feest-ao.py` | **The odd pair out: they build no prop.** The first stands the *whole disco* up at the game's own coordinates — shell, tiles, props, guests, camera and the five lights — and the second measures ambient occlusion against it. They are the 2026-08-18 AO investigation; its findings and its verdict are in [`app/AMBIENT-OCCLUSION.md`](../app/AMBIENT-OCCLUSION.md). Neither exports anything. |
 | `garden.py` | **De Tuin's own vocabulary**, on top of `lowpoly.py`: a pointed lathe, a folded leaf, a swept curve, an arbitrary-section column, a chamfered octagon, and the plant anatomy the seven plants share. Nothing outside the garden imports it. |
 | `flour-sack.py`, `bosbes.py`, `crate.py`, `klaver.py`, `sink.py`, `cake.py`, `scale.py`, `veertje.py`, `maanstof.py`, `spoon.py` | De Keuken's ten. Run one to rebuild and re-export it. |
 | `molehill.py`, `garden-bed.py`, `garden-fence.py`, `plant-*.py` × 7 | De Tuin's first ten. |
@@ -233,7 +234,7 @@ two things worth keeping:
   unpivoted pan slides sideways through the base rather than dipping.
   `ModelLibrary.pivot` hangs the part on an upright holder to fix it.
 - That pivot has to take the part's **baked-occlusion siblings** with it. The
-  bake splits crevice faces into `…Shade1` / `…Shade2` meshes, so moving only
+  bake splits occluded faces into `…ShadeN` meshes, so moving only
   the mesh you asked for bounces the pan and leaves its shading hanging in the
   air where the pan used to be.
 
@@ -531,7 +532,7 @@ inside the basin, and under each ring of icing.
 
 `lowpoly.bake_ao_facets` casts rays over each face's hemisphere against the
 whole prop, and moves the faces that are actually in the crevice into their own
-mesh named `…Shade1` / `…Shade2`. `ModelLibrary` reads that suffix and paints
+mesh named `…ShadeN`. `ModelLibrary` reads that suffix and paints
 them a step darker per level, out of the palette.
 
 What it finds, at the settings each prop is exported with:
@@ -543,7 +544,7 @@ What it finds, at the settings each prop is exported with:
 | Crate | 16 + 16 on the boards, 8 + 12 on the frame | every butt joint, the inside faces, and under the top rail |
 | Clover | 4–6 per petal | the hub where four petals crowd together |
 | Sink | 3 on the tap, 5 on the handle neck | where the spout leaves the post, and under the handle |
-| Cake | 120 on the icing, 22 + 122 on the pearls | under every drip, and between the beads |
+| Cake | 441 trimming faces across Shade1–6; all 36 tier faces stay plain | under every drip, between the beads and across the trimming bands |
 | Scale | 3 on the base, 3 on the dial, 12 on the pan | where the dial meets its neck, under the pan's rim, along the plinth's step |
 | Feather | 10 on the vane | the crease, either side of the shaft |
 | Pouch | 15 on the bag, 40 on the cord, 6 on the cloth | under the cord, and where the open cloth folds into it |
@@ -566,6 +567,34 @@ a colour she did not choose. That is what `occluders` is for: the tiers cast
 into the bake without receiving from it. The first cake bake put 11 of the top
 tier's 12 faces in shadow, because a tier sits inside its own icing skirt.
 
+### Het Feest's longer ramp
+
+The disco's room-scale study changed the modelled party props on 2026-08-18.
+`app/AMBIENT-OCCLUSION.md` found that the largest missing term was not a short
+join but **each character and cabinet shading itself**: chin over chest, arm
+against side, belly over feet, one speaker section over another. Those gaps are
+20–40 mm, so every Het Feest prop finished through `feest.finish` now uses:
+
+- **30 mm reach**;
+- **0.80 strength**, quantised to the nearest `0.88ⁿ` palette step;
+- **ten Shade levels**, putting fully enclosed facets at `0.88¹⁰ = 0.279`.
+
+The eleven `beertje-*.usdz` assets, the booth, speaker, mirror ball, light bar
+and stage lamp were rebuilt through that path. The shared cake uses the same
+arguments directly, so the kitchen and decorating room see the same cake. The
+dance tile remains the honest zero: it has no self-occlusion, and its existing
+Shade1/2 names are an authored fallback rather than an AO measurement. The
+shipping tile top is a UV plane with the smooth generated rectangular gradient
+from `FeestProps`; the USDZ is used only if texture creation fails.
+
+The AO path needed no Swift change: `ModelLibrary` already parses any integer
+after `Shade`, and `Palette.occluded` already raises `0.88` to that power.
+The simulator passes did lower Het Feest's separate emissive-room dial from 2.6
+to 1.1 so the floor and mirror ball keep their colour, and restored the intended
+floor-contact-shadow opacity. There are still no UVs, textures or runtime AO.
+The shell texture remains the separate, conditional second step in
+`app/AMBIENT-OCCLUSION.md`.
+
 The sack's body and corners come back **unshaded**, which is the right answer:
 a slumped bag is convex nearly everywhere, and the two faces that did measure
 as occluded were too few to read as anything but a blemish.
@@ -578,12 +607,13 @@ against it:
 - **It is baked to facets, not to a texture.** No UVs, no lightmap, no runtime
   cost — the result is still one flat tone per face, which is what the whole
   style is made of. `app/LIGHTMAPS.md` is the texture route, and it is not this.
-- **Its reach is short**: 2.2 mm on the berry and the cake, 2.5 mm on the
+- **Its reach is short outside Het Feest**: 2.2 mm on the berry, 2.5 mm on the
   clover, 3 mm on the sink and the basket, 4 mm on the crate, 5 mm on a 139 mm
   tree, 6 mm on the sack — roughly the
   same *proportion* of each prop, and always chosen against the size of the part
   it must stay inside. On the crate the 4 mm is set against a 6 mm board depth,
-  so it never reaches out onto the flat of a board.
+  so it never reaches out onto the flat of a board. Het Feest is the measured
+  exception above: 30 mm, spread over ten levels rather than two.
 - **It is on the modelled props only.** Nothing built by `FacetedMesh` has any,
   and the rule stands there.
 

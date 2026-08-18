@@ -104,7 +104,16 @@ describes the plate and the mesh, which is the sign it is the right sentence.
   between them, and **one glowing panel across the front**. The panel is what
   makes it a booth rather than a sideboard, and it is the cheapest emissive
   surface in the room. Its knobs came back charcoal, which is off-palette; the
-  built version uses `woodBrown`.
+  built version uses `woodBrown`. The plate now wins on the cabinet colour too:
+  `berryBlue` with `berryBlueDeep` feet, under the pink lip.
+
+  **Image-to-3D was tried and rejected on 2026-08-18.** Higgsfield/Meshy job
+  `e0df1452-5afc-47b3-9f29-5bf930f07597` cost 20 credits and returned one
+  untextured 2,640-triangle shell. It caught the broad silhouette, but fused the
+  rail, platters, mixer and cabinet into spiky triangulated bridges. Decimation
+  cannot separate forms that were generated as one surface. The clean rebuild
+  is 380 polygons across named parts, keeps the two platter pivots, and adds the
+  plate's dark rail stops, eight knobs, four channel faders and corner buttons.
 - **`roombox.png`, again, and it is the plate that overruled two of the others.**
   Owner's call on seeing it, 2026-08-17: *"I especially like this one."* Two
   things in it are load-bearing and neither is in any studio plate. **The lit
@@ -141,6 +150,15 @@ describes the plate and the mesh, which is the sign it is the right sentence.
   row of six survived**, where `buttons/README.md`'s row lost every glyph — the
   difference is that these carry no symbol. The rule is narrower than it looked:
   *flux cannot assemble a compound glyph*, not *flux cannot draw a row*.
+- **`boxen.png`** — two tall monochrome cabinets, each with fully chamfered
+  edges, a small tweeter and a woofer that is a recessed funnel rather than a
+  disc. The rebuilt asset contains the complete lilac-over-peach stack, not one
+  cabinet loaded twice. At 42 × 56 × 30 mm per cabinet the stack stands 114 mm,
+  just above a guest as the plate does.
+  The cone throat sits **0.54 × its radius** behind a real 14-sided boolean hole
+  in the baffle. Before that cut, the intact cabinet face covered every deeper
+  cone. The cap is now a separate 80-face sphere; cabinets and caps cast but do
+  not receive AO, while cone walls use a 30 mm, 0.35-strength four-rung ramp.
 - **`gasten.png`** — settled that a friend is *one body with a swapped head*, and
   was then **overruled on the body itself**. Five faceted animals in five
   distinct pastels, each told apart by ears and muzzle alone, which is

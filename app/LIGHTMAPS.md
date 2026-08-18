@@ -1,5 +1,19 @@
 # Baking lightmaps in Reality Composer Pro 3
 
+> **This has now been done, in Blender rather than in RCP 3, and the answer is
+> in [`AMBIENT-OCCLUSION.md`](AMBIENT-OCCLUSION.md).** Het Feest was assembled
+> as a scene, occlusion was measured against it, and the texture route below was
+> run: 23.6 s for the four shell pieces at 512², tracking a per-pixel reference
+> to within 1–3%. It works, it is accurate and it is cheap to bake — what it
+> costs is UVs in `FacetedMesh` (which writes positions and normals and nothing
+> else) and a `LightingRig.applyLightmap` keyed by entity rather than applying
+> one map to every model. The bigger finding is that it is **not the first thing
+> to reach for**: most of the occlusion this room is missing is each character
+> shading herself, and that needs no texture at all.
+> The 30 mm, ten-level per-prop ramp now ships; the shell texture still does not.
+>
+> Everything below still stands as the RCP 3 route. Nothing in it has been run.
+
 The escape hatch from `POC.md`. The art direction deliberately runs **without**
 baked ambient occlusion — this file is how to test whether that was the right
 call, by baking it and looking at both.

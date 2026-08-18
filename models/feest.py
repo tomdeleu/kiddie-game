@@ -71,8 +71,23 @@ placed = garden.placed
 chip = garden.chip
 fresh = garden.fresh
 root_for = garden.root_for
-finish = garden.finish
 matrix = garden.matrix
+
+# Long-reach per-prop AO settled by `app/AMBIENT-OCCLUSION.md`: 30 mm reads the
+# chin/chest, arm/side and cabinet seams that the original 2–6 mm contact bake
+# cannot reach. Two in-app passes still washed out under RealityKit's simulator
+# lighting. Ten rungs at 0.80 preserve open facets and deepen only the enclosed
+# joins; Shade10 bottoms out at 0.88 ** 10 = 0.279.
+AO_REACH = 0.030
+AO_STRENGTH = 0.80
+AO_LEVELS = 10
+
+
+def finish(name, parts, shade=None, min_faces=3):
+    """Finish a Het Feest prop with the room's long-reach AO ramp."""
+    return garden.finish(name, parts, distance=AO_REACH, shade=shade,
+                         min_faces=min_faces, ramp_strength=AO_STRENGTH,
+                         ramp_levels=AO_LEVELS)
 
 # `Palette.swift` is the single source of truth — the app repaints every model
 # on load. These exist so a model is reviewable in Blender.

@@ -175,12 +175,12 @@ def main():
     # what makes that possible, and without it every tile measures zero: a patch
     # on its own has no neighbour to be in a groove with.
     #
-    # 2.2 mm is the groove's own depth, which is the rule `models/README.md`
-    # settled on the tree — the distance is chosen against the facet the shading
-    # has to sit inside, not against the prop. The prop is 60 mm; the thing being
-    # shaded is 2 mm deep.
-    shades = lowpoly.bake_ao_facets(keep, distance=DEPTH,
-                                    occluders=parts + keep + scratch)
+    # The room study extends the reach from the 0.8 mm groove depth to 30 mm.
+    # Its ten-rung ramp keeps the groove and lets neighbouring rows shade one
+    # another without turning the whole 60 mm ball one dark material.
+    shades = lowpoly.bake_ao_facets(
+        keep, distance=feest.AO_REACH, occluders=parts + keep + scratch,
+        ramp_strength=feest.AO_STRENGTH, ramp_levels=feest.AO_LEVELS)
     for ob in scratch:
         bpy.data.objects.remove(ob, do_unlink=True)
 

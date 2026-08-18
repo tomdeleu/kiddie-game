@@ -253,6 +253,15 @@ final class FeestRoom: Room {
         // has eleven friends and six of them are on the floor.
         let onTheFloor = Set(state.everyone)
         let dj = Friend.allCases.first { !onTheFloor.contains($0) } ?? .bas
+
+        let pedestal = FeestProps.djPedestal(flat: flat)
+        pedestal.position = [
+            FeestLayout.djSpot.x,
+            RoomBox.floorY,
+            FeestLayout.djSpot.z,
+        ]
+        root.addChild(pedestal)
+
         let character = GuestCharacter(friend: dj, role: .dj, at: FeestLayout.djSpot,
                                        phase: 0, ticker: ticker, flat: flat)
         // His arm pose and his motion are both `.dj`'s own — the style is only
@@ -591,10 +600,10 @@ final class FeestRoom: Room {
         floatBalloon(dt)
     }
 
-    /// **Sixteen materials, twice a second — not sixteen materials sixty times a
-    /// second.** A travelling diagonal of lit tiles, stepped on the beat and
-    /// repainted only then. Building a `PhysicallyBasedMaterial` per tile per
-    /// frame is the one thing in this room that could cost a frame.
+    /// **Cached materials, twice a second — never rebuilt sixty times a second.**
+    /// A changing set of lit tiles is stepped on the beat and repainted only
+    /// then. Building a `PhysicallyBasedMaterial` per tile per frame is the one
+    /// thing in this room that could cost a frame.
     /// **Only the tiles that changed are touched**, and that is the whole of why
     /// the room stopped stuttering.
     ///
@@ -607,8 +616,8 @@ final class FeestRoom: Room {
     ///
     /// Two changes, and the second is the one that matters. Every material the
     /// room can ever need is now **built once at build time** and kept — there
-    /// are only six lit floor colours, one lit ball colour and six lamp colours,
-    /// so a few dozen materials cover every state the room has. And each surface
+    /// are only six three-step floor ladders, one lit ball colour and six lamp
+    /// colours, so a few dozen materials cover every state the room has. And each surface
     /// **remembers what it is wearing**, so a beat assigns only to the handful
     /// that actually changed: about fourteen floor tiles, twelve ball tiles and
     /// nothing at all on the lamps unless the colour stepped.
@@ -650,13 +659,12 @@ final class FeestRoom: Room {
                 }
                 guard wanted != floorWear[index] else { continue }
                 floorWear[index] = wanted
-                // A tile is several meshes — `models/dance-tile.py` splits its
-                // top into three bands for the gradient — so lighting one is a
-                // swap across all of them and unlighting it restores each mesh's
-                // own step of the ladder.
+                // The shipping tile is one smoothly textured plane; the modelled
+                // failure fallback is three bands. Either way, the cached material
+                // at the part's step preserves the rectangular falloff.
                 for part in tile {
                     part.mesh.model?.materials = [wanted < 0 ? part.dark
-                                                             : floor.glowing[wanted]]
+                                                             : floor.glowing[wanted][part.shadeStep]]
                 }
             }
         }
@@ -1077,6 +1085,17 @@ final class FeestRoom: Room {
 
     func refreshContactShadows(settings: LightingSettings) {
         self.settings = settings
+        // `ContactShadows` currently writes the requested opacity into both the
+        // colour alpha and the transparent blend, so 0.22 arrives as 0.22²:
+        // about five percent, effectively invisible across this luminous floor.
+        // Compensate locally with √opacity so Het Feest lands at the setting's
+        // intended final opacity without changing the approved shadows in the
+        // other rooms.
+        let feestShadows = LightingSettings()
+        feestShadows.contactShadowsEnabled = settings.contactShadowsEnabled
+        feestShadows.contactShadowOpacity = sqrt(settings.contactShadowOpacity)
+        feestShadows.contactShadowScale = settings.contactShadowScale
+
         var props: [Entity?] = [table, popper, booth?.root]
         props.append(contentsOf: speakers.map { $0.root })
         props.append(contentsOf: pads.map { $0.root })
@@ -1084,9 +1103,9 @@ final class FeestRoom: Room {
         props.append(djCharacter?.root)
         for prop in props.compactMap({ $0 }) {
             guard prop.isEnabled else { continue }
-            ContactShadows.attach(to: prop, radius: 0.020, settings: settings)
+            ContactShadows.attach(to: prop, radius: 0.020, settings: feestShadows)
             ContactShadows.update(for: prop, surfaceY: surfaceY(at: prop.position),
-                                  settings: settings)
+                                  settings: feestShadows)
         }
         // **The balloon and the mirror ball deliberately get none.** Both hang in
         // the air, and `ContactShadows` assumes a horizontal plane underneath —
@@ -1097,12 +1116,17 @@ final class FeestRoom: Room {
 
     /// **This room's surfaces, added the moment the surfaces existed.**
     /// `ROOMS.md` §3: every surface a prop can stand on must be in the lookup, or
-    /// the cue lands somewhere else. There are three, and one of them is round.
+    /// the cue lands somewhere else. There are four, including the DJ's riser.
     private func surfaceY(at point: SIMD3<Float>) -> Float {
         let toTable = SIMD2<Float>(point.x - FeestLayout.tableCentre.x,
                                    point.z - FeestLayout.tableCentre.y)
         if simd_length(toTable) <= FeestLayout.tableRadius + 0.006 {
             return FeestLayout.tableTopY
+        }
+        let toDJ = SIMD2<Float>(point.x - FeestLayout.djSpot.x,
+                                point.z - FeestLayout.djSpot.z)
+        if simd_length(toDJ) <= FeestLayout.djPedestalRadius + 0.004 {
+            return RoomBox.floorY + FeestLayout.djPedestalHeight
         }
         if RoomBox.within(point, centre: FeestLayout.boothCentre,
                           size: FeestLayout.boothSize, margin: 0.006) {

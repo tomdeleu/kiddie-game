@@ -169,7 +169,10 @@ def build():
     for ob in parts:
         ob.parent = root
 
-    # Contact shading under each icing skirt and between the pearls.
+    # Long-reach self-occlusion under each icing skirt, between the pearls and
+    # across the three trimming bands. Het Feest's in-app pass settled 30 mm and
+    # a 0.80-strength ten-rung ramp; the cake is shared, so the same baked
+    # asset now carries that form shading through De Keuken and Versieren too.
     #
     # **The tiers occlude but are never shaded.** They are repainted every round
     # from `CakeSpec.tierColours` — one, two or three colours, which is how
@@ -178,7 +181,9 @@ def build():
     # that: the top tier sits inside its own icing skirt, so 11 of its 12 faces
     # measured as occluded and the whole tier went dark.
     trimmings = [ob for ob in parts if not ob.name.startswith("CakeTier")]
-    shades = lowpoly.bake_ao_facets(trimmings, distance=0.0022, occluders=parts)
+    shades = lowpoly.bake_ao_facets(
+        trimmings, distance=0.030, occluders=parts,
+        ramp_strength=0.80, ramp_levels=10)
 
     return [root] + parts + shades
 

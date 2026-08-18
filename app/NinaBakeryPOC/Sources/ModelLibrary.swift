@@ -122,7 +122,7 @@ enum ModelLibrary {
     /// tween in the room can then treat it like any hand-built entity.
     ///
     /// **It takes the part's shaded pieces with it.** The occlusion bake splits
-    /// a mesh's crevice faces into siblings called `…Shade1` / `…Shade2`, so a
+    /// a mesh's occluded faces into siblings called `…ShadeN`, so a
     /// pivot that moved only the mesh it was asked for would bounce the scale's
     /// pan and leave the shading behind, hanging in the air where the pan was.
     ///

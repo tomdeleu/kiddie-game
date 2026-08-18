@@ -231,10 +231,9 @@ def main():
                 "the yoke arms are inside the barrel: %.4f against %.4f"
                 % (ARM_X - 0.0016, at_bolt))
 
-    # 2 mm, against a rim 1.6 mm proud and a yoke arm 3.2 mm wide. Reach further
-    # and the barrel's own taper — one 14 mm band — tips over whole, which on the
-    # brightest small prop in the room is the honey pot's mistake
-    # (`models/README.md`): a bright note darkened is a bright note lost.
+    # The 30 mm room-study reach now shades the yoke against the barrel and the
+    # clamp against the bar as broad forms. Ten rungs replace the old two hard
+    # thresholds, so the 14 mm barrel band does not simply flip one tone.
     #
     # **The lens casts but is never shaded.** It is the thing the prop is *for*,
     # it sits down a well with a rim all round it, and it measures as almost
@@ -242,7 +241,7 @@ def main():
     # `garden.finish`'s way of saying so, and the honey pool is the case that
     # wanted it first.
     shade = [ob for ob in parts if ob.name != "LampLens"]
-    objects = feest.finish(NAME, parts, distance=0.002, shade=shade)
+    objects = feest.finish(NAME, parts, shade=shade)
     for ob in objects:
         if ob.type == 'MESH':
             print("  %-22s %3d faces" % (ob.name, len(ob.data.polygons)))

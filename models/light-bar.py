@@ -98,13 +98,10 @@ def main():
     feest.check(abs(span - LENGTH) < 1e-6,
                 "the bar is %.4f m long, not the %.3f the room wants" % (span, LENGTH))
 
-    # **Nothing to find, and that is the right answer.** A tube is convex
-    # everywhere on its outside and its bore is a 3 mm hole 280 mm deep, so the
-    # only faces in a crevice are the ones nobody can see into. It is the fence
-    # again (`models/README.md`): a very large facet has nothing to quantise, and
-    # the honest thing is to record the zero rather than raise the distance until
-    # a number appears — which here would darken 280 mm of bar in one step.
-    objects = feest.finish(NAME, parts, distance=0.002)
+    # The outside remains convex at the room's 30 mm reach. The ten-rung ramp
+    # only separates the deep bore from the visible timber, where the former
+    # two-threshold bake would have risked flipping one 280 mm face at once.
+    objects = feest.finish(NAME, parts)
     for ob in objects:
         if ob.type == 'MESH':
             print("  %-22s %3d faces" % (ob.name, len(ob.data.polygons)))

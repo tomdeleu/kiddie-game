@@ -98,7 +98,7 @@ enum Palette {
     ///
     /// It is not a lightmap and it costs nothing at runtime. `bake_ao_facets`
     /// in `models/lowpoly.py` measures the occlusion at model time and splits
-    /// the faces in the crevice into their own mesh named `…Shade1` / `…Shade2`;
+    /// the occluded faces into their own mesh named `…ShadeN`;
     /// `ModelLibrary` sees the suffix and calls this. So the occlusion is still
     /// a flat tone on a facet, which is what the whole style is made of.
     ///

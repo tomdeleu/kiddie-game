@@ -93,8 +93,9 @@ argument.
 Deliberate deviations from the design are recorded there. The kitchen's: the
 palette gained a blue, an amber and a lilac the locked thirteen do not contain;
 the room box is 0.46 m with the camera pulled back 8%, rather than the 0.4 m and
-the framing `POC.md` signed off; and **the ten Blender props carry ambient
-occlusion**, which nothing else does — see below. The round is ended by carrying
+the framing `POC.md` signed off; and **the modelled props carry facet-baked
+ambient occlusion** — short contact shading in the first three rooms, plus the
+disco's measured long-reach ramp — see below. The round is ended by carrying
 the finished cake up onto the plank, and its doorway now genuinely leads to the
 decorating room rather than promising one. The garden's: **eight seeds rather
 than `GAMEPLAY.md` §5's six**, because the kitchen deals eight; a full basket
@@ -278,13 +279,22 @@ These were argued through and settled. Reopen only if the user asks.
   from the facet normals, and corners stay light. Every room is an open corner
   room box (two walls + floor) on a slim base slab, at a fixed isometric angle.
   Full spec in `references/REFERENCES.md`.
-  **The ten Blender props break the AO rule, on the owner's call, 2026-08-16**:
+ **The modelled props break the AO rule, on the owner's calls of 2026-08-16 and
+ 2026-08-18**:
   a crown standing off a globe, a collar fanning over a tie, a board butting
   into a post, four petals crowding a hub, a spout leaving its post and icing
-  hanging over a tier are all joins no facet can shade. It is baked to the
-  facets, not to a texture, and reaches 2.2–6 mm. `models/README.md` has the
-  argument; the rule holds everywhere else, including everything `FacetedMesh`
-  builds.
+ hanging over a tier are all joins no facet can shade. The kitchen and garden
+ bakes reach 2.2–6 mm. Het Feest's measured exception reaches **30 mm over ten
+ Shade levels** on the friends and modelled disco props; the shared cake
+ uses it in every room. It is still baked to facets, not a texture.
+ `app/AMBIENT-OCCLUSION.md` has the measurements and `models/README.md` has the
+ implementation; the rule holds everywhere else, including everything
+ `FacetedMesh` builds and every room shell.
+ **Het Feest's dance-floor top is the one generated texture exception.** The
+ room-box plate requires a genuinely smooth rectangular light falloff; three
+ `ShadeN` bands were visibly bands. `FeestProps` generates one 128² greyscale
+ texture in memory and reuses it on all 36 UV planes. The bundled modelled tile
+ remains its no-texture failure fallback.
   **Every image generation must pass the matching locked style reference**
   alongside the prompt — scenes `64f0893e-073a-4065-b363-f87687ced11d`
   (`references/plates/01-cottage-exterior.png`), characters

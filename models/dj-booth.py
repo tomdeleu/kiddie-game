@@ -26,12 +26,12 @@ things. What the code version could not say, in the order the plate says it:
   * **Faders and a screen.** Two slider bars beside the platters and an angled
     display on the mixer. Small, and they are what a plate is for.
 
-**The colours are the room's, not the studio plate's**, and the two disagree:
-`dj-booth.png` paints a blue-grey cabinet, `roombox.png` a cream one. The room
-box wins for the same reason it won about the size of the mirror ball — it is
-the picture with the room in it — and it is also what the game already ships.
-Every colour here is repainted from `Palette.swift` on load anyway; these exist
-so the `.blend` is reviewable.
+**The booth plate now wins on the cabinet.** The former cream body disappeared
+into the plaster and made the pink lip look like a floating tray. The plate's
+blue-grey body is `berryBlue`, with `berryBlueDeep` feet and a cream lightbox
+frame — still the game's palette, but now the same colour blocking as the prop
+reference. Every colour is repainted from `Palette.swift` on load anyway; these
+exist so the `.blend` is reviewable.
 
 **The two platters are one mesh each, mark included, and that is the rig talking
 rather than a saving.** They spin, so `FeestProps` hangs each on
@@ -72,10 +72,10 @@ DECK_RADIUS = 0.021
 
 
 def build():
-    cream = feest.material("BoothCream", feest.CREAM)
     cream_light = feest.material("BoothCreamLight", feest.CREAM_LIGHT)
     rose = feest.material("BoothRose", feest.ROSE)
-    lilac = feest.material("BoothLilac", feest.LILAC)
+    blue = feest.material("BoothBlue", feest.BERRY_BLUE)
+    blue_deep = feest.material("BoothBlueDeep", feest.BERRY_BLUE_DEEP)
     butter = feest.material("BoothButter", feest.BUTTER_YELLOW)
     wood = feest.material("BoothWood", feest.WOOD_BROWN)
 
@@ -86,7 +86,7 @@ def build():
     # off the floor. Without them the box sits in the floor and the room's
     # contact shadow is the only thing saying it is an object.
     inset = 0.008
-    parts.append(feest.boxes("BoothVoet", wood, [
+    parts.append(feest.boxes("BoothVoet", blue_deep, [
         ((sx * HALF_X - sx * inset - 0.005, sx * HALF_X - sx * inset + 0.005),
          (sy * HALF_Y - sy * inset - 0.005, sy * HALF_Y - sy * inset + 0.005),
          (0.0, FOOT))
@@ -94,14 +94,14 @@ def build():
 
     # The cabinet. A crisp box, because the plate's cabinet is crisp — the
     # chamfer that `feest.octa_column` exists for belongs to the speakers.
-    parts.append(feest.boxes("BoothKast", cream,
+    parts.append(feest.boxes("BoothKast", blue,
                              [((-HALF_X, HALF_X), (-HALF_Y, HALF_Y),
                                (FOOT, HEIGHT))]))
 
     # --------------------------------------------------------- the front window
     # Blender +Y is the game's −Z, so the face towards the camera is at −Y.
     front = -HALF_Y
-    panel_x, panel_z0, panel_z1 = 0.040, 0.018, 0.052
+    panel_x, panel_z0, panel_z1 = 0.042, 0.014, 0.053
     frame = 0.004
     parts.append(feest.boxes("BoothLijst", cream_light, [
         # left, right, bottom, top — four bars standing 1.5 mm proud of the
@@ -132,32 +132,27 @@ def build():
          (-HALF_Y - SLAB_PROUD, HALF_Y + SLAB_PROUD),
          (HEIGHT, HEIGHT + SLAB))]))
 
-    # The rail along the back, with a taller block at each end — straight off
-    # the plate, and the reason the silhouette is a console.
+    # The rail along the back — straight off the plate, and the reason the
+    # silhouette is a console. Its two end stops are dark blocks sitting on the
+    # deck, not giant pink extensions of the rail.
     #
-    # **The blocks are stacked on the rail, not overlapped with it.** Written the
-    # obvious way — three boxes all starting at `rail_z`, two of them taller —
-    # the ends share a volume with the run, and `lowpoly.add_box` puts several
-    # shells in one mesh without unioning them. That leaves faces buried inside
-    # solid geometry, which is the fence's bug again and which rendered as two
-    # **black** blocks. Stacking is the fix and it is also the plate's own
-    # profile: a step, not a lump.
     rail_z = HEIGHT + SLAB
     back = HALF_Y + SLAB_PROUD
     parts.append(feest.boxes("BoothRand", rose, [
         ((-HALF_X - SLAB_PROUD, HALF_X + SLAB_PROUD), (back - 0.007, back),
          (rail_z, rail_z + 0.006)),
-        ((-HALF_X - SLAB_PROUD, -HALF_X + 0.010), (back - 0.007, back),
-         (rail_z + 0.006, rail_z + 0.011)),
-        ((HALF_X - 0.010, HALF_X + SLAB_PROUD), (back - 0.007, back),
-         (rail_z + 0.006, rail_z + 0.011)),
+    ]))
+    parts.append(feest.boxes("BoothStop", wood, [
+        ((x - 0.0035, x + 0.0035), (back - 0.012, back - 0.005),
+         (rail_z + 0.006, rail_z + 0.011))
+        for x in (-HALF_X + 0.011, HALF_X - 0.011)
     ]))
 
     # The deck plate let into the top: everything on the console stands on this
     # rather than on the rose slab. It stops 1 mm short of the rail's foot, so
     # the two never share a face.
     deck_z = rail_z
-    parts.append(feest.boxes("BoothDek", lilac, [
+    parts.append(feest.boxes("BoothDek", blue, [
         ((-0.050, 0.050), (-0.0215, back - 0.008), (deck_z, deck_z + 0.0015))]))
     top = deck_z + 0.0015
 
@@ -207,27 +202,46 @@ def build():
              (dy - 0.009, dy + 0.009), (0.0, 0.0016))], at=(0, 0, top)))
 
     # ---------------------------------------------------------------- the mixer
-    # Slim and low, because the platters are the console and this is the channel
-    # between them. It was 22 mm across and stood 4.5 mm proud, which beside a
-    # 42 mm platter is a block in the way rather than a mixer.
-    parts.append(feest.boxes("BoothMenger", cream_light, [
-        ((-0.0075, 0.0075), (-0.013, 0.013), (top, top + 0.0030))]))
+    # Low and broad enough to read between the two 42 mm platters. The old 15 mm
+    # strip hid its controls behind the discs; the plate gives the centre a real
+    # console body and a separate front channel section.
+    parts.append(feest.boxes("BoothMenger", blue, [
+        ((-0.0105, 0.0105), (-0.013, 0.013), (top, top + 0.0030))]))
     # The angled display on its back half. A wedge rather than a flat plate: in
     # the plate the screen leans back towards the DJ, and a screen lying flat is
     # a dark rectangle painted on the console.
     parts.append(feest.placed("BoothScherm", wood, _screen(top + 0.0030)))
 
-    # Six knobs in two rows on the front half, and they are `woodBrown` rather
+    # Eight knobs in two rows on the front half, and they are `woodBrown` rather
     # than the plate's charcoal, which is off the palette.
     knobs = []
     for row in range(2):
-        for column in range(3):
+        for column in range(4):
             knobs.append(feest.lathe(
                 "BoothKnop-%d-%d" % (row, column), wood,
                 [(0.0013, 0.0), (0.0016, 0.0014), (0.0011, 0.0023)], 6,
-                at=(-0.0044 + column * 0.0044, -0.0100 + row * 0.0048,
+                at=(-0.0066 + column * 0.0044, -0.0100 + row * 0.0048,
                     top + 0.0030)))
     parts.append(feest.join("BoothKnoppen", wood, knobs))
+
+    # Four channel faders in their own cream inset at the camera-side edge of
+    # the mixer. In the plate these little dark marks are what separates a DJ
+    # console from two record players on a table.
+    parts.append(feest.boxes("BoothKanaal", cream_light, [
+        ((-0.0115, 0.0115), (-0.0205, -0.0140),
+         (top + 0.0002, top + 0.0022))]))
+    parts.append(feest.boxes("BoothSchuif", wood, [
+        ((x - 0.0010, x + 0.0010), (-0.0195, -0.0150),
+         (top + 0.0022, top + 0.0030))
+        for x in (-0.0075, -0.0025, 0.0025, 0.0075)
+    ]))
+
+    # The two small rose square buttons at opposite front corners of the deck.
+    parts.append(feest.boxes("BoothLampje", rose, [
+        ((x - 0.0020, x + 0.0020), (-0.0200, -0.0160),
+         (top, top + 0.0022))
+        for x in (-0.046, 0.046)
+    ]))
 
     return parts
 
@@ -237,7 +251,7 @@ def _screen(z):
     import bmesh
     bm = bmesh.new()
     # A wedge: low at the front (−Y, the camera side), high at the back.
-    x0, x1 = -0.0062, 0.0062
+    x0, x1 = -0.0082, 0.0082
     y0, y1 = 0.0015, 0.0110
     v = [bm.verts.new(c) for c in
          ((x0, y0, z), (x1, y0, z), (x1, y1, z), (x0, y1, z),
@@ -269,14 +283,15 @@ def main():
     feest.check(deep <= HALF_Y + SLAB_PROUD + 1e-6,
                 "the booth is %.4f m deeper than its half-depth" % deep)
 
-    # 3 mm, against the 3 mm the top slab overhangs by — the number is chosen
-    # against the part the shading has to stay inside, which is
-    # `models/README.md`'s rule and the tree is what taught it.
+    # The room-wide AO study supersedes the original 3 mm contact bake here.
+    # At 30 mm the booth keeps the slab joins and also gains the broad cabinet
+    # separation visible in the ray-traced reference, quantised over ten
+    # ShadeN levels rather than two hard thresholds.
     #
     # **The platters are baked like everything else**, because folding the mark
     # into `Plaat<i>` made them a single part with a single base name, which is
     # what `ModelLibrary.pivot` needs to carry a moving part's shading with it.
-    objects = feest.finish(NAME, parts, distance=0.003)
+    objects = feest.finish(NAME, parts)
     for ob in objects:
         if ob.type == 'MESH':
             print("  %-22s %3d faces" % (ob.name, len(ob.data.polygons)))
