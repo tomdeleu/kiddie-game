@@ -131,22 +131,38 @@ final class GuestCharacter {
 
     // MARK: - Proportions
     //
-    // All from `references/feest/beertjes.png`, measured off the plate as
-    // fractions of the total height and then written down in metres once. The
-    // guest is 0.102 m tall against Nina's 0.125, which is right: they are her
-    // friends and they are little.
+    // **Kept in step with `models/beertje.py`, which measured them off
+    // `references/feest/beertje-solo.png` rather than taking them from here.**
+    // These numbers changed when the guests were modelled, and the reason is
+    // worth recording: the old set put the head's *centre* at the torso's top, so
+    // half the head was inside the body and the two — being the same width —
+    // fused into one lump with ears on it. Measured off the plate the head
+    // overlaps the body by about 3% of its own diameter, and the bear is roughly
+    // twice as tall as it is wide where the old rig was 87 mm tall against 62.
+    //
+    // The width is deliberately unchanged in spirit: `FeestLayout.guestRadius` is
+    // a 32 mm *touch* radius and `boothCentre` records the DJ needing to fit
+    // behind his decks, so the body got narrower rather than wider. The guest now
+    // stands about 102 mm — which is what the comment here always claimed.
 
-    private static let legHeight: Float = 0.013
+    private static let legHeight: Float = 0.014
     private static let bodyBase: Float = 0.012
-    private static let bodyHeight: Float = 0.048
-    private static let bodyWidest: Float = 0.031
-    /// Head centre, in body space. It sits *into* the top of the barrel — there
-    /// is no neck on the plate and a gap where one would be is the single
-    /// quickest way to lose the look.
-    private static let headY: Float = 0.046
-    private static let headRadius: Float = 0.026
-    private static let shoulderY: Float = 0.036
-    private static let armLength: Float = 0.021
+    private static let bodyHeight: Float = 0.046
+    private static let bodyWidest: Float = 0.028
+    /// Head centre, in body space. It sits a few millimetres *into* the top of
+    /// the barrel — there is no neck on the plate — but only a few: sunk to its
+    /// centre it stops being a head.
+    private static let headY: Float = 0.064
+    private static let headRadius: Float = 0.023
+    private static let shoulderY: Float = 0.038
+    private static let armLength: Float = 0.024
+    /// Where an arm hangs off the body, and where the model puts it.
+    private static var shoulderX: Float { bodyWidest * 0.86 }
+    /// Where a leg stands. The model pushes them 8 mm forward of the body's axis
+    /// so the feet clear the belly's bulge from a camera looking down at 31° —
+    /// which is every camera this game has.
+    private static let hipX: Float = 0.014
+    private static let hipZ: Float = 0.008
 
     init(friend: Friend, role: Role = .gast, style: DanceStyle = .zwaaien,
          at home: SIMD3<Float>, phase: Float, ticker: Ticker, flat: Bool) {
@@ -167,6 +183,110 @@ final class GuestCharacter {
         let coat = friend.colour
         let accent = friend.accent
 
+        var builtLegs: [Entity] = []
+        let raise = role == .dj ? (left: Float(1.5), right: Float(1.5)) : style.raise
+        let forward = role == .dj ? Float(0.9) : style.forward
+
+        // **The modelled friend**, from `models/beertje.py` — one USDZ per
+        // species, all eleven of them, so a friend is never headless.
+        //
+        // The model arrives as one flat set of parts in **root space**, and the
+        // rig is rebuilt around it here rather than in Blender: each group is
+        // lifted onto the pivot that drives it, preserving its world transform,
+        // so the geometry lands exactly where it was modelled and the pivot is
+        // the thing that turns. `CONCEPT.md` §9.7 is untouched — one solid body,
+        // two legs pivoting at the hip, arms welded on at a fixed pose.
+        //
+        // **Order matters.** The catch-all at the end sweeps whatever is still
+        // under the wrapper into the body, so the head, arms and legs have to
+        // have been lifted out before it runs.
+        if flat, let modelled = ModelLibrary.load(
+                "beertje-\(friend.soort.rawValue)",
+                tint: ["Coat": coat, "Accent": accent,
+                       "Cream": Palette.creamLight, "Dark": Palette.woodBrown]) {
+            root.addChild(modelled)
+
+            body.name = "GastBody"
+            body.position = [0, GuestCharacter.bodyBase, 0]
+            root.addChild(body)
+
+            head.name = "GastHead"
+            head.position = [0, GuestCharacter.headY, 0]
+            body.addChild(head)
+
+            for i in 0..<2 {
+                let arm = Entity()
+                arm.name = "GastArm\(i)"
+                arm.position = [i == 0 ? -GuestCharacter.shoulderX
+                                       : GuestCharacter.shoulderX,
+                                GuestCharacter.shoulderY, 0]
+                body.addChild(arm)
+                GuestCharacter.regroup(modelled, matching: "Arm\(i)", into: arm)
+                // Positive Z-rotation swings +Y towards −X, which is the left
+                // side — so the left arm takes the angle and the right one takes
+                // its negative, and both lean out rather than across.
+                let sideways = i == 0 ? raise.left : -raise.right
+                arm.orientation = simd_quatf(angle: sideways, axis: [0, 0, 1])
+                    * simd_quatf(angle: forward, axis: [1, 0, 0])
+            }
+
+            for i in 0..<2 {
+                // Pivot at the hip, not at the leg's middle. Rotating a leg
+                // about its centre is the classic error and makes it look
+                // detached.
+                let hip = Entity()
+                hip.name = "GastHip\(i)"
+                hip.position = [i == 0 ? -GuestCharacter.hipX : GuestCharacter.hipX,
+                                GuestCharacter.legHeight, GuestCharacter.hipZ]
+                root.addChild(hip)
+                GuestCharacter.regroup(modelled, matching: "Been\(i)", into: hip)
+                builtLegs.append(hip)
+            }
+
+            GuestCharacter.regroup(modelled, matching: "Kop", into: head)
+            GuestCharacter.regroup(modelled, matching: "", into: body)
+        } else {
+            builtLegs = GuestCharacter.buildProcedural(
+                root: root, body: body, head: head, friend: friend,
+                coat: coat, accent: accent, raise: raise, forward: forward,
+                flat: flat)
+        }
+        legs = builtLegs
+
+        if role == .dj {
+            // Two cups and a band. It is the one prop in the room that says
+            // *this animal is working* rather than dancing, and it is three
+            // pieces. Modelled friends do not carry them: eleven files would
+            // each need a DJ variant to say what three primitives say here.
+            for dx in [Float(-0.022), 0.022] {
+                let cup = RoomBuilder.model(.prism(radius: 0.0068, height: 0.006, sides: 8),
+                                            Palette.woodBrown, flat: flat, name: "DJCup")
+                cup.orientation = simd_quatf(angle: .pi / 2, axis: [0, 0, 1])
+                cup.position = [dx, 0.002, 0]
+                head.addChild(cup)
+            }
+            let band = RoomBuilder.model(.box([0.042, 0.005, 0.007]),
+                                         Palette.woodBrown, flat: flat, name: "DJBand")
+            band.position = [0, 0.018, 0]
+            head.addChild(band)
+        }
+
+        start()
+    }
+
+
+    /// The code-built friend. See `init` for when it runs: the USDZ missing from
+    /// the bundle, or the debug panel's flat-shading toggle turned off. A missing
+    /// asset must not leave a guest-shaped hole where a tap target was.
+    ///
+    /// `static` because Swift will not let `init` call an instance method before
+    /// every stored property is assigned, and `legs` is what this produces.
+    private static func buildProcedural(root: Entity, body: Entity, head: Entity,
+                                        friend: Friend, coat: UIColorLike,
+                                        accent: UIColorLike,
+                                        raise: (left: Float, right: Float),
+                                        forward: Float, flat: Bool) -> [Entity] {
+        let soort = friend.soort
         // MARK: Legs — stubs, and the only parts that move independently.
         //
         // On the plate they are barely there: two little feet under a barrel,
@@ -190,7 +310,6 @@ final class GuestCharacter {
 
             builtLegs.append(hip)
         }
-        legs = builtLegs
 
         // MARK: Body — one solid piece, and it is a barrel rather than a box.
         body.name = "GastBody"
@@ -222,8 +341,6 @@ final class GuestCharacter {
         // reads directly as *how far from straight up*: 0 is hands in the air,
         // π/2 is straight out, π is hanging down. `DanceStyle.raise` is written
         // in exactly those terms.
-        let raise = role == .dj ? (left: Float(1.5), right: Float(1.5)) : style.raise
-        let forward = role == .dj ? Float(0.9) : style.forward
         for (i, dx) in [Float(-0.026), 0.026].enumerated() {
             let arm = RoomBuilder.model(
                 .lathe(profile: [[0.0062, 0], [0.0072, 0.006], [0.0068, 0.016],
@@ -260,7 +377,7 @@ final class GuestCharacter {
 
         // The frog's eyes stand on top of its head instead, which is the whole
         // of what makes a frog a frog at this size.
-        if friend.soort != .kikker {
+        if soort != .kikker {
             for (i, dx) in [Float(-0.0098), 0.0098].enumerated() {
                 let eye = RoomBuilder.model(.icosphere(radius: 0.0032, subdivisions: 0),
                                             Palette.woodBrown, flat: flat, name: "GastOog\(i)")
@@ -269,26 +386,9 @@ final class GuestCharacter {
             }
         }
 
-        GuestCharacter.buildFace(friend.soort, on: head, coat: coat, accent: accent, flat: flat)
+        buildFace(soort, on: head, coat: coat, accent: accent, flat: flat)
 
-        if role == .dj {
-            // Two cups and a band. It is the one prop in the room that says
-            // *this animal is working* rather than dancing, and it is three
-            // pieces.
-            for dx in [Float(-0.024), 0.024] {
-                let cup = RoomBuilder.model(.prism(radius: 0.0075, height: 0.006, sides: 8),
-                                            Palette.woodBrown, flat: flat, name: "DJCup")
-                cup.orientation = simd_quatf(angle: .pi / 2, axis: [0, 0, 1])
-                cup.position = [dx, 0.002, 0]
-                head.addChild(cup)
-            }
-            let band = RoomBuilder.model(.box([0.046, 0.005, 0.007]),
-                                         Palette.woodBrown, flat: flat, name: "DJBand")
-            band.position = [0, 0.020, 0]
-            head.addChild(band)
-        }
-
-        start()
+        return builtLegs
     }
 
     // MARK: - The eleven heads
@@ -530,6 +630,30 @@ final class GuestCharacter {
         }
     }
 
+    /// Lift every mesh whose name contains `token` onto `holder`, keeping it
+    /// exactly where it was modelled.
+    ///
+    /// An empty token matches everything still under `source`, which is how the
+    /// torso and belly reach the body without being named: by then the head, the
+    /// arms and the legs have already been taken out.
+    private static func regroup(_ source: Entity, matching token: String,
+                                into holder: Entity) {
+        var found: [ModelEntity] = []
+        collect(source, matching: token, into: &found)
+        // Gathered first and moved afterwards: re-parenting mid-walk mutates the
+        // children being iterated.
+        for mesh in found { mesh.setParent(holder, preservingWorldTransform: true) }
+    }
+
+    private static func collect(_ entity: Entity, matching token: String,
+                                into found: inout [ModelEntity]) {
+        if let model = entity as? ModelEntity, model.model != nil,
+           token.isEmpty || model.name.contains(token) {
+            found.append(model)
+        }
+        for child in entity.children { collect(child, matching: token, into: &found) }
+    }
+
     // MARK: - Dancing
 
     /// One job for the life of the character, and it does nothing but advance a
@@ -652,7 +776,14 @@ final class GuestCharacter {
     private func djNods(swing: Float, sway: Float) {
         // He leans over the decks and nods. No hop: a DJ who bounced like the
         // crowd would read as a guest standing in the wrong place.
-        body.orientation = simd_quatf(angle: 0.22 + swing * 0.06, axis: [1, 0, 0])
+        //
+        // **0.12 rad, down from 0.22, and the modelled friends are why.** The
+        // lean tips the head forward by `sin(angle) × headY`, and the guests grew
+        // from 87 mm to 102 mm when they were built from the plate — so the same
+        // angle now carries his chin past the console's near edge and lays his
+        // face on the platters. Half the lean puts him back over his decks
+        // instead of on them.
+        body.orientation = simd_quatf(angle: 0.12 + swing * 0.05, axis: [1, 0, 0])
         head.orientation = simd_quatf(angle: sway * 0.12, axis: [0, 1, 0])
         root.position = home
         root.scale = SIMD3<Float>(1 - swing * 0.012, 1 + swing * 0.020, 1 - swing * 0.012)

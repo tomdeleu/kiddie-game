@@ -358,6 +358,18 @@ final class GameScene: ObservableObject {
         voice.load()
         ticker.start()
 
+        // **`-room <id>` opens straight into that room**, which is the room
+        // switcher's job done from the command line so a simulator run can be
+        // driven without touching the UI. Debug builds only; it reads the same
+        // `RoomID` the picker does, so there is no second list to keep in step.
+        #if DEBUG
+        if let i = ProcessInfo.processInfo.arguments.firstIndex(of: "-room"),
+           i + 1 < ProcessInfo.processInfo.arguments.count,
+           let wanted = RoomID(rawValue: ProcessInfo.processInfo.arguments[i + 1]) {
+            enter(wanted, greeting: greeting)
+            return
+        }
+        #endif
         enter(.keuken, greeting: greeting)
     }
 

@@ -650,8 +650,14 @@ final class FeestRoom: Room {
                 }
                 guard wanted != floorWear[index] else { continue }
                 floorWear[index] = wanted
-                tile.model?.materials = [wanted < 0 ? floor.dark[index]
-                                                    : floor.glowing[wanted]]
+                // A tile is several meshes — `models/dance-tile.py` splits its
+                // top into three bands for the gradient — so lighting one is a
+                // swap across all of them and unlighting it restores each mesh's
+                // own step of the ladder.
+                for part in tile {
+                    part.mesh.model?.materials = [wanted < 0 ? part.dark
+                                                             : floor.glowing[wanted]]
+                }
             }
         }
 
@@ -951,7 +957,7 @@ final class FeestRoom: Room {
 
     private func tapLamps() {
         sound.play(.ding, volume: 0.45, rate: 1.5)
-        for lamp in lamps { ticker.squash(lamp.lens, amount: 0.30, duration: 0.35) }
+        for lamp in lamps { ticker.squash(lamp.lensPivot, amount: 0.30, duration: 0.35) }
         // A colour change now rather than on the next beat, which is the whole
         // response: five lamps all changing at once is a visible thing.
         lastLitStep = -1
@@ -1301,8 +1307,25 @@ private extension simd_quatf {
     /// The decorating room has the same extension for the same reason; it is
     /// `private` in both, which is the cheaper of the two ways to avoid a
     /// collision until a third room wants it.
+    ///
+    /// **The minus sign is load-bearing and it was missing.** A turn of θ about
+    /// +Y sends (1, 0, 0) to (cos θ, 0, −sin θ) — the right-hand rule curls +Z
+    /// towards +X — so `atan2(v.z, v.x)` is `atan2(−sin θ, cos θ)`, which is
+    /// **−θ**. Reading the angle back therefore returned its negative.
+    ///
+    /// Everything in this room that spins accumulates by reading its own angle
+    /// and adding to it (`stepRoom`, `celebrate`), and with the sign inverted
+    /// that recurrence is `aₙ₊₁ = −aₙ + turn`, which does not rotate: it
+    /// **alternates between 0 and `turn` on every frame**. The mirror ball, its
+    /// pools of light on the floor and both of the DJ's platters were all
+    /// vibrating in place at the frame rate rather than turning — owner,
+    /// 2026-08-18: *"the disco ball seems like its spinning extremely fast.
+    /// glitching."*
+    ///
+    /// Verified against `simd` rather than argued: with the sign the angle
+    /// accumulates 0.1, 0.2, 0.3…; without it, 0.1, 0, 0.1, 0.
     var angleAboutY: Float {
         let v = act(SIMD3<Float>(1, 0, 0))
-        return atan2(v.z, v.x)
+        return atan2(-v.z, v.x)
     }
 }

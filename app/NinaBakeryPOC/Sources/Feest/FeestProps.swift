@@ -49,60 +49,121 @@ enum FeestProps {
     /// a number of its own rather than another `amount` passed to `lit`.
     static let floorGlow: Float = 0.85
 
+    /// **How hard a mirror-ball tile glints, and it is a quarter of a lamp.**
+    ///
+    /// The ball came back white (owner, 2026-08-18: *"it also has too much
+    /// light. it looks white instead of like the plate."*), and it is the floor's
+    /// mistake repeated on a smaller surface: a lit tile was
+    /// `lit(.creamLight, 0.7)`, which is emission at **1.82** on a base colour
+    /// already at 95% luminance. Anything that far above white has no colour left
+    /// after tonemapping, so every glinting tile came back the same flat white
+    /// and the ball read as a lamp rather than as a thing catching one.
+    ///
+    /// `references/feest/discobal.png` has **no glowing tile at all** — the whole
+    /// prop sits in a narrow pale band and the glint is the game's own addition.
+    /// So it should be the smallest emissive value in the room, not the largest,
+    /// and it is applied to `butterYellow` rather than `creamLight`: a mid-tone
+    /// has chroma left to survive the exposure, which is the same pairing
+    /// `FeestLayout.floorLitColours` settled on.
+    static let ballGlow: Float = 0.34
+
     // MARK: - The dance floor
 
     struct DanceFloor {
         let root: Entity
-        /// Row-major, `tilesPerSide²` of them. The room repaints these on the
-        /// beat and needs them in a flat array to do it cheaply.
-        let tiles: [ModelEntity]
-        /// **Built once, at build time.** One per tile, in its own pale colour —
-        /// what a tile wears when it is not lit.
-        let dark: [RealityKit.Material]
+        /// Row-major, `tilesPerSide²` of them.
+        ///
+        /// **A tile is several meshes, not one**, because `models/dance-tile.py`
+        /// splits its top into three concentric bands so the tile can be brighter
+        /// in the middle than at its edge. Each is paired with the matte material
+        /// the loader gave it, so lighting a tile is a swap and unlighting it is
+        /// a restore — no material is ever rebuilt on the beat.
+        let tiles: [[(mesh: ModelEntity, dark: RealityKit.Material)]]
         /// One per entry in `FeestLayout.floorLitColours`. A lit tile is assigned
         /// one of these rather than having a material constructed for it.
         let glowing: [RealityKit.Material]
     }
 
-    /// **Sixteen thin boxes, and it is the whole disco.**
+    /// **Thirty-six tiles, and it is the whole disco.**
     ///
     /// `references/feest/dansvloer.png` came back with pastel tiles rather than a
     /// black-and-white chequer, and that is the version that belongs here: a lit
     /// floor in the room's own colours, with three or four brighter than the rest
     /// at any moment. A chequer would have been a second palette.
+    ///
+    /// ## The gradient, and why it costs no new code
+    ///
+    /// The plates show a soft square falloff on each tile — brighter in the
+    /// middle, dimming to the edge — and that is most of what makes
+    /// `roombox.png`'s floor read as *lit* rather than painted. It is not a
+    /// texture: this game has none, and the floor is the largest surface in the
+    /// room and so the worst place to start. `models/dance-tile.py` quantises the
+    /// falloff onto facets instead, and names the bands `TegelVlak`,
+    /// `TegelVlakShade1` and `TegelVlakShade2` — the suffix `ModelLibrary`
+    /// already reads as "this many steps darker". The whole gradient therefore
+    /// arrives through the occlusion path with no new Swift at all.
+    ///
+    /// **A lit tile glows uniformly**, which is deliberate: the gradient says
+    /// *this tile is a panel*, and a tile that has just lit up is a lamp. Keeping
+    /// the ladder while lit would have meant a second set of thirty-six
+    /// materials to say something the light already says.
     static func danceFloor(flat: Bool) -> DanceFloor {
         let root = Entity()
         root.name = "Dansvloer"
 
-        var tiles: [ModelEntity] = []
-        var dark: [RealityKit.Material] = []
-        let size = FeestLayout.tileSize
-        // **One mesh, thirty-six tiles.** They are identical boxes, and
-        // `RoomBuilder.model` builds a fresh `MeshResource` per call — so the
-        // obvious loop was generating 36 copies of the same geometry and giving
-        // the renderer 36 things it cannot batch.
-        let mesh = FacetedMesh.mesh(FacetedMesh.box([size, FeestLayout.tileThickness, size]),
-                                    flat: flat)
+        var tiles: [[(mesh: ModelEntity, dark: RealityKit.Material)]] = []
         let glowing = FeestLayout.floorLitColours.map { lit($0, floorGlow) }
+        let size = FeestLayout.tileSize
+        // **One mesh, thirty-six tiles**, for the procedural path. They are
+        // identical boxes and `RoomBuilder.model` builds a fresh `MeshResource`
+        // per call, so the obvious loop generated 36 copies of one geometry.
+        let fallbackMesh = FacetedMesh.mesh(
+            FacetedMesh.box([size, FeestLayout.tileThickness, size]), flat: flat)
+
         for row in 0..<FeestLayout.tilesPerSide {
             for column in 0..<FeestLayout.tilesPerSide {
                 let colour = FeestLayout.tileColour(row: row, column: column)
-                let material = Palette.material(colour)
-                dark.append(material)
-                let tile = ModelEntity(mesh: mesh, materials: [material])
-                tile.name = "Tegel-\(row)-\(column)"
                 var spot = FeestLayout.tileSpot(row, column)
-                spot.y = RoomBox.floorY + FeestLayout.tileThickness / 2
-                tile.position = spot
+                var built: [(mesh: ModelEntity, dark: RealityKit.Material)] = []
+
+                if flat, let modelled = ModelLibrary.load("dance-tile",
+                                                          tint: ["Tegel": colour]) {
+                    // The model sits on its own floor, so it is placed by its
+                    // base rather than by its middle.
+                    spot.y = RoomBox.floorY
+                    modelled.position = spot
+                    modelled.name = "Tegel-\(row)-\(column)"
+                    modelled.excludeFromShadowCasting()
+                    root.addChild(modelled)
+                    collectTileMeshes(modelled, into: &built)
+                } else {
+                    spot.y = RoomBox.floorY + FeestLayout.tileThickness / 2
+                    let material = Palette.material(colour)
+                    let tile = ModelEntity(mesh: fallbackMesh, materials: [material])
+                    tile.name = "Tegel-\(row)-\(column)"
+                    tile.position = spot
+                    tile.excludeFromShadowCasting()
+                    root.addChild(tile)
+                    built = [(tile, material)]
+                }
+
                 // A lit floor casting a shadow of itself onto the floor it is
-                // lying on is the one shadow in this room that could only ever
-                // be a stain. Same reasoning as `RoomBox.shell`.
-                tile.excludeFromShadowCasting()
-                root.addChild(tile)
-                tiles.append(tile)
+                // lying on is the one shadow in this room that could only ever be
+                // a stain. Same reasoning as `RoomBox.shell`.
+                tiles.append(built)
             }
         }
-        return DanceFloor(root: root, tiles: tiles, dark: dark, glowing: glowing)
+        return DanceFloor(root: root, tiles: tiles, glowing: glowing)
+    }
+
+    /// Every mesh under a loaded tile, with the material the loader painted it.
+    private static func collectTileMeshes(
+        _ entity: Entity,
+        into found: inout [(mesh: ModelEntity, dark: RealityKit.Material)]) {
+        if let model = entity as? ModelEntity, let first = model.model?.materials.first {
+            found.append((model, first))
+        }
+        for child in entity.children { collectTileMeshes(child, into: &found) }
     }
 
     // MARK: - The six pads
@@ -315,7 +376,7 @@ enum FeestProps {
         root.excludeFromShadowCasting()
 
         return MirrorBall(root: root, ball: ball, tiles: tiles, dark: dark,
-                          glowing: lit(Palette.creamLight, 0.7))
+                          glowing: lit(Palette.butterYellow, ballGlow))
     }
 
     /// The pools of light, built separately because they live on the **floor**
@@ -352,7 +413,13 @@ enum FeestProps {
 
     struct Lamp {
         let root: Entity
+        /// What the beat recolours.
         let lens: ModelEntity
+        /// What the beat squashes. **Not the same entity**: a loaded mesh's own
+        /// transform belongs to the exporter, so scaling it scales about the
+        /// prop's origin rather than the lens's. `ModelLibrary.pivot` hands back
+        /// a holder standing where the lens stands, which is what a squash wants.
+        let lensPivot: Entity
         let beam: ModelEntity
     }
 
@@ -389,19 +456,40 @@ enum FeestProps {
         let down = simd_normalize(target - origin)
         root.orientation = simd_quatf(from: [0, -1, 0], to: down)
 
-        let housing = RoomBuilder.model(
-            .taperedPrism(bottomRadius: 0.0105, topRadius: 0.0068, height: 0.014, sides: 8),
-            Palette.creamLight, flat: flat, name: "LampHuis")
-        // The lathe stands on +Y, and local −Y is where it has to point.
-        housing.orientation = simd_quatf(angle: .pi, axis: [1, 0, 0])
-        housing.position = [0, 0.002, 0]
-        root.addChild(housing)
+        // **The model needs no turn at all.** `models/stage-lamp.py` builds the
+        // lantern looking down its own −Y — clamp straddling the bar, barrel
+        // hanging under it — which is exactly the axis `root` has just been
+        // rotated onto. The code version below turns its housing a further π
+        // about X because a `FacetedMesh` lathe stands on +Y; a model built
+        // pointing the right way does not.
+        var lens: ModelEntity
+        var lensPivot: Entity
+        if flat, let modelled = ModelLibrary.load("stage-lamp",
+                                                  tint: ["LampHuis": Palette.creamLight,
+                                                         "LampLens": colour]),
+           let mesh = ModelLibrary.mesh("LampLens", in: modelled),
+           let pivot = ModelLibrary.pivot("LampLens", in: modelled) {
+            root.addChild(modelled)
+            mesh.model?.materials = [lit(colour)]
+            lens = mesh
+            lensPivot = pivot
+        } else {
+            let housing = RoomBuilder.model(
+                .taperedPrism(bottomRadius: 0.0105, topRadius: 0.0068, height: 0.014, sides: 8),
+                Palette.creamLight, flat: flat, name: "LampHuis")
+            // The lathe stands on +Y, and local −Y is where it has to point.
+            housing.orientation = simd_quatf(angle: .pi, axis: [1, 0, 0])
+            housing.position = [0, 0.002, 0]
+            root.addChild(housing)
 
-        let lens = RoomBuilder.model(.prism(radius: 0.0092, height: 0.0022, sides: 8),
-                                     colour, flat: flat, name: "LampLens")
-        lens.model?.materials = [lit(colour)]
-        lens.position = [0, -0.014, 0]
-        root.addChild(lens)
+            let built = RoomBuilder.model(.prism(radius: 0.0092, height: 0.0022, sides: 8),
+                                          colour, flat: flat, name: "LampLens")
+            built.model?.materials = [lit(colour)]
+            built.position = [0, -0.014, 0]
+            root.addChild(built)
+            lens = built
+            lensPivot = built
+        }
 
         // **Narrow end first, and that is not obvious.** A `taperedPrism` puts
         // `bottomRadius` at y = 0, and the π turn about X below maps y = 0 to the
@@ -435,11 +523,31 @@ enum FeestProps {
         root.addChild(beam)
         root.excludeFromShadowCasting()
 
-        return Lamp(root: root, lens: lens, beam: beam)
+        return Lamp(root: root, lens: lens, lensPivot: lensPivot, beam: beam)
     }
 
     /// The bar the lamps clamp on. Two of them, one per wall.
+    ///
+    /// **A round tube with a real bore**, from `models/light-bar.py` — the code
+    /// version is `.box([length, 5 mm, 5 mm])`, a square batten, and every bar in
+    /// `references/feest/lichtrek.png` is a scaffolding pole.
+    ///
+    /// **It is the one prop in the game that is scaled on load**, which
+    /// `models/README.md` otherwise forbids, and the exception is a geometric
+    /// fact rather than a judgement: every facet on a tube's skin is a rectangle
+    /// whose long edge runs down the axis, so lengthening it changes no angle, no
+    /// normal and no silhouette. The two end annuli are perpendicular to the axis
+    /// and do not scale at all. The alternative is a second 40-face file that
+    /// differs in one number.
+    static let lightBarLength: Float = 0.280
+
     static func lightBar(length: Float, flat: Bool) -> Entity {
+        if flat, let modelled = ModelLibrary.load("light-bar",
+                                                  tint: ["Lichtbalk": Palette.woodBrown]) {
+            modelled.scale = [length / lightBarLength, 1, 1]
+            modelled.excludeFromShadowCasting()
+            return modelled
+        }
         let bar = RoomBuilder.model(.box([length, 0.005, 0.005]),
                                     Palette.woodBrown, flat: flat, name: "Lichtbalk")
         bar.excludeFromShadowCasting()
@@ -465,6 +573,43 @@ enum FeestProps {
         root.name = "DJBooth"
         root.position = [FeestLayout.boothCentre.x, RoomBox.floorY, FeestLayout.boothCentre.y]
 
+        if flat, let modelled = ModelLibrary.load("dj-booth", tint: boothTint),
+           let panel = ModelLibrary.mesh("BoothPaneel", in: modelled) {
+            root.addChild(modelled)
+            // The room's biggest emissive surface. The loader paints everything
+            // matte; this is the one mesh that is a light rather than a lit
+            // thing, so it is overridden after the fact.
+            panel.model?.materials = [lit(Palette.butterYellow, 0.8)]
+            let decks = (0..<2).compactMap { ModelLibrary.pivot("Plaat\($0)", in: modelled) }
+            return Booth(root: root, decks: decks, panel: panel)
+        }
+        return buildProceduralBooth(into: root, flat: flat)
+    }
+
+    /// Mesh name → palette colour for `models/dj-booth.py`.
+    ///
+    /// Matched by prefix, longest first, so `BoothKnop` can differ from
+    /// `BoothKast` without either listing every knob. **The plate's charcoal
+    /// knobs are `woodBrown` here**, which is the darkest of the locked thirteen
+    /// — `dj-booth.png` puts them off-palette and `references/feest/README.md`
+    /// already recorded the substitution.
+    private static let boothTint: [String: UIColorLike] = [
+        "BoothKast": Palette.cream,
+        "BoothVoet": Palette.woodBrown,
+        "BoothLijst": Palette.creamLight,
+        "BoothPaneel": Palette.butterYellow,
+        "BoothBlad": Palette.rose,
+        "BoothRand": Palette.rose,
+        "BoothDek": Palette.lilac,
+        "BoothMenger": Palette.creamLight,
+        "BoothScherm": Palette.woodBrown,
+        "BoothKnop": Palette.woodBrown,
+        "BoothFader": Palette.woodBrown,
+        "Plaat": Palette.creamLight,
+    ]
+
+    /// The code-built console. See `booth(flat:)` for when it runs.
+    private static func buildProceduralBooth(into root: Entity, flat: Bool) -> Booth {
         let size = FeestLayout.boothSize
         let height = FeestLayout.boothTopY - RoomBox.floorY
 
@@ -532,54 +677,152 @@ enum FeestProps {
         let cones: [Entity]
     }
 
-    /// A stack of two, from `references/feest/boxen.png`: square boxes each with
-    /// one large recessed cone and a smaller one above it.
+    /// **The modelled cabinet, stacked twice** — `models/speaker.py`, built from
+    /// `references/feest/boxen.png` and measured off a 3× crop of it.
     ///
-    /// **Takes its spot**, because there are two of them now — one in each back
-    /// corner (owner, 2026-08-17). They are identical and they thump together;
-    /// only the right-hand one is tappable, and `FeestLayout.speakerSpotFar` has
-    /// the reason.
+    /// **Takes its spot**, because there are two stacks — one in each back corner
+    /// (owner, 2026-08-17). They are identical and they thump together; only the
+    /// right-hand one is tappable, and `FeestLayout.speakerSpotFar` has why.
+    ///
+    /// ## What the model has that the code below does not
+    ///
+    /// The procedural version paints two pale discs on a plain brown box, and
+    /// from across the room that is exactly what it reads as — owner, 2026-08-18,
+    /// on seeing it in the game: *"that still looks like shit."* The plate has
+    /// four things it cannot say, and `models/speaker.py` argues each:
+    ///
+    /// - **Every edge chamfered**, top and bottom rims included.
+    /// - **A driver that stands proud of the baffle** as a raised boss, rather
+    ///   than a disc lying on it.
+    /// - **A deep funnel** behind a narrow rim lip.
+    /// - **A dust cap that is a spherical cap standing on the throat**, which is
+    ///   what puts a hard crease round it. A ball dropped into a cone cannot do
+    ///   this at any size — there is always a height where the cone equals the
+    ///   ball's radius, and the two blend into one dish.
+    ///
+    /// ## Two colours, because the plate has two
+    ///
+    /// `boxen.png` stacks a pale lavender cabinet on a peach one, and each is
+    /// **one colour all over** — cone, surround and dust cap included. The code
+    /// version painted the cone `creamLight` and the cap `woodBrown` against a
+    /// `sandyWood` box, which is the clover's mistake (`models/README.md`): a
+    /// tint standing in for a shape. With a real recess the facets do that job.
     static func speakers(at spot: SIMD3<Float>, flat: Bool) -> Speakers {
         let root = Entity()
         root.name = "Boxen"
         root.position = spot
 
         var cones: [Entity] = []
-        let box = SIMD3<Float>(0.044, 0.038, 0.030)
         for level in 0..<2 {
-            let y = Float(level) * (box.y + 0.002) + box.y / 2
-            let cabinet = RoomBuilder.model(.box(box), Palette.sandyWood, flat: flat,
-                                            name: "Box\(level)")
-            cabinet.position = [0, y, 0]
-            root.addChild(cabinet)
+            let y = Float(level) * (cabinetSize.y + 0.0015)
+            let colour = level == 0 ? Palette.sandyWood : Palette.lilac
 
-            for (i, spec) in [(Float(0.012), Float(-0.008)),
-                              (Float(0.006), Float(0.011))].enumerated() {
-                let cone = Entity()
-                cone.name = "Conus\(level)-\(i)"
-                cone.position = [0, y + spec.1, box.z / 2 + 0.001]
-                root.addChild(cone)
-
-                let disc = RoomBuilder.model(
-                    .taperedPrism(bottomRadius: spec.0, topRadius: spec.0 * 0.45,
-                                  height: 0.004, sides: 10),
-                    Palette.creamLight, flat: flat, name: "ConusPlaat")
-                disc.orientation = simd_quatf(angle: -.pi / 2, axis: [1, 0, 0])
-                cone.addChild(disc)
-
-                // The dust cap sits at the *inner* end of the cone, which is
-                // where the −π/2 turn puts the narrow end: the disc runs from the
-                // cabinet face inwards, so a cap proud of the face would be a
-                // knob on a hole.
-                let cap = RoomBuilder.model(.icosphere(radius: spec.0 * 0.30, subdivisions: 0),
-                                            Palette.woodBrown, flat: flat, name: "ConusDop")
-                cap.position = [0, 0, -0.0035]
-                cone.addChild(cap)
-
-                cones.append(cone)
+            if flat, let cabinet = ModelLibrary.load("speaker", tint: ["Box": colour]) {
+                cabinet.name = "Box\(level)"
+                cabinet.position = [0, y, 0]
+                root.addChild(cabinet)
+                // **Each driver on its own pivot**, because `FeestRoom` pushes it
+                // out with `cone.scale = [1, 1, push]`. `ModelLibrary.pivot` puts
+                // the holder at the part's own position and takes its baked shade
+                // siblings with it — without that the cone would stretch away
+                // from the cabinet's foot and leave its shading behind.
+                for i in 0..<2 {
+                    if let cone = driverPivot("BoxConus\(i)", in: cabinet) {
+                        cones.append(cone)
+                    }
+                }
+                continue
             }
+
+            buildProceduralCabinet(into: root, level: level, y: y, flat: flat,
+                                   cones: &cones)
         }
         return Speakers(root: root, cones: cones)
+    }
+
+    /// Put one driver — cone, dome and both of their baked shade meshes — on a
+    /// single upright pivot, and hand the pivot back.
+    ///
+    /// **`ModelLibrary.pivot` cannot do this one**, and the reason is worth
+    /// stating rather than working around silently: it collects a part by
+    /// *exact* base name, which is right for the scale's pan and wrong here. A
+    /// driver is two parts — `BoxConus0` and `BoxConus0Dop` — because
+    /// `models/speaker.py` splits the dome out so the bake can darken the cone
+    /// around it without darkening the dome. Matched exactly, the dome would be
+    /// left behind on the baffle while its cone pushed out on the beat.
+    ///
+    /// So this matches by **prefix**. It is deliberately local to this file
+    /// rather than a change to `ModelLibrary`: prefix matching is looser, and
+    /// three other rooms rely on the exact-match behaviour.
+    private static func driverPivot(_ prefix: String, in wrapper: Entity) -> Entity? {
+        var family: [ModelEntity] = []
+        collect(prefix, in: wrapper, into: &family)
+        guard let first = family.first else { return nil }
+
+        let holder = Entity()
+        holder.name = prefix + "Pivot"
+        holder.position = first.position(relativeTo: wrapper)
+        wrapper.addChild(holder)
+        for part in family {
+            part.setParent(holder, preservingWorldTransform: true)
+        }
+        return holder
+    }
+
+    private static func collect(_ prefix: String, in entity: Entity,
+                                into found: inout [ModelEntity]) {
+        if let model = entity as? ModelEntity, model.model != nil,
+           model.name.hasPrefix(prefix) {
+            found.append(model)
+        }
+        for child in entity.children {
+            collect(prefix, in: child, into: &found)
+        }
+    }
+
+    /// The cabinet's envelope, kept in step with `models/speaker.py`.
+    ///
+    /// **42 × 48 × 30, where the code version was 44 × 38 × 30.** Every cabinet
+    /// in `boxen.png` is taller than it is wide — 230 px across a 355 px face, a
+    /// ratio of 0.65 — and the old box was the other way round at 1.16. A squat
+    /// box with a small disc on it is most of why the built speaker did not look
+    /// like the plate. Taken literally the plate gives a 68 mm cabinet, and two
+    /// of those would stand 136 mm against a 102 mm guest; 48 is the compromise.
+    static let cabinetSize = SIMD3<Float>(0.042, 0.048, 0.030)
+
+    /// The code-built cabinet. See `speakers(at:flat:)` for when it runs: the
+    /// USDZ missing from the bundle, or the debug panel's flat-shading toggle
+    /// turned off. A missing asset must not leave a dead patch of floor where a
+    /// tap target was.
+    private static func buildProceduralCabinet(into root: Entity, level: Int, y: Float,
+                                               flat: Bool, cones: inout [Entity]) {
+        let box = cabinetSize
+        let cabinet = RoomBuilder.model(.box(box), Palette.sandyWood, flat: flat,
+                                        name: "Box\(level)")
+        cabinet.position = [0, y + box.y / 2, 0]
+        root.addChild(cabinet)
+
+        for (i, spec) in [(Float(0.0158), Float(0.018)),
+                          (Float(0.0058), Float(0.0396))].enumerated() {
+            let cone = Entity()
+            cone.name = "Conus\(level)-\(i)"
+            cone.position = [0, y + spec.1, box.z / 2 + 0.001]
+            root.addChild(cone)
+
+            let disc = RoomBuilder.model(
+                .taperedPrism(bottomRadius: spec.0, topRadius: spec.0 * 0.45,
+                              height: 0.004, sides: 12),
+                Palette.sandyWood, flat: flat, name: "ConusPlaat")
+            disc.orientation = simd_quatf(angle: -.pi / 2, axis: [1, 0, 0])
+            cone.addChild(disc)
+
+            let cap = RoomBuilder.model(.icosphere(radius: spec.0 * 0.30, subdivisions: 0),
+                                        Palette.sandyWood, flat: flat, name: "ConusDop")
+            cap.position = [0, 0, -0.0035]
+            cone.addChild(cap)
+
+            cones.append(cone)
+        }
     }
 
     // MARK: - The cake table

@@ -189,7 +189,10 @@ enum Friend: String, Codable, CaseIterable, Identifiable {
 
     /// The eleven heads, and the only thing that differs between two guests
     /// beyond colour.
-    enum Soort {
+    /// **The raw value is the model's filename**, so a friend's species and the
+    /// USDZ that draws it cannot drift apart: `models/beertje.py` writes one file
+    /// per case as `beertje-<raw>.usdz`.
+    enum Soort: String {
         case muis, vlinder, beer, kat, kikker, vogel, schaap, mol, egel, hond, slak
     }
 }

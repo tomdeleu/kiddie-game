@@ -51,6 +51,13 @@ Each writes its USDZ and saves its `.blend`. Add `-- --no-save` to export
 without touching the `.blend`. Blender 5.2 LTS; the export is deterministic, so
 re-running with no edits produces the same geometry.
 
+**The same geometry, but not the same file.** A USDZ is a zip and a zip carries
+timestamps, so rebuilding a prop with no edit at all still changes its hash —
+measured on `garden-fence`, twice in a row, 2026-08-18. Two consequences, and
+both have already caught someone out: `git status` after a rebuild is **not**
+evidence that a prop changed, and a prop rebuilt only to check something should
+be put back with `git checkout` rather than committed.
+
 The `.py` is authoritative on purpose. A `.blend` is a binary a diff cannot
 read and a session cannot review, and a prop whose shape only exists inside one
 is a prop that can only be changed by the person with Blender open.
