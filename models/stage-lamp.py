@@ -120,7 +120,7 @@ YOKE_BOTTOM = -0.0034
 
 
 def build():
-    shell = feest.material("LampShell", feest.CREAM_LIGHT)
+    shell = feest.material("LampShell", feest.BLUSH_PINK)
     lens_material = feest.material("LampLensGlas", feest.BUTTER_YELLOW)
     parts = []
 

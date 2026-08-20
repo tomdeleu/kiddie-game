@@ -1,0 +1,21 @@
+01:56.244  render           | Saved: '/Users/tomdeleu/git/kiddie-game/app/ao-study-feest/01-as-it-ships.png'
+07:58.681  render           | Saved: '/Users/tomdeleu/git/kiddie-game/app/ao-study-feest/02-real-ao.png'
+  Schil          4 objects
+  Vloer        180 objects
+  Props        130 objects
+  Rig           19 objects
+  Gasten       194 objects
+  Camera         1 objects
+  Licht          5 objects
+  shadows      174 meshes out of the shadow map
+Het Feest: 533 objects, 13527 faces
+plate    open_L=0.8636  shadow_L=0.6325  contrast=1.365  ground=1.288  sat=0.1681  kept=572130/921600
+wrote /Users/tomdeleu/git/kiddie-game/app/ao-study-feest/01-as-it-ships.png
+ships    open_L=0.8860  shadow_L=0.5389  contrast=1.644  ground=1.503  sat=0.1713  kept=1211593/1470000
+score    {"contrast_err": 0.16619114417829664, "open_drop": 0.0, "open_err": 0.02234509670734397, "pass": false, "pass_contrast": false, "pass_open": true, "pass_sat": true, "pass_shadow": false, "plate_err": 0.07214287725185027, "sat_err": 0.019180988293688903, "shadow_err": 0.08085427982807158}
+wrote /Users/tomdeleu/git/kiddie-game/app/ao-study-feest/02-real-ao.png
+ao       open_L=0.8770  shadow_L=0.5010  contrast=1.750  ground=1.510  sat=0.1643  kept=1211593/1470000
+score    {"contrast_err": 0.1722176009453453, "open_drop": 0.0, "open_err": 0.017451750993728532, "pass": false, "pass_contrast": false, "pass_open": true, "pass_sat": true, "pass_shadow": false, "plate_err": 0.07481815226193429, "sat_err": 0.022471330595944913, "shadow_err": 0.0871319265127184}
+Blender 5.2.0 LTS (hash fbe6228777e7 built 2026-07-14 01:31:22)
+
+Blender quit

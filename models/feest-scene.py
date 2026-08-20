@@ -720,7 +720,7 @@ def assemble():
     scene.render.engine = 'CYCLES'
     scene.render.resolution_x = 1400
     scene.render.resolution_y = 1050
-    scene.render.film_transparent = False
+    scene.render.film_transparent = True
     scene.view_settings.view_transform = 'Standard'
     # Half a stop, and it is a display setting rather than a change to
     # any light: the five suns stay at `LightingSettings`' own numbers so
@@ -747,6 +747,18 @@ def assemble():
                 if ob.type == 'MESH')
     print("Het Feest: %d objects, %d faces" % (len(bpy.data.objects), total))
     return groups
+
+
+def render_still(path, samples=64):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    scene = bpy.context.scene
+    scene.render.engine = "CYCLES"
+    scene.cycles.samples = samples
+    scene.render.filepath = path
+    scene.render.image_settings.file_format = "PNG"
+    bpy.ops.render.render(write_still=True)
+    print("wrote %s" % path)
+    return path
 
 
 if __name__ == "__main__":

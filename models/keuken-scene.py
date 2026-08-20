@@ -811,10 +811,11 @@ def assemble():
     scene.render.resolution_x = 1400
     scene.render.resolution_y = 1050
     scene.render.resolution_percentage = 100
-    scene.render.film_transparent = False
+    scene.render.film_transparent = True
     scene.view_settings.view_transform = 'Standard'
     scene.view_settings.look = 'Medium High Contrast'
-    scene.view_settings.exposure = 0.5
+    # 0.15 matches plate open_L (err 0.027). 0.5 blew the kitchen to white.
+    scene.view_settings.exposure = 0.15
     scene.unit_settings.system = 'METRIC'
 
     world = bpy.data.worlds.get("Keuken") or bpy.data.worlds.new("Keuken")
@@ -831,6 +832,18 @@ def assemble():
     print("  %-12s %3d meshes out of the shadow map" % ("shadows", hidden))
     print("De Keuken: %d objects, %d faces" % (len(bpy.data.objects), total))
     return groups
+
+
+def render_still(path, samples=64):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    scene = bpy.context.scene
+    scene.render.engine = "CYCLES"
+    scene.cycles.samples = samples
+    scene.render.filepath = path
+    scene.render.image_settings.file_format = "PNG"
+    bpy.ops.render.render(write_still=True)
+    print("wrote %s" % path)
+    return path
 
 
 if __name__ == "__main__":

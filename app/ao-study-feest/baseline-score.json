@@ -1,0 +1,28 @@
+{
+  "ships": {
+    "contrast_err": 0.16619114417829664,
+    "open_err": 0.02234509670734397,
+    "shadow_err": 0.08085427982807158,
+    "sat_err": 0.019180988293688903,
+    "plate_err": 0.07214287725185027,
+    "open_drop": 0.0,
+    "pass_contrast": false,
+    "pass_open": true,
+    "pass_shadow": false,
+    "pass_sat": true,
+    "pass": false
+  },
+  "ao": {
+    "contrast_err": 0.1722176009453453,
+    "open_err": 0.017451750993728532,
+    "shadow_err": 0.0871319265127184,
+    "sat_err": 0.022471330595944913,
+    "plate_err": 0.07481815226193429,
+    "open_drop": 0.0,
+    "pass_contrast": false,
+    "pass_open": true,
+    "pass_shadow": false,
+    "pass_sat": true,
+    "pass": false
+  }
+}

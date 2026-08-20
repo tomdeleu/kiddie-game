@@ -610,6 +610,11 @@ def main():
                  ("CoatRomp", "CreamBuik", "CoatKop", "CreamKopSnuit")
                  or ob.name.startswith(("CoatArm", "CoatBeen", "GoldBeen"))]
         objects = feest.finish("Beertje", parts, shade=shade)
+        for ob in objects:
+            if ob.type != 'MESH' or "Shade" in ob.name:
+                continue
+            for poly in ob.data.polygons:
+                poly.use_smooth = True
         shaded = sum(1 for ob in objects
                      if ob.type == 'MESH' and "Shade" in ob.name)
         print("%-9s %3d parts, %2d shaded" %

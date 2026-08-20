@@ -51,6 +51,9 @@ enum GardenRoomBuilder {
         // else casts *onto*.
         slab.excludeFromShadowCasting()
         ground.excludeFromShadowCasting()
+        if let ao = GardenAO.lawnOverlay() {
+            root.addChild(ao)
+        }
 
         root.addChild(buildBed(flat: flat))
         root.addChild(buildBench(flat: flat))
@@ -86,11 +89,11 @@ enum GardenRoomBuilder {
     static func buildBed(flat: Bool) -> Entity {
         if flat, let modelled = ModelLibrary.load(
                 "garden-bed",
-                tint: ["BedBoards": Palette.blushPinkDeep,
+                tint: GardenAO.paintTints(["BedBoards": Palette.blushPinkDeep,
                        "BedFrame": Palette.rose,
                        "BedSoil": Palette.woodBrown,
                        "BedHoles": Palette.mix(Palette.woodBrown,
-                                               Palette.sandyWood, 0.35)]) {
+                                               Palette.sandyWood, 0.35)])) {
             modelled.position = [GardenLayout.bedCentre.x, 0,
                                  GardenLayout.bedCentre.y]
             return modelled
@@ -283,9 +286,9 @@ enum GardenRoomBuilder {
     static func buildFence(flat: Bool) -> Entity {
         if flat, let modelled = ModelLibrary.load(
                 "garden-fence",
-                tint: ["FencePickets": Palette.cream,
+                tint: GardenAO.paintTints(["FencePickets": Palette.cream,
                        "FencePosts": Palette.creamLight,
-                       "FenceRails": Palette.creamLight]) {
+                       "FenceRails": Palette.creamLight])) {
             return modelled
         }
         return buildProceduralFence(flat: flat)
@@ -453,6 +456,7 @@ enum GardenRoomBuilder {
     /// toggle the same way.
     static func model(_ shape: RoomBuilder.Shape, _ colour: UIColorLike,
                       flat: Bool, name: String) -> ModelEntity {
-        RoomBuilder.model(shape, colour, flat: flat, name: name)
+        RoomBuilder.model(shape, GardenAO.paint(colour, name: name),
+                          flat: flat, name: name)
     }
 }

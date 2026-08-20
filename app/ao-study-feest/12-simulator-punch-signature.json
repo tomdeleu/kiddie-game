@@ -1,0 +1,18 @@
+{
+  "path": "/Users/tomdeleu/git/kiddie-game/app/ao-study-feest/12-simulator-punch.png",
+  "open_L": 0.9282,
+  "shadow_L": 0.6094,
+  "contrast": 1.523,
+  "ground_contrast": 1.475,
+  "sat": 0.1499,
+  "contrast_err": 0.1448,
+  "open_err": 0.0627,
+  "shadow_err": 0.0424,
+  "sat_err": 0.1080,
+  "plate_err": 0.0895,
+  "pass_contrast": true,
+  "pass_open": true,
+  "pass_shadow": true,
+  "pass_sat": true,
+  "pass": true
+}

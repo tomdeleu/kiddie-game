@@ -561,7 +561,7 @@ enum FeestProps {
         var lens: ModelEntity
         var lensPivot: Entity
         if flat, let modelled = ModelLibrary.load("stage-lamp",
-                                                  tint: ["LampHuis": Palette.creamLight,
+                                                  tint: ["LampHuis": Palette.blushPink,
                                                          "LampLens": colour]),
            let mesh = ModelLibrary.mesh("LampLens", in: modelled),
            let pivot = ModelLibrary.pivot("LampLens", in: modelled) {
@@ -572,7 +572,7 @@ enum FeestProps {
         } else {
             let housing = RoomBuilder.model(
                 .taperedPrism(bottomRadius: 0.0105, topRadius: 0.0068, height: 0.014, sides: 8),
-                Palette.creamLight, flat: flat, name: "LampHuis")
+                Palette.blushPink, flat: flat, name: "LampHuis")
             // The lathe stands on +Y, and local −Y is where it has to point.
             housing.orientation = simd_quatf(angle: .pi, axis: [1, 0, 0])
             housing.position = [0, 0.002, 0]
@@ -626,7 +626,7 @@ enum FeestProps {
     ///
     /// **A round tube with a real bore**, from `models/light-bar.py` — the code
     /// version is `.box([length, 5 mm, 5 mm])`, a square batten, and every bar in
-    /// `references/feest/lichtrek.png` is a scaffolding pole.
+    /// `references/feest/lichtrek.png` is a round pastel-pink tube, not a pole.
     ///
     /// **It is the one prop in the game that is scaled on load**, which
     /// `models/README.md` otherwise forbids, and the exception is a geometric
@@ -639,13 +639,13 @@ enum FeestProps {
 
     static func lightBar(length: Float, flat: Bool) -> Entity {
         if flat, let modelled = ModelLibrary.load("light-bar",
-                                                  tint: ["Lichtbalk": Palette.woodBrown]) {
+                                                  tint: ["Lichtbalk": Palette.blushPink]) {
             modelled.scale = [length / lightBarLength, 1, 1]
             modelled.excludeFromShadowCasting()
             return modelled
         }
         let bar = RoomBuilder.model(.box([length, 0.005, 0.005]),
-                                    Palette.woodBrown, flat: flat, name: "Lichtbalk")
+                                    Palette.blushPink, flat: flat, name: "Lichtbalk")
         bar.excludeFromShadowCasting()
         return bar
     }
@@ -830,7 +830,8 @@ enum FeestProps {
         var cones: [Entity] = []
         if flat, let modelled = ModelLibrary.load(
             "speaker",
-            tint: ["BoxOnder": Palette.sandyWood, "BoxBoven": Palette.lilac]) {
+            tint: FeestAO.paintTints(["BoxOnder": Palette.sandyWood,
+                                      "BoxBoven": Palette.lilac])) {
             root.addChild(modelled)
             for level in ["BoxOnder", "BoxBoven"] {
                 for i in 0..<2 {

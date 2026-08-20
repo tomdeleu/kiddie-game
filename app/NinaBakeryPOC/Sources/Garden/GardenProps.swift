@@ -47,7 +47,7 @@ enum GardenProps {
         let root = Entity()
         root.name = "SeedJar_\(ingredient.rawValue)"
 
-        let body = RoomBuilder.model(.taperedPrism(bottomRadius: 0.0072,
+        let body = model(.taperedPrism(bottomRadius: 0.0072,
                                                    topRadius: 0.0098,
                                                    height: 0.018, sides: 8),
                                      ingredient.tokenColour, flat: flat, name: "JarBody")
@@ -57,7 +57,7 @@ enum GardenProps {
         // light and the two read as separate parts. Cream on every one of them —
         // with eight in a row the lid is what makes them a set and the body is
         // what makes them different.
-        let lid = RoomBuilder.model(.lathe(profile: [[0.0110, 0],
+        let lid = model(.lathe(profile: [[0.0110, 0],
                                                       [0.0106, 0.0026],
                                                       [0.0072, 0.0050],
                                                       [0, 0.0058]],
@@ -67,7 +67,7 @@ enum GardenProps {
         root.addChild(lid)
 
         // The knob, which is what makes it a lid rather than a cap.
-        let knob = RoomBuilder.model(.prism(radius: 0.0022, height: 0.0032, sides: 6),
+        let knob = model(.prism(radius: 0.0022, height: 0.0032, sides: 6),
                                      Palette.creamLight, flat: flat, name: "JarKnob")
         knob.position = [0, 0.0236, 0]
         root.addChild(knob)
@@ -83,7 +83,7 @@ enum GardenProps {
     static func seedToken(_ ingredient: Ingredient, flat: Bool) -> Entity {
         let root = Entity()
         root.name = "Seed_\(ingredient.rawValue)"
-        let pip = RoomBuilder.model(.lathe(profile: [[0, 0],
+        let pip = model(.lathe(profile: [[0, 0],
                                                      [0.0032, 0.0014],
                                                      [0.0046, 0.0040],
                                                      [0.0038, 0.0072],
@@ -136,14 +136,14 @@ enum GardenProps {
         // The turned earth every stage stands in. A faceted dome, not a cone:
         // `sprout-early.png` is emphatic about it, and a cone reads as a
         // molehill — which this room also has, eleven centimetres away.
-        let mound = RoomBuilder.model(.dome(radius: 0.0125, height: 0.0055,
+        let mound = model(.dome(radius: 0.0125, height: 0.0055,
                                             sides: 9, rings: 2),
                                       Palette.woodBrown, flat: flat, name: "PlantMound")
         root.addChild(mound)
         guard growth > 0 else { return root }
 
         let stemHeight: Float = growth == 1 ? 0.014 : 0.026
-        let stem = RoomBuilder.model(.taperedPrism(bottomRadius: 0.0016,
+        let stem = model(.taperedPrism(bottomRadius: 0.0016,
                                                    topRadius: 0.0012,
                                                    height: stemHeight, sides: 5),
                                      Palette.sageDeep, flat: flat, name: "PlantStem")
@@ -157,7 +157,7 @@ enum GardenProps {
         let leafLength: Float = growth == 1 ? 0.0085 : 0.0135
         let tilt: Float = growth == 1 ? 0.55 : 1.15   // radians from upright
         for i in 0..<leafCount {
-            let leaf = RoomBuilder.model(leafShape(length: leafLength),
+            let leaf = model(leafShape(length: leafLength),
                                          i.isMultiple(of: 2) ? Palette.sage : Palette.mint,
                                          flat: flat, name: "PlantLeaf\(i)")
             let around = Float(i) / Float(leafCount) * 2 * .pi
@@ -172,7 +172,7 @@ enum GardenProps {
             // The closed bud, in the seed's colour. Two shallow cones meeting at
             // their widest, which is the plate's pointed pod without needing a
             // profile of its own.
-            let bud = RoomBuilder.model(.lathe(profile: [[0, 0],
+            let bud = model(.lathe(profile: [[0, 0],
                                                           [0.0042, 0.0028],
                                                           [0.0050, 0.0062],
                                                           [0.0030, 0.0104],
@@ -209,7 +209,7 @@ enum GardenProps {
         if ingredient == .honing {
             for i in 0..<8 {
                 let around = Float(i) / 8 * 2 * .pi
-                let petal = RoomBuilder.model(.prism(radius: 0.0052, height: 0.0022,
+                let petal = model(.prism(radius: 0.0052, height: 0.0022,
                                                      sides: 6),
                                               Palette.butterYellow, flat: flat,
                                               name: "HoneyPetal\(i)")
@@ -228,7 +228,7 @@ enum GardenProps {
             for (i, step) in [SIMD3<Float>(0.0012, 0.0090, 0.0004),
                               SIMD3<Float>(0.0055, 0.0126, 0.0018),
                               SIMD3<Float>(0.0096, 0.0122, 0.0032)].enumerated() {
-                let piece = RoomBuilder.model(.box([0.0055, 0.0016, 0.0016]),
+                let piece = model(.box([0.0055, 0.0016, 0.0016]),
                                               Palette.sageDeep, flat: flat,
                                               name: "PlantStalk\(i)")
                 piece.orientation = simd_quatf(angle: Float(i) * -0.55 + 0.9,
@@ -300,7 +300,8 @@ enum GardenProps {
             return nil
         }
         return ModelLibrary.load("plant-\(ingredient.rawValue)",
-                                 tint: plantTint.merging(head) { _, model in model })
+                                 tint: GardenAO.paintTints(
+                                    plantTint.merging(head) { _, model in model }))
     }
 
     /// What every plant model has below its head. The head's own colours are
@@ -354,7 +355,7 @@ enum GardenProps {
         let root = Entity()
         root.name = "WateringCan"
 
-        let body = RoomBuilder.model(.taperedPrism(bottomRadius: 0.0215,
+        let body = model(.taperedPrism(bottomRadius: 0.0215,
                                                    topRadius: 0.0165,
                                                    height: 0.030, sides: 8),
                                      Palette.mint, flat: flat, name: "CanBody")
@@ -362,7 +363,7 @@ enum GardenProps {
 
         // The mouth: a shallow ring on top, so the can has an inside. A flat lid
         // would make it a pot.
-        let mouth = RoomBuilder.model(.annulus(innerRadius: 0.0088,
+        let mouth = model(.annulus(innerRadius: 0.0088,
                                                outerRadius: 0.0165, segments: 8),
                                       Palette.mintLight, flat: flat, name: "CanMouth")
         mouth.position = [0, 0.030, 0]
@@ -373,7 +374,7 @@ enum GardenProps {
         for i in 0..<5 {
             let t = Float(i) / 4
             let angle = .pi * t
-            let piece = RoomBuilder.model(.box([0.0125, 0.0042, 0.0042]),
+            let piece = model(.box([0.0125, 0.0042, 0.0042]),
                                           Palette.mintLight, flat: flat,
                                           name: "CanHandle\(i)")
             piece.position = [-cos(angle) * 0.0130, 0.0300 + sin(angle) * 0.0150, 0]
@@ -383,12 +384,12 @@ enum GardenProps {
 
         // The back D-handle, which is what says *can* rather than *jug* at
         // thumbnail size.
-        let grip = RoomBuilder.model(.box([0.0044, 0.0165, 0.0044]),
+        let grip = model(.box([0.0044, 0.0165, 0.0044]),
                                      Palette.mintLight, flat: flat, name: "CanGrip")
         grip.position = [-0.0250, 0.0175, 0]
         root.addChild(grip)
         for side: Float in [-1, 1] {
-            let arm = RoomBuilder.model(.box([0.0075, 0.0042, 0.0042]),
+            let arm = model(.box([0.0075, 0.0042, 0.0042]),
                                         Palette.mintLight, flat: flat, name: "CanGripArm")
             arm.position = [-0.0215, 0.0175 + side * 0.0082, 0]
             root.addChild(arm)
@@ -397,7 +398,7 @@ enum GardenProps {
         // The spout: one straight bar leaving the body low and rising. Mitred
         // rather than curved, which is the sink tap's lesson — a hard angle is
         // in the vocabulary and a bend is not.
-        let spout = RoomBuilder.model(.box([0.0330, 0.0072, 0.0072]),
+        let spout = model(.box([0.0330, 0.0072, 0.0072]),
                                       Palette.mint, flat: flat, name: "CanSpout")
         spout.orientation = simd_quatf(angle: 0.42, axis: [0, 0, 1])
         spout.position = [0.0300, 0.0135, 0]
@@ -408,7 +409,7 @@ enum GardenProps {
         rose.position = [0.0455, 0.0205, 0]
         root.addChild(rose)
 
-        let face = RoomBuilder.model(.prism(radius: 0.0092, height: 0.0038, sides: 8),
+        let face = model(.prism(radius: 0.0092, height: 0.0038, sides: 8),
                                      Palette.mintLight, flat: flat, name: "CanRoseFace")
         face.orientation = simd_quatf(angle: .pi / 2 - 0.42, axis: [0, 0, 1])
         rose.addChild(face)
@@ -416,7 +417,8 @@ enum GardenProps {
         // The water, hanging from the rose and grown down Y — the pour stream
         // from the kitchen, which already narrows at the lip, swells as it
         // falls, and turns about its own axis so its facets travel.
-        let stream = KitchenProps.pourStream(colour: Palette.berryBlue,
+        let stream = KitchenProps.pourStream(colour: GardenAO.paint(Palette.berryBlue,
+                                                                   name: "CanStream"),
                                              length: 0.030, flat: flat)
         stream.name = "CanStream"
         stream.isEnabled = false
@@ -473,10 +475,10 @@ enum GardenProps {
     static func basket(flat: Bool) -> Basket {
         if flat, let modelled = ModelLibrary.load(
                 "harvest-basket",
-                tint: ["BasketTub": Palette.sandyWood,
+                tint: GardenAO.paintTints(["BasketTub": Palette.sandyWood,
                        "BasketRim": Palette.mint,
                        "BasketLining": Palette.rose,
-                       "BasketHandle": Palette.creamLight]) {
+                       "BasketHandle": Palette.creamLight])) {
             let root = Entity()
             root.name = "HarvestBasket"
             root.addChild(modelled)
@@ -503,14 +505,14 @@ enum GardenProps {
         let root = Entity()
         root.name = "HarvestBasket"
 
-        let tub = RoomBuilder.model(.bowl(bottomRadius: 0.0180, topRadius: 0.0290,
+        let tub = model(.bowl(bottomRadius: 0.0180, topRadius: 0.0290,
                                           height: 0.0245, wallThickness: 0.0030,
                                           floorThickness: 0.0030, sides: 4, rings: 2),
                                     Palette.sandyWood, flat: flat, name: "BasketTub")
         tub.orientation = towardsCamera
         root.addChild(tub)
 
-        let rim = RoomBuilder.model(.annulus(innerRadius: 0.0262,
+        let rim = model(.annulus(innerRadius: 0.0262,
                                              outerRadius: 0.0320, segments: 4),
                                     Palette.mint, flat: flat, name: "BasketRim")
         rim.orientation = towardsCamera
@@ -520,7 +522,7 @@ enum GardenProps {
         // The handle, seven segments on a half-circle standing along X.
         for i in 0..<7 {
             let angle = .pi * Float(i) / 6
-            let piece = RoomBuilder.model(.box([0.0110, 0.0050, 0.0050]),
+            let piece = model(.box([0.0110, 0.0050, 0.0050]),
                                           Palette.creamLight, flat: flat,
                                           name: "BasketHandle\(i)")
             piece.position = [-cos(angle) * 0.0250,
@@ -547,13 +549,13 @@ enum GardenProps {
         let root = Entity()
         root.name = "Flower"
 
-        let stem = RoomBuilder.model(.box([0.0032, height, 0.0032]),
+        let stem = model(.box([0.0032, height, 0.0032]),
                                      Palette.sage, flat: flat, name: "FlowerStem")
         stem.position = [0, height / 2, 0]
         root.addChild(stem)
 
         for side: Float in [-1, 1] {
-            let leaf = RoomBuilder.model(leafShape(length: 0.0095),
+            let leaf = model(leafShape(length: 0.0095),
                                          Palette.sageDeep, flat: flat, name: "FlowerLeaf")
             leaf.position = [0, height * 0.34, 0]
             leaf.orientation = simd_quatf(angle: side * .pi / 2, axis: [0, 1, 0])
@@ -566,12 +568,12 @@ enum GardenProps {
         // flowers in a row reading as five stars.
         for i in 0..<6 {
             let around = Float(i) / 6 * 2 * .pi
-            let chip = RoomBuilder.model(.prism(radius: 0.0058, height: 0.0026, sides: 6),
+            let chip = model(.prism(radius: 0.0058, height: 0.0026, sides: 6),
                                          petal, flat: flat, name: "FlowerPetal\(i)")
             chip.position = [cos(around) * 0.0082, height, sin(around) * 0.0082]
             root.addChild(chip)
         }
-        let eye = RoomBuilder.model(.prism(radius: 0.0050, height: 0.0040, sides: 6),
+        let eye = model(.prism(radius: 0.0050, height: 0.0040, sides: 6),
                                     centre, flat: flat, name: "FlowerCentre")
         eye.position = [0, height + 0.0006, 0]
         root.addChild(eye)
@@ -604,11 +606,11 @@ enum GardenProps {
     static func molehill(flat: Bool) -> Molehill {
         if flat, let modelled = ModelLibrary.load(
                 "molehill",
-                tint: ["HillEarth": Palette.woodBrown,
+                tint: GardenAO.paintTints(["HillEarth": Palette.woodBrown,
                        "MoleHead": moleGrey,
                        "MolePaw": moleGrey,
                        "MoleNose": Palette.blushPink,
-                       "MoleEye": Palette.ovenInside]),
+                       "MoleEye": Palette.ovenInside])),
            let mole = group("Mole", in: modelled) {
             let root = Entity()
             root.name = "Molehill"
@@ -667,7 +669,7 @@ enum GardenProps {
         let root = Entity()
         root.name = "Molehill"
 
-        let hill = RoomBuilder.model(.taperedPrism(bottomRadius: 0.0270,
+        let hill = model(.taperedPrism(bottomRadius: 0.0270,
                                                    topRadius: 0.0092,
                                                    height: 0.0195, sides: 10),
                                      Palette.woodBrown, flat: flat, name: "MolehillEarth")
@@ -680,18 +682,18 @@ enum GardenProps {
         mole.position = [0, 0.0060, 0]
         root.addChild(mole)
 
-        let head = RoomBuilder.model(.icosphere(radius: 0.0092, subdivisions: 1),
+        let head = model(.icosphere(radius: 0.0092, subdivisions: 1),
                                      Palette.mix(Palette.creamLight, Palette.woodBrown, 0.45),
                                      flat: flat, name: "MoleHead")
         mole.addChild(head)
 
-        let nose = RoomBuilder.model(.icosphere(radius: 0.0040, subdivisions: 0),
+        let nose = model(.icosphere(radius: 0.0040, subdivisions: 0),
                                      Palette.blushPink, flat: flat, name: "MoleNose")
         nose.position = [0.0052, -0.0016, 0.0052]
         mole.addChild(nose)
 
         for side: Float in [-1, 1] {
-            let eye = RoomBuilder.model(.prism(radius: 0.0013, height: 0.0012, sides: 6),
+            let eye = model(.prism(radius: 0.0013, height: 0.0012, sides: 6),
                                         Palette.ovenInside, flat: flat, name: "MoleEye")
             eye.orientation = towardsCamera * simd_quatf(angle: .pi / 2, axis: [1, 0, 0])
             eye.position = [0.0052 + side * 0.0020, 0.0030, 0.0052 - side * 0.0020]
@@ -710,7 +712,7 @@ enum GardenProps {
         let root = Entity()
         root.name = "Butterfly"
 
-        let body = RoomBuilder.model(.lathe(profile: [[0, -0.0090],
+        let body = model(.lathe(profile: [[0, -0.0090],
                                                        [0.0026, -0.0050],
                                                        [0.0032, 0.0030],
                                                        [0.0022, 0.0082],
@@ -721,7 +723,7 @@ enum GardenProps {
         root.addChild(body)
 
         for side: Float in [-1, 1] {
-            let upper = RoomBuilder.model(.extrude(outline: [[0, 0],
+            let upper = model(.extrude(outline: [[0, 0],
                                                               [0.0165, 0.0060],
                                                               [0.0180, 0.0135],
                                                               [0.0075, 0.0125],
@@ -733,7 +735,7 @@ enum GardenProps {
             upper.position = [0, 0, -0.0010]
             root.addChild(upper)
 
-            let lower = RoomBuilder.model(.extrude(outline: [[0, 0],
+            let lower = model(.extrude(outline: [[0, 0],
                                                               [0.0120, -0.0035],
                                                               [0.0135, -0.0105],
                                                               [0.0060, -0.0120],
@@ -745,7 +747,7 @@ enum GardenProps {
             lower.position = [0, 0, 0.0010]
             root.addChild(lower)
 
-            let antenna = RoomBuilder.model(.box([0.0075, 0.0011, 0.0011]),
+            let antenna = model(.box([0.0075, 0.0011, 0.0011]),
                                             Palette.rose, flat: flat, name: "Antenna")
             antenna.orientation = simd_quatf(angle: side * 0.6, axis: [0, 1, 0])
             antenna.position = [side * 0.0030, 0, -0.0125]
@@ -765,7 +767,7 @@ enum GardenProps {
         // five short prisms — the only way to get the stripes without a texture.
         let radii: [Float] = [0.0058, 0.0088, 0.0092, 0.0078, 0.0046]
         for (i, radius) in radii.enumerated() {
-            let band = RoomBuilder.model(.prism(radius: radius, height: 0.0042, sides: 8),
+            let band = model(.prism(radius: radius, height: 0.0042, sides: 8),
                                          i.isMultiple(of: 2) ? Palette.woodBrown
                                                              : Palette.butterYellow,
                                          flat: flat, name: "BeeBand\(i)")
@@ -774,7 +776,7 @@ enum GardenProps {
         }
 
         for side: Float in [-1, 1] {
-            let wing = RoomBuilder.model(.extrude(outline: [[0, 0],
+            let wing = model(.extrude(outline: [[0, 0],
                                                              [0.0105, 0.0028],
                                                              [0.0125, -0.0012],
                                                              [0.0090, -0.0048],
@@ -786,7 +788,7 @@ enum GardenProps {
             wing.orientation = simd_quatf(angle: side * -0.35, axis: [0, 1, 0])
             root.addChild(wing)
 
-            let antenna = RoomBuilder.model(.box([0.0011, 0.0060, 0.0011]),
+            let antenna = model(.box([0.0011, 0.0060, 0.0011]),
                                             Palette.woodBrown, flat: flat, name: "BeeAntenna")
             antenna.position = [side * 0.0030, 0.0115, -0.0020]
             antenna.orientation = simd_quatf(angle: side * 0.3, axis: [0, 0, 1])
@@ -953,6 +955,10 @@ enum GardenProps {
             root.addChild(stone)
             placed += 1
         }
+        // A dozen 11 mm stones are smaller than the key's shadow map. They
+        // print as one smear on the mint, which is a stain, not a bank.
+        // They still sit in the grass. They just stop casting.
+        root.excludeFromShadowCasting()
         return root
     }
 
@@ -1022,7 +1028,7 @@ enum GardenProps {
     private static func model(_ geometry: FacetedMesh.Geometry, _ colour: UIColorLike,
                               flat: Bool, name: String) -> ModelEntity {
         let entity = ModelEntity(mesh: FacetedMesh.mesh(geometry, flat: flat),
-                                 materials: [Palette.material(colour)])
+                                 materials: [Palette.material(GardenAO.paint(colour, name: name))])
         entity.name = name
         return entity
     }
@@ -1085,8 +1091,8 @@ enum GardenProps {
     static func tree(flat: Bool) -> Entity {
         if flat, let modelled = ModelLibrary.load(
                 "garden-tree",
-                tint: ["TreeTrunk": Palette.cream,
-                       "TreeCanopy": Palette.mint]) {
+                tint: GardenAO.paintTints(["TreeTrunk": Palette.cream,
+                       "TreeCanopy": Palette.mint])) {
             return modelled
         }
         return proceduralTree(flat: flat)
@@ -1097,7 +1103,7 @@ enum GardenProps {
         let root = Entity()
         root.name = "Tree"
 
-        let trunk = RoomBuilder.model(.taperedPrism(bottomRadius: 0.0171,
+        let trunk = model(.taperedPrism(bottomRadius: 0.0171,
                                                     topRadius: 0.0122,
                                                     height: 0.128, sides: 6),
                                       Palette.cream, flat: flat, name: "TreeTrunk")
@@ -1117,7 +1123,7 @@ enum GardenProps {
             ([0.0036, 0.1965, 0.0054], 0.0278),
         ]
         for (i, lobe) in lobes.enumerated() {
-            let ball = RoomBuilder.model(.icosphere(radius: lobe.1, subdivisions: 1),
+            let ball = model(.icosphere(radius: lobe.1, subdivisions: 1),
                                          i.isMultiple(of: 2) ? Palette.sage : Palette.mint,
                                          flat: flat, name: "TreeLobe\(i)")
             ball.position = lobe.0
@@ -1137,13 +1143,21 @@ enum GardenProps {
             ([radius * 0.10, radius * 0.48, -radius * 0.74], radius * 0.62),
         ]
         for (i, lobe) in lobes.enumerated() {
-            let ball = RoomBuilder.model(.icosphere(radius: lobe.1, subdivisions: 1),
+            let ball = model(.icosphere(radius: lobe.1, subdivisions: 1),
                                          i.isMultiple(of: 2) ? Palette.sage : Palette.sageDeep,
                                          flat: flat, name: "BushLobe\(i)")
             ball.position = lobe.0
             root.addChild(ball)
         }
         return root
+    }
+
+    /// Garden-local colour punch. Lawn, fence and foliage stay pale so the
+    /// bushes still read; everything else takes the measured 1.8× chroma.
+    private static func model(_ shape: RoomBuilder.Shape, _ colour: UIColorLike,
+                              flat: Bool, name: String) -> ModelEntity {
+        RoomBuilder.model(shape, GardenAO.paint(colour, name: name),
+                          flat: flat, name: name)
     }
 }
 

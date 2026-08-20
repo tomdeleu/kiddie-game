@@ -54,7 +54,7 @@ SIDES = 10
 
 
 def build():
-    timber = feest.material("BalkHout", feest.WOOD_BROWN)
+    timber = feest.material("BalkHout", feest.BLUSH_PINK)
 
     # A tube lying along X: four rings — outer and inner at each end — bridged
     # into a closed solid. Built by hand rather than with `garden.lathe` because

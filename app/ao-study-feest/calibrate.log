@@ -1,0 +1,31 @@
+00:34.551  render           | Saved: '/Users/tomdeleu/git/kiddie-game/app/ao-study-feest/calibrate-e0.15.png'
+01:09.615  render           | Saved: '/Users/tomdeleu/git/kiddie-game/app/ao-study-feest/calibrate-e0.25.png'
+01:44.499  render           | Saved: '/Users/tomdeleu/git/kiddie-game/app/ao-study-feest/calibrate-e0.30.png'
+02:25.785  render           | Saved: '/Users/tomdeleu/git/kiddie-game/app/ao-study-feest/calibrate-e0.35.png'
+03:16.927  render           | Saved: '/Users/tomdeleu/git/kiddie-game/app/ao-study-feest/calibrate-e0.40.png'
+04:04.522  render           | Saved: '/Users/tomdeleu/git/kiddie-game/app/ao-study-feest/calibrate-e0.50.png'
+  Schil          4 objects
+  Vloer        180 objects
+  Props        130 objects
+  Rig           19 objects
+  Gasten       194 objects
+  Camera         1 objects
+  Licht          5 objects
+  shadows      174 meshes out of the shadow map
+Het Feest: 533 objects, 13527 faces
+wrote /Users/tomdeleu/git/kiddie-game/app/ao-study-feest/calibrate-e0.15.png
+e=0.15  open_L=0.8021  shadow_L=0.4815  contrast=1.666  ground=1.415  sat=0.1646  kept=1207114/1470000  open_err=0.0615  plate_err=0.0691  pass=False
+wrote /Users/tomdeleu/git/kiddie-game/app/ao-study-feest/calibrate-e0.25.png
+e=0.25  open_L=0.8271  shadow_L=0.4976  contrast=1.662  ground=1.466  sat=0.1676  kept=1211180/1470000  open_err=0.0365  plate_err=0.0691  pass=False
+wrote /Users/tomdeleu/git/kiddie-game/app/ao-study-feest/calibrate-e0.30.png
+e=0.30  open_L=0.8400  shadow_L=0.5056  contrast=1.661  ground=1.484  sat=0.1692  kept=1211240/1470000  open_err=0.0236  plate_err=0.0705  pass=False
+wrote /Users/tomdeleu/git/kiddie-game/app/ao-study-feest/calibrate-e0.35.png
+e=0.35  open_L=0.8525  shadow_L=0.5139  contrast=1.659  ground=1.494  sat=0.1705  kept=1211316/1470000  open_err=0.0111  plate_err=0.0709  pass=False
+wrote /Users/tomdeleu/git/kiddie-game/app/ao-study-feest/calibrate-e0.40.png
+e=0.40  open_L=0.8644  shadow_L=0.5221  contrast=1.655  ground=1.498  sat=0.1715  kept=1211392/1470000  open_err=0.0008  plate_err=0.0692  pass=False
+wrote /Users/tomdeleu/git/kiddie-game/app/ao-study-feest/calibrate-e0.50.png
+e=0.50  open_L=0.8860  shadow_L=0.5391  contrast=1.644  ground=1.502  sat=0.1714  kept=1211536/1470000  open_err=0.0224  plate_err=0.0721  pass=False
+best exposure 0.25 plate_err=0.0691 pass=False
+Blender 5.2.0 LTS (hash fbe6228777e7 built 2026-07-14 01:31:22)
+
+Blender quit

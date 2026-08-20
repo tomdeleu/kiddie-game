@@ -252,8 +252,9 @@ final class GardenRoom: Room {
         node.root.position = GardenLayout.canHome
         root.addChild(node.root)
         can = node
-        ContactShadows.attach(to: node.root, radius: 0.026, settings: settings)
-        ContactShadows.update(for: node.root, surfaceY: GardenLayout.floorY, settings: settings)
+        let shadows = Self.contactShadowSettings(from: settings)
+        ContactShadows.attach(to: node.root, radius: 0.026, settings: shadows)
+        ContactShadows.update(for: node.root, surfaceY: GardenLayout.floorY, settings: shadows)
     }
 
     private func buildBasket() {
@@ -261,8 +262,9 @@ final class GardenRoom: Room {
         node.root.position = GardenLayout.basketHome
         root.addChild(node.root)
         basket = node
-        ContactShadows.attach(to: node.root, radius: 0.030, settings: settings)
-        ContactShadows.update(for: node.root, surfaceY: GardenLayout.floorY, settings: settings)
+        let shadows = Self.contactShadowSettings(from: settings)
+        ContactShadows.attach(to: node.root, radius: 0.030, settings: shadows)
+        ContactShadows.update(for: node.root, surfaceY: GardenLayout.floorY, settings: shadows)
         refreshBasketContents(animated: false)
     }
 
@@ -671,7 +673,8 @@ final class GardenRoom: Room {
         let seed = GardenProps.seedToken(ingredient, flat: flat)
         seed.position = jar.position + [0, 0.024, 0]
         root.addChild(seed)
-        ContactShadows.attach(to: seed, radius: 0.008, settings: settings)
+        ContactShadows.attach(to: seed, radius: 0.008,
+                              settings: Self.contactShadowSettings(from: settings))
         carriedSeed = (ingredient, seed)
         ticker.squash(jar, amount: 0.10)
         refreshInteractivity()
@@ -1486,15 +1489,65 @@ final class GardenRoom: Room {
     func refreshContactShadows(settings: LightingSettings) {
         self.settings = settings
         carrier.update(settings: settings)
+        let shadows = Self.contactShadowSettings(from: settings)
         let props: [Entity?] = [can?.root, basket?.root] + strays.map { $0 as Entity? }
         for prop in props.compactMap({ $0 }) where prop.isEnabled {
             let radius: Float = prop === can?.root ? 0.026
                 : (prop === basket?.root ? 0.030 : 0.008)
-            ContactShadows.attach(to: prop, radius: radius, settings: settings)
+            ContactShadows.attach(to: prop, radius: radius, settings: shadows)
             ContactShadows.update(for: prop,
                                   surfaceY: GardenLayout.surfaces.y(at: prop.position),
-                                  settings: settings)
+                                  settings: shadows)
         }
+    }
+
+    /// Measured against `references/garden/roombox.png`. The shared 1200 lx
+    /// dome washes the pastels. 800 lx raised saturation and ground contrast
+    /// toward the plate (`app/ao-study-tuin/04-ambient-800.png`). Scale, so a
+    /// debug-panel move still moves. `-no-garden-ao` leaves the approved rig.
+    static func lighting(from settings: LightingSettings) -> LightingSettings {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-no-garden-ao") {
+            return settings
+        }
+        #endif
+        let tuned = LightingSettings()
+        tuned.keyEnabled = settings.keyEnabled
+        tuned.keyIntensity = settings.keyIntensity
+        tuned.keyElevation = settings.keyElevation
+        tuned.keyAzimuth = settings.keyAzimuth
+        tuned.keyTemperature = settings.keyTemperature
+        tuned.shadowsEnabled = settings.shadowsEnabled
+        tuned.fillEnabled = settings.fillEnabled
+        tuned.fillIntensity = settings.fillIntensity
+        tuned.fillTemperature = settings.fillTemperature
+        tuned.ambientEnabled = settings.ambientEnabled
+        tuned.ambientIntensity = settings.ambientIntensity * (800.0 / 1200.0)
+        tuned.iblEnabled = settings.iblEnabled
+        tuned.iblIntensity = settings.iblIntensity
+        tuned.contactShadowsEnabled = settings.contactShadowsEnabled
+        tuned.contactShadowOpacity = settings.contactShadowOpacity
+        tuned.contactShadowScale = settings.contactShadowScale
+        tuned.flatShading = settings.flatShading
+        tuned.lightmapMode = settings.lightmapMode
+        return tuned
+    }
+
+    /// `ContactShadows` writes opacity into colour alpha and the transparent
+    /// blend, so 0.22 arrives as 0.22². Kitchen and party already compensate.
+    /// Garden-local: the shared helper must not retune the other rooms.
+    private static func contactShadowSettings(from settings: LightingSettings)
+        -> LightingSettings {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-no-garden-ao") {
+            return settings
+        }
+        #endif
+        let gardenShadows = LightingSettings()
+        gardenShadows.contactShadowsEnabled = settings.contactShadowsEnabled
+        gardenShadows.contactShadowOpacity = sqrt(settings.contactShadowOpacity)
+        gardenShadows.contactShadowScale = settings.contactShadowScale
+        return gardenShadows
     }
 
     /// Everything stops, then the bed is written down. `GameScene` calls this

@@ -1,0 +1,7 @@
+ts	phase	decision	why	evidence	result
+2026-08-20T17:24:00Z	metric	froze ground contrast/open/shadow/sat vs references/feest/roombox.png	same frozen bands as tuin/keuken hillclimbs	app/ao-study-feest/plate-signature.json	plate open_L=0.8636 shadow_L=0.6325 ground=1.288 sat=0.1681
+2026-08-20T17:24:06Z	harness	cloned keuken-measure.py to feest-measure.py; added render_still to feest-scene.py	garden/kitchen already paid for the ruler; feest needs its own plate path	models/feest-measure.py	ruler separates washed < plate < deepened
+2026-08-20T17:28:14Z	baseline	Blender as-it-ships sat ok; shadow/contrast miss; device is the gate	Blender at e=0.5 blows contrast; simulator sat washed	app/ao-study-feest/baseline-score.json	ships plate_err=0.072 sat pass shadow fail
+2026-08-20T17:36:00Z	baseline	simulator as-it-ships before changes	sat_err=0.248 fail; contrast/open/shadow pass	app/ao-study-feest/12-simulator-now.png	FAIL plate_err=0.124 pass_sat=false
+2026-08-20T17:42:00Z	iter1	FeestRoom.lighting ambient 800/1200 + FeestAO 1.6x punch on matte props	device sat washed like garden before ambient+punch; emissive path untouched	app/ao-study-feest/12-simulator-punch.png	KEEP PASS plate_err=0.089 sat_err=0.108 all bands inside frozen limits
+2026-08-20T17:42:00Z	stop	did not add shell AO maps on this pass	simulator already passes; shell bake is separate decision per AMBIENT-OCCLUSION.md	stopped with marginal remaining ideas

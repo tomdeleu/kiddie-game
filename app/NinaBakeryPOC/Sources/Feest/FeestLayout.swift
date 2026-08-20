@@ -431,7 +431,9 @@ enum FeestLayout {
     ]
 
     static func discoColour(_ index: Int) -> UIColorLike {
-        discoColours[((index % discoColours.count) + discoColours.count) % discoColours.count]
+        let raw = discoColours[((index % discoColours.count) + discoColours.count)
+                                 % discoColours.count]
+        return FeestAO.paint(raw, name: "Pad")
     }
 
     /// **A tile's own colour, and the reason it is not `row * side + column`.**

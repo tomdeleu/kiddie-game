@@ -164,6 +164,10 @@ final class GuestCharacter {
     private static let hipX: Float = 0.014
     private static let hipZ: Float = 0.008
 
+    /// Het Feest guests use smooth shading on the modelled bear USDZ and on the
+    /// procedural fallback. The rest of the room stays faceted.
+    private static let smoothShading = true
+
     init(friend: Friend, role: Role = .gast, style: DanceStyle = .zwaaien,
          at home: SIMD3<Float>, phase: Float, ticker: Ticker, flat: Bool) {
         self.friend = friend
@@ -182,6 +186,7 @@ final class GuestCharacter {
 
         let coat = friend.colour
         let accent = friend.accent
+        let faceted = flat && !Self.smoothShading
 
         var builtLegs: [Entity] = []
         let raise = role == .dj ? (left: Float(1.5), right: Float(1.5)) : style.raise
@@ -200,11 +205,13 @@ final class GuestCharacter {
         // **Order matters.** The catch-all at the end sweeps whatever is still
         // under the wrapper into the body, so the head, arms and legs have to
         // have been lifted out before it runs.
-        if flat, let modelled = ModelLibrary.load(
+        if let modelled = ModelLibrary.load(
                 "beertje-\(friend.soort.rawValue)",
-                tint: ["Coat": coat, "Accent": accent,
-                       "Cream": Palette.creamLight, "Dark": Palette.woodBrown,
-                       "Gold": Palette.butterYellow, "Rose": Palette.rose]) {
+                tint: FeestAO.paintTints(["Coat": coat, "Accent": accent,
+                                          "Cream": Palette.creamLight,
+                                          "Dark": Palette.woodBrown,
+                                          "Gold": Palette.butterYellow,
+                                          "Rose": Palette.rose])) {
             root.addChild(modelled)
 
             body.name = "GastBody"
@@ -250,7 +257,7 @@ final class GuestCharacter {
             builtLegs = GuestCharacter.buildProcedural(
                 root: root, body: body, head: head, friend: friend,
                 coat: coat, accent: accent, raise: raise, forward: forward,
-                flat: flat)
+                flat: faceted)
         }
         legs = builtLegs
 

@@ -1083,6 +1083,37 @@ final class FeestRoom: Room {
         build(flat: flat)
     }
 
+    /// Measured against `references/feest/roombox.png`. The shared 1200 lx dome
+    /// washes pastels on device the same way it did in De Tuin. Scale ambient
+    /// so a debug-panel move still moves. `-no-feest-ao` leaves the approved rig.
+    static func lighting(from settings: LightingSettings) -> LightingSettings {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-no-feest-ao") {
+            return settings
+        }
+        #endif
+        let tuned = LightingSettings()
+        tuned.keyEnabled = settings.keyEnabled
+        tuned.keyIntensity = settings.keyIntensity
+        tuned.keyElevation = settings.keyElevation
+        tuned.keyAzimuth = settings.keyAzimuth
+        tuned.keyTemperature = settings.keyTemperature
+        tuned.shadowsEnabled = settings.shadowsEnabled
+        tuned.fillEnabled = settings.fillEnabled
+        tuned.fillIntensity = settings.fillIntensity
+        tuned.fillTemperature = settings.fillTemperature
+        tuned.ambientEnabled = settings.ambientEnabled
+        tuned.ambientIntensity = settings.ambientIntensity * (800.0 / 1200.0)
+        tuned.iblEnabled = settings.iblEnabled
+        tuned.iblIntensity = settings.iblIntensity
+        tuned.contactShadowsEnabled = settings.contactShadowsEnabled
+        tuned.contactShadowOpacity = settings.contactShadowOpacity
+        tuned.contactShadowScale = settings.contactShadowScale
+        tuned.flatShading = settings.flatShading
+        tuned.lightmapMode = settings.lightmapMode
+        return tuned
+    }
+
     func refreshContactShadows(settings: LightingSettings) {
         self.settings = settings
         // `ContactShadows` currently writes the requested opacity into both the

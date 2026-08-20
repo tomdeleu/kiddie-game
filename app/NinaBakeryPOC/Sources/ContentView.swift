@@ -411,6 +411,7 @@ final class GameScene: ObservableObject {
         sceneRoot.addChild(next.root)
         next.build(flat: settings.flatShading)
         builtFlat = settings.flatShading
+        applyRoomLighting(settings)
 
         // A beat before she is greeted, so the room is on screen first.
         if greeting {
@@ -488,8 +489,21 @@ final class GameScene: ObservableObject {
             room?.build(flat: settings.flatShading)
             self.builtFlat = settings.flatShading
         }
-        rig.apply(settings, to: sceneRoot)
-        room?.refreshContactShadows(settings: settings)
+        applyRoomLighting(settings)
+    }
+
+    private func applyRoomLighting(_ settings: LightingSettings) {
+        let lights: LightingSettings
+        switch currentRoom {
+        case .tuin:
+            lights = GardenRoom.lighting(from: settings)
+        case .feest:
+            lights = FeestRoom.lighting(from: settings)
+        default:
+            lights = settings
+        }
+        rig.apply(lights, to: sceneRoot)
+        room?.refreshContactShadows(settings: lights)
     }
 }
 
