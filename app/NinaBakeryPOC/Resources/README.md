@@ -47,6 +47,22 @@ rather than crashing when a file is absent, and logs which one.
 The canonical copy of the script is `audio/script-keuken.json`. The copy here is
 produced by that script — edit the canonical one.
 
+## Lightmaps — De Keuken
+
+`Lightmaps/KeukenFloorAO.png`, `KeukenBackWallAO.png` and
+`KeukenLeftWallAO.png` are the kitchen's measured room-scale ambient occlusion.
+`KitchenAO.swift` maps them over three kitchen-only UV planes; the shared
+textureless shell remains underneath and is the complete fallback if a map is
+missing.
+
+They are 512² greyscale maps already calibrated to `1 - 0.55·AO`. They multiply
+into the shell's palette tint rather than using
+`PhysicallyBasedMaterial.ambientOcclusion`, because the global lightmap debug
+pass clears that slot while set to Off. Re-bake them whenever fixed kitchen
+furniture moves. The scene, method and simulator comparison are in
+[`../../AMBIENT-OCCLUSION.md`](../../AMBIENT-OCCLUSION.md), "De Keuken — same
+work, different answer".
+
 ## Optional — nothing here is required
 
 Three POC-era assets slot in, and the debug panel detects each one and enables

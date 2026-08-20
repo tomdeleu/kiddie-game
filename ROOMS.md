@@ -696,9 +696,12 @@ A checklist, in the order it is worth doing:
 - **Hang timed audio off the picture, not off a stopwatch.** A line started on a
   timer has to absorb however long the player spent opening a file, and it
   routinely did not fit.
-- **No ambient occlusion.** Shading comes from the facet normals and corners stay
-  light. The two Blender props are the owner-sanctioned exception and their AO is
-  baked to the facets, not to a texture — `models/README.md`.
+- **Ambient occlusion is an owner-sanctioned exception, never a default.**
+  Modelled props bake it to facets (`models/README.md`). De Keuken's measured
+  room-scale exception uses three 512² maps on kitchen-only UV planes because
+  one 460 mm shell facet cannot carry a local answer; the shared `RoomBox`
+  remains textureless. `app/AMBIENT-OCCLUSION.md` has the evidence and the
+  simulator pass.
 - **Judge a cue on the device, not on a plate.** Three cues in, all three looked
   fine as renders and two of them failed on the iPad.
 - **Size a surface from the widest thing that stands on it**, not from what

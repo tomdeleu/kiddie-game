@@ -168,11 +168,12 @@ final class KitchenRoom: Room {
     init(ticker: Ticker, touch: TouchRouter, voice: VoiceBank,
          sound: SoundKit, settings: LightingSettings, mode: RoomMode = .bezoek,
          picked: [Ingredient] = []) {
+        let kitchenShadows = Self.contactShadowSettings(from: settings)
         self.ticker = ticker
         self.touch = touch
         self.voice = voice
         self.sound = sound
-        self.settings = settings
+        self.settings = kitchenShadows
         self.mode = mode
         // **A basket from the garden starts a new round rather than resuming
         // the saved one.** She has just walked in carrying five things she
@@ -187,7 +188,8 @@ final class KitchenRoom: Room {
         root.name = "Kitchen"
 
         let carrier = CarryController(ticker: ticker, sound: sound,
-                                      surfaces: KitchenLayout.surfaces, settings: settings)
+                                      surfaces: KitchenLayout.surfaces,
+                                      settings: kitchenShadows)
         // Everything with an inside, read fresh every frame of a drag — see
         // `CarryController.containers` for why this is a closure.
         carrier.containers = { [weak self] in
@@ -2456,8 +2458,9 @@ final class KitchenRoom: Room {
     }
 
     func refreshContactShadows(settings: LightingSettings) {
-        self.settings = settings
-        carrier.update(settings: settings)
+        let kitchenShadows = Self.contactShadowSettings(from: settings)
+        self.settings = kitchenShadows
+        carrier.update(settings: kitchenShadows)
         let props: [Entity?] = [bowl, tin?.root, cake, rollingPin, basket, flourSack, crate]
             + tokens.map { $0.entity as Entity? }
         for prop in props.compactMap({ $0 }) {
@@ -2467,12 +2470,33 @@ final class KitchenRoom: Room {
             else if prop === flourSack { radius = 0.024 }
             else if prop === crate { radius = 0.026 }
             else { radius = 0.016 }
-            ContactShadows.attach(to: prop, radius: radius, settings: settings)
+            ContactShadows.attach(to: prop, radius: radius, settings: kitchenShadows)
             // Ask the room what is under it rather than guessing from height:
             // props now sit on four different surfaces and move between them.
             ContactShadows.update(for: prop, surfaceY: KitchenLayout.surfaceY(at: prop.position),
-                                  settings: settings)
+                                  settings: kitchenShadows)
         }
+    }
+
+    /// `ContactShadows` writes opacity into both the colour alpha and the
+    /// transparent blend, so the requested 0.22 otherwise arrives as 0.22²:
+    /// about five percent, which the kitchen baseline confirms is invisible.
+    ///
+    /// Het Feest already compensates locally with the square root. Keep this
+    /// kitchen-local too: the owner asked to iterate on De Keuken, and changing
+    /// the shared helper would silently retune the garden and decorating room.
+    private static func contactShadowSettings(from settings: LightingSettings)
+        -> LightingSettings {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-no-kitchen-ao") {
+            return settings
+        }
+        #endif
+        let kitchenShadows = LightingSettings()
+        kitchenShadows.contactShadowsEnabled = settings.contactShadowsEnabled
+        kitchenShadows.contactShadowOpacity = sqrt(settings.contactShadowOpacity)
+        kitchenShadows.contactShadowScale = settings.contactShadowScale
+        return kitchenShadows
     }
 
     // MARK: - Room

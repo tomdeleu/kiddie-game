@@ -11,7 +11,7 @@ This folder is for the shapes that vocabulary cannot reach.
 | | |
 |---|---|
 | `lowpoly.py` | The shared rules: flat shading, palette colours, ring/bridge/tube/box builders, the AO bake, and the export. A prop script is then only its shape. |
-| `feest-scene.py`, `feest-ao.py` | **The odd pair out: they build no prop.** The first stands the *whole disco* up at the game's own coordinates — shell, tiles, props, guests, camera and the five lights — and the second measures ambient occlusion against it. They are the 2026-08-18 AO investigation; its findings and its verdict are in [`app/AMBIENT-OCCLUSION.md`](../app/AMBIENT-OCCLUSION.md). Neither exports anything. |
+| `feest-scene.py`, `feest-ao.py`, `keuken-scene.py`, `keuken-ao.py`, `keuken-lightmaps.py` | **The odd ones out: they build no prop.** The scene files stand the whole disco and kitchen up at the game's coordinates; the AO files measure them with one shared implementation; `keuken-lightmaps.py` rebuilds the kitchen's three shipping shell maps. The findings and different verdicts are in [`app/AMBIENT-OCCLUSION.md`](../app/AMBIENT-OCCLUSION.md). |
 | `beertje.py`, `dj-headphones.py` | Het Feest's cast: eleven complete species sharing one teddy-bear construction, plus the separate baked headset worn by whichever friend is DJ today. Both preserve `GuestCharacter`'s head/arm/leg pivots. |
 | `garden.py` | **De Tuin's own vocabulary**, on top of `lowpoly.py`: a pointed lathe, a folded leaf, a swept curve, an arbitrary-section column, a chamfered octagon, and the plant anatomy the seven plants share. Nothing outside the garden imports it. |
 | `flour-sack.py`, `bosbes.py`, `crate.py`, `klaver.py`, `sink.py`, `cake.py`, `scale.py`, `veertje.py`, `maanstof.py`, `spoon.py` | De Keuken's ten. Run one to rebuild and re-export it. |
@@ -596,6 +596,31 @@ to 1.1 so the floor and mirror ball keep their colour, and restored the intended
 floor-contact-shadow opacity. There are still no UVs, textures or runtime AO.
 The shell texture remains the separate, conditional second step in
 `app/AMBIENT-OCCLUSION.md`.
+
+### De Keuken's room-scale rerun
+
+The same study was repeated against the complete kitchen later on 2026-08-18.
+`keuken-scene.py` reconstructs a valid populated visit-mode state — shell,
+furniture, Nina, Otto, five ingredient sources and three cakes — as 266 objects,
+231 meshes and 4,550 faces. `keuken-ao.py` reuses `feest-ao.py`'s measurement
+functions rather than forking the algorithm.
+
+**It did not justify giving the other kitchen models Het Feest's long ramp.**
+At 30 mm, the eligible nine assets reduced the error against the per-pixel
+reference by only 7–8%, because the missing form is mainly the procedural Nina,
+Otto, furniture and shell. It would also take those nine assets from 63 meshes
+in the populated scene to an estimated 82 at 0.55 strength or 93 at 0.80.
+
+The existing 2–6 mm bakes therefore stay exactly as they are. They own the
+joins they were written for. The shared cake remains the one kitchen-visible
+long-ramp asset because Het Feest already settled it globally.
+
+The kitchen's shell texture was the accurate route — a 36% error reduction —
+and now ships after the owner reported that the existing AO did not visibly act
+in the simulator. It does **not** add UVs to the shared shell: `KitchenAO.swift`
+lays three generated UV planes over its inward faces and maps the three
+0.55-calibrated images there. The modelled kitchen props and their scripts stay
+unchanged; fixed furniture movement is what requires these maps to be rebaked.
 
 The sack's body and corners come back **unshaded**, which is the right answer:
 a slumped bag is convex nearly everywhere, and the two faces that did measure

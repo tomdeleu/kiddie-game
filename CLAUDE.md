@@ -95,7 +95,14 @@ palette gained a blue, an amber and a lilac the locked thirteen do not contain;
 the room box is 0.46 m with the camera pulled back 8%, rather than the 0.4 m and
 the framing `POC.md` signed off; and **the modelled props carry facet-baked
 ambient occlusion** — short contact shading in the first three rooms, plus the
-disco's measured long-reach ramp — see below. The round is ended by carrying
+disco's measured long-reach ramp — see below. A full room-scale kitchen rerun
+on 2026-08-18 kept those short bakes: extending the ramp to its nine eligible
+models improved the per-pixel-reference error by only 7–8%, because the missing
+term lives mainly on the procedural shell, furniture, Nina and Otto. After the
+owner reported on 2026-08-19 that the AO did not visibly act in the simulator,
+the measured second route shipped: three 512² shell maps on kitchen-only UV
+planes, plus the intended 0.22 contact-shadow opacity. The round is ended by
+carrying
 the finished cake up onto the plank, and its doorway now genuinely leads to the
 decorating room rather than promising one. The garden's: **eight seeds rather
 than `GAMEPLAY.md` §5's six**, because the kitchen deals eight; a full basket
@@ -289,12 +296,17 @@ These were argued through and settled. Reopen only if the user asks.
  uses it in every room. It is still baked to facets, not a texture.
  `app/AMBIENT-OCCLUSION.md` has the measurements and `models/README.md` has the
  implementation; the rule holds everywhere else, including everything
- `FacetedMesh` builds and every room shell.
- **Het Feest's dance-floor top is the one generated texture exception.** The
- room-box plate requires a genuinely smooth rectangular light falloff; three
+ `FacetedMesh` builds.
+ **There are two texture exceptions.** Het Feest's dance-floor top uses one
+ because the room-box plate requires a genuinely smooth rectangular light
+ falloff; three
  `ShadeN` bands were visibly bands. `FeestProps` generates one 128² greyscale
  texture in memory and reuses it on all 36 UV planes. The bundled modelled tile
- remains its no-texture failure fallback.
+ remains its no-texture failure fallback. De Keuken's inward shell faces use
+ three 512² AO maps, calibrated at 0.55 strength and mapped onto kitchen-only UV
+ planes; the textureless shared shell remains underneath as the failure
+ fallback. Both exceptions were measured against renders and checked in the
+ simulator rather than introduced as general material vocabulary.
   **Every image generation must pass the matching locked style reference**
   alongside the prompt — scenes `64f0893e-073a-4065-b363-f87687ced11d`
   (`references/plates/01-cottage-exterior.png`), characters

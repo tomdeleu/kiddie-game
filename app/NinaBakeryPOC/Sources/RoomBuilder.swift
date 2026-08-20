@@ -859,6 +859,9 @@ enum RoomBuilder {
         // and a slab, identical in every room. What follows is the furniture,
         // which is the only part that was ever the kitchen's own.
         root.addChild(RoomBox.shell(flat: flat))
+        if let ao = KitchenAO.shellOverlay() {
+            root.addChild(ao)
+        }
 
         root.addChild(buildTable(flat: flat))
         root.addChild(buildCounter(flat: flat))

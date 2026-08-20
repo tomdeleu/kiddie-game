@@ -413,9 +413,9 @@ engine with a scene graph, physics, and particle emitters.
 the flat UI on top (the back arrow, the parent gate).
 
 The visual target is **faceted pastel low-poly** — angular flat-shaded surfaces,
-soft pastel colour, even lighting, and no ambient occlusion. See
+soft pastel colour, even lighting, and no ambient occlusion by default. See
 [references/REFERENCES.md](references/REFERENCES.md) for the full specification
-and §9.5 below for what it costs to render.
+and §9.5 below for the measured exceptions.
 
 A simple, chunky aesthetic is what makes 3D tractable for one person, and it is
 worth being precise about why. The usual objection to 3D is the art pipeline:
@@ -427,9 +427,9 @@ specialist work measured in weeks. **Chunky stylisation removes most of it:**
 - Joints are **rigid**. Nothing bends or deforms, so there is no skinning and no
   weight painting — the single hardest part of 3D character work simply does not
   exist here.
-- Materials are **single matte colours**. No textures to author, no UV
-  unwrapping, no PBR maps, and — since the art direction dropped baked ambient
-  occlusion — no bakes either. See §9.5.
+- Materials are **single matte colours** by default. There is no general UV,
+  texture or PBR-map pipeline; the measured prop and shell exceptions in §9.5
+  are authored narrowly rather than reopening one.
 - The style's whole visual language is *implied* detail. A jar is a cylinder
   with a lid on it. Getting it "right" means getting it simple.
 
@@ -493,9 +493,10 @@ somewhere other than an iPad. Neither is true today.
   `ModelEntity(mesh:materials:)` for everything.
 - **Materials.** `SimpleMaterial(color:roughness:isMetallic:)` with roughness
   near 1.0 and `isMetallic: false` gives the matte surface. Flat base colour and
-  nothing else — no textures anywhere in the project. Avoid `UnlitMaterial`: a
-  surface that ignores lighting loses its facet shading and collapses into a
-  silhouette.
+  nothing else is the default. Two measured UV-plane exceptions now exist:
+  Het Feest's dance-floor light falloff and De Keuken's three shell AO maps;
+  `CLAUDE.md` records both. Avoid `UnlitMaterial`: a surface that ignores
+  lighting loses its facet shading and collapses into a silhouette.
 - **Camera.** A fixed `PerspectiveCamera` per room at a slightly elevated
   three-quarter angle — the doll's-house framing. **She never controls the
   camera.** A 4-year-old cannot orbit a viewport, and a camera that moves
@@ -515,9 +516,10 @@ somewhere other than an iPad. Neither is true today.
 
 The art direction is **faceted pastel low-poly**
 ([`references/REFERENCES.md`](references/REFERENCES.md)) — angular flat-shaded
-geometry, soft pastels, even lighting, and **no ambient occlusion at all**. This
-replaces the clay direction that this section previously described, and it makes
-the rendering markedly simpler rather than harder.
+geometry, soft pastels and even lighting. Ambient occlusion remains off by
+default; the measured prop and kitchen-shell exceptions are recorded in
+`CLAUDE.md`. This replaces the clay direction that this section previously
+described, and it makes the rendering markedly simpler rather than harder.
 
 **Shading comes from the facets.** Hard normals mean each polygon returns its own
 value under one directional light, so a faceted sphere reads as twenty tones with
@@ -535,10 +537,10 @@ single `DirectionalLightComponent` with `DirectionalLightComponent.Shadow`
 supplies direction and the grounding shadow. No rim lights, no dramatic
 contrast, and deliberately **no dark corners**.
 
-#### Depth without ambient occlusion
+#### Depth, with narrow ambient-occlusion exceptions
 
-The old plan baked AO into every asset in Blender. That is dropped. Depth now
-comes from four sources, none of which is a bake:
+The old plan baked AO into every asset in Blender. That is dropped. Default
+depth comes from four sources:
 
 1. **Flat-shaded facets** — the primary source, and free. Smooth clay needed
    occlusion because it had almost no normal variation to shade; faceted
@@ -550,11 +552,10 @@ comes from four sources, none of which is a bake:
 4. **Contact shadow blobs under draggables** — a soft dark ellipse scaled by
    proximity to the surface. Crude, cheap, dynamic, convincing at this scale.
 
-Fallbacks if some corner still reads flat, neither of which reintroduces
-per-asset Blender bakes: **hand-darkened vertex colours** (authored art, no UVs,
-no textures), or **Reality Composer Pro 3's light baker**, which generates AO and
-indirect lightmaps for static scenes as a tool step. Keeping that escape hatch
-open costs nothing now.
+Fallbacks if some corner still reads flat: **hand-darkened vertex colours**, or
+an authored AO map on a dedicated UV plane. De Keuken has now taken the second
+route after a complete Blender measurement and simulator A/B; it leaves the
+shared textureless shell underneath. `app/AMBIENT-OCCLUSION.md` is the record.
 
 RealityKit exposes no screen-space AO, so do not plan around SSAO arriving.
 `POC.md` has the full breakdown.

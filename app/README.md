@@ -1503,7 +1503,7 @@ Nothing structural. The three things it is short of are content and are cheap:
 
 ## Deliberate deviations from the design
 
-**There is ambient occlusion on the twenty-two Blender props, and nowhere
+**There is facet-baked ambient occlusion on the modelled props, and nowhere
 else.**
 `references/REFERENCES.md` bans it outright — the facets are supposed to do the
 shading and corners are supposed to stay light — and that holds everywhere a
@@ -1518,15 +1518,29 @@ seeing the standing crown, and extended to each prop after it.
 It is baked **to the facets, not to a texture** — `bake_ao_facets` in
 `models/lowpoly.py` measures the occlusion at model time and splits the faces
 in the crevice into their own mesh, which `Palette.occluded` paints a step
-darker. So there are still no UVs, no lightmap and no runtime cost, and the
-occlusion is still one flat tone on a facet. Its reach runs from 2.2 mm on the
-berry to 6 mm on the sack, always sized against the part it has to stay inside:
-contact shading where two parts meet, not the all-over darkening the clay
-direction was rejected for. **The cake's tiers are exempt entirely** — they are
-repainted every round, and a tier a step darker would read as a colour she did
-not choose. Everything built by `FacetedMesh`
-has none. `models/README.md` has the argument in full and the three rules that
-keep the bake honest, and `LIGHTMAPS.md` is still the untaken texture route.
+darker. So there are still no UVs, no lightmap and no runtime AO pass — the
+cost is the extra `ShadeN` draw calls — and the occlusion is still one flat
+tone on a facet. In De Keuken its reach runs from
+2.2 mm on the berry to 6 mm on the sack, always sized against the part it has
+to stay inside: contact shading where two parts meet, not the all-over darkening
+the clay direction was rejected for. Het Feest's measured exception reaches
+30 mm over ten levels; the shared cake carries that ramp here too, but its tiers
+remain exempt — they are repainted every round, and a tier a step darker would
+read as a colour she did not choose. Everything built by `FacetedMesh` has none.
+
+**The room-scale kitchen study did not extend that 30 mm ramp to its other
+modelled props.** It improved the per-pixel-reference error by only 7–8% because
+the missing term is mainly on the procedural shell, furniture, Nina and Otto;
+the accurate shell texture improved it by 36%, and now ships after the owner
+reported on 2026-08-19 that the existing AO did not visibly act in the
+simulator. `KitchenAO` lays three 512² maps on kitchen-only UV planes over the
+floor and inward walls, multiplied into base colour because the global debug
+lightmap pass clears the material AO slot when it is off. The same pass restores
+the kitchen contact discs from 0.22² to their intended final 0.22 opacity.
+In Debug, `-no-kitchen-ao` disables both changes for an exact simulator A/B.
+The 266-object reconstruction, measurements and eleven renders are in
+[`AMBIENT-OCCLUSION.md`](AMBIENT-OCCLUSION.md), "De Keuken — same work,
+different answer". `models/README.md` has the prop-bake rules.
 
 **The room is 0.46 m across and the camera moved with it.** `POC.md` asks for a
 box "around 0.4 m" and signed off a framing; this is that box grown 15% and that

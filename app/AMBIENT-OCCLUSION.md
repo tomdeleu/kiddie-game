@@ -1,13 +1,24 @@
-# Real ambient occlusion, tried in Het Feest
+# Real ambient occlusion, tried in Het Feest and De Keuken
 
 **The question** (owner, 2026-08-18): *is real ambient occlusion in the scenes
 possible?* — asked with Blender connected and the plates on disk, and asked of
-**the disco**.
+**the disco**. Later the same day the owner asked for the same work on
+**GAMEPLAY §6.3, De Keuken**. The two rooms do not have the same answer.
 
-This is the answer, and it is four measurements and eleven renders rather than
-an opinion. Everything in it can be rebuilt from
+This is the answer, and it is measurements and renders rather than an opinion.
+The disco can be rebuilt from
 [`models/feest-scene.py`](../models/feest-scene.py) and
-[`models/feest-ao.py`](../models/feest-ao.py).
+[`models/feest-ao.py`](../models/feest-ao.py); the kitchen from
+[`models/keuken-scene.py`](../models/keuken-scene.py) and
+[`models/keuken-ao.py`](../models/keuken-ao.py).
+
+**The short verdict:** Het Feest gained its 30 mm ten-level prop ramp. De
+Keuken keeps its existing 2–6 mm contact bakes and the shared cake's disco
+ramp: a long ramp on the nine other modelled assets reaches the wrong 8% of the
+error. **Its measured shell texture now ships instead.** On 2026-08-19 the
+owner reported that the original AO did not visibly act in the simulator, which
+triggered the conditional second step below: three 512² maps on kitchen-local
+UV planes, plus restoration of the contact discs' intended 0.22 opacity.
 
 **Implemented 2026-08-18:** the unconditional first step in §6 now ships in the
 model assets: 30 mm per-prop AO, 0.80 strength, quantised to ten `ShadeN`
@@ -377,3 +388,268 @@ ao.apply_texture(shell, maps, strength=0.55)
 `ao.strip()` puts every mesh back on its first material slot; `ao.plain()`
 takes `pixel_ao` back out. Both leave the scene renderable, so the three routes
 can be A/B'd in one session without rebuilding the room.
+
+---
+
+## De Keuken — same work, different answer
+
+**Asked by the owner on 2026-08-18:** repeat the room-scale AO investigation
+for `GAMEPLAY.md` §6.3, De Keuken.
+
+**The first pass shipped only the study.** The nine kitchen assets that could
+take a longer facet ramp account for too little of the missing image, while the
+shell texture accounts for most of it. That texture was initially deferred.
+
+**Implemented after the simulator check on 2026-08-19:** the owner reported that
+the AO did not look like it was doing anything. The conditional shell route now
+ships as three kitchen-only UV planes in `KitchenAO.swift`; the 0.55-calibrated
+maps multiply into diffuse colour because `LightingRig` clears the material AO
+slot whenever the global lightmap debug switch is off. The kitchen also applies
+the same √opacity compensation as Het Feest, so `ContactShadows`' double alpha
+lands at the requested final 0.22 instead of 0.048.
+
+The eleven kitchen renders are in
+[`ao-study-keuken/`](ao-study-keuken/). They were made in Cycles at one fixed
+seed; Blender 5.2's EEVEE did not reproduce the five-sun rig closely enough to
+mix its output into pixel differences, so unlike the disco's original pass no
+cross-engine comparison is used here.
+
+### What was assembled
+
+[`models/keuken-scene.py`](../models/keuken-scene.py) rebuilds a valid,
+maximally populated visit-mode kitchen:
+
+- the shared shell, table, counter, two shelves and six jars, cake plank,
+  portrait fallback and invited door;
+- Otto and Nina from their Swift dimensions and pivots;
+- dough, basket, bowl, spoon, tin and rolling pin;
+- one possible five-ingredient deal across all five sources;
+- sink, scale, flour sack and crate;
+- three completed cakes on the plank;
+- the camera at `CameraRig.eye` and the five approved `LightingSettings` suns.
+
+That is **266 objects, 231 meshes and 4,550 faces**. Where a prop has a Blender
+source, the scene calls its shipping `build()` and keeps its existing `ShadeN`
+pieces. Procedural things are transcribed from `FacetedMesh` at the same
+coordinates and side counts.
+
+The still is deliberately fuller than a round's middle: visit mode starts a
+fresh round behind the three cakes that opened the door, so all of it can
+genuinely coexist. Water, batter, sparkles, flour prints, halos and the dynamic
+contact-shadow discs are transient and absent.
+
+| | |
+|---|---|
+| [`01-as-it-ships.png`](ao-study-keuken/01-as-it-ships.png) | the assembled kitchen, with the app's caster list |
+| [`00-what-casts-a-shadow.png`](ao-study-keuken/00-what-casts-a-shadow.png) | every mesh casting │ the app's own caster list |
+
+**The caster list matters here too.** The shell, counter, shelves, cake plank,
+portrait and doorway do not cast in the app; **119 of the scene's 231 meshes**
+are therefore out of the key shadow map. Turning them all back on restores the
+wall/wall wedge and furniture silhouettes that `LightingSettings` records being
+rejected on device. They are cast shadows, not AO, and any future regression
+that looks like the left panel belongs in the caster list.
+
+### The per-pixel ceiling
+
+| | |
+|---|---|
+| [`02-real-ao.png`](ao-study-keuken/02-real-ao.png) | per-pixel Cycles AO at 45 mm and 0.55 strength |
+| [`03-where-real-ao-acts.png`](ao-study-keuken/03-where-real-ao-acts.png) | the difference from `01`, ×6 |
+
+With absolute render differences below 0.015 treated as sampling and denoiser
+noise, real kitchen AO touches **25.0% of the lit picture**, darkens those
+pixels by a mean **7.1%**, and the deepest twentieth reaches **20.1%**. The
+near-identical coverage to Het Feest (24.5%) hides a different distribution:
+
+- broad contact under the table legs, flour sack, crate and Otto;
+- the bowl and sink interiors, and under their rims;
+- Nina's apron, arms and hat against her body;
+- Otto's mouth surround, eyes, door and chimney against the dome;
+- the shelves, counter, plank, portrait and doorway meeting plaster;
+- the wall/floor and wall/wall joins.
+
+The first item overstates what is missing in the app: its loose props have
+dynamic `ContactShadows`, and the table, Nina and Otto cast real shadows. The
+Blender ceiling intentionally has neither helper disc. The first simulator
+capture exposed why the discs appeared absent: `ContactShadows` writes opacity
+into both colour alpha and transparent blending, so requested 0.22 arrived as
+0.22², about 0.048. De Keuken now compensates locally with √opacity, as Het
+Feest already did, restoring the intended final 0.22 without retuning the
+garden or decorating room.
+
+### Why the disco's long prop ramp does not transfer
+
+The tempting mechanical answer was to give every modelled kitchen asset Het
+Feest's 30 mm ramp. Two candidates were rendered: 0.55 over six visual rungs,
+the study setting, and the disco's shipping 0.80 over ten.
+
+| | |
+|---|---|
+| [`04-props-truth-ramp.png`](ao-study-keuken/04-props-truth-ramp.png) | per-pixel truth │ 0.55/six on modelled kitchen props │ 0.80/ten |
+
+Measured over the lit picture against `02`:
+
+| route | mean error | improvement over no added AO |
+|---|---:|---:|
+| no added kitchen AO | 0.01596 | — |
+| modelled props, 0.55 / six | 0.01482 | **7.2%** |
+| modelled props, 0.80 / ten | 0.01467 | **8.1%** |
+
+That is the wrong end of the room. The eligible assets are the blueberry,
+clover, moon-dust pouch, feather, spoon, sink, scale, flour sack and crate.
+The missing forms that dominate `03` are the procedural **Nina, Otto, table,
+counter, bowls and shell**. Rebuilding nine USDZ files cannot touch them.
+
+It is not free either. In this populated still those nine assets currently
+occupy **63 meshes** including their short-bake `ShadeN` pieces. Replacing the
+short bakes with the measured 30 mm ramp is estimated at **82 meshes** for
+0.55, or **93** for 0.80: 19–30 more draw calls to improve the room-scale error
+by seven or eight percent. The deeper render also makes the scale's dial edge
+and the sack's enclosed folds visibly harsher while leaving the floor and
+plaster unchanged.
+
+The shared cake is excluded from that test because it already carries Het
+Feest's 30 mm, 0.80, ten-level ramp in every room. Nothing here asks to undo it.
+
+**Verdict: keep the kitchen's existing 2–6 mm bakes.** They answer the joins
+they were authored for — crown/calyx, board/post, collar/tie, spout/post — and
+do not pretend to answer the room.
+
+### The shell still cannot be painted by facets
+
+The shipping shell gives each visible inward surface one receiving facet. At
+45 mm, measured against the whole kitchen while excluding each facet's own
+object:
+
+| surface | receiving facets | measured AO | a facet bake's only answer |
+|---|---:|---:|---|
+| floor top | 1 | **0.000** | no shading anywhere, despite every contact in `03` |
+| back wall inner | 1 | **0.234** | the whole 460 × 235 mm wall one step dark |
+| left wall inner | 1 | **0.702** | the whole wall two steps dark |
+
+This is the disco failure with different signs. There the floor centre happened
+to see enough room to darken the whole floor; here it happens to sit in open
+space and sees nothing. The left wall's one sample sits among the shelves and
+door and declares the whole wall enclosed. Neither is a picture of where AO
+acts.
+
+| | |
+|---|---|
+| [`09-facet-scene-bake.png`](ao-study-keuken/09-facet-scene-bake.png) | scene AO after cutting each inward shell face into 24 × 24 cells |
+
+At 24 divisions, 19 mm cells, the shell grows from **24 to 1,749 faces** and
+the room from 4,550 to **6,275**. It finally has samples near the furniture,
+and paints them as stair steps: rectangles behind the shelves, square halos
+under the floor props, and a block grid along the wall joins. Finer cells are a
+lightmap priced in triangles.
+
+**Facet-quantised scene AO remains a dead end.**
+
+### The texture remains the accurate route
+
+The same 512² Cycles bake used for Het Feest was run on the kitchen's visible
+shell. The shipping floor and two wall PNGs total **222 KB** in source and
+about **169 KB** after Xcode's resource processing. They include fixed geometry
+only — shell, furniture, Otto, sink, scale, sack and crate — so a moved bowl or
+ingredient never leaves a baked ghost. Dynamic contact stays with the corrected
+contact discs.
+
+| | |
+|---|---|
+| [`06-shell-ships-texture-truth.png`](ao-study-keuken/06-shell-ships-texture-truth.png) | today │ shell texture │ per-pixel truth |
+| [`07-floor-ao-map.png`](ao-study-keuken/07-floor-ao-map.png) | the floor map — feet, legs, sack, crate and Otto |
+| [`08-both-routes.png`](ao-study-keuken/08-both-routes.png) | shell texture plus the 0.55 modelled-prop ramp |
+| [`10-where-both-routes-act.png`](ao-study-keuken/10-where-both-routes-act.png) | the combined difference from today, ×6 |
+
+| route | mean error vs per-pixel truth | improvement over today |
+|---|---:|---:|
+| today | 0.01596 | — |
+| modelled prop ramp only, 0.55 | 0.01482 | 7.2% |
+| shell texture only | **0.01022** | **36.0%** |
+| both | **0.00915** | **42.7%** |
+
+So the kitchen strengthens the disco's conclusion: a texture is the right
+representation for a soft answer over a 460 mm quad. The implementation avoids
+changing shared code: `KitchenAO.shellOverlay()` lays three generated UV planes
+0.2 mm over `RoomBox.shell`'s inward faces. The ordinary box remains underneath
+for thickness and is the complete fallback if any texture is absent.
+
+The first simulator pass put the maps in
+`PhysicallyBasedMaterial.ambientOcclusion`; it looked unchanged. The cause was
+not insufficient strength: `LightingRig.applyLightmap(.off)` clears that slot
+on every model immediately after room construction. The maps are already
+calibrated to `1 - 0.55·AO`, so the shipping material multiplies them into base
+colour instead — white leaves the palette unchanged and only the measured
+gradients darken. That is also the route the Blender comparison measured.
+
+| | |
+|---|---|
+| [`11-simulator-iteration.png`](ao-study-keuken/11-simulator-iteration.png) | the same Debug build: `-no-kitchen-ao` │ shipping AO |
+
+The right panel is where the room-scale AO is visibly doing
+work: under Otto, the table legs, sack and crate, with softer wall contact
+behind the fixed furniture. It keeps live directional shadows and adds three
+draw calls. The debug launch flag disables both the shell maps and the opacity
+correction, so the A/B includes the complete kitchen pass. Furniture movement
+still requires a re-bake.
+
+### What ships from the kitchen pass
+
+1. **Three kitchen shell AO maps.** 512², 0.55 strength, on three kitchen-only
+   UV planes built by `KitchenAO.swift`.
+2. **The intended 0.22 dynamic contact opacity.** A local √opacity correction
+   compensates for the shared helper applying alpha twice.
+3. **The nine eligible modelled props keep their short contact bakes.**
+   Extending them remains the measured wrong route.
+4. **The shared cake keeps its existing long ramp.**
+5. **No facet scene bake and no lighting change.**
+6. **The reproducible study ships:** the assembled scene, shared measurement
+   wrapper and eleven renders, including the simulator iteration.
+
+### Rebuilding the kitchen study
+
+```
+blender --background --python models/keuken-scene.py
+blender --background --python models/keuken-lightmaps.py
+```
+
+The first command assembles the study scene; the second rebuilds the three
+shipping maps directly. For interactive measurements:
+
+```python
+import importlib.util, sys
+
+def load(stem, name):
+    spec = importlib.util.spec_from_file_location(name, "models/%s.py" % stem)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
+
+scene = load("keuken-scene", "keuken_scene")
+ao = load("keuken-ao", "keuken_ao")
+
+scene.SUBDIV = 0
+groups = scene.assemble()
+every = ao.meshes()
+
+# Room-scale relationships, excluding each facet's own prop.
+room = ao.measure(every, every, distance=ao.REACH)
+print(ao.report(room, groups))
+
+# Longer self-occlusion, for the candidate prop ramp.
+props = ao.measure_per_prop(every, distance=0.030)
+ao.paint(props, ladder=False, steps=6, strength=0.55)
+
+# Per-pixel ceiling and the original whole-box study route.
+ao.pixel_ao()
+shell = [ob for ob in groups["Schil"] if ob.type == "MESH"]
+maps = ao.bake_texture(shell, size=512, samples=24, distance=0.045)
+ao.apply_texture(shell, maps, strength=0.55)
+```
+
+`keuken-ao.py` deliberately re-exports `feest-ao.py`'s room-independent
+measurement code. The second room therefore tests a different scene with the
+same rays, thresholds and paint functions rather than carrying a forked AO
+implementation.
