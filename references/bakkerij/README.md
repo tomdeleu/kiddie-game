@@ -129,13 +129,48 @@ returned a solid panel first time. Worth knowing before the party's lanterns.
 wanted a shape showing through the glass before the friend comes in. There is no
 glass, so the cue is the bell and the leaf, not a silhouette.
 
+## The frames' two states, the toys and the sign
+
+The second batch, generated 2026-08-17 when the room was built. The four steps
+above had a plate each. These are everything else the room turned out to need.
+The state the wall is actually in most of the time, the five toys `GAMEPLAY.md`
+§6.1 asks for, and the sign above the door.
+
+This session did not generate more. The files were already on disk.
+
+| File | Job ID | Reads as |
+|---|---|---|
+| `lijstje-twee-staten.png` | `00e1c187-1957-4a68-8381-12b140ed69f2` | **The plate this batch was for.** One frame twice: left a pale warm-grey panel carrying a darker grey animal silhouette, right the same frame holding a small faceted layered cake behind a **warm glowing inner rim**. Both states, one picture, exactly as asked |
+| `poes.png` | `6ec7a53f-5888-4b1c-9c63-56c39b541f3e` | A cat curled asleep, nose to tail, ears folded, eyes two closed curves. Blush pink over a cream chest, and **faceted all the way round** |
+| `bel.png` | `30c9b18f-8107-4628-a633-51e5afcff65e` | A butter yellow dome bell with a ball clapper, on a curved arm off a flat wall backplate. The dome's facets read as horizontal bands |
+| `radio.png` | `d4aa2070-fac6-4507-85b3-3f7fefcb6973` | A boxy radio: body, carry handle, round grille, **8-sided dial knob**, small buttons. Came back blush pink rather than mint |
+| `raam.png` | `467d8c4e-6e20-4f99-8a84-1e6308b8819e` | A cream window frame around a **solid pale blue panel** in four panes. No glass, no reflection, first time |
+| `tekeningen.png` | `82603aeb-60d8-4b76-8a4a-74074b0e110c` | Three cream sheets with **square corners**, a heart, a sun and a flower standing proud of the paper, each under a small faceted pin head |
+| `uithangbord-twee-staten.png` | `d985b5c5-ec79-4501-bb52-456913dfbddc` | **FAILED its brief, kept for its geometry.** Asked for the sign washed-out grey beside the sign fully lit; both came back fully coloured. The board, the bracket bar, the two hanger rods and the cake-and-star relief are right, and that is what was modelled |
+| `vriend-aan-toonbank.png` | `79c24dce-3296-4240-8a1c-c93b0ec38d51` | Staging: a mouse standing at the near end of a long low blush counter, card held out at counter height. **It is wearing Nina's apron and wings** |
+
+**No seeds recorded for either batch**, only job IDs.
+
+### What the second batch taught
+
+- **A two-state plate works when the states differ by content, and fails when
+  they differ only by saturation.** The frame pair came back perfect. The sign
+  pair came back as the same coloured sign twice. Ask for two states only when
+  you can name a different thing in each one.
+- **The characters reference dresses whatever it draws in Nina's clothes.** The
+  mouse in `vriend-aan-toonbank.png` arrived in the fairy's mint apron and her
+  wings. Passing the characters plate to a character who is not Nina still
+  borrows her costume.
+
 ## Cost
 
-Eight generations, eight credits — seven keepers and one failed room box.
+**Sixteen generations, sixteen credits**, across two batches: eight for the
+required action (seven keepers and one failed room box) and eight for the frames'
+two states, the toys and the sign (seven keepers and one sign that failed its
+brief but was modelled from anyway).
 
-**The balance fell by 13.1 over the same period, and only 8 of that was this
-work.** The rest was `Voiceover` spend from another session on the same account,
-running concurrently and still running after the last image landed. That is the
-warning [`../versieren/README.md`](../versieren/README.md) ends on, confirmed
-with timestamps: **read `transactions`, not the balance delta**, before recording
-what a batch cost.
+The room's voice-over is on top of that. 37 line ids and **53 variants** in
+[`../../audio/script-bakkerij.json`](../../audio/script-bakkerij.json).
+
+This session spent **zero** more image credits. The extra plates were already
+here.

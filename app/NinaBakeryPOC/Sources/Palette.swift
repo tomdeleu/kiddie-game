@@ -82,6 +82,22 @@ enum Palette {
     /// `woodBrown`, taken darker. One surface, the oven's mouth plug.
     static let ovenInside    = hex(0x554C3F)
 
+    // MARK: - Added for De Bakkerij
+
+    /// **The grey a waiting frame is.** Nothing in the locked thirteen could be
+    /// it. The only grey there is `backdropGrey`, marked *reference plates only,
+    /// never in-game* — eleven of those on a cream wall read as eleven holes.
+    ///
+    /// Derived the way `berryBlue` was: `cream` pulled most of the way to
+    /// neutral **at cream's own lightness**. A ghost is then the same
+    /// brightness as the wall and differs only in being colourless.
+    /// `references/bakkerij/lijstje-twee-staten.png` is the plate this was
+    /// checked against.
+    static let ghostGrey     = hex(0xDCD8D2)
+    /// The silhouette inside the ghost — one step down, so the animal shows
+    /// against its own panel without becoming a black hole in a pastel room.
+    static let ghostGreyDeep = hex(0xC4BFB8)
+
     /// A palette colour one or more steps into shadow.
     ///
     /// **This is the game's only ambient occlusion**, and it exists against a

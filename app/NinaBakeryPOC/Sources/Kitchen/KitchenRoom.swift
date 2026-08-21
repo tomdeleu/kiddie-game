@@ -456,13 +456,17 @@ final class KitchenRoom: Room {
         doorTouchSpot = hit
     }
 
-    /// **The kitchen is finished.** Three cakes on the plank, and the door is
-    /// the way on — see `KitchenLayout.cakesToFinish`.
-    ///
-    /// A floor, not a quota: a fresh round still starts, and she is free to
-    /// bake a fourth instead. It stays true once true, so coming back to a
-    /// finished kitchen finds the door still open and still lit.
-    var roomComplete: Bool { state.shelf.count >= KitchenLayout.cakesToFinish }
+    /// **The kitchen is finished.** A visit wants three cakes on the plank
+    /// (`KitchenLayout.cakesToFinish`). A round wants the cake she just made,
+    /// which is `lastFinished` after a fresh round start. The plank's history
+    /// is kept and must not open the door for a friend she has not baked for
+    /// yet.
+    var roomComplete: Bool {
+        if mode == .bezoek {
+            return state.shelf.count >= KitchenLayout.cakesToFinish
+        }
+        return state.lastFinished != nil
+    }
 
     /// **Put the door in the state the plank has earned.**
     ///
@@ -1741,7 +1745,9 @@ final class KitchenRoom: Room {
         // happens next, and what happens next is not the same after the third
         // cake as after the first. `shelf` already counts the one that has just
         // landed, so this asks about the plank she is looking at.
-        let finishes = shelf.count >= KitchenLayout.cakesToFinish
+        let finishes = mode == .bezoek
+            ? shelf.count >= KitchenLayout.cakesToFinish
+            : true
         // Cleared before she is spoken to, not after: it is the premise the
         // out-of-the-oven chain is checked against, and there is no longer a
         // cake on the table.
@@ -1802,10 +1808,11 @@ final class KitchenRoom: Room {
     /// Unfinished kitchen: it opens, shows the light, falls shut, and Nina says
     /// what it is. That is a toy, and it always was.
     ///
-    /// Three cakes up: it is **the way out of the room**, and tapping it is what
-    /// ends the kitchen (owner, 2026-08-16). Everything about the door has been
-    /// telling her so since the third cake landed — it is standing ajar, the
-    /// light behind it is on, and there is a ring on the floor at the threshold.
+    /// Finished kitchen: it is **the way out of the room**, and tapping it is
+    /// what ends the kitchen (owner, 2026-08-16). A visit finishes at three
+    /// cakes. A round finishes at one. Everything about the door has been
+    /// telling her so since it opened. It is standing ajar, the light behind
+    /// it is on, and there is a ring on the floor at the threshold.
     private func tapDoorway() {
         guard let doorway else { return }
         sound.play(.whoosh)
@@ -1845,7 +1852,8 @@ final class KitchenRoom: Room {
         save()
 
         let cake = state.cakeToDecorate
-        voice.sayInstead(cake == nil ? Line.kamerDeur : Line.naarVersieren)
+        let visiting = mode == .bezoek
+        voice.sayInstead(visiting || cake == nil ? Line.kamerDeur : Line.naarVersieren)
 
         // Light coming through the gap, twice, on the beat of the swing opening
         // and of it standing there.
@@ -1861,10 +1869,14 @@ final class KitchenRoom: Room {
             }
         }
 
-        // **Handed over on the beat the leaf reaches full open**, so the swing
+        // Handed over on the beat the leaf reaches full open, so the swing
         // reads as the way through rather than as something that happened first.
         // `GameScene` waits again on its own side before building, which is what
         // gives Nina's line room to land.
+        if visiting {
+            ticker.after(0.9) { [weak self] in self?.onExit?(.bakkerij(nil)) }
+            return
+        }
         guard let cake else { return }
         ticker.after(0.9) { [weak self] in self?.onExit?(.versieren(cake)) }
     }

@@ -93,6 +93,19 @@ struct IntroMovie: View {
 
     nonisolated static var isAvailable: Bool { !urls.isEmpty }
 
+    /// **Has the film been seen already?** It plays on the first launch and
+    /// never again, because `GAMEPLAY.md` §2 wants the wall of frames to be the
+    /// first thing on screen and fourteen seconds between her and the wall
+    /// every single launch is fourteen seconds she will learn to skip.
+    ///
+    /// `UserDefaults` rather than `GameStore`, and deliberately: this is read
+    /// `nonisolated`, before any scene exists, and it is a fact about the app
+    /// rather than about her wall. Clearing the app's data replays the film.
+    nonisolated static var hasPlayed: Bool {
+        get { UserDefaults.standard.bool(forKey: "introPlayed") }
+        set { UserDefaults.standard.set(newValue, forKey: "introPlayed") }
+    }
+
     var body: some View {
         ZStack {
             // Black behind, so the film's letterbox on a 4:3 iPad reads as

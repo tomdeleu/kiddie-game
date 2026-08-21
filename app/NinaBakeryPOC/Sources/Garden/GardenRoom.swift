@@ -42,12 +42,15 @@ final class GardenRoom: Room {
     var onExit: ((RoomExit) -> Void)?
 
     /// Which way she came in. `ROOMS.md` §9: one flag, not two implementations.
-    /// The garden reads it nowhere yet — sowing, watering and picking are the
-    /// same either way, and a full basket is the completion rule in both modes
-    /// (owner's call, 2026-08-16) — but it is stored so the room is spelled like
-    /// the other two, and so the day the bakery hub lands the door has something
-    /// to ask.
+    /// Sowing, watering and picking are the same either way. A full basket is
+    /// the completion rule in both modes (owner's call, 2026-08-16). The door
+    /// is what differs. A round hands the basket to the kitchen. A visit walks
+    /// home to the bakery.
     let mode: RoomMode
+
+    /// Who today's round is for, when the bakery sent her. A visit has none.
+    /// `hintTarget(.zaaien)` reads `Friend.hintedIngredient` off this.
+    private let friend: Friend?
 
     private let ticker: Ticker
     private let touch: TouchRouter
@@ -133,13 +136,15 @@ final class GardenRoom: Room {
     private var lastTouchPoint: SIMD3<Float>?
 
     init(ticker: Ticker, touch: TouchRouter, voice: VoiceBank,
-         sound: SoundKit, settings: LightingSettings, mode: RoomMode = .bezoek) {
+         sound: SoundKit, settings: LightingSettings, mode: RoomMode = .bezoek,
+         friend: Friend? = nil) {
         self.ticker = ticker
         self.touch = touch
         self.voice = voice
         self.sound = sound
         self.settings = settings
         self.mode = mode
+        self.friend = friend
         self.state = GardenStore.load()
         root.name = "Garden"
 
@@ -1084,18 +1089,10 @@ final class GardenRoom: Room {
 
     /// **The end of the garden.**
     ///
-    /// A ceremony rather than a transition, for the same reason the kitchen's
-    /// is: there is nowhere to be taken. The bakery hub does not exist, so the
-    /// round has no next room to hand to — and **a 4-year-old told she is going
-    /// somewhere and then not taken there has been lied to** (`ROOMS.md` §9).
-    ///
-    /// What it does do is real: the basket goes out through `onExit`, so the
-    /// round the kitchen starts next is baked from **what she actually grew**.
-    /// She will not see the handover happen and that is fine; she will see five
-    /// familiar things waiting in the kitchen's five places.
-    ///
-    /// **This is the one function the bakery hub replaces**, exactly as
-    /// `KitchenRoom.endRoom` is the one the decorating room replaces.
+    /// A round hands the basket to the kitchen, so the cake is baked from what
+    /// she actually grew. A visit walks home to the bakery with nothing to hang.
+    /// She will not see the handover. She will see five familiar things waiting
+    /// in the kitchen's five places, or the wall she left from.
     private func endRoom(_ doorway: Props.Doorway) {
         swingDoor(doorway, hold: 2.6)
         sound.play(.reward, volume: 0.7)
@@ -1114,14 +1111,18 @@ final class GardenRoom: Room {
             }
         }
 
-        // **Handed over on the beat the leaf reaches full open**, the same beat
+        // Handed over on the beat the leaf reaches full open, the same beat
         // the kitchen uses, so the swing reads as the way through rather than as
-        // something that happened first. An empty basket is not a handover —
-        // she opened the gate on a garden she had not picked — so that ends the
-        // visit instead, which today means staying exactly where she is.
+        // something that happened first. `gardenComplete` already refused an
+        // empty basket, so this is always a full one.
         let basket = state.basket
         ticker.after(0.9) { [weak self] in
-            self?.onExit?(basket.isEmpty ? .bakkerij : .keuken(basket))
+            guard let self else { return }
+            if self.mode == .bezoek {
+                self.onExit?(.bakkerij(nil))
+            } else {
+                self.onExit?(.keuken(basket))
+            }
         }
     }
 
@@ -1379,13 +1380,19 @@ final class GardenRoom: Room {
     /// **The shimmer is where the seed jars get their turn.**
     ///
     /// The halo cannot point at one of eight equally right answers, but a shimmer
-    /// can: it is the *idle* cue, it says "there is something over here" rather
-    /// than "this one", and `GAMEPLAY.md` §6.2 asks for exactly this — the wish
+    /// can. It is the idle cue. It says "there is something over here" rather
+    /// than "this one", and `GAMEPLAY.md` §6.2 asks for exactly this. The wish
     /// hint is `Ticker.shimmer` on a jar, not a halo on one. Which jar shimmers
-    /// is arbitrary now and will be the wish's colour once the friends exist.
+    /// is the friend's `hintedIngredient`, or the first jar on a visit.
     private func hintTarget(for step: GardenStep) -> Entity? {
         switch step {
-        case .zaaien: return jars.first
+        case .zaaien:
+            if let hint = friend?.hintedIngredient,
+               let index = Ingredient.allCases.firstIndex(of: hint),
+               jars.indices.contains(index) {
+                return jars[index]
+            }
+            return jars.first
         case .gieten: return can?.root
         case .plukken:
             guard let index = state.nextRipePlot else { return nil }
