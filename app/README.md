@@ -2951,8 +2951,10 @@ on disk from the 2026-08-17 bakery branch. Job IDs live in
   `[weak rebuilt]` on `FrameWall.Frame`, which is a struct — the garden's
   `[weak can]` on `WateringCan`. The closure wants the moulding, so that is
   what is captured. `ticker.move` now labels `done:`, the warning that first
-  build cleaned up while it had the compiler open. There is still no Swift
-  toolchain here.
+  build cleaned up while it had the compiler open. Wish switches that ignored
+  an associated value now write `_` rather than omitting the payload, which is
+  the pattern the language guide requires. There is still no Swift toolchain
+  here.
 - **Nina in the bakery**, with the protocol in `POC.md`. Touch radii were
   inherited from the kitchen's box.
 - **Gold-frame replay of the opening film.** §2 still wants the film somewhere

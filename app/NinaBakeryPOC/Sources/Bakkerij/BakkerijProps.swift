@@ -505,7 +505,7 @@ enum BakkerijProps {
                     node.addChild(puff)
                 }
             }
-        case .sprinkels:
+        case .sprinkels(_):
             // Many little ones, because Pip's wish is a quantity.
             let colours = [Palette.rose, Palette.mint, Palette.butterYellow,
                            Palette.lilac, Palette.sage]

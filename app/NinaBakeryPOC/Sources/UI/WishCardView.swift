@@ -42,7 +42,7 @@ struct WishCardView: View {
     /// cake: a heart is a heart, a candle is a flame, a cloud is a cloud.
     static func symbol(for wish: Wish) -> String {
         switch wish {
-        case .kleur:
+        case .kleur(_):
             // A colour wish has no object in it, so the shape is a blot of
             // paint and the colour does the talking — see `tone(for:)`.
             return "circle.fill"
@@ -51,7 +51,7 @@ struct WishCardView: View {
             case .fonkelt, .glimt: return "sparkles"
             case .hoog: return "cloud.fill"
             }
-        case .sprinkels:
+        case .sprinkels(_):
             return "circle.grid.3x3.fill"
         case .stickers(let kind, _):
             switch kind {
