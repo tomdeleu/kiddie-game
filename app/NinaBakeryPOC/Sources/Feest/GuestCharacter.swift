@@ -837,7 +837,6 @@ final class GuestCharacter {
         jumpTime = 0.55
     }
 
-    /// She tapped the cake. Everybody eats.
     func eat(for duration: Float) {
         eatTime = duration
     }

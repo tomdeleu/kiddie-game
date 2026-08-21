@@ -722,8 +722,15 @@ cake handed over *is* a visit.
 > floor, a stack of speakers, and **a DJ behind a booth with two decks**. The six
 > instrument pads are the floor buttons. What did *not* change is the whole of
 > what the room is for — the guests still dance to her beat, and she still ends
-> it by tapping the cake — which is the tell that the theme was a skin over a
+> it when she likes — which is the tell that the theme was a skin over a
 > mechanic rather than the mechanic itself.
+>
+> **The way out is a VIP rope, not the cake — owner's call, 2026-08-21.** This
+> section used to say she ends the party by tapping the cake, and that a door
+> beside it would be a second ending. The cake is a toy now. The door is two
+> gold stanchions and a velvet rope, standing in the same place as every other
+> room's way out, because the *place* repeating is worth more than the *prop*
+> repeating.
 >
 > `references/plates/11-finale.png` was regenerated for it, and
 > `references/plates/04-party-roombox.png` is superseded — it is the old bunting
@@ -739,17 +746,19 @@ edge**, one per instrument. Whatever she taps, the whole room dances to — the
 animation clock follows the beat she is actually making, so it is her rhythm the
 guests, the ball, the floor and the lights are all on, not a recording.
 
-**She ends the party by tapping the cake.** Nothing else ends it. There is no
+**She ends the party by tapping the VIP rope.** Nothing else ends it. There is no
 timer, no song that finishes, no fairy telling her it is time. When she taps it,
 everyone eats with enormous crunching noises, applauds, and the friend of the
 day thanks her **by name** — with their special move if the wish matched.
 
 Putting the ending on a tap matters for two reasons. It is the only real
 authority she has in the game, and it gives a parent a visible, honest "when you
-tap the cake, we're done" — which is what makes *nog één keer* actually work at
+tap the rope, we're done" — which is what makes *nog één keer* actually work at
 bedtime.
 
-**Toys:** the mirror ball, which spins up and throws light when tapped; the
+Tapping the cake names it. It is a toy, like the balloon and the popper.
+
+**Toys:** the cake; the mirror ball, which spins up and throws light when tapped; the
 confetti popper; the speaker stack, which thumps and wobbles its cones; the DJ,
 who scratches; a balloon that bobs away and comes back; and any guest, who jumps.
 
@@ -774,17 +783,23 @@ the six the kitchen derived): the lights are the existing pastels driven up with
 emission, which is the same trick and a great deal cheaper than a disco palette
 of its own.
 
-#### The way out is the cake
+#### The way out is the VIP rope
 
-**This room has no door**, and it is the only one that does not. §6.5 has always
-said *nothing else ends it*, and a door standing open beside the cake would be a
-second ending — which in a room whose whole point is that she decides when it is
-over is not a convenience, it is a contradiction.
+**Owner's call, 2026-08-21.** This room used to have no door, on the argument
+that a door beside the cake would be a second ending. That was right about
+*two* endings and wrong about which object should be the one. The cake stays on
+the table as a toy; the way out is a door, and it is a different door from the
+other rooms': two butter-yellow stanchions and a blush velvet rope in front of
+a lit gold frame.
 
-So the cake carries the cue the door carries everywhere else: **it is lit from
+It stands in the same place on the left wall as the kitchen's leaf and the
+decorating room's, because the way out being where it was last time is worth
+more to a 4-year-old than variety is. Variety is the prop.
+
+The rope carries the cue the door carries everywhere else: **it is lit from
 the moment she arrives**, exactly as the decorating room's door is, and for the
 same reason — in a room with no required action, lighting the exit says *you may
-finish when you like*, which is true here and nowhere else. `ROOMS.md` §9 has
+finish when you like*, which is true here. `ROOMS.md` §9 has
 the deviation.
 
 #### Six guests and a DJ, not twelve
@@ -826,7 +841,7 @@ can be scenery rather than targets. Nothing on screen has to be tappable.
   hand one over, so the room deals a friend the way the decorating room deals a
   cake on a visit. `RoomExit` grows a case the day the hub lands.
 
-**Completion in round mode** is tapping the cake, which hands over to §6.6. In
+**Completion in round mode** is tapping the VIP rope, which hands over to §6.6. In
 visit mode — replaying a filled frame — it is the same tap, and it hands back to
 the wall. Neither exists yet, so both call `RoomExit.bakkerij` and the room
 **lays out a fresh party behind the celebration** — a new friend, and in visit

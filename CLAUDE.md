@@ -37,7 +37,7 @@ can across the bed three times, tap the ripe plants into the basket. The
 kitchen: roll the base, fetch five ingredients from five places, stir, pour,
 into Otto, tap, cake, carry it up onto the plank. Versieren: turn the cake,
 pipe, shake, press stickers on, light the candle. Het Feest: tap the pads,
-everyone dances to you, and tap the cake when you are ready to eat it.
+everyone dances to you, and tap the VIP rope when you are ready to leave.
 
 **The four of them are one round.** The garden's basket is what the kitchen
 bakes, the kitchen's cake is what Versieren decorates, and Versieren's decorated
@@ -109,9 +109,12 @@ than `GAMEPLAY.md` §5's six**, because the kitchen deals eight; a full basket
 completes it in both modes; **it has a fence instead of the two walls
 `references/REFERENCES.md` §1 locks**, standing exactly where the plaster stood;
 and its gate says `ROOMS.md` §9's three things twice, because a picket fence has
-nothing behind it to light. The party's: **it has no door at all** — the cake is
-the way out, because §6.5 says nothing else ends the party and two endings in one
-room is a contradiction; **six guests plus a DJ rather than the twelve
+nothing behind it to light. The party's: **a VIP rope on two gold posts** rather
+than a wood leaf or a picket gate, standing in the same place on the left wall
+— owner's call, 2026-08-21, reversing the earlier "the cake is the way out",
+because tapping the cake to leave a disco is the wrong object. The cake is a
+toy; the rope is the door; §6.5 still says nothing else ends the party, so there
+is still one ending, not two; **six guests plus a DJ rather than the twelve
 `GAMEPLAY.md` §6.5 used to ask for**, and the reason is the screen-separation
 arithmetic in `ROOMS.md` §5 rather than the rig; the friend of the day is
 **dealt** rather than handed over, since there is no hub to hand one over; and

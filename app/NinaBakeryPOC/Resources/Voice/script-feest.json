@@ -9,12 +9,12 @@
   "language": "nl",
 
   "_why": {
-    "the_idle_line_is_an_offer_not_an_instruction": "Same rule as Versieren's and for the same reason: GAMEPLAY.md §6.5 asks the room for nothing until she decides it is over, so there is nothing she can be failing to do. `zullenWeEten` is 'shall we eat the cake in a bit?' and it alternates with `stil`, which is just 'I am still here'. An idle nudge that said 'tap a pad' would invent a required action the room exists without.",
+    "the_idle_line_is_an_offer_not_an_instruction": "Same rule as Versieren's and for the same reason: GAMEPLAY.md §6.5 asks the room for nothing until she decides it is over, so there is nothing she can be failing to do. The idle now reuses `nina.versieren.zullenWeGaan` ('shall we go?') because the 2026-08-21 call moved the exit off the cake and onto the VIP rope. `zullenWeEten` told her to tap the cake and is kept in the file so a regenerate does not silently drop it; it is not called. An idle nudge that said 'tap a pad' would invent a required action the room exists without.",
     "the_friends_thank_her_through_nina": "GAMEPLAY.md §6.5 asks the friend of the day to thank her BY NAME, in their own voice. Eleven friend voices do not exist and are most of the game's remaining dialogue (§8), so until they do, Nina relays it: 'Pip zegt: dankjewel, Nina!' The friend is still named and the name is still spoken. `Friend.thanksLineID` derives these ids off the enum case, so the day the eleven are cast this is what gets re-pointed rather than rewritten.",
     "eleven_names_one_variant_each": "The dank.* lines break the never-the-same-line-twice rule on purpose, the same way the naming layer does — a friend's name is a thing she learns by hearing it the same way twice, and each of these is heard once per party anyway.",
     "muurKomt_promises_soon_not_now": "ROOMS.md §9 forbids promising a room that is not built. §6.6 — the photograph and the wall — does not exist, so the last thing she hears at the end of a party is that it is coming *straks*. A 4-year-old told she is going somewhere and then not taken there has been lied to.",
     "dansen_is_low_priority": "She will tap the pads dozens of times a minute. A line per tap would be a lift announcement, so `dansen` fires about one time in seven and at .low priority, which VoiceBank drops outright if anyone is already speaking. `eersteBeat` and `sneller` fire once each, at normal priority, because each of them notices something that happened once.",
-    "no_line_for_the_party_table": "Every other prop in the room has a naming line and the table does not, because nothing can tap it — the cake standing on it is the way out and its target covers the whole thing. A naming line no tap can reach is a line generated for nothing.",
+    "no_line_for_the_party_table": "Every other prop in the room has a naming line and the table does not, because the cake standing on it is the target and covers the whole thing. A naming line no tap can reach is a line generated for nothing. The cake itself reuses `nina.dit.taart`.",
     "length": "Gracie reads Dutch at 15–17 characters a second, so these were written to a measured length rather than trimmed afterwards. Nothing here is longer than about four seconds."
   },
 
@@ -41,8 +41,8 @@
     "nina.feest.eersteBeat": "The first pad she ever hits this party. Once.",
     "nina.feest.sneller": "She has sped the beat up past about 175 bpm. Once — noticing twice would be commenting on her playing.",
     "nina.feest.dansen": "Occasional low-priority encouragement while she plays.",
-    "nina.feest.zullenWeEten": "Idle. An offer to finish, NOT an instruction — see _why above.",
-    "nina.feest.opeten": "She tapped the cake. Everybody eats.",
+    "nina.feest.zullenWeEten": "Superseded idle. Told her to tap the cake. Kept so a regenerate does not drop the files; FeestRoom now reuses nina.versieren.zullenWeGaan.",
+    "nina.feest.opeten": "She tapped the VIP rope. Everybody eats.",
     "nina.feest.wensGelukt": "The cake matched the friend's wish. Said after the thanks, never instead of them.",
     "nina.feest.muurKomt": "The last thing in a party: the photo and the wall are coming *soon*.",
     "nina.feest.nogeen": "A fresh party is laid out behind the celebration — a new friend, a new cake.",

@@ -3,11 +3,11 @@ import simd
 
 /// **Props more than one room uses.**
 ///
-/// So far there is one, and it is the door. `ROOMS.md` §9 gives every room the
-/// same way out, saying the same thing three ways to somebody who cannot read —
-/// the leaf off the latch at 11°, the light behind it, and a ring on the floor
-/// concentric with the threshold. All three were got right once, two of them
-/// after being got wrong twice, and none of that is about a kitchen.
+/// Three ways out, one `Doorway`: a wood leaf, a garden gate, and the disco's
+/// velvet rope. `ROOMS.md` §9 gives every room the same behaviour — ajar, the
+/// light behind it, a ring on the floor at the threshold — and none of that is
+/// about a kitchen. The disco's posts and rope are a different *prop* standing
+/// in the same *place*.
 ///
 /// The dimensions stay in `Layout`: a door is the same door in every room, and
 /// `KitchenLayout.doorOpening` is taller than Nina on purpose (a door she could not
@@ -16,7 +16,7 @@ enum Props {
 
     /// **A way out**, whether it is a door in a wall or a gate in a fence.
     ///
-    /// Both builders return this, which is what lets a room's door behaviour —
+    /// All three builders return this, which is what lets a room's door behaviour —
     /// ajar when the room is finished, the swing, the ring at the threshold — be
     /// written once and used by both.
     struct Doorway {
@@ -176,8 +176,8 @@ enum Props {
     /// over: five vertical boards and two horizontals are a fence, and a
     /// diagonal across them is a thing that opens.
     ///
-    /// It returns the same `Doorway` as `doorway(flat:centre:)`, so
-    /// `GardenRoom`'s ajar-swing-ring behaviour is untouched. Its `glow` is nil
+    /// It returns the same `Doorway` as `doorway(flat:centre:)` and `vipRope`, so
+    /// a room's ajar-swing-ring behaviour is untouched. Its `glow` is nil
     /// — see the field.
     ///
     /// **No lintel.** A gate's opening is the full-height gap between its posts,
@@ -269,5 +269,108 @@ enum Props {
         // the grounding the fence gets too — there is no wall left for a shadow
         // to smear across.
         return Doorway(root: root, hinge: hinge, glow: nil)
+    }
+
+    // MARK: - The VIP rope
+
+    /// **The disco's way out: a velvet rope on two stanchions, in front of a
+    /// lit opening.**
+    ///
+    /// Owner's call, 2026-08-21: tapping the cake should not end the party, and
+    /// the door must not be the kitchen's wood leaf or the garden's gate. Two
+    /// butter-yellow posts and a blush rope *are* a door a 4-year-old can read
+    /// — they unhook, they show the light behind, and they stand where the
+    /// other rooms put their way out, so the place is the same even though the
+    /// prop is not.
+    ///
+    /// It returns the same `Doorway` as the other two. The hinge is the near
+    /// post's axis; the rope hangs under it, so the existing ajar-swing-ring
+    /// behaviour opens the barrier into the room and leaves the posts standing.
+    /// The glow is on from the first frame, because this room asks her for
+    /// nothing and lighting the exit is the honest use of the halo
+    /// (`ROOMS.md` §9).
+    static func vipRope(flat: Bool,
+                        centre: SIMD3<Float> = KitchenLayout.doorwayCentre) -> Doorway {
+        let root = Entity()
+        root.name = "VipTouw"
+        root.position = centre
+        root.orientation = simd_quatf(angle: .pi / 2, axis: [0, 1, 0])
+
+        let open = KitchenLayout.doorOpening
+        let jamb = KitchenLayout.doorFrameWidth
+        let depth = KitchenLayout.doorFrameDepth
+        let postZ: Float = 0.018
+        let postHeight: Float = 0.078
+        let ropeY: Float = 0.056
+        let gold = Palette.butterYellow
+        let ropeColour = Palette.blushPinkDeep
+
+        let glow = RoomBuilder.model(.box([open.x, open.y, 0.002]),
+                                     Palette.butterYellow, flat: flat, name: "VipGlow")
+        glow.position = [0, open.y / 2, KitchenLayout.doorWallFace + 0.002]
+        root.addChild(glow)
+
+        // Gold frame, not the kitchen's rose one — the opening has to read as
+        // a disco exit before the rope has moved.
+        for side: Float in [-1, 1] {
+            let post = RoomBuilder.model(.box([jamb, open.y, depth]),
+                                         gold, flat: flat, name: "VipJamb")
+            post.position = [side * (open.x + jamb) / 2, open.y / 2, KitchenLayout.doorFrameZ]
+            root.addChild(post)
+        }
+        let lintel = RoomBuilder.model(.box([open.x + jamb * 2, jamb, depth]),
+                                       gold, flat: flat, name: "VipLintel")
+        lintel.position = [0, open.y + jamb / 2, KitchenLayout.doorFrameZ]
+        root.addChild(lintel)
+
+        func stanchion(atX x: Float, name: String) {
+            let base = RoomBuilder.model(.prism(radius: 0.012, height: 0.006, sides: 8),
+                                         gold, flat: flat, name: "\(name)Voet")
+            base.position = [x, 0, postZ]
+            root.addChild(base)
+
+            let pole = RoomBuilder.model(.prism(radius: 0.005, height: postHeight, sides: 8),
+                                         gold, flat: flat, name: "\(name)Paal")
+            pole.position = [x, 0.006, postZ]
+            root.addChild(pole)
+
+            let ball = RoomBuilder.model(.icosphere(radius: 0.009, subdivisions: 0),
+                                         gold, flat: flat, name: "\(name)Knop")
+            ball.position = [x, postHeight + 0.006, postZ]
+            root.addChild(ball)
+
+            let hook = RoomBuilder.model(.box([0.008, 0.005, 0.008]),
+                                         Palette.honeyAmber, flat: flat, name: "\(name)Haak")
+            hook.position = [x, ropeY, postZ + 0.007]
+            root.addChild(hook)
+        }
+        stanchion(atX: -open.x / 2, name: "VipDichtbij")
+        stanchion(atX: open.x / 2, name: "VipVer")
+
+        // Hinge on the near post, so a negative turn about Y swings the rope
+        // into the room toward the camera — the same answer the wood leaf and
+        // the gate already paid for.
+        let hinge = Entity()
+        hinge.name = "VipHinge"
+        hinge.position = [-open.x / 2, 0, postZ]
+        root.addChild(hinge)
+
+        var points: [SIMD3<Float>] = []
+        var normals: [SIMD3<Float>] = []
+        let samples = 7
+        let span = open.x
+        for i in 0...samples {
+            let t = Float(i) / Float(samples)
+            let sag = 0.012 * 4 * t * (1 - t)
+            points.append([t * span, ropeY - sag, 0.002])
+            normals.append([0, 1, 0])
+        }
+        let cord = RoomBuilder.model(.ribbon(points: points, normals: normals,
+                                             width: 0.009, thickness: 0.007),
+                                     ropeColour, flat: flat, name: "VipKoord")
+        hinge.addChild(cord)
+
+        root.excludeFromShadowCasting()
+        return Doorway(root: root, hinge: hinge, glow: glow)
     }
 }

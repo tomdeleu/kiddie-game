@@ -7,7 +7,8 @@ runs on the iPad.
 > **Het Feest is the newest**, landed 2026-08-17. Its section is
 > [below](#het-feest--the-party); the short version is that it is a discotheque
 > on the owner's call, that the whole room runs on a beat taken from her taps, and
-> that its way out is the cake rather than a door. It came from a container, so
+> that its way out is a VIP rope on two gold posts, not a wood door and not
+> the cake. It came from a container, so
 > the handover names the risky edits rather than the whole room — see
 > [what it owes](#what-it-owes-1).
 
@@ -58,7 +59,7 @@ below is still the record of that.
 | **De Tuin** | `GAMEPLAY.md` §6.2 | Plant, water, pick — five ingredients into the basket |
 | **De Keuken** | `GAMEPLAY.md` §6.3 | Roll, fill, stir, pour, bake, and carry the cake onto the plank |
 | **Versieren** | `GAMEPLAY.md` §6.4 | Turn, pipe, shake, press stickers on, light the candle |
-| **Het Feest** | `GAMEPLAY.md` §6.5 | A disco: tap the pads, everyone dances to your beat, tap the cake when you are ready to eat it |
+| **Het Feest** | `GAMEPLAY.md` §6.5 | A disco: tap the pads, everyone dances to your beat, tap the VIP rope when you are ready to leave |
 
 **Switching between them is behind the developer panel**: tap the small grey
 wrench in the top-right corner and use the room picker at the top of the strip.
@@ -1861,7 +1862,7 @@ x = 0 because past that it starts crossing Otto's chimney.
 | `Game/Sticker.swift` | The seven sticker kinds and what each is worth saying about. |
 | `Game/RoundState.swift` | The kitchen's round, and the JSON it is saved to. Bakes the garden's basket when it is handed one, and deals off a shuffled deck when it is not. |
 | `RoomBox.swift` | The box every room is in: its size, its shell, and the ray arithmetic the fixed camera makes possible. |
-| `Props/Doorway.swift` | The way out. Shared, because `ROOMS.md` §9's three cues are a rule about rooms rather than about one — and the garden's gate is the same function with the light left out. |
+| `Props/Doorway.swift` | The way out. Shared, because `ROOMS.md` §9's three cues are a rule about rooms rather than about one — the garden's gate is the same function with the light left out, and the disco's VIP rope is the same function with gold posts instead of a wood leaf. |
 | `Kitchen/KitchenProps.swift` | Otto, the bowl, the batter, the tin, the cake, the eight ingredients, the toys, the portrait. |
 | `Kitchen/KitchenRoom.swift` | The kitchen: assembly, the state machine, the toys, the nudges. |
 | `Versieren/VersierLayout.swift` | Every position in the decorating room, in one table. |
@@ -2742,27 +2743,29 @@ reads as broken rather than as chance. The five shouts *within* the vocal do get
 `VoiceBank`'s never-the-same-twice rule, for free. The beat is four hits of the
 drum **at her own tempo**, so even the DJ's own sound is the beat she is making.
 
-### The way out is the cake
+### The way out is the VIP rope
 
-**This room has no door**, and it is the only one that does not. §6.5 has always
-said *she ends the party by tapping the cake; nothing else ends it*, and a door
-standing open beside the cake would be a second ending — which in a room whose
-whole point is that she decides when it is over is a contradiction rather than a
-convenience.
+**Owner's call, 2026-08-21:** tapping the cake should not end the room. The
+party still asks her for nothing, and she still decides when it is over — the
+object that means *we are leaving* is now a door, and it is a *different* door
+from the kitchen's wood leaf and the garden's gate: two butter-yellow stanchions
+and a blush velvet rope, in front of a lit gold frame, standing in the same
+place on the left wall as every other room's way out.
 
-So the cake carries the cue the door carries everywhere else: **lit from the
-moment she arrives**, exactly as the decorating room's door is, because in a room
-with no required action *you may finish when you like* is a true statement.
-`refreshCakeInvitation` is `refreshDoorInvitation` under another name and is just
-as nearly empty, which is the right shape — a room with nothing to gate on should
-say so in the function that would have gated it.
+The cake is a toy. Tapping it names it. Eating, thanks and the handover all hang
+off the rope: inviting from the first frame, exactly as the decorating room's
+door is, because in a room with no required action *you may finish when you
+like* is a true statement. `refreshDoorInvitation` is nearly empty, which is the
+right shape.
 
-Tapping it is the ending: everybody eats in three bites with the cake shrinking
-under them, applause, confetti, and the friend of the day thanks her by name.
-Then, because there is no bakery to go to, **the room lays out a fresh party
-behind the celebration** — a new friend, a new cake — the way the kitchen starts
-a fresh round behind its third cake. A room that ends with nowhere to go must not
-end with nothing to do.
+Tapping the rope is the ending: the barrier swings into the room, everybody
+eats in three bites with the cake shrinking under them, applause, confetti, and
+the friend of the day thanks her by name. Then, because there is no bakery to go
+to, **the room lays out a fresh party behind the celebration**. A room that
+ends with nowhere to go must not end with nothing to do.
+
+The confetti popper moved to the open right corner so the rope could take the
+kitchen's doorway without stealing taps from a toy.
 
 ### The cake arrives decorated, and that is the handover working
 
@@ -2898,6 +2901,12 @@ rides on a tap that lands on the empty floor.
 - **§6.6, the photograph and the wall**, which is what `nina.feest.muurKomt`
   promises *straks* rather than *now* — and which is now the last thing between
   four rooms and a game.
+- **A plate for the VIP rope.** Higgsfield's session was expired on 2026-08-21,
+  so `Props.vipRope` was built from the brief rather than from a studio shot.
+  The prompt is in `references/feest/README.md`.
+- **Three idle lines of its own.** The rope stole the exit from the cake, and
+  `nina.feest.zullenWeEten` tells her to tap the cake, so the idle currently
+  reuses Versieren's *zullen we gaan?*.
 
 ## What these four rooms may not conclude
 

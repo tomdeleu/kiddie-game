@@ -34,6 +34,31 @@ and none of them is a prop).
 | The dance poses | `beertjes-dansen.png` | 16:9 | `971082` | `562e7144-fefb-4481-a4f9-d6b6b8849c24` | **characters** |
 | One bear, large | `beertje-solo.png` | 3:4 | `753928` | `e32fc1a8-b7e0-4bbb-925b-5ae247050dac` | **characters** |
 | The finale | `../plates/11-finale.png` | 1:1 | `9333` | `f6429693-912d-4988-829f-970ceed3cd34` | scenes |
+| **The VIP rope** — owed | — | 1:1 | — | Higgsfield session expired 2026-08-21 | scenes |
+
+The VIP rope is the disco's way out as of 2026-08-21 (owner: tapping the cake
+should not end the room; the door must not be the kitchen's). Two butter-yellow
+stanchions, a blush velvet rope, a gold frame around a lit opening. Built from
+that brief in `Props.vipRope` while the plate is outstanding. Prompt to run when
+the connector is back, `flux_2` / `pro` / `1k` / 1:1 against the scenes
+reference, with the fifth disco phrase:
+
+> Flat-shaded low-poly 3D render of a chunky children's-toy VIP entrance: two
+> short faceted butter-yellow stanchion posts with octagon ball tops and a thick
+> drooping blush-pink velvet rope hooked between them, standing in front of a
+> cream wall with a bright cream light filling the opening. Hard-edged faceted
+> geometry: every surface is a flat untextured polygon facet with visible
+> straight polygon edges, angular and crisp, very low polygon count. No smooth
+> curved surfaces, no rounded bevels, no subdivision, no surface texture, no
+> fine detail, no clutter. Studio product shot, three-quarter view, one object.
+> Soft pastel palette only: blush pink, mint green, cream, soft butter yellow,
+> pale sandy wood. Soft even studio lighting, one gentle key light, a soft
+> contact shadow on the ground, no hard shadow edges, no dark corners, no
+> ambient occlusion pooling. Plain neutral light grey background. Children's
+> game aesthetic, no photorealism, no text. Brightly and evenly lit — this is a
+> daytime pastel toy disco, not a dark nightclub: no darkness, no moody club
+> lighting, no lens flare, no haze, no beams of smoke. No letters, no VIP sign,
+> no words.
 
 Full prompts are on the job records. All sixteen carry `CLAUDE.md`'s four style
 phrases; the ten disco ones carry a fifth clause and the three bear plates carry

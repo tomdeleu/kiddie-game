@@ -554,20 +554,19 @@ should say so in the function that would have gated it, not by deleting it.
 > the shape to copy for any room that wants an arc without a gate. A step machine
 > and a locked door are separate things, and only one of them is forbidden here.
 
-> **Het Feest has no door at all, and that is the third variation rather than a
-> gap.** `GAMEPLAY.md` §6.5 has always said *she ends the party by tapping the
-> cake; nothing else ends it*, and a door standing open beside the cake would be
-> a second ending — in a room whose entire point is that she decides when it is
-> over, that is a contradiction rather than a convenience. So **the cake is the
-> way out**, and it carries the cue the door carries everywhere else: lit from
-> the moment she arrives, exactly as the decorating room's door is, because in a
-> room with no required action *you may finish when you like* is a true statement
-> and lighting the exit is the honest use of the halo.
+> **Het Feest's way out is a VIP rope, and that is the fourth variation rather
+> than a gap.** Owner's call, 2026-08-21: tapping the cake should not end the
+> party. The room still asks her for nothing, and she still decides when it is
+> over; the object that means *finished* is now a door, and it is a different
+> door from the kitchen's wood leaf and the garden's gate — two gold posts and
+> a velvet rope, in the same place on the left wall. The cake is a toy. The
+> rope is lit from the first frame, exactly as the decorating room's door is,
+> because *you may finish when you like* is a true statement.
 >
-> The general form, now that three rooms have answered it differently: **the way
-> out is whatever object means "this is finished", and the cue belongs on that
-> object.** In two rooms that object is a door; in one it is a cake. What must not
-> happen is a room with two of them.
+> The general form: **the way out is whatever object means "this is finished",
+> and the cue belongs on that object.** What must not happen is a room with two
+> of them. The disco used to put that object on the cake; it now puts it on the
+> rope.
 
 ### The door says it three ways at once
 
