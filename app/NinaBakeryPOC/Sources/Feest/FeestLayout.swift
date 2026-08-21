@@ -295,11 +295,10 @@ enum FeestLayout {
 
     // MARK: - The cake, on its table
     //
-    // **The cake is the way out of this room** (`GAMEPLAY.md` §6.5, `ROOMS.md`
-    // §9), so it is placed the way a door is placed: clear of everything, easy to
-    // aim at, and impossible to hit by accident while reaching for something
-    // else. It sits front-left, on the far side of the room from the DJ, with
-    // 85 mm of screen between it and the nearest guest.
+    // Front-left, on the far side of the room from the DJ, with 85 mm of screen
+    // between it and the nearest guest. It used to be the way out; the VIP rope
+    // took that job on 2026-08-21, and the cake stayed put because it is still
+    // the centrepiece and still has to be easy to tap as a toy.
 
     static let tableCentre = SIMD2<Float>(-0.148, 0.086)
     static let tableTopY: Float = 0.072
@@ -311,10 +310,10 @@ enum FeestLayout {
     /// **1.8×, between the kitchen's 1.0 and the decorating room's 2.5.**
     ///
     /// In the kitchen a cake is a prop she carries; in Versieren it is the canvas
-    /// and it is the room. Here it is the centrepiece *and* the exit, so it has
-    /// to read across the room and be easy to hit, but it must not tower over the
-    /// guests standing next to it — at 1.8 it is 94 mm across against a guest
-    /// 125 mm tall, which is a cake on a table at a party.
+    /// and it is the room. Here it is the centrepiece, so it has to read across
+    /// the room and be easy to hit, but it must not tower over the guests
+    /// standing next to it — at 1.8 it is 94 mm across against a guest 125 mm
+    /// tall, which is a cake on a table at a party.
     static let cakeScale: Float = 1.8
 
     /// The target hangs on a marker at the middle of the cake rather than on its
@@ -324,9 +323,26 @@ enum FeestLayout {
         SIMD3<Float>(tableCentre.x, tableTopY + 0.030, tableCentre.y)
     }
     static let cakeRadius: Float = 0.040
-    /// The halo under the cake — on the table top, not the floor. It is the one
-    /// cue in the room and it is on from the first frame.
-    static let cakeHaloRadius: Float = 0.046
+
+    // MARK: - The VIP rope, the way out
+    //
+    // **Same place as every other room's door.** `Props.Doorway` says why: the
+    // way out being where it was last time is worth more to a 4-year-old than
+    // variety is. Variety is the prop — two gold posts and a velvet rope
+    // instead of a wood leaf or a picket gate.
+    //
+    // The confetti popper used to stand in front of this wall at z = 0.132,
+    // 61 mm of screen from a 56 mm door target. It moved to the open right
+    // corner so the rope could take the kitchen's own doorway without stealing
+    // taps from a toy.
+
+    static var doorwayCentre: SIMD3<Float> { KitchenLayout.doorwayCentre }
+    static var doorHaloSpot: SIMD3<Float> { KitchenLayout.doorHaloSpot }
+    static var doorHaloRadius: Float { KitchenLayout.doorHaloRadius }
+    static let doorRadius: Float = 0.056
+    static var doorTouchSpot: SIMD3<Float> {
+        doorwayCentre + SIMD3<Float>(0, KitchenLayout.doorOpening.y / 2, 0)
+    }
 
     // MARK: - Toys
 
@@ -370,7 +386,10 @@ enum FeestLayout {
     static let speakerRadius: Float = 0.028
     static let speakerTouchY: Float = 0.030
 
-    static let popperSpot = SIMD3<Float>(-0.196, RoomBox.floorY, 0.132)
+    /// **Open right corner**, having given the left wall to the VIP rope. 19 mm
+    /// of screen slack against the nearest pad, which is the tightest pair this
+    /// move created and still clears `assertSpacing`.
+    static let popperSpot = SIMD3<Float>(0.180, RoomBox.floorY, 0.180)
     static let popperRadius: Float = 0.026
     static let popperTouchY: Float = 0.020
 
@@ -492,6 +511,7 @@ enum FeestLayout {
         }
         spots.append(("dj", SIMD3<Float>(djSpot.x, djTouchY, djSpot.z), djRadius))
         spots.append(("taart", cakeTouchSpot, cakeRadius))
+        spots.append(("deur", doorTouchSpot, doorRadius))
         spots.append(("discobal", ballCentre, ballTouchRadius))
         spots.append(("lampen", lampTouchSpot, lampRadius))
         spots.append(("boxen", SIMD3<Float>(speakerSpot.x, speakerTouchY, speakerSpot.z),

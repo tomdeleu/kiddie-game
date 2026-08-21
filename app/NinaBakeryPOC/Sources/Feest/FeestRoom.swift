@@ -19,16 +19,17 @@ import CoreGraphics
 ///
 /// Three things follow from this being a room that asks her for nothing:
 ///
-/// - **The halo has one thing to point at, and it is the cake** — which is also
-///   the way out (`ROOMS.md` §9). Lit from the first frame, exactly as the
+/// - **The halo has one thing to point at, and it is the VIP rope** — which is
+///   also the way out (`ROOMS.md` §9). Lit from the first frame, exactly as the
 ///   decorating room's door is, because *you may finish when you like* is a true
-///   statement here and nowhere else. **There is no door in this room.** §6.5:
-///   *nothing else ends it.*
+///   statement here. Owner's call, 2026-08-21: the cake is a toy, not an exit.
+///   The rope is a different door from the kitchen's leaf and the garden's gate,
+///   standing in the same place on the left wall.
 /// - **The miss machinery is not wired.** `noteMiss` means *she dragged the prop
 ///   the current step is about and it did not land*, and nothing in this room is
 ///   dragged at all. Every interaction here is a tap.
-/// - **The idle nudge is not an instruction.** *"Zullen we de taart opeten?"*,
-///   never *"tap a pad"*. There is nothing she is failing to do.
+/// - **The idle nudge is not an instruction.** *"Zullen we gaan?"*, never
+///   *"tap a pad"*. There is nothing she is failing to do.
 @MainActor
 final class FeestRoom: Room {
 
@@ -66,8 +67,12 @@ final class FeestRoom: Room {
     private var cakeNode: Entity?
     private var stickerLayer: Entity?
     private var cakeTouchSpot: Entity?
-    private var cakeHalo: Halo.Handle?
     private var baker: BakerCharacter?
+    private var doorway: Props.Doorway?
+    private var doorTouchSpot: Entity?
+    private var doorHalo: Halo.Handle?
+    private var doorRest: Float = 0
+    private var doorSwing: Int?
 
     /// The friend of the day is `guests[0]`. `GuestCharacter` holds its own
     /// `friend`, so nothing here has to keep the two lists in step.
@@ -156,6 +161,7 @@ final class FeestRoom: Room {
         buildGuests()
         buildToys()
         buildCake()
+        buildDoorway()
         buildBaker()
 
         registerTargets()
@@ -359,6 +365,23 @@ final class FeestRoom: Room {
         cakeTouchSpot = spot
     }
 
+    /// **The VIP rope**, in the same place every other room puts its door.
+    ///
+    /// `Props.vipRope` returns the same `Props.Doorway` the kitchen's leaf and
+    /// the garden's gate do, so `refreshDoorInvitation`, `swingDoor` and
+    /// `endRoom` are the same shape as Versieren's.
+    private func buildDoorway() {
+        let node = Props.vipRope(flat: flat, centre: FeestLayout.doorwayCentre)
+        root.addChild(node.root)
+        doorway = node
+
+        let spot = Entity()
+        spot.name = "DoorTouchSpot"
+        spot.position = FeestLayout.doorTouchSpot
+        root.addChild(spot)
+        doorTouchSpot = spot
+    }
+
     private func buildBaker() {
         baker?.stop()
         // **Her own spot, passed in.** `BakerCharacter` eases back to a hardcoded
@@ -427,29 +450,37 @@ final class FeestRoom: Room {
     // MARK: - Step presentation
 
     /// One function rebuilds everything the step implies. There are two steps and
-    /// what this mostly does is decide whether the cake is still a thing she can
-    /// tap — see the class comment on why the cake carries the halo.
+    /// what this mostly does is decide whether she can still leave — see the
+    /// class comment on why the VIP rope carries the halo.
     private func applyStep(animated: Bool) {
         _ = animated
         touch.target(named: "taart")?.enabled = state.step == .dansen
-        refreshCakeInvitation()
+        refreshDoorInvitation()
     }
 
-    /// **The cake is lit from the first frame, and it is the way out.**
-    ///
-    /// `ROOMS.md` §9's exactly-two functions, in a room whose way out is not a
-    /// door: this is `refreshDoorInvitation`. It is nearly empty, which is the
-    /// right shape — a room with nothing to gate on should say so in the function
-    /// that would have gated it, not by deleting it.
-    private func refreshCakeInvitation() {
+    /// **The rope is inviting from the first frame, in both modes**, which is
+    /// the whole of this function. `ROOMS.md` §9 has it as one of exactly two:
+    /// in a room with no required action there is nothing for it to wait for.
+    private func refreshDoorInvitation() {
+        guard let doorway else { return }
+
+        doorRest = KitchenLayout.doorAjarAngle
+        if doorSwing == nil {
+            doorway.hinge.orientation = simd_quatf(angle: doorRest, axis: [0, 1, 0])
+        }
+        doorway.glow?.isEnabled = true
+
         guard state.step == .dansen else {
-            Halo.remove(cakeHalo, ticker: ticker)
-            cakeHalo = nil
+            Halo.remove(doorHalo, ticker: ticker)
+            doorHalo = nil
             return
         }
-        guard cakeHalo == nil, let anchor = cakeAnchor else { return }
-        cakeHalo = Halo.attach(to: anchor, radius: FeestLayout.cakeHaloRadius,
-                               ticker: ticker) { _ in FeestLayout.tableTopY }
+        guard doorHalo == nil else { return }
+        let marker = Entity()
+        marker.position = FeestLayout.doorHaloSpot
+        root.addChild(marker)
+        doorHalo = Halo.attach(to: marker, radius: FeestLayout.doorHaloRadius,
+                               ticker: ticker) { _ in RoomBox.floorY }
     }
 
     // MARK: - Targets
@@ -475,6 +506,11 @@ final class FeestRoom: Room {
         touch.register("taart", entity: cakeTouchSpot, radius: FeestLayout.cakeRadius,
                        planeY: FeestLayout.tableTopY) { target in
             target.onTap = { [weak self] in self?.tapCake() }
+        }
+
+        touch.register("deur", entity: doorTouchSpot, radius: FeestLayout.doorRadius,
+                       planeY: RoomBox.floorY) { target in
+            target.onTap = { [weak self] in self?.tapDoorway() }
         }
 
         for (index, guest) in guests.enumerated() {
@@ -757,35 +793,65 @@ final class FeestRoom: Room {
         voice.say(FeestLine.ditKnop, priority: .low)
     }
 
-    // MARK: - The ending
+    // MARK: - The cake, now a toy
 
-    /// **She tapped the cake, and that is the only thing that ends the party.**
-    ///
-    /// §6.5: *"Putting the ending on a tap matters for two reasons. It is the
-    /// only real authority she has in the game, and it gives a parent a visible,
-    /// honest 'when you tap the cake, we're done'."*
+    /// **Tapping the cake names it.** Owner's call, 2026-08-21: it is not the
+    /// way out. The eating, the thanks and the handover all live on the VIP
+    /// rope, which is the thing that means *we are leaving*.
     private func tapCake() {
+        guard state.step == .dansen else { return }
+        resetIdle()
+        if let cake = cakeNode {
+            ticker.squash(cake, amount: 0.18, duration: 0.28)
+        }
+        Sparkles.burst(at: FeestLayout.cakeTouchSpot + [0, 0.012, 0],
+                       in: root, ticker: ticker,
+                       colour: state.cake.colours.first?.base ?? Palette.cream,
+                       count: 6, size: 0.0022, speed: 0.06, life: 0.5)
+        sound.play(.plop, volume: 0.4, rate: Float.random(in: 0.95...1.08))
+        voice.say(Line.ditTaart, priority: .low)
+    }
+
+    // MARK: - The way out
+
+    /// **She tapped the VIP rope, and that is the only thing that ends the party.**
+    ///
+    /// Same contract as Versieren's door: inviting from the first frame, always
+    /// the same meaning. The eating used to hang off the cake; it hangs off this
+    /// tap now, because the party still ends with everyone eating — it just
+    /// is not the cake that says *we are done*.
+    private func tapDoorway() {
+        guard let doorway else { return }
+        sound.play(.whoosh)
+        guard state.step == .dansen else {
+            swingDoor(doorway)
+            return
+        }
+        endRoom(doorway)
+    }
+
+    /// **The end of the party.** Eating, thanks, the rope swinging open, and
+    /// then — because there is no bakery to go to — a fresh party laid out
+    /// behind the celebration.
+    private func endRoom(_ doorway: Props.Doorway) {
         guard state.step == .dansen else { return }
         state.step = .opeten
 
-        // **The wish, evaluated once.** `GAMEPLAY.md` §4 puts this here and only
-        // here, and it decides which happy thing happens — never whether one does.
         let matched = state.friend.matches(state.cake)
         state.wishMatched = matched
         save()
 
-        Halo.remove(cakeHalo, ticker: ticker)
-        cakeHalo = nil
+        swingDoor(doorway, hold: 2.6)
+        Halo.remove(doorHalo, ticker: ticker)
+        doorHalo = nil
         touch.target(named: "taart")?.enabled = false
 
         for guest in guests { guest.eat(for: 1.6) }
         djCharacter?.eat(for: 1.6)
         baker?.set(.cheering)
         sound.play(.knabbel, volume: 0.85)
+        sound.play(.reward, volume: 0.55)
 
-        // The cake goes, in bites rather than at once — it is the one prop in the
-        // game that is consumed, and a cake that vanished on the tap would read
-        // as the game taking it away rather than as everybody eating it.
         eatTheCake()
 
         jobs.append(ticker.after(1.7) { [weak self] in
@@ -796,28 +862,51 @@ final class FeestRoom: Room {
             FeestProps.confetti(at: SIMD3<Float>(FeestLayout.floorCentre.x, 0.150,
                                                  FeestLayout.floorCentre.y),
                                 in: self.root, ticker: self.ticker, count: 30, flat: self.flat)
-            // The friend whose wish came true goes over the top for good — §4's
-            // "a special move only they do".
             if matched, let star = self.guests.first { star.celebrate() }
         })
 
-        // **What she hears, in the order §6.5 asks for**: everybody eats, the
-        // friend of the day thanks her by name, and — if the wish matched — that
-        // it was exactly what they wanted. Nina relays the thanks until the eleven
-        // friends have voices of their own; `Friend.thanksLineID` is what gets
-        // re-pointed the day they do.
         var lines = [FeestLine.opeten, state.friend.thanksLineID]
         if matched { lines.append(FeestLine.wensGelukt) }
         lines.append(FeestLine.muurKomt)
         voice.sayInstead(lines)
 
-        // **The room says what just happened and hands back control.** There is
-        // no bakery to go to, so `GameScene` does nothing with this today — which
-        // is exactly why the room also lays out a fresh party behind it. A room
-        // that ends with nowhere to go must not end with nothing to do.
-        jobs.append(ticker.after(1.2) { [weak self] in self?.onExit?(.bakkerij) })
+        let threshold = FeestLayout.doorHaloSpot
+        for (i, delay) in [Float(0.45), 1.5].enumerated() {
+            let job = ticker.after(delay) { [weak self] in
+                guard let self else { return }
+                Sparkles.burst(at: threshold + [0, 0.030, 0], in: self.root,
+                               ticker: self.ticker, colour: Palette.butterYellow,
+                               count: i == 0 ? 12 : 8, size: 0.0026,
+                               speed: 0.07, life: 1.1)
+                self.sound.play(.sparkle, volume: 0.45, rate: 1.0 + Float(i) * 0.15)
+            }
+            jobs.append(job)
+        }
+
+        jobs.append(ticker.after(0.9) { [weak self] in self?.onExit?(.bakkerij) })
         jobs.append(voice.whenQuiet(after: 0.5, timeout: 30) { [weak self] in
             self?.startFreshParty()
+        })
+    }
+
+    private func swingDoor(_ doorway: Props.Doorway, hold: Float = 1.5) {
+        ticker.cancel(doorSwing)
+        let hinge = doorway.hinge
+        let rest = doorRest
+        let open = KitchenLayout.doorOpenAngle
+        doorSwing = ticker.tween(0.45, step: { t in
+            hinge.orientation = simd_quatf(angle: rest + (open - rest) * t, axis: [0, 1, 0])
+        }, done: { [weak self] in
+            guard let self else { return }
+            self.doorSwing = self.ticker.after(hold) { [weak self] in
+                guard let self else { return }
+                self.doorSwing = self.ticker.tween(0.5, step: { t in
+                    hinge.orientation = simd_quatf(angle: open + (rest - open) * t,
+                                                   axis: [0, 1, 0])
+                }, done: { [weak self] in
+                    self?.doorSwing = nil
+                })
+            }
         })
     }
 
@@ -1201,7 +1290,7 @@ final class FeestRoom: Room {
 
     var debugActions: [(String, @MainActor () -> Void)] {
         [("Nieuw feest", { [weak self] in self?.startFreshParty() }),
-         ("Eet de taart", { [weak self] in self?.tapCake() }),
+         ("Tik de uitgang", { [weak self] in self?.tapDoorway() }),
          ("Wens laten kloppen", { [weak self] in self?.forceWishForTesting() })]
     }
 
@@ -1255,7 +1344,7 @@ final class FeestRoom: Room {
             self.idleTime += dt
             if self.nudgeStage == 0, self.idleTime > 45, self.state.step == .dansen {
                 self.nudgeStage = 1
-                self.voice.say(self.alternateNudge ? FeestLine.stil : FeestLine.zullenWeEten,
+                self.voice.say(self.alternateNudge ? FeestLine.stil : FeestLine.zullenWeGaan,
                                priority: .low)
                 self.alternateNudge.toggle()
             }
@@ -1282,8 +1371,13 @@ final class FeestRoom: Room {
         beatJob = nil
         ticker.cancel(idleJob)
         idleJob = nil
-        Halo.remove(cakeHalo, ticker: ticker)
-        cakeHalo = nil
+        ticker.cancel(doorSwing)
+        doorSwing = nil
+        doorRest = 0
+        Halo.remove(doorHalo, ticker: ticker)
+        doorHalo = nil
+        doorTouchSpot = nil
+        doorway = nil
         for guest in guests { guest.stop() }
         djCharacter?.stop()
         djCharacter = nil
@@ -1329,6 +1423,10 @@ enum FeestLine {
     static let muurKomt = "nina.feest.muurKomt"
     static let nogeen = "nina.feest.nogeen"
     static let opnieuw = "nina.feest.opnieuw"
+    /// Idle. An offer to finish, NOT an instruction. Reuses Versieren's
+    /// *zullen we gaan?* until the party has its own three variants — the old
+    /// `zullenWeEten` told her to tap the cake, which is no longer the exit.
+    static let zullenWeGaan = "nina.versieren.zullenWeGaan"
     static let zullenWeEten = "nina.feest.zullenWeEten"
     /// The kitchen's, reused: *"ik ben er nog, hoor"*.
     static let stil = "nina.stil"
@@ -1348,10 +1446,7 @@ enum FeestLine {
     static let ditBallon = "nina.dit.ballon"
     static let ditVriendje = "nina.dit.vriendje"
     /// Said on a tap that lands on the empty dance floor — see
-    /// `FeestRoom.tapNothing`. **There is deliberately no line for the party
-    /// table**: nothing can tap it, because the cake standing on it is the way
-    /// out of the room and its target covers the whole thing. A naming line no
-    /// tap can reach is a line that was generated for nothing.
+    /// `FeestRoom.tapNothing`.
     static let ditDansvloer = "nina.dit.dansvloer"
 }
 
