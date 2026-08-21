@@ -4,7 +4,7 @@ The detailed design. [`CONCEPT.md`](CONCEPT.md) says what the game *is*; this
 file says what actually happens, minute by minute, and what has to be built to
 make it happen.
 
-It exists because `CONCEPT.md` described a **loop**, not a game: four rooms, one
+It exists because `CONCEPT.md` described a **loop**, not a game: rooms, one
 verb each, five minutes, then the identical thing again tomorrow. There was no
 reason to stay in a room once its verb was done, and no reason to come back once
 the novelty wore off. This file fixes both.
@@ -124,18 +124,13 @@ about the bakery rather than about a guest: *this is a real toverbakkerij now.*
 The finale must not read as a door closing. She will want to bake again the next
 morning, and finding the bakery shut would read as broken, not as finished.
 
-### What opens the app — OPEN
+### What opens the app — DECIDED, 2026-08-21
 
-The built app opens **title plate → film → the kitchen** (`app/README.md`, "The
-opening"), and this section says the wall is the first thing on screen. Both
-cannot be true once the bakery room exists, and the collision is a real one: the
-film is fourteen seconds, and fourteen seconds between her and the wall *every
-single launch* is fourteen seconds she will learn to skip.
-
-The recommendation, not yet a decision: **title plate → film on first launch
-only → the wall**, with the film moved behind the gold frame afterwards so it is
-still somewhere rather than gone. `IntroMovie.isAvailable` is already the only
-thing that decides whether the film plays, so this is one flag.
+**Title plate → film on first launch only → the wall.** Fourteen seconds between
+her and the wall every launch is fourteen seconds she will learn to skip.
+`IntroMovie.hasPlayed` is the flag. Clearing the app's data replays the film.
+The gold-frame replay of the film is still open. See `app/README.md`, "The
+opening".
 
 ## 3. Anatomy of a round
 
@@ -397,10 +392,11 @@ below.
 
 **Required: open the shop, choose who is coming, let them in, take the order.**
 
-> **Designed 2026-08-17, not built.** This section used to say *"required: tap a
-> grey frame"*, which is not a required action — it is a menu with a room drawn
-> round it. What follows is a step machine in the kitchen's sense:
-> `ROOMS.md` §1's named steps, one lit thing at a time, nothing failable.
+> **Built 2026-08-21.** Ported from the 2026-08-17 implementation onto the
+> lighting the other rooms measured afterwards. This section used to say
+> *"required: tap a grey frame"*, which is not a required action. It is a menu
+> with a room drawn round it. What follows is a step machine in the kitchen's
+> sense. `ROOMS.md` §1's named steps, one lit thing at a time, nothing failable.
 
 Four steps, and the whole leg is **~40 seconds**. It has to be the leanest step
 machine in the game and not the second-fattest, because it is the only room she
@@ -573,7 +569,7 @@ function the decorating room replaces.
 
 **Deviations from this file, all deliberate and all recorded in
 `app/README.md`:** the room box is 0.46 m rather than 0.40 m with the camera 8%
-further back, the doorway leads nowhere yet, and the palette gained a blue, an
+further back, the round's doorway hands the cake to Versieren, and the palette gained a blue, an
 amber and a lilac the locked thirteen do not contain.
 
 ### 6.4 Versieren — decorating — **BUILT**
@@ -969,9 +965,9 @@ about it. After that:
    to be blocked at all — they are six synthesised `SoundKit` voices, on the
    same terms as every other effect in the game — so what is still blocked is
    **the party loop alone**, which is one asset rather than seven.
-5. **The wall** — twelve frames, the grey ghosts, the level select, and
-   persistence. This moves *up*: it is not a reward system bolted on later, it
-   is the thing that makes the game a game, and everything else hangs off it.
+5. ~~**The wall**~~ — **built**, 2026-08-21, as De Bakkerij. Twelve frames, the
+   grey ghosts, the level select, and persistence in `muur.json`. It is not a
+   reward system bolted on later. It is the thing that makes the game a game.
 6. ~~**The garden**~~ — **built**, 2026-08-16, out of order. See
    [`app/README.md`](app/README.md), "De Tuin". It came before decorating and the
    party because two of its three costs were not the garden at all: **carrying,
@@ -987,8 +983,8 @@ about it. After that:
    is the cheapest quality in the whole project.
 9. **Final voice-over**, once the dialogue has settled.
 
-Step 5 moving up is the substantive change. Build it as soon as a round can be
-completed, because until the wall exists there is no reason for a second round.
+Step 5 was the last thing between four rooms and a game, and it is in.
+A round can now start at the wall and hang a photograph when it comes home.
 
 ## 10. Still open
 
@@ -1008,8 +1004,8 @@ completed, because until the wall exists there is no reason for a second round.
   hers — it comes from her taps — so the room works in silence in a way a room
   waiting for a backing track would not. Whether a loop should follow her tempo
   or run at its own is a decision that cannot be made until there is a loop.
-- **What opens the app**, now that the film and the wall both claim the first
-  screen — §2.
+- ~~**What opens the app**~~ — **decided 2026-08-21: film on first launch only,
+  then the wall.** §2. The gold-frame replay of the film is still open.
 - **Whether the basket goes back to three when the garden fills it** — §5. Five
   dealt from six makes every cake a rainbow and four of the eleven wishes
   automatic. Decide before the friends are built.

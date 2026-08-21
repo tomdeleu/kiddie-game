@@ -150,11 +150,10 @@ enum Friend: String, Codable, CaseIterable, Identifiable {
         }
     }
 
-    /// **Which tray or jar shimmers**, for the day the wish card and the hint
-    /// exist upstream. `GAMEPLAY.md` §6.2 and §6.4 both put a hint on the wish,
-    /// and both need to ask the wish what it is about without knowing the eleven.
-    /// Nothing calls this yet; it is here so the two rooms that will can read it
-    /// off the friend rather than re-deriving the table.
+    /// **Which tray or jar shimmers.** `GAMEPLAY.md` §6.2 and §6.4 both put a
+    /// hint on the wish, and both ask the wish what it is about without knowing
+    /// the eleven. The garden and the decorating room read this off the friend
+    /// rather than re-deriving the table.
     var hintedSticker: StickerKind? {
         if case .stickers(let kind, _) = wish { return kind }
         if case .sprinkels = wish { return .sprinkel }
@@ -166,23 +165,37 @@ enum Friend: String, Codable, CaseIterable, Identifiable {
         return nil
     }
 
+    /// **Which seed jar shimmers**, for a colour or effect wish. Decoration
+    /// wishes have no jar. Derived here so the garden does not re-walk §4.
+    var hintedIngredient: Ingredient? {
+        if let colour = hintedColour {
+            return Ingredient.allCases.first { $0.colour == colour }
+        }
+        switch wish {
+        case .effect(.fonkelt): return .sterrensuiker
+        case .effect(.hoog): return .wolkenroom
+        case .effect(.glimt): return .honing
+        default: return nil
+        }
+    }
+
     /// **A friend nobody chose**, for a party entered without one.
     ///
-    /// There is no bakery hub, so nothing upstream can say who is at the door.
-    /// The room deals one, which is exactly what the decorating room does with a
-    /// cake on a visit (`CakeSpec.dealt`, owner's call 2026-08-16) and for the
-    /// same reason: the answer to a missing thing is to supply it rather than to
-    /// refuse her the room. `RoomExit` grows a case the day the hub lands.
+    /// A visit to the disco has no bakery order behind it. The room deals one,
+    /// which is exactly what the decorating room does with a cake on a visit
+    /// (`CakeSpec.dealt`, owner's call 2026-08-16) and for the same reason. The
+    /// answer to a missing thing is to supply it rather than to refuse her the
+    /// room.
     static func dealt() -> Friend {
         allCases.randomElement() ?? .pip
     }
 
-    /// The other guests at the party, excluding the friend of the day.
+    /// **The other guests at the party, excluding the friend of the day.**
     ///
-    /// §6.5 says *everyone she has baked for so far*, and there is no wall yet to
-    /// say who that is — so it is a shuffled handful. The count is
-    /// `FeestLayout.guestCount - 1` and it is decided by the floor, not by this:
-    /// see `FeestLayout.guestSpots`.
+    /// §6.5 says *everyone she has baked for so far*. The wall can say who that
+    /// is, and this still deals a shuffled handful so a first-round party is not
+    /// five empty spots. The count is `FeestLayout.guestCount - 1` and it is
+    /// decided by the floor, not by this. See `FeestLayout.guestSpots`.
     static func others(besides friend: Friend, count: Int) -> [Friend] {
         allCases.filter { $0 != friend }.shuffled().prefix(count).map { $0 }
     }

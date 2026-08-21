@@ -112,7 +112,8 @@ final class FeestRoom: Room {
 
     init(ticker: Ticker, touch: TouchRouter, voice: VoiceBank,
          sound: SoundKit, settings: LightingSettings,
-         mode: RoomMode = .bezoek, handedCake: CakeSpec? = nil) {
+         mode: RoomMode = .bezoek, handedCake: CakeSpec? = nil,
+         friend handedFriend: Friend? = nil) {
         self.ticker = ticker
         self.touch = touch
         self.voice = voice
@@ -120,14 +121,14 @@ final class FeestRoom: Room {
         self.settings = settings
         self.mode = mode
 
-        // **A cake arriving means a new party**, and the friend is dealt with it.
-        // On a visit the saved one is resumed, and if there is none a cake and a
-        // friend are dealt together — the decorating room's rule (`CakeSpec.dealt`,
-        // owner's call 2026-08-16) applied to a second missing thing: supply it
-        // rather than refuse her the room.
+        // **A cake arriving means a new party.** The friend comes with it when
+        // the bakery started the round. On a visit the saved one is resumed, and
+        // if there is none a cake and a friend are dealt together. The decorating
+        // room's rule (`CakeSpec.dealt`, owner's call 2026-08-16) applied to a
+        // second missing thing. Supply it rather than refuse her the room.
         var loaded = FeestStore.load(fallback: CakeSpec.dealt())
         if let handedCake {
-            loaded = .fresh(cake: handedCake, friend: Friend.dealt())
+            loaded = .fresh(cake: handedCake, friend: handedFriend ?? Friend.dealt())
         }
         self.state = loaded
         root.name = "Feest"
@@ -811,13 +812,14 @@ final class FeestRoom: Room {
         lines.append(FeestLine.muurKomt)
         voice.sayInstead(lines)
 
-        // **The room says what just happened and hands back control.** There is
-        // no bakery to go to, so `GameScene` does nothing with this today — which
-        // is exactly why the room also lays out a fresh party behind it. A room
-        // that ends with nowhere to go must not end with nothing to do.
-        jobs.append(ticker.after(1.2) { [weak self] in self?.onExit?(.bakkerij) })
+        // **The room says what just happened and hands back control.** A round
+        // carries the cake home so the bakery can hang it. A visit walks home
+        // with nothing to hang. Wait until Nina has finished thanking her, so
+        // `GameScene.enter` cannot cut the thanks off with `voice.stop()`.
+        let result = FeestResult(friend: state.friend, cake: state.cake, matched: matched)
+        let visiting = mode == .bezoek
         jobs.append(voice.whenQuiet(after: 0.5, timeout: 30) { [weak self] in
-            self?.startFreshParty()
+            self?.onExit?(visiting ? .bakkerij(nil) : .bakkerij(result))
         })
     }
 

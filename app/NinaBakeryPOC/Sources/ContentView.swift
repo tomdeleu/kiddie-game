@@ -16,9 +16,10 @@ struct ContentView: View {
     @State private var showDeveloperPanel = false
     @State private var dragging = false
 
-    /// **Title plate, then film, then the game.** Each layer uncovers the next,
-    /// and the room is built and lit under all of them — so whichever way she
-    /// gets through, the kitchen is simply there rather than loading.
+    /// **Title plate, then film on first launch, then the bakery.** Each layer
+    /// uncovers the next, and the room is built and lit under all of them, so
+    /// whichever way she gets through, the wall is simply there rather than
+    /// loading.
     ///
     /// The film is skipped entirely when no `intro-*.mp4` is bundled, which is
     /// the one thing that changes the order.
@@ -45,12 +46,16 @@ struct ContentView: View {
     /// lights are on it. This is what the loading screen waits for.
     @State private var sceneReady = false
 
+    /// The curtain at the end of a session. See `curtainLayer`.
+    @State private var curtainClosed = false
+
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .topTrailing) {
                 backdrop
                 roomView
                 restartButton
+                wishCardLayer
                 // **Order and transitions are both load-bearing here.** The
                 // plate is last, so it is on top of the film; and each cover
                 // appears with no animation and leaves with a fade, so there is
@@ -74,11 +79,13 @@ struct ContentView: View {
                 // already got where you were trying to skip to is not a
                 // developer control.
                 developerLayer
+                curtainLayer
             }
             .coordinateSpace(.named("room"))
             .onAppear {
                 scene.cameraRig.setViewport(geometry.size)
                 keepTheScreenAwake()
+                scene.onCurtain = { closeTheCurtain() }
             }
             .onChange(of: geometry.size) { _, size in
                 scene.cameraRig.setViewport(size)
@@ -88,6 +95,56 @@ struct ContentView: View {
         .onChange(of: scenePhase) { _, phase in
             // The round survives the iPad being taken away mid-stir.
             if phase != .active { scene.room?.save() }
+        }
+    }
+
+    /// **The wish card, and it is the only persistent interface element in the
+    /// game** (`GAMEPLAY.md` §4).
+    ///
+    /// It lives here rather than in the bakery because it has to survive four
+    /// room swaps and a room is torn down wholesale. Top-left, because the other
+    /// three corners are taken: the wrench top-right, restart bottom-left, skip
+    /// bottom-right.
+    @ViewBuilder
+    private var wishCardLayer: some View {
+        if let friend = scene.wishCard {
+            VStack {
+                HStack {
+                    WishCardView(friend: friend) { scene.replayWish() }
+                        .padding(.leading, 22)
+                        .padding(.top, 22)
+                        .transition(.scale.combined(with: .opacity))
+                    Spacer()
+                }
+                Spacer()
+            }
+            .allowsHitTesting(true)
+        }
+    }
+
+    /// **The curtain that closes on the end of a session** (`GAMEPLAY.md` §6.6).
+    ///
+    /// Screen-space rather than a prop. The blind stays up for the rest of the
+    /// sitting, so shutting the shop to end a round would mean re-opening it
+    /// to start the next one. A theatre curtain over the whole session is
+    /// what §6.6 is describing.
+    ///
+    /// Opaque from its first frame, leaving with a fade. A cover that fades
+    /// in is a peep-hole.
+    @ViewBuilder
+    private var curtainLayer: some View {
+        if curtainClosed {
+            GeometryReader { geo in
+                ZStack {
+                    ForEach([-1.0, 1.0], id: \.self) { side in
+                        Color(Palette.blushPinkDeep)
+                            .frame(width: geo.size.width / 2 + 2)
+                            .offset(x: CGFloat(side) * geo.size.width / 4)
+                    }
+                }
+            }
+            .ignoresSafeArea()
+            .transition(.asymmetric(insertion: .identity, removal: .opacity))
         }
     }
 
@@ -121,7 +178,7 @@ struct ContentView: View {
     }
 
     /// The title plate has done its waiting. Either the film follows, or the
-    /// kitchen does — and the two are uncovered differently on purpose.
+    /// bakery does, and the two are uncovered differently on purpose.
     ///
     /// **With a film, nothing fades yet.** The film is inserted underneath the
     /// plate with no animation, so the plate is still the only thing on screen;
@@ -130,10 +187,11 @@ struct ContentView: View {
     /// covers.
     ///
     /// **Without one, this is the reveal**, and the crossfade is the point: the
-    /// plate is the only cover and the kitchen is what is behind it.
+    /// plate is the only cover and the bakery is what is behind it.
     private func finishLoading() {
         guard opening == .loading else { return }
-        guard IntroMovie.isAvailable else {
+        // **The film plays once.** After that the wall is what opens the game.
+        guard IntroMovie.isAvailable, !IntroMovie.hasPlayed else {
             opening = .playing
             withAnimation(.easeInOut(duration: 0.5)) { plateUp = false }
             // The beat that `GameScene.start` used to schedule, now that the
@@ -176,9 +234,10 @@ struct ContentView: View {
     /// off, the end of the film does not.** She skipped because she wants to
     /// bake, so holding her at the door for the rest of a sentence would be
     /// exactly backwards; but letting the last line finish over the first
-    /// second of the kitchen is how a film ends, not a bug.
+    /// second of the bakery is how a film ends, not a bug.
     private func finishIntro(skipped: Bool) {
         guard opening == .film else { return }
+        IntroMovie.hasPlayed = true
         if skipped { scene.voice?.stop() }
         withAnimation(.easeInOut(duration: 0.45)) { opening = .playing }
         scene.greetWhenQuiet()
@@ -301,6 +360,16 @@ struct ContentView: View {
         .simultaneousGesture(TapGesture(count: 3).onEnded { showDeveloperPanel = true })
     }
 
+    /// Two and a half seconds: closed, held, and opened again on the bakery
+    /// standing ready for tomorrow.
+    private func closeTheCurtain() {
+        withAnimation(.easeInOut(duration: 0.0)) { curtainClosed = true }
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(1.6))
+            withAnimation(.easeInOut(duration: 0.9)) { curtainClosed = false }
+        }
+    }
+
     private func keepTheScreenAwake() {
         #if os(iOS)
         UIApplication.shared.isIdleTimerDisabled = true
@@ -326,11 +395,21 @@ final class GameScene: ObservableObject {
     /// **The room that is up.** `@Published` so the debug strip re-renders when
     /// it changes — an `@ObservedObject` will not notice a plain stored property.
     @Published private(set) var room: (any Room)?
-    @Published private(set) var currentRoom: RoomID = .keuken
+    @Published private(set) var currentRoom: RoomID = .bakkerij
 
     /// The last cake handed over by the previous room, so the decorating room
     /// can be entered mid-round rather than only from a fresh visit.
     private var handedCake: CakeSpec?
+
+    /// **Who today's round is for**, held for as long as the round lasts.
+    private var roundFriend: Friend?
+
+    /// The wish card in the screen corner. `@Published` so `ContentView`
+    /// re-renders when a round starts or ends.
+    @Published private(set) var wishCard: Friend?
+
+    /// Set by `ContentView`: close the curtain on the end of a session.
+    var onCurtain: (@MainActor () -> Void)?
 
     private var settings: LightingSettings?
     private var builtFlat: Bool?
@@ -370,7 +449,30 @@ final class GameScene: ObservableObject {
             return
         }
         #endif
-        enter(.keuken, greeting: greeting)
+        resume(greeting: greeting)
+    }
+
+    /// **What opens the game.** `GAMEPLAY.md` §2: the wall of frames is the first
+    /// thing on screen and the last thing before it closes.
+    ///
+    /// And if a round was in progress when the app was last closed, she is put
+    /// back where she was rather than at the beginning.
+    private func resume(greeting: Bool) {
+        let saved = GameStore.load()
+        guard let round = saved.round else {
+            enter(.bakkerij, greeting: greeting)
+            return
+        }
+        roundFriend = round.friend
+
+        if let result = round.result {
+            enter(.bakkerij, result: result, greeting: greeting)
+            return
+        }
+
+        wishCard = round.friend
+        let room = round.room.flatMap { RoomID(rawValue: $0) } ?? .bakkerij
+        enter(room, friend: round.friend, greeting: greeting)
     }
 
     /// **Put a room up, and take the old one down.**
@@ -390,7 +492,8 @@ final class GameScene: ObservableObject {
     /// decorating room takes a cake. `RoomExit` is the shape that carries them
     /// between rooms; this is the shape that gets them into one.
     func enter(_ id: RoomID, handing cake: CakeSpec? = nil,
-               picked: [Ingredient] = [], greeting: Bool = true) {
+               picked: [Ingredient] = [], friend: Friend? = nil,
+               result: FeestResult? = nil, greeting: Bool = true) {
         guard let settings else { return }
 
         room?.leave()
@@ -399,10 +502,16 @@ final class GameScene: ObservableObject {
         voice.stop()
 
         handedCake = cake
-        let mode: RoomMode = cake == nil && picked.isEmpty ? .bezoek : .ronde
-        // `let`, not `var`: `Room` is `AnyObject`-bound, so `onExit` is set
-        // through the reference rather than mutating the binding.
+        if let friend { roundFriend = friend }
+        // **A round is anything with a payload.** After the bakery, a room can
+        // be mid-round while carrying neither a cake nor a basket. The garden
+        // entered straight from the hub is exactly that. A debug visit hands
+        // nothing over, and must not inherit yesterday's friend.
+        let inARound = cake != nil || !picked.isEmpty || friend != nil || result != nil
+        let mode: RoomMode = inARound ? .ronde : .bezoek
+        let carriedFriend = friend ?? (inARound ? roundFriend : nil)
         let next = makeRoom(id, cake: cake, picked: picked, mode: mode,
+                            friend: carriedFriend, result: result,
                             settings: settings)
         next.onExit = { [weak self] exit in self?.handle(exit) }
 
@@ -413,18 +522,29 @@ final class GameScene: ObservableObject {
         builtFlat = settings.flatShading
         applyRoomLighting(settings)
 
-        // A beat before she is greeted, so the room is on screen first.
         if greeting {
             ticker.after(0.9) { [weak next] in next?.greet() }
         }
     }
 
     private func makeRoom(_ id: RoomID, cake: CakeSpec?, picked: [Ingredient],
-                          mode: RoomMode, settings: LightingSettings) -> any Room {
+                          mode: RoomMode, friend: Friend?, result: FeestResult?,
+                          settings: LightingSettings) -> any Room {
         switch id {
+        case .bakkerij:
+            let hub = BakkerijRoom(ticker: ticker, touch: touch, voice: voice,
+                                   sound: sound, settings: settings, mode: mode,
+                                   friend: friend, result: result)
+            hub.onWishCard = { [weak self] friend in
+                self?.wishCard = friend
+                if friend == nil { self?.roundFriend = nil }
+            }
+            hub.onCurtain = { [weak self] in self?.onCurtain?() }
+            return hub
         case .tuin:
             return GardenRoom(ticker: ticker, touch: touch, voice: voice,
-                              sound: sound, settings: settings, mode: mode)
+                              sound: sound, settings: settings, mode: mode,
+                              friend: friend)
         case .keuken:
             return KitchenRoom(ticker: ticker, touch: touch, voice: voice,
                                sound: sound, settings: settings, mode: mode,
@@ -432,11 +552,11 @@ final class GameScene: ObservableObject {
         case .versieren:
             return VersierRoom(ticker: ticker, touch: touch, voice: voice,
                                sound: sound, settings: settings, mode: mode,
-                               handedCake: cake)
+                               handedCake: cake, friend: friend)
         case .feest:
             return FeestRoom(ticker: ticker, touch: touch, voice: voice,
                              sound: sound, settings: settings, mode: mode,
-                             handedCake: cake)
+                             handedCake: cake, friend: friend)
         }
     }
 
@@ -445,17 +565,53 @@ final class GameScene: ObservableObject {
     /// left gets to finish saying so.
     private func handle(_ exit: RoomExit) {
         switch exit {
+        case .tuin(let friend):
+            roundFriend = friend
+            noteRound(friend: friend, room: .tuin)
+            ticker.after(1.4) { [weak self] in self?.enter(.tuin, friend: friend) }
         case .keuken(let basket):
+            noteRound(room: .keuken)
             ticker.after(1.4) { [weak self] in self?.enter(.keuken, picked: basket) }
         case .versieren(let cake):
+            noteRound(room: .versieren)
             ticker.after(1.4) { [weak self] in self?.enter(.versieren, handing: cake) }
         case .feest(let cake):
+            noteRound(room: .feest)
             ticker.after(1.4) { [weak self] in self?.enter(.feest, handing: cake) }
-        case .bakkerij:
-            // The bakery does not exist yet, so a visit ends back where it
-            // started. `ROOMS.md` §9: never promise a room that does not exist.
-            break
+        case .bakkerij(let result):
+            if let result {
+                var saved = GameStore.load()
+                saved.round = RoundInProgress(friend: result.friend,
+                                              room: RoomID.bakkerij.rawValue,
+                                              result: result)
+                GameStore.save(saved)
+                ticker.after(1.4) { [weak self] in
+                    self?.enter(.bakkerij, result: result)
+                }
+            } else {
+                roundFriend = nil
+                wishCard = nil
+                ticker.after(1.4) { [weak self] in
+                    self?.enter(.bakkerij)
+                }
+            }
         }
+    }
+
+    /// Mirror the round into the game-wide save at each doorway, so a relaunch
+    /// knows both who it is for and how far she got.
+    private func noteRound(friend: Friend? = nil, room: RoomID) {
+        guard let who = friend ?? roundFriend else { return }
+        var saved = GameStore.load()
+        saved.round = RoundInProgress(friend: who, room: room.rawValue,
+                                      result: saved.round?.result)
+        GameStore.save(saved)
+    }
+
+    /// The wish card was tapped. §4: tapping it replays the line.
+    func replayWish() {
+        guard let friend = wishCard else { return }
+        voice.say(BakkerijLine.wish(for: friend))
     }
 
     /// Nina's narration over the opening film's first shot. The second shot's
@@ -499,6 +655,8 @@ final class GameScene: ObservableObject {
             lights = GardenRoom.lighting(from: settings)
         case .feest:
             lights = FeestRoom.lighting(from: settings)
+        case .bakkerij:
+            lights = BakkerijRoom.lighting(from: settings)
         default:
             lights = settings
         }

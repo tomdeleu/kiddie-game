@@ -33,6 +33,10 @@ final class VersierRoom: Room {
     /// rule and what the door does differ.
     let mode: RoomMode
 
+    /// Who today's round is for, when the bakery sent her. A visit has none.
+    /// The idle shimmer on a tray reads `Friend.hintedSticker` off this.
+    private let friend: Friend?
+
     private let ticker: Ticker
     private let touch: TouchRouter
     private let voice: VoiceBank
@@ -103,19 +107,24 @@ final class VersierRoom: Room {
     private var idleTime: Float = 0
     private var nudgeStage = 0
     private var alternateNudge = false
+    private var hintJob: Int?
+    private var hintEntity: Entity?
+    private var hintScale = SIMD3<Float>(repeating: 1)
     private var jobs: [Int] = []
 
     // MARK: - Life
 
     init(ticker: Ticker, touch: TouchRouter, voice: VoiceBank,
          sound: SoundKit, settings: LightingSettings,
-         mode: RoomMode = .bezoek, handedCake: CakeSpec? = nil) {
+         mode: RoomMode = .bezoek, handedCake: CakeSpec? = nil,
+         friend: Friend? = nil) {
         self.ticker = ticker
         self.touch = touch
         self.voice = voice
         self.sound = sound
         self.settings = settings
         self.mode = mode
+        self.friend = friend
 
         // **On a round the kitchen's cake arrives and replaces whatever was
         // here.** On a visit there is nothing to hand over, so the saved state
@@ -984,9 +993,7 @@ final class VersierRoom: Room {
     /// decorating room replaces."* It replaced the kitchen's; the party replaced
     /// this one.
     ///
-    /// **A visit is still a ceremony**, because a visit's door goes back to the
-    /// bakery and the bakery does not exist. Never promise a room that is not
-    /// built.
+    /// **A visit walks home to the bakery**, with nothing to hang.
     private func endRoom(_ doorway: Props.Doorway) {
         swingDoor(doorway, hold: 2.6)
         baker?.set(.cheering)
@@ -1009,13 +1016,14 @@ final class VersierRoom: Room {
             jobs.append(job)
         }
 
-        // **Handed over on the beat the leaf reaches full open**, so the swing
+        // Handed over on the beat the leaf reaches full open, so the swing
         // reads as the way through rather than as something that happened first.
         // Same 0.9 s as the kitchen's, and `GameScene` waits again on its own
         // side, which is what gives Nina's line room to land.
-        guard toParty else { return }
         let cake = state.cake
-        jobs.append(ticker.after(0.9) { [weak self] in self?.onExit?(.feest(cake)) })
+        jobs.append(ticker.after(0.9) { [weak self] in
+            self?.onExit?(toParty ? .feest(cake) : .bakkerij(nil))
+        })
     }
 
     private func swingDoor(_ doorway: Props.Doorway, hold: Float = 1.5) {
@@ -1145,14 +1153,17 @@ final class VersierRoom: Room {
     // MARK: - Idle
 
     /// Copied from the kitchen and **tuned nothing** — 25 s, 45 s, 105 s.
-    /// The one thing that is this room's own is the line.
+    /// The voice is this room's own, and it is never an instruction. The 25 s
+    /// shimmer is the wish hint. `GAMEPLAY.md` §6.4 puts it on the matching tray.
     private func startIdleWatch() {
         ticker.cancel(idleJob)
         idleTime = 0
         nudgeStage = 0
+        stopHint()
         idleJob = ticker.add { [weak self] dt in
             guard let self else { return false }
             self.idleTime += dt
+            if self.idleTime > 25 { self.showHint() }
             if self.nudgeStage == 0, self.idleTime > 45 {
                 self.nudgeStage = 1
                 // **Never an instruction.** There is nothing she is failing to
@@ -1170,6 +1181,22 @@ final class VersierRoom: Room {
     private func resetIdle() {
         idleTime = 0
         nudgeStage = 0
+        stopHint()
+    }
+
+    private func showHint() {
+        guard hintJob == nil else { return }
+        guard let kind = friend?.hintedSticker, let tray = trays[kind] else { return }
+        hintEntity = tray
+        hintScale = tray.scale
+        hintJob = ticker.shimmer(tray)
+    }
+
+    private func stopHint() {
+        guard hintJob != nil else { return }
+        ticker.stopShimmer(hintJob, on: hintEntity, restoring: hintScale)
+        hintJob = nil
+        hintEntity = nil
     }
 
     // MARK: - Housekeeping
@@ -1179,6 +1206,7 @@ final class VersierRoom: Room {
         jobs.removeAll()
         ticker.cancel(idleJob)
         idleJob = nil
+        stopHint()
         ticker.cancel(doorSwing)
         doorSwing = nil
         doorRest = 0
