@@ -570,13 +570,13 @@ final class BakkerijRoom: Room {
 
         // They walk to the counter, and Nina says hello when they get there.
         jobs.append(ticker.move(visitor.root, to: BakkerijLayout.friendSpot,
-                                duration: 1.5, arc: 0.004) { [weak self] in
+                                duration: 1.5, arc: 0.004, done: { [weak self] in
             guard let self else { return }
             self.ticker.squash(visitor.root, amount: 0.10, duration: 0.4)
             self.voice.sayInstead(BakkerijLine.binnen)
             self.giveCard(to: friend)
             self.advance(to: .bestellen, after: 0.5)
-        })
+        }))
 
         // And the shop door stops being a cue the moment it has been used.
         jobs.append(ticker.after(1.2) { [weak self] in
@@ -641,7 +641,7 @@ final class BakkerijRoom: Room {
         guard let friend = state.friend else { return }
 
         jobs.append(ticker.move(card, to: BakkerijLayout.cardHangCentre,
-                                duration: 0.25, arc: 0.004) { [weak self] in
+                                duration: 0.25, arc: 0.004, done: { [weak self] in
             guard let self else { return }
             self.ticker.wiggle(card, angle: 0.18, duration: 0.6)
             Sparkles.burst(at: BakkerijLayout.cardHangCentre, in: self.root,
@@ -665,7 +665,7 @@ final class BakkerijRoom: Room {
                 self.voice.sayInstead(BakkerijLine.naarTuin)
                 self.openTheWayOut()
             })
-        })
+        }))
     }
 
     /// The back door lights, and from here the room is finished with her.
@@ -748,7 +748,7 @@ final class BakkerijRoom: Room {
         guard let result = state.result else { return }
 
         jobs.append(ticker.move(photo, to: target + SIMD3<Float>(0.006, 0, 0),
-                                duration: 0.4, arc: 0.012) { [weak self] in
+                                duration: 0.4, arc: 0.012, done: { [weak self] in
             guard let self else { return }
             photo.removeFromParent()
             self.photo = nil
@@ -771,8 +771,12 @@ final class BakkerijRoom: Room {
                 self.ticker.squash(rebuilt.root, amount: 0.18, duration: 0.6)
                 rebuilt.moulding.model?.materials =
                     [Palette.glowMaterial(Palette.butterYellow, intensity: 2.0)]
-                self.jobs.append(self.ticker.after(1.4) { [weak rebuilt] in
-                    rebuilt?.moulding.model?.materials = [Palette.material(Palette.cream)]
+                // `FrameWall.Frame` is a struct — `[weak rebuilt]` is the garden's
+                // first-build error (`[weak can]` on `WateringCan`). The closure
+                // wants the moulding, which is a class.
+                let moulding = rebuilt.moulding
+                self.jobs.append(self.ticker.after(1.4) { [weak moulding] in
+                    moulding?.model?.materials = [Palette.material(Palette.cream)]
                 })
             }
 
@@ -784,7 +788,7 @@ final class BakkerijRoom: Room {
             self.onWishCard?(nil)
             self.paintSign()
             self.finishTheDay()
-        })
+        }))
     }
 
     private func finishTheDay() {

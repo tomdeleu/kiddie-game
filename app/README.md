@@ -2946,11 +2946,13 @@ on disk from the 2026-08-17 bakery branch. Job IDs live in
 
 ### What it owes
 
-- **A compiler pass.** This room was written in a container. File moves and new
-  calls into main-actor code are the two mistakes the 2026-08-16 builds actually
-  caught. `ContentView` gained `onExit` routing for five rooms, `GardenRoom` and
-  `VersierRoom` gained a `friend:` argument, `FeestRoom.tapCake` now calls
-  `onExit` with a `FeestResult`, and `KitchenRoom.roomComplete` now reads `mode`.
+- **A compiler pass in Xcode.** This room was written in a container. The error
+  the first 2026-08-16 build actually caught was already in `hangPhoto`:
+  `[weak rebuilt]` on `FrameWall.Frame`, which is a struct — the garden's
+  `[weak can]` on `WateringCan`. The closure wants the moulding, so that is
+  what is captured. `ticker.move` now labels `done:`, the warning that first
+  build cleaned up while it had the compiler open. There is still no Swift
+  toolchain here.
 - **Nina in the bakery**, with the protocol in `POC.md`. Touch radii were
   inherited from the kitchen's box.
 - **Gold-frame replay of the opening film.** §2 still wants the film somewhere
