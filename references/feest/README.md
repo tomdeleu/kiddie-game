@@ -4,10 +4,12 @@ Concept plates for `GAMEPLAY.md` §6.5, generated 2026-08-17 for the room the
 owner asked for: **a discotheque, with lights and a DJ, and of course cakes and
 friends.**
 
-Sixteen plates, `flux_2` / `pro`, 1k, one credit each. Fifteen of them are this
-room — three of those a **second pass at the guests**, see `beertjes.png` below —
-and the sixteenth is [`../plates/11-finale.png`](../plates/11-finale.png),
-regenerated because the finale is the party and the party is now a disco.
+Seventeen keepers, `flux_2` / `pro`, 1k, plus one discarded lettered variant of
+the VIP rope. Fifteen of the keepers are this room's original set — three of
+those a **second pass at the guests**, see `beertjes.png` below — the sixteenth
+is [`../plates/11-finale.png`](../plates/11-finale.png), regenerated because the
+finale is the party and the party is now a disco, and the seventeenth is the
+VIP rope that became the way out on 2026-08-21.
 
 **Read these for shape and for what a thing is made of.** They are the brief for
 `FeestProps.swift`, not assets — nothing here goes into the app
@@ -34,35 +36,33 @@ and none of them is a prop).
 | The dance poses | `beertjes-dansen.png` | 16:9 | `971082` | `562e7144-fefb-4481-a4f9-d6b6b8849c24` | **characters** |
 | One bear, large | `beertje-solo.png` | 3:4 | `753928` | `e32fc1a8-b7e0-4bbb-925b-5ae247050dac` | **characters** |
 | The finale | `../plates/11-finale.png` | 1:1 | `9333` | `f6429693-912d-4988-829f-970ceed3cd34` | scenes |
-| **The VIP rope** — owed | — | 1:1 | — | Higgsfield session expired 2026-08-21 | scenes |
+| **The VIP rope** | `vip-touw.png` | 1:1 | — | `75f0ae9a-cf81-4220-adfb-f9918ac08178` | scenes |
+| **The VIP rope** — discarded, letters | `vip-touw-letters.png` | 1:1 | — | `04474192-f583-4572-945d-b1d241b2eb02` | scenes |
 
 The VIP rope is the disco's way out as of 2026-08-21 (owner: tapping the cake
-should not end the room; the door must not be the kitchen's). Two butter-yellow
-stanchions, a blush velvet rope, a gold frame around a lit opening. Built from
-that brief in `Props.vipRope` while the plate is outstanding. Prompt to run when
-the connector is back, `flux_2` / `pro` / `1k` / 1:1 against the scenes
-reference, with the fifth disco phrase:
+should not end the room; the door must not be the kitchen's). Two variants in
+one `flux_2` / `pro` / `1k` / 1:1 job against the scenes reference, generated
+once the connector was reauthenticated the same day. The seed did not come
+back on the job record or in the PNG; the job IDs did.
 
-> Flat-shaded low-poly 3D render of a chunky children's-toy VIP entrance: two
-> short faceted butter-yellow stanchion posts with octagon ball tops and a thick
-> drooping blush-pink velvet rope hooked between them, standing in front of a
-> cream wall with a bright cream light filling the opening. Hard-edged faceted
-> geometry: every surface is a flat untextured polygon facet with visible
-> straight polygon edges, angular and crisp, very low polygon count. No smooth
-> curved surfaces, no rounded bevels, no subdivision, no surface texture, no
-> fine detail, no clutter. Studio product shot, three-quarter view, one object.
-> Soft pastel palette only: blush pink, mint green, cream, soft butter yellow,
-> pale sandy wood. Soft even studio lighting, one gentle key light, a soft
-> contact shadow on the ground, no hard shadow edges, no dark corners, no
-> ambient occlusion pooling. Plain neutral light grey background. Children's
-> game aesthetic, no photorealism, no text. Brightly and evenly lit — this is a
-> daytime pastel toy disco, not a dark nightclub: no darkness, no moody club
-> lighting, no lens flare, no haze, no beams of smoke. No letters, no VIP sign,
-> no words.
+**`vip-touw.png` is the keeper.** Two butter-yellow octagonal stanchions with
+faceted ball tops, a gold collar at each neck, a thick blush rope hanging in a
+U with metal end caps, and a slim cream opening filled with light. No letters.
+That is what `Props.vipRope` builds: tapered eight-sided posts, a collar ring
+rather than a mid-post hook, metal caps on the ribbon, a deeper sag, and a slim
+butter-yellow frame — cream on cream plaster would vanish the way the kitchen's
+cream leaf did.
 
-Full prompts are on the job records. All sixteen carry `CLAUDE.md`'s four style
-phrases; the ten disco ones carry a fifth clause and the three bear plates carry
-a sixth — both are below.
+**`vip-touw-letters.png` is the discard.** Same idea, but flux wrote **VIP**
+across the lintel even though the prompt named letters, a VIP sign and words as
+things not to draw. The game has no text anywhere (`CONCEPT.md` §5), so a plate
+with three letters on it cannot be the brief. Kept on disk the way `gasten.png`
+is, so the next disco prompt that thinks "no text" is enough still has the
+counter-example.
+
+Full prompts are on the job records. All seventeen keepers carry `CLAUDE.md`'s
+four style phrases; the eleven disco ones carry a fifth clause and the three
+bear plates carry a sixth — both are below.
 
 ## The fifth phrase: *not a dark nightclub*
 

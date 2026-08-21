@@ -2767,6 +2767,12 @@ ends with nowhere to go must not end with nothing to do.
 The confetti popper moved to the open right corner so the rope could take the
 kitchen's doorway without stealing taps from a toy.
 
+The studio plate is `references/feest/vip-touw.png` (`75f0ae9a-cf81-4220-adfb-f9918ac08178`).
+`Props.vipRope` follows that shot: tapered eight-sided posts, a gold collar at
+the neck where the rope hangs, metal end caps, and a slim butter-yellow frame
+rather than a cream one, because this room's plaster is already cream. A second
+variant wrote **VIP** on the lintel and was discarded — the game has no text.
+
 ### The cake arrives decorated, and that is the handover working
 
 The party is the first thing in the game to collect on the promise `Sticker` was
@@ -2901,9 +2907,6 @@ rides on a tap that lands on the empty floor.
 - **§6.6, the photograph and the wall**, which is what `nina.feest.muurKomt`
   promises *straks* rather than *now* — and which is now the last thing between
   four rooms and a game.
-- **A plate for the VIP rope.** Higgsfield's session was expired on 2026-08-21,
-  so `Props.vipRope` was built from the brief rather than from a studio shot.
-  The prompt is in `references/feest/README.md`.
 - **Three idle lines of its own.** The rope stole the exit from the cake, and
   `nina.feest.zullenWeEten` tells her to tap the cake, so the idle currently
   reuses Versieren's *zullen we gaan?*.

@@ -289,6 +289,10 @@ enum Props {
     /// The glow is on from the first frame, because this room asks her for
     /// nothing and lighting the exit is the honest use of the halo
     /// (`ROOMS.md` §9).
+    ///
+    /// The mesh follows `references/feest/vip-touw.png`: tapered eight-sided
+    /// posts, a collar at the neck, metal caps on the rope, a deeper sag. The
+    /// lettered sibling of that plate is not a brief.
     static func vipRope(flat: Bool,
                         centre: SIMD3<Float> = KitchenLayout.doorwayCentre) -> Doorway {
         let root = Entity()
@@ -300,49 +304,62 @@ enum Props {
         let jamb = KitchenLayout.doorFrameWidth
         let depth = KitchenLayout.doorFrameDepth
         let postZ: Float = 0.018
-        let postHeight: Float = 0.078
-        let ropeY: Float = 0.056
+        let baseH: Float = 0.007
+        let postHeight: Float = 0.072
+        let ballR: Float = 0.011
+        /// Just under the ball — `references/feest/vip-touw.png` hangs the rope
+        /// from a collar at the neck, not from mid-post.
+        let ropeY: Float = baseH + postHeight
         let gold = Palette.butterYellow
         let ropeColour = Palette.blushPinkDeep
+        let metal = Palette.honeyAmber
 
         let glow = RoomBuilder.model(.box([open.x, open.y, 0.002]),
-                                     Palette.butterYellow, flat: flat, name: "VipGlow")
+                                     Palette.creamLight, flat: flat, name: "VipGlow")
         glow.position = [0, open.y / 2, KitchenLayout.doorWallFace + 0.002]
         root.addChild(glow)
 
-        // Gold frame, not the kitchen's rose one — the opening has to read as
-        // a disco exit before the rope has moved.
+        // Slim butter frame, not the kitchen's rose one. The studio plate sits
+        // the posts in front of a pale wall the same colour as themselves; in
+        // this room the plaster is cream, so a cream opening would vanish the
+        // way a cream leaf did. The frame is the separation, kept thinner than
+        // the kitchen's because the plate has almost none.
+        let slim = jamb * 0.7
         for side: Float in [-1, 1] {
-            let post = RoomBuilder.model(.box([jamb, open.y, depth]),
+            let post = RoomBuilder.model(.box([slim, open.y, depth]),
                                          gold, flat: flat, name: "VipJamb")
-            post.position = [side * (open.x + jamb) / 2, open.y / 2, KitchenLayout.doorFrameZ]
+            post.position = [side * (open.x + slim) / 2, open.y / 2, KitchenLayout.doorFrameZ]
             root.addChild(post)
         }
-        let lintel = RoomBuilder.model(.box([open.x + jamb * 2, jamb, depth]),
+        let lintel = RoomBuilder.model(.box([open.x + slim * 2, slim, depth]),
                                        gold, flat: flat, name: "VipLintel")
-        lintel.position = [0, open.y + jamb / 2, KitchenLayout.doorFrameZ]
+        lintel.position = [0, open.y + slim / 2, KitchenLayout.doorFrameZ]
         root.addChild(lintel)
 
         func stanchion(atX x: Float, name: String) {
-            let base = RoomBuilder.model(.prism(radius: 0.012, height: 0.006, sides: 8),
+            let base = RoomBuilder.model(.prism(radius: 0.014, height: baseH, sides: 8),
                                          gold, flat: flat, name: "\(name)Voet")
             base.position = [x, 0, postZ]
             root.addChild(base)
 
-            let pole = RoomBuilder.model(.prism(radius: 0.005, height: postHeight, sides: 8),
-                                         gold, flat: flat, name: "\(name)Paal")
-            pole.position = [x, 0.006, postZ]
+            let pole = RoomBuilder.model(
+                .taperedPrism(bottomRadius: 0.007, topRadius: 0.0045,
+                              height: postHeight, sides: 8),
+                gold, flat: flat, name: "\(name)Paal")
+            pole.position = [x, baseH, postZ]
             root.addChild(pole)
 
-            let ball = RoomBuilder.model(.icosphere(radius: 0.009, subdivisions: 0),
+            let ball = RoomBuilder.model(.icosphere(radius: ballR, subdivisions: 0),
                                          gold, flat: flat, name: "\(name)Knop")
-            ball.position = [x, postHeight + 0.006, postZ]
+            ball.position = [x, ropeY + ballR * 0.45, postZ]
             root.addChild(ball)
 
-            let hook = RoomBuilder.model(.box([0.008, 0.005, 0.008]),
-                                         Palette.honeyAmber, flat: flat, name: "\(name)Haak")
-            hook.position = [x, ropeY, postZ + 0.007]
-            root.addChild(hook)
+            // Collar at the neck, the plate's attachment ring. A short fat
+            // prism, not a torus: eight sides is already a ring at this size.
+            let collar = RoomBuilder.model(.prism(radius: 0.008, height: 0.005, sides: 8),
+                                           metal, flat: flat, name: "\(name)Ring")
+            collar.position = [x, ropeY - 0.002, postZ]
+            root.addChild(collar)
         }
         stanchion(atX: -open.x / 2, name: "VipDichtbij")
         stanchion(atX: open.x / 2, name: "VipVer")
@@ -357,18 +374,43 @@ enum Props {
 
         var points: [SIMD3<Float>] = []
         var normals: [SIMD3<Float>] = []
-        let samples = 7
+        let samples = 8
         let span = open.x
+        let sagDepth: Float = 0.028
         for i in 0...samples {
             let t = Float(i) / Float(samples)
-            let sag = 0.012 * 4 * t * (1 - t)
+            let sag = sagDepth * 4 * t * (1 - t)
             points.append([t * span, ropeY - sag, 0.002])
             normals.append([0, 1, 0])
         }
         let cord = RoomBuilder.model(.ribbon(points: points, normals: normals,
-                                             width: 0.009, thickness: 0.007),
+                                             width: 0.010, thickness: 0.008),
                                      ropeColour, flat: flat, name: "VipKoord")
         hinge.addChild(cord)
+
+        func endCap(at point: SIMD3<Float>, toward next: SIMD3<Float>, name: String) {
+            let cap = RoomBuilder.model(
+                .taperedPrism(bottomRadius: 0.005, topRadius: 0.0035,
+                              height: 0.010, sides: 6),
+                metal, flat: flat, name: name)
+            let delta = next - point
+            let length = simd_length(delta)
+            if length > 1e-6 {
+                let dir = delta / length
+                let y = SIMD3<Float>(0, 1, 0)
+                let axis = simd_cross(y, dir)
+                let axisLen = simd_length(axis)
+                if axisLen > 1e-6 {
+                    cap.orientation = simd_quatf(angle: acos(max(-1, min(1, simd_dot(y, dir)))),
+                                                 axis: axis / axisLen)
+                }
+            }
+            cap.position = point
+            hinge.addChild(cap)
+        }
+        endCap(at: points[0], toward: points[1], name: "VipKapDichtbij")
+        endCap(at: points[points.count - 1], toward: points[points.count - 2],
+               name: "VipKapVer")
 
         root.excludeFromShadowCasting()
         return Doorway(root: root, hinge: hinge, glow: glow)
