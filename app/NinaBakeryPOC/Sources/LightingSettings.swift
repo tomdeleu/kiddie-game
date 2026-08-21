@@ -61,9 +61,9 @@ final class LightingSettings: ObservableObject {
 
     // MARK: Key light
     @Published var keyEnabled: Bool = true
-    @Published var keyIntensity: Float = 1400      // lux
-    @Published var keyElevation: Float = 62        // degrees above horizon
-    @Published var keyAzimuth: Float = 135         // degrees around Y
+    @Published var keyIntensity: Float = 1000      // lux
+    @Published var keyElevation: Float = 85         // degrees above horizon
+    @Published var keyAzimuth: Float = 108         // degrees around Y
     @Published var keyTemperature: Float = 6200    // Kelvin
     @Published var shadowsEnabled: Bool = true
 
@@ -88,7 +88,7 @@ final class LightingSettings: ObservableObject {
     // MARK: Contact shadows
     @Published var contactShadowsEnabled: Bool = true
     /// 0.18 under the original 2200 lx key; nudged up when the key dropped to
-    /// 1400, so the discs keep carrying the grounding the weaker cast shadow
+    /// 1000, so the discs keep carrying the grounding the weaker cast shadow
     /// gives up.
     @Published var contactShadowOpacity: Float = 0.22
     @Published var contactShadowScale: Float = 1.15
@@ -120,9 +120,9 @@ final class LightingSettings: ObservableObject {
         flatShading = true
         showBackdrop = true
         keyEnabled = true
-        keyIntensity = 1400
-        keyElevation = 62
-        keyAzimuth = 135
+        keyIntensity = 1000
+        keyElevation = 85
+        keyAzimuth = 108
         keyTemperature = 6200
         shadowsEnabled = true
         fillEnabled = true

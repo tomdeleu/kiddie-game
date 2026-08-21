@@ -116,7 +116,13 @@ def build():
     # of the earth and the joins under the nose and the paws, and stop well
     # short of the hill's own slope — a molehill shaded down its sides is a
     # rock. `occluders` is not needed: nothing here is repainted per round.
-    return garden.finish(NAME, parts, distance=0.0040)
+    objects = garden.finish(NAME, parts, distance=0.0040)
+    for ob in objects:
+        if ob.type != 'MESH' or not ob.name.startswith('Mole'):
+            continue
+        for poly in ob.data.polygons:
+            poly.use_smooth = True
+    return objects
 
 
 if __name__ == "__main__":

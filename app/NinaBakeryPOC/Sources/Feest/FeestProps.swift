@@ -1005,6 +1005,7 @@ enum FeestProps {
     /// sphere, because a balloon is a teardrop and a sphere on a string is a
     /// ball on a string.
     static func balloon(flat: Bool) -> Entity {
+        let faceted = CharacterShading.faceted(flat)
         let root = Entity()
         root.name = "Ballon"
         root.position = FeestLayout.balloonHome
@@ -1012,17 +1013,17 @@ enum FeestProps {
         let skin = RoomBuilder.model(
             .lathe(profile: [[0, -0.020], [0.006, -0.016], [0.013, -0.006],
                              [0.014, 0.004], [0.009, 0.012], [0, 0.016]],
-                   sides: 10),
-            Palette.rose, flat: flat, name: "BallonVel")
+                   sides: CharacterShading.torsoSides),
+            Palette.rose, flat: faceted, name: "BallonVel")
         root.addChild(skin)
 
         let knot = RoomBuilder.model(.lathe(profile: [[0, -0.026], [0.0035, -0.021],
-                                                      [0, -0.019]], sides: 6),
-                                     Palette.blushPinkDeep, flat: flat, name: "BallonKnoop")
+                                                      [0, -0.019]], sides: CharacterShading.limbSides),
+                                     Palette.blushPinkDeep, flat: faceted, name: "BallonKnoop")
         root.addChild(knot)
 
         let string = RoomBuilder.model(.box([0.0012, 0.040, 0.0012]),
-                                       Palette.creamLight, flat: flat, name: "BallonTouw")
+                                       Palette.creamLight, flat: faceted, name: "BallonTouw")
         string.position = [0, -0.046, 0]
         root.addChild(string)
         root.excludeFromShadowCasting()

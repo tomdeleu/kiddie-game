@@ -604,7 +604,8 @@ enum GardenProps {
     /// two **paws** resting on the earth are here too, and the hill has the
     /// plate's convex profile instead of a straight taper.
     static func molehill(flat: Bool) -> Molehill {
-        if flat, let modelled = ModelLibrary.load(
+        let faceted = CharacterShading.faceted(flat)
+        if let modelled = ModelLibrary.load(
                 "molehill",
                 tint: GardenAO.paintTints(["HillEarth": Palette.woodBrown,
                        "MoleHead": moleGrey,
@@ -617,7 +618,7 @@ enum GardenProps {
             root.addChild(modelled)
             return Molehill(root: root, mole: mole)
         }
-        return proceduralMolehill(flat: flat)
+        return proceduralMolehill(flat: faceted)
     }
 
     private static let moleGrey = Palette.mix(Palette.creamLight,
@@ -682,12 +683,13 @@ enum GardenProps {
         mole.position = [0, 0.0060, 0]
         root.addChild(mole)
 
-        let head = model(.icosphere(radius: 0.0092, subdivisions: 1),
+        let head = model(.icosphere(radius: 0.0092,
+                                    subdivisions: CharacterShading.headSubdivisions),
                                      Palette.mix(Palette.creamLight, Palette.woodBrown, 0.45),
                                      flat: flat, name: "MoleHead")
         mole.addChild(head)
 
-        let nose = model(.icosphere(radius: 0.0040, subdivisions: 0),
+        let nose = model(.icosphere(radius: 0.0040, subdivisions: 1),
                                      Palette.blushPink, flat: flat, name: "MoleNose")
         nose.position = [0.0052, -0.0016, 0.0052]
         mole.addChild(nose)

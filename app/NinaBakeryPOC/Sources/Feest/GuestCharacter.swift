@@ -164,9 +164,6 @@ final class GuestCharacter {
     private static let hipX: Float = 0.014
     private static let hipZ: Float = 0.008
 
-    /// Het Feest guests use smooth shading on the modelled bear USDZ and on the
-    /// procedural fallback. The rest of the room stays faceted.
-    private static let smoothShading = true
 
     init(friend: Friend, role: Role = .gast, style: DanceStyle = .zwaaien,
          at home: SIMD3<Float>, phase: Float, ticker: Ticker, flat: Bool) {
@@ -186,7 +183,7 @@ final class GuestCharacter {
 
         let coat = friend.colour
         let accent = friend.accent
-        let faceted = flat && !Self.smoothShading
+        let faceted = CharacterShading.faceted(flat)
 
         var builtLegs: [Entity] = []
         let raise = role == .dj ? (left: Float(1.5), right: Float(1.5)) : style.raise
@@ -267,25 +264,24 @@ final class GuestCharacter {
             // around the shared head pivot: a bent band, deep cups and cushions
             // from `references/feest/dj.png`. One separate asset avoids eleven
             // near-identical DJ variants and moves with every nod automatically.
-            if flat, let headphones = ModelLibrary.load(
+            if let headphones = ModelLibrary.load(
                 "dj-headphones",
                 tint: ["DJMint": Palette.mintLight, "DJDark": Palette.woodBrown,
                        "DJCream": Palette.creamLight, "DJRose": Palette.rose]) {
                 headphones.name = "DJKoptelefoon"
                 head.addChild(headphones)
             } else {
-                // The debug smooth-shading A/B and a missing bundle asset still
-                // get a complete, tappable DJ.
+                // A missing bundle asset still gets a complete, tappable DJ.
                 for dx in [Float(-0.027), 0.027] {
                     let cup = RoomBuilder.model(
                         .prism(radius: 0.0090, height: 0.006, sides: 8),
-                        Palette.mintLight, flat: flat, name: "DJCup")
+                        Palette.mintLight, flat: faceted, name: "DJCup")
                     cup.orientation = simd_quatf(angle: .pi / 2, axis: [0, 0, 1])
                     cup.position = [dx, 0.002, 0]
                     head.addChild(cup)
                 }
                 let band = RoomBuilder.model(.box([0.052, 0.005, 0.007]),
-                                             Palette.woodBrown, flat: flat,
+                                             Palette.woodBrown, flat: faceted,
                                              name: "DJBand")
                 band.position = [0, 0.027, -0.004]
                 head.addChild(band)
@@ -324,7 +320,7 @@ final class GuestCharacter {
 
             let leg = RoomBuilder.model(
                 .lathe(profile: [[0.0080, 0], [0.0090, 0.004], [0.0085, 0.011],
-                                 [0.0070, 0.013]], sides: 8),
+                                 [0.0070, 0.013]], sides: CharacterShading.limbSides),
                 coat, flat: flat, name: "GastPoot\(i)")
             leg.position = [0, -GuestCharacter.legHeight, 0]
             hip.addChild(leg)
@@ -343,15 +339,16 @@ final class GuestCharacter {
         let torso = RoomBuilder.model(
             .lathe(profile: [[w * 0.52, 0], [w * 0.88, 0.007], [w, 0.017],
                              [w * 0.97, 0.029], [w * 0.78, 0.040],
-                             [w * 0.45, GuestCharacter.bodyHeight]], sides: 10),
+                             [w * 0.45, GuestCharacter.bodyHeight]], sides: CharacterShading.torsoSides),
             coat, flat: flat, name: "GastRomp")
         body.addChild(torso)
 
         // **The pale belly, and it is not decoration.** Every animal on the plate
         // has one and it covers most of the front. Without it a guest is one
         // solid colour from the chin down and reads as a bollard.
-        let belly = RoomBuilder.model(.icosphere(radius: w * 0.72, subdivisions: 1),
-                                      Palette.creamLight, flat: flat, name: "GastBuik")
+        let belly = RoomBuilder.model(
+            .icosphere(radius: w * 0.72, subdivisions: CharacterShading.headSubdivisions),
+            Palette.creamLight, flat: flat, name: "GastBuik")
         belly.scale = [1.0, 1.05, 0.42]
         belly.position = [0, 0.019, w * 0.70]
         body.addChild(belly)
@@ -366,7 +363,7 @@ final class GuestCharacter {
             let arm = RoomBuilder.model(
                 .lathe(profile: [[0.0062, 0], [0.0072, 0.006], [0.0068, 0.016],
                                  [0.0075, GuestCharacter.armLength - 0.004],
-                                 [0.0055, GuestCharacter.armLength]], sides: 8),
+                                 [0.0055, GuestCharacter.armLength]], sides: CharacterShading.limbSides),
                 coat, flat: flat, name: "GastArm\(i)")
             // Positive Z-rotation swings +Y towards −X, which is the left side —
             // so the left arm takes the angle and the right one takes its
@@ -380,7 +377,7 @@ final class GuestCharacter {
 
             // A paw on the end, which is what makes a raised arm read as a hand
             // in the air rather than as a stick.
-            let paw = RoomBuilder.model(.icosphere(radius: 0.0072, subdivisions: 0),
+            let paw = RoomBuilder.model(.icosphere(radius: 0.0072, subdivisions: 1),
                                         accent, flat: flat, name: "GastPoot\(i)Hand")
             paw.position = [0, GuestCharacter.armLength, 0]
             arm.addChild(paw)
@@ -391,8 +388,10 @@ final class GuestCharacter {
         head.position = [0, GuestCharacter.headY, 0]
         body.addChild(head)
 
-        let skull = RoomBuilder.model(.icosphere(radius: GuestCharacter.headRadius, subdivisions: 1),
-                                      coat, flat: flat, name: "GastKop")
+        let skull = RoomBuilder.model(
+            .icosphere(radius: GuestCharacter.headRadius,
+                       subdivisions: CharacterShading.headSubdivisions),
+            coat, flat: flat, name: "GastKop")
         skull.scale = [1.0, 0.94, 0.95]
         head.addChild(skull)
 
@@ -400,7 +399,7 @@ final class GuestCharacter {
         // of what makes a frog a frog at this size.
         if soort != .kikker {
             for (i, dx) in [Float(-0.0098), 0.0098].enumerated() {
-                let eye = RoomBuilder.model(.icosphere(radius: 0.0032, subdivisions: 0),
+                let eye = RoomBuilder.model(.icosphere(radius: 0.0032, subdivisions: 1),
                                             Palette.woodBrown, flat: flat, name: "GastOog\(i)")
                 eye.position = [dx, 0.003, 0.0224]
                 head.addChild(eye)

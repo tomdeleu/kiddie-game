@@ -174,7 +174,7 @@ def build(soort):
         (w * 1.00, 0.024), (w * 0.96, 0.032), (w * 0.83, 0.040),
         (w * 0.55, BODY_HEIGHT),
     ]
-    parts.append(feest.lathe("CoatRomp", coat, torso, 14,
+    parts.append(feest.lathe("CoatRomp", coat, torso, 16,
                              at=(0.0, 0.0, BODY_BASE)))
 
     # **The pale belly, and it is not decoration.** The three furry animals on
@@ -611,7 +611,7 @@ def main():
                  or ob.name.startswith(("CoatArm", "CoatBeen", "GoldBeen"))]
         objects = feest.finish("Beertje", parts, shade=shade)
         for ob in objects:
-            if ob.type != 'MESH' or "Shade" in ob.name:
+            if ob.type != 'MESH':
                 continue
             for poly in ob.data.polygons:
                 poly.use_smooth = True
