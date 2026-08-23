@@ -15,7 +15,7 @@ import Foundation
 enum FeestStep: String, Codable {
     /// The party. Six pads, a beat, and a cake standing on its table.
     case dansen
-    /// She tapped the cake. Everybody is eating it, and then thanking her.
+    /// She tapped the VIP rope. Everybody is eating the cake, and then thanking her.
     case opeten
 }
 

@@ -37,7 +37,7 @@ can across the bed three times, tap the ripe plants into the basket. The
 kitchen: roll the base, fetch five ingredients from five places, stir, pour,
 into Otto, tap, cake, carry it up onto the plank. Versieren: turn the cake,
 pipe, shake, press stickers on, light the candle. Het Feest: tap the pads,
-everyone dances to you, and tap the cake when you are ready to eat it.
+everyone dances to you, and tap the VIP rope when you are ready to leave.
 
 **The four of them are one round.** The garden's basket is what the kitchen
 bakes, the kitchen's cake is what Versieren decorates, and Versieren's decorated
@@ -109,9 +109,12 @@ than `GAMEPLAY.md` §5's six**, because the kitchen deals eight; a full basket
 completes it in both modes; **it has a fence instead of the two walls
 `references/REFERENCES.md` §1 locks**, standing exactly where the plaster stood;
 and its gate says `ROOMS.md` §9's three things twice, because a picket fence has
-nothing behind it to light. The party's: **it has no door at all** — the cake is
-the way out, because §6.5 says nothing else ends the party and two endings in one
-room is a contradiction; **six guests plus a DJ rather than the twelve
+nothing behind it to light. The party's: **a VIP rope on two gold posts** rather
+than a wood leaf or a picket gate, standing in the same place on the left wall
+— owner's call, 2026-08-21, reversing the earlier "the cake is the way out",
+because tapping the cake to leave a disco is the wrong object. The cake is a
+toy; the rope is the door; §6.5 still says nothing else ends the party, so there
+is still one ending, not two; **six guests plus a DJ rather than the twelve
 `GAMEPLAY.md` §6.5 used to ask for**, and the reason is the screen-separation
 arithmetic in `ROOMS.md` §5 rather than the rig; the friend of the day is
 **dealt** rather than handed over, since there is no hub to hand one over; and
@@ -176,7 +179,7 @@ palette and pass criteria are still the standard every new room is held to.
 | [`references/versieren/`](references/versieren/) | The decorating room's seventeen plates — the turntable, the two tools, the seven sticker shapes and the toys — and what three attempts at its room box taught about making flux name its own facet counts. |
 | [`references/garden/`](references/garden/) | **De Tuin's twenty-five plates** — the bed, the can, the basket, four plant stages, eight ripe plants, six toys, and the fence, gate and potting bench that replaced its walls. Its README has the job IDs and the three studio plates the room box overruled. |
 | [`references/bakkerij/`](references/bakkerij/) | **De Bakkerij's six plates** — the room box, the wall of twelve frames, the blind, the shop door and the order hook, one per step of `GAMEPLAY.md` §6.1. They replace plates 06 and 10, which were drawn in the retired clay style. Its README has the empty-room-box failure and what fixed it. |
-| [`references/feest/`](references/feest/) | **Het Feest's fifteen plates** — the disco room box, the DJ booth, the mirror ball, the light bar, the dance floor, the six pads, the speakers, the cake table, two toys, the DJ, and two passes at the guests. Its README has the seeds, the fifth prompt phrase that keeps a disco from going dark, the sixth that lets a shape be round and faceted at once, and why asking for six animals gets five three times running. |
+| [`references/feest/`](references/feest/) | **Het Feest's sixteen keeper plates** — the disco room box, the DJ booth, the mirror ball, the light bar, the dance floor, the six pads, the speakers, the cake table, two toys, the DJ, two passes at the guests, and the VIP rope that is the way out. Its README has the seeds, the fifth prompt phrase that keeps a disco from going dark, the sixth that lets a shape be round and faceted at once, why asking for six animals gets five three times running, and why "no text" still produced a lintel with VIP on it. |
 | [`references/ingredients/`](references/ingredients/) | The eight ingredients, the flour sack and the flour cloud — the plates the models were built from. |
 | [`references/moodboard/`](references/moodboard/) | Provenance + licences. Gathered for two retired directions — not the current look. |
 | [`references/FETCHING-ASSETS.md`](references/FETCHING-ASSETS.md) | How to get outside material onto disk here, and what fails. |

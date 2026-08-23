@@ -85,7 +85,8 @@ The cake is carried to a table. The friends arrive. The DJ starts.
 
 Six big pads along the bottom, each an instrument. Whatever she taps, the room
 dances to — the guests, the ball, the floor and the lights are all on the beat
-she is making. Then everyone eats the cake with enormous crunching sounds,
+she is making. She leaves through a VIP rope on two gold posts. Then everyone
+eats the cake with enormous crunching sounds,
 applause, and the friend of the day says:
 
 > "Dankjewel, Nina! Dit was de allerlekkerste taart!"
