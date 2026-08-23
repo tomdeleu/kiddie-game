@@ -2529,7 +2529,9 @@ It is the halo's four-attempt lesson (`Engine/Halo.swift`) applied to a whole
 room rather than to a ring: **to make something look like a light, make it one —
 never take the light away from everything else.** And it kept the palette locked:
 the six disco colours are the existing pastels driven up with emission, so
-nothing was added to the thirteen.
+nothing was added to the thirteen for the lights. The one new swatch is
+`eveningSky`, the dusk rectangle in the VIP door — dark as a subject, the way
+Otto's mouth is, not as a lighting change.
 
 The same clause did the same work on the plates. Every disco prompt in
 `references/feest/` carries *"brightly and evenly lit — a daytime pastel toy
@@ -2749,8 +2751,9 @@ drum **at her own tempo**, so even the DJ's own sound is the beat she is making.
 party still asks her for nothing, and she still decides when it is over — the
 object that means *we are leaving* is now a door, and it is a *different* door
 from the kitchen's wood leaf and the garden's gate: two butter-yellow stanchions
-and a blush velvet rope, in front of a lit gold frame, standing in the same
-place on the left wall as every other room's way out.
+and a blush velvet rope, in front of evening — a dark hole in the cream wall,
+because the party is at night. The disco around it stays bright. It stands in the
+same place on the left wall as every other room's way out.
 
 The cake is a toy. Tapping it names it. Eating, thanks and the handover all hang
 off the rope: inviting from the first frame, exactly as the decorating room's
@@ -2767,11 +2770,12 @@ ends with nowhere to go must not end with nothing to do.
 The confetti popper moved to the open right corner so the rope could take the
 kitchen's doorway without stealing taps from a toy.
 
-The studio plate is `references/feest/vip-touw.png` (`75f0ae9a-cf81-4220-adfb-f9918ac08178`).
-`Props.vipRope` follows that shot: tapered eight-sided posts, a gold collar at
-the neck where the rope hangs, metal end caps, and a slim butter-yellow frame
-rather than a cream one, because this room's plaster is already cream. A second
-variant wrote **VIP** on the lintel and was discarded — the game has no text.
+The studio plate is `references/feest/vip-touw.png`. `Props.vipRope` follows
+that shot for the posts and the rope: tapered eight-sided posts, a gold collar
+at the neck, metal end caps, a deeper sag, and a slim butter-yellow frame.
+Owner's call, 2026-08-23: the hole is `Palette.eveningSky`, not the cream glow
+the first keeper drew, because it is evening outside. A second variant wrote
+**VIP** on the lintel and was discarded — the game has no text.
 
 ### The cake arrives decorated, and that is the handover working
 
@@ -2907,6 +2911,9 @@ rides on a tap that lands on the empty floor.
 - **§6.6, the photograph and the wall**, which is what `nina.feest.muurKomt`
   promises *straks* rather than *now* — and which is now the last thing between
   four rooms and a game.
+- **An evening plate for the VIP rope.** The first keeper filled the hole with
+  cream light; the mesh overrules it with `eveningSky`. Higgsfield had expired
+  again when this was decided.
 - **Three idle lines of its own.** The rope stole the exit from the cake, and
   `nina.feest.zullenWeEten` tells her to tap the cake, so the idle currently
   reuses Versieren's *zullen we gaan?*.

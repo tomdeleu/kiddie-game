@@ -4,10 +4,11 @@ import simd
 /// **Props more than one room uses.**
 ///
 /// Three ways out, one `Doorway`: a wood leaf, a garden gate, and the disco's
-/// velvet rope. `ROOMS.md` §9 gives every room the same behaviour — ajar, the
-/// light behind it, a ring on the floor at the threshold — and none of that is
-/// about a kitchen. The disco's posts and rope are a different *prop* standing
-/// in the same *place*.
+/// velvet rope. `ROOMS.md` §9 gives every room the same behaviour — ajar, what
+/// you see through the opening, a ring on the floor at the threshold — and
+/// none of that is about a kitchen. The disco's posts and rope are a different
+/// *prop* standing in the same *place*; its opening is evening sky rather than
+/// the next room's light, because the party is at night.
 ///
 /// The dimensions stay in `Layout`: a door is the same door in every room, and
 /// `KitchenLayout.doorOpening` is taller than Nina on purpose (a door she could not
@@ -26,9 +27,11 @@ enum Props {
         /// rotation about Y — `CONCEPT.md` §9.7's animation budget, spent the
         /// same way Otto's mouth spends it.
         let hinge: Entity
-        /// The next room, seen through the opening. Flat against the wall
-        /// behind the leaf, so it is only visible while the door stands open —
-        /// which is what makes opening it worth doing.
+        /// What you see through the opening. Flat against the wall behind the
+        /// leaf, so it is only visible while the door stands open — which is
+        /// what makes opening it worth doing. In the kitchen and decorating
+        /// room this is the next room's light; in the disco it is evening
+        /// outside.
         ///
         /// **Optional, because a gate has no wall to hold one.** `ROOMS.md` §9
         /// asks the way out to say the same thing three ways, and the garden's
@@ -273,26 +276,33 @@ enum Props {
 
     // MARK: - The VIP rope
 
-    /// **The disco's way out: a velvet rope on two stanchions, in front of a
-    /// lit opening.**
+    /// **The disco's way out: a velvet rope on two stanchions, in front of
+    /// evening.**
     ///
     /// Owner's call, 2026-08-21: tapping the cake should not end the party, and
     /// the door must not be the kitchen's wood leaf or the garden's gate. Two
     /// butter-yellow posts and a blush rope *are* a door a 4-year-old can read
-    /// — they unhook, they show the light behind, and they stand where the
+    /// — they unhook, they show the dark outside, and they stand where the
     /// other rooms put their way out, so the place is the same even though the
     /// prop is not.
+    ///
+    /// Owner's call, 2026-08-23: the hole is evening, not a cream glow. A lit
+    /// plate here would say the next room is as bright as this one, and the
+    /// party is at night. The plate in the opening is matte `eveningSky`; the
+    /// disco around it stays as bright as every other room. Dark is the
+    /// subject of the hole, the same way it is the subject of Otto's mouth.
     ///
     /// It returns the same `Doorway` as the other two. The hinge is the near
     /// post's axis; the rope hangs under it, so the existing ajar-swing-ring
     /// behaviour opens the barrier into the room and leaves the posts standing.
-    /// The glow is on from the first frame, because this room asks her for
-    /// nothing and lighting the exit is the honest use of the halo
+    /// The opening is visible from the first frame, because this room asks her
+    /// for nothing and showing the exit is the honest use of the halo
     /// (`ROOMS.md` §9).
     ///
     /// The mesh follows `references/feest/vip-touw.png`: tapered eight-sided
     /// posts, a collar at the neck, metal caps on the rope, a deeper sag. The
-    /// lettered sibling of that plate is not a brief.
+    /// lettered sibling of that plate is not a brief. The first keeper filled
+    /// the hole with cream light; this mesh overrules that one surface.
     static func vipRope(flat: Bool,
                         centre: SIMD3<Float> = KitchenLayout.doorwayCentre) -> Doorway {
         let root = Entity()
@@ -314,16 +324,18 @@ enum Props {
         let ropeColour = Palette.blushPinkDeep
         let metal = Palette.honeyAmber
 
+        // Evening outside, not the next room's light. A cream plate would
+        // vanish into this room's plaster; a butter-yellow glow would say day.
+        // Matte, not emissive: night is not a lamp.
         let glow = RoomBuilder.model(.box([open.x, open.y, 0.002]),
-                                     Palette.creamLight, flat: flat, name: "VipGlow")
+                                     Palette.eveningSky, flat: flat, name: "VipAvond")
         glow.position = [0, open.y / 2, KitchenLayout.doorWallFace + 0.002]
         root.addChild(glow)
 
-        // Slim butter frame, not the kitchen's rose one. The studio plate sits
-        // the posts in front of a pale wall the same colour as themselves; in
-        // this room the plaster is cream, so a cream opening would vanish the
-        // way a cream leaf did. The frame is the separation, kept thinner than
-        // the kitchen's because the plate has almost none.
+        // Slim butter frame, not the kitchen's rose one. The posts sit in
+        // front of cream plaster the same family as themselves; the dark hole
+        // is already the separation, and the frame is kept thinner than the
+        // kitchen's because the plate has almost none.
         let slim = jamb * 0.7
         for side: Float in [-1, 1] {
             let post = RoomBuilder.model(.box([slim, open.y, depth]),

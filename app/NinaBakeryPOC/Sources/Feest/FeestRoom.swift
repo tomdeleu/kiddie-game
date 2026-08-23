@@ -20,11 +20,12 @@ import CoreGraphics
 /// Three things follow from this being a room that asks her for nothing:
 ///
 /// - **The halo has one thing to point at, and it is the VIP rope** — which is
-///   also the way out (`ROOMS.md` §9). Lit from the first frame, exactly as the
-///   decorating room's door is, because *you may finish when you like* is a true
-///   statement here. Owner's call, 2026-08-21: the cake is a toy, not an exit.
-///   The rope is a different door from the kitchen's leaf and the garden's gate,
-///   standing in the same place on the left wall.
+///   also the way out (`ROOMS.md` §9). Inviting from the first frame, exactly as
+///   the decorating room's door is, because *you may finish when you like* is a
+///   true statement here. Owner's call, 2026-08-21: the cake is a toy, not an
+///   exit. The rope is a different door from the kitchen's leaf and the garden's
+///   gate, standing in the same place on the left wall. Owner's call,
+///   2026-08-23: the hole behind it is evening outside, not a cream glow.
 /// - **The miss machinery is not wired.** `noteMiss` means *she dragged the prop
 ///   the current step is about and it did not land*, and nothing in this room is
 ///   dragged at all. Every interaction here is a tap.

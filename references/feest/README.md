@@ -45,13 +45,23 @@ one `flux_2` / `pro` / `1k` / 1:1 job against the scenes reference, generated
 once the connector was reauthenticated the same day. The seed did not come
 back on the job record or in the PNG; the job IDs did.
 
-**`vip-touw.png` is the keeper.** Two butter-yellow octagonal stanchions with
-faceted ball tops, a gold collar at each neck, a thick blush rope hanging in a
-U with metal end caps, and a slim cream opening filled with light. No letters.
-That is what `Props.vipRope` builds: tapered eight-sided posts, a collar ring
-rather than a mid-post hook, metal caps on the ribbon, a deeper sag, and a slim
-butter-yellow frame — cream on cream plaster would vanish the way the kitchen's
-cream leaf did.
+**`vip-touw.png` is the keeper for the posts and the rope.** Two butter-yellow
+octagonal stanchions with faceted ball tops, a gold collar at each neck, a
+thick blush rope hanging in a U with metal end caps. No letters. That is what
+`Props.vipRope` builds: tapered eight-sided posts, a collar ring rather than a
+mid-post hook, metal caps on the ribbon, a deeper sag, and a slim butter-yellow
+frame.
+
+**The hole in that plate is cream light, and the room overrules it.** Owner's
+call, 2026-08-23: it is evening outside. The plate in the opening is matte
+`Palette.eveningSky` — a dusty dusk rectangle in the cream wall — the same
+kind of exception as the kitchen's wood leaf against a cream plate. The disco
+around it stays bright; dark is the subject of the hole, not a lighting change.
+Higgsfield's session had expired again when this was decided, so there is no
+evening keeper yet. Re-render when the connector is back, same recipe as
+above, with the opening named as dark dusk evening sky rather than a cream
+glow, and keep the fifth disco phrase on the *posts and the wall* so flux
+does not dim the whole shot.
 
 **`vip-touw-letters.png` is the discard.** Same idea, but flux wrote **VIP**
 across the lintel even though the prompt named letters, a VIP sign and words as
