@@ -778,10 +778,11 @@ a base colour cannot reach. The plaster, the floor and the props keep exactly th
 lighting every other room has. So the room reads as a disco because bright things
 are pulsing in it, not because everything else went dark.
 
-That also keeps the palette locked. Nothing new was added to the thirteen (or to
-the six the kitchen derived): the lights are the existing pastels driven up with
-emission, which is the same trick and a great deal cheaper than a disco palette
-of its own.
+That also keeps the palette almost locked. The lights are the existing pastels
+driven up with emission, which is the same trick and a great deal cheaper than
+a disco palette of its own. The one new swatch is `eveningSky`, and it is not
+a light: it is the dusk rectangle in the door, derived the way `ovenInside`
+was, for the one surface where dark is the subject.
 
 #### The way out is the VIP rope
 
@@ -790,15 +791,16 @@ that a door beside the cake would be a second ending. That was right about
 *two* endings and wrong about which object should be the one. The cake stays on
 the table as a toy; the way out is a door, and it is a different door from the
 other rooms': two butter-yellow stanchions and a blush velvet rope in front of
-a lit gold frame.
+evening — a dark dusty dusk hole in the cream wall, because the party is at
+night. The disco around it stays bright; dark is the subject of the hole.
 
 It stands in the same place on the left wall as the kitchen's leaf and the
 decorating room's, because the way out being where it was last time is worth
 more to a 4-year-old than variety is. Variety is the prop.
 
-The rope carries the cue the door carries everywhere else: **it is lit from
+The rope carries the cue the door carries everywhere else: **it is inviting from
 the moment she arrives**, exactly as the decorating room's door is, and for the
-same reason — in a room with no required action, lighting the exit says *you may
+same reason — in a room with no required action, showing the exit says *you may
 finish when you like*, which is true here. `ROOMS.md` §9 has
 the deviation.
 

@@ -71,16 +71,29 @@ enum Palette {
     static let lilac         = hex(0xD3C6E4)
     static let lilacDeep     = hex(0xAE9CC9)
 
-    /// **A sixth**, and the only dark one: the inside of Otto's mouth.
+    /// **A sixth**, and the first dark one: the inside of Otto's mouth.
     ///
     /// The locked thirteen bottom out at `woodBrown`, which under the room's
     /// even lighting reads as a wooden surface, not a cavity — and with the
     /// oven door standing open all round, the mouth has to read as depth
     /// ("needs depth and thus more shadow", owner's note on the 2026-08-15
     /// build). The no-AO rule bans shadow pooled onto *surfaces*; a mouth
-    /// interior is the one place where dark is the subject. Same hue as
+    /// interior is the first place where dark is the subject. Same hue as
     /// `woodBrown`, taken darker. One surface, the oven's mouth plug.
     static let ovenInside    = hex(0x554C3F)
+
+    /// **A seventh**, and the second dark one: evening, seen through the disco
+    /// door.
+    ///
+    /// Owner's call, 2026-08-23: the hole behind the VIP rope is night outside,
+    /// not the next room's light. The kitchen's cream glow would vanish into
+    /// this room's plaster the way a cream leaf did, and a butter-yellow glow
+    /// would say *day* through a door that is supposed to say *the party is in
+    /// the evening*. `berryBlue` taken down to `ovenInside`'s lightness, hue
+    /// kept, so it reads as dusk sky rather than as Otto's mouth. One surface,
+    /// the plate in `Props.vipRope`. The disco itself stays as bright as every
+    /// other room — dark is the subject of the hole, not a lighting change.
+    static let eveningSky    = hex(0x3B4E68)
 
     /// A palette colour one or more steps into shadow.
     ///
@@ -193,9 +206,11 @@ extension Palette {
     /// The same matte surface, lit from within.
     ///
     /// Used for exactly three things: a sun-honey cake's glow, Otto's mouth
-    /// while he is baking, and the doorway when it is inviting her through. It
-    /// is not a lighting change — the facets still do the shading — it just
-    /// stops those three reading as painted-on.
+    /// while he is baking, and the kitchen and decorating doorways when they
+    /// are inviting her through. The disco's opening is not one of them: that
+    /// hole is evening outside, matte `eveningSky`, not a light. It is not a
+    /// lighting change — the facets still do the shading — it just stops those
+    /// three reading as painted-on.
     static func glowMaterial(_ colour: UIColorLike, intensity: Float = 1.0) -> RealityKit.Material {
         var m = PhysicallyBasedMaterial()
         m.baseColor = .init(tint: colour)
