@@ -1,14 +1,12 @@
 import Foundation
 
-/// **The eleven friends, and the one function that decides whether a cake
-/// matched.**
+/// **The eleven friends.**
 ///
-/// Straight out of `GAMEPLAY.md` §4, and it lives here rather than beside
-/// `CakeSpec` for the reason §4 gives: *"matching is a pure function of the
-/// finished `CakeSpec` plus its stickers, and it is evaluated once, at the
-/// party. Nothing anywhere else in the game looks at it — not the garden's hint,
-/// not the kitchen, not the decorating room."* Putting it in `Game/` would make
-/// it look like something four rooms share. One room reads it.
+/// Straight out of `GAMEPLAY.md` §4. They live here rather than in `Game/`
+/// because the party is the room that stands them up; the bakery only needs
+/// to know *who* is coming, and the wall only needs a name to hang a photo
+/// under. Putting them beside `CakeSpec` would make them look like something
+/// a cake is scored against, which it is not.
 ///
 /// **All eleven are animals**, because animals are cheap in this style — one
 /// body plus a swapped head and colour — and a 4-year-old reads them instantly.
@@ -99,6 +97,19 @@ enum Friend: String, Codable, CaseIterable, Identifiable {
         }
     }
 
+    /// **Nina relaying the thanks, by name.**
+    ///
+    /// `GAMEPLAY.md` §6.5 asks for the friend of the day to thank her *by name*,
+    /// in their own voice. Eleven friend voices do not exist and are most of the
+    /// game's remaining dialogue, so until they do, Nina says it for them —
+    /// *"Pip zegt: dankjewel, Nina!"* — one variant each, in `script-feest.json`.
+    ///
+    /// It is the honest half of the design rather than a placeholder for it: the
+    /// friend is still named, the name is still spoken, and the day the eleven
+    /// are cast this id is what gets re-pointed. Derived off the case name for
+    /// the `Ingredient.nameLineID` reason — a typo in a line id is silence.
+    var thanksLineID: String { "nina.feest.dank.\(rawValue)" }
+
     /// What they love. `GAMEPLAY.md` §4's table, one case per row.
     var wish: Wish {
         switch self {
@@ -115,19 +126,6 @@ enum Friend: String, Codable, CaseIterable, Identifiable {
         case .nel: return .tweeKleuren
         }
     }
-
-    /// **Nina relaying the thanks, by name.**
-    ///
-    /// `GAMEPLAY.md` §6.5 asks for the friend of the day to thank her *by name*,
-    /// in their own voice. Eleven friend voices do not exist and are most of the
-    /// game's remaining dialogue, so until they do, Nina says it for them —
-    /// *"Pip zegt: dankjewel, Nina!"* — one variant each, in `script-feest.json`.
-    ///
-    /// It is the honest half of the design rather than a placeholder for it: the
-    /// friend is still named, the name is still spoken, and the day the eleven
-    /// are cast this id is what gets re-pointed. Derived off the case name for
-    /// the `Ingredient.nameLineID` reason — a typo in a line id is silence.
-    var thanksLineID: String { "nina.feest.dank.\(rawValue)" }
 
     /// **The wish, evaluated.** Pure, total, and read exactly once per party.
     ///
@@ -151,10 +149,7 @@ enum Friend: String, Codable, CaseIterable, Identifiable {
     }
 
     /// **Which tray or jar shimmers**, for the day the wish card and the hint
-    /// exist upstream. `GAMEPLAY.md` §6.2 and §6.4 both put a hint on the wish,
-    /// and both need to ask the wish what it is about without knowing the eleven.
-    /// Nothing calls this yet; it is here so the two rooms that will can read it
-    /// off the friend rather than re-deriving the table.
+    /// exist upstream.
     var hintedSticker: StickerKind? {
         if case .stickers(let kind, _) = wish { return kind }
         if case .sprinkels = wish { return .sprinkel }
@@ -168,21 +163,21 @@ enum Friend: String, Codable, CaseIterable, Identifiable {
 
     /// **A friend nobody chose**, for a party entered without one.
     ///
-    /// There is no bakery hub, so nothing upstream can say who is at the door.
-    /// The room deals one, which is exactly what the decorating room does with a
-    /// cake on a visit (`CakeSpec.dealt`, owner's call 2026-08-16) and for the
-    /// same reason: the answer to a missing thing is to supply it rather than to
-    /// refuse her the room. `RoomExit` grows a case the day the hub lands.
+    /// A visit to the disco has no bakery order behind it. The room deals one,
+    /// which is exactly what the decorating room does with a cake on a visit
+    /// (`CakeSpec.dealt`, owner's call 2026-08-16) and for the same reason. The
+    /// answer to a missing thing is to supply it rather than to refuse her the
+    /// room.
     static func dealt() -> Friend {
         allCases.randomElement() ?? .pip
     }
 
-    /// The other guests at the party, excluding the friend of the day.
+    /// **The other guests at the party, excluding the friend of the day.**
     ///
-    /// §6.5 says *everyone she has baked for so far*, and there is no wall yet to
-    /// say who that is — so it is a shuffled handful. The count is
-    /// `FeestLayout.guestCount - 1` and it is decided by the floor, not by this:
-    /// see `FeestLayout.guestSpots`.
+    /// §6.5 says *everyone she has baked for so far*. The wall can say who that
+    /// is, and this still deals a shuffled handful so a first-round party is not
+    /// five empty spots. The count is `FeestLayout.guestCount - 1` and it is
+    /// decided by the floor, not by this. See `FeestLayout.guestSpots`.
     static func others(besides friend: Friend, count: Int) -> [Friend] {
         allCases.filter { $0 != friend }.shuffled().prefix(count).map { $0 }
     }

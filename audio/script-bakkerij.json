@@ -1,0 +1,325 @@
+{
+  "_comment": "De Bakkerij's voice-over script — room 6.1, the hub. BOTH the durable production record (CONCEPT.md §7.3) AND the runtime manifest: bundled into the app and read by VoiceBank.swift, which maps line id -> variant files. VoiceBank loads every bundled script-*.json and merges by id, so this file needs no Swift change beyond the id constants in BakkerijLine and Friend.wishLineID.",
+  "_provider": "higgsfield",
+  "_model": "text2speech_v2",
+  "_variant": "elevenlabs",
+  "_cost_per_line_credits": 0.3,
+  "_generated": "2026-08-17 — room 6.1, De Bakkerij (the hub and the wall of twelve frames)",
+  "_files": "app/NinaBakeryPOC/Resources/Voice/",
+  "language": "nl",
+  "_why": {
+    "the_naming_lines_live_here_not_in_script_namen": "Het Feest's precedent, and this room has a second reason to follow it. audio/script-namen.json is currently fifteen ids behind its bundled copy (every garden naming line is missing from the canonical file), so editing the canonical one and copying it into the bundle would silently delete nina.dit.hek and fourteen others. A new per-room file cannot lose anything, because VoiceBank merges every script it finds. The drift itself is fixed separately, by copying bundle -> canonical, which is a pure copy with nothing to get wrong.",
+    "kiezen_asks_rather_than_instructs": "ROOMS.md §3 gives this step no halo at all, because eleven grey ghosts are eleven equally right answers and pointing at one would lie. The line has to carry the same honesty: 'wie komt er vandaag?' is a question with eleven right answers, where 'tik op een lijstje' alone would sound like there is a correct one. Both halves are said, question first.",
+    "the_wish_is_relayed_once_in_ninas_words": "GAMEPLAY.md §4: the friend says what they love and 'Nina repeats it once in her own words'. These eleven lines are that repeat. One variant each, deliberately — same rule as the naming lines: a wish is learned by hearing it the same way twice, and this is also the line the persistent wish card replays all round when tapped, where a different wording each tap would read as a different wish.",
+    "the_friends_still_have_no_voices": "Same position as script-feest.json's thanks lines. The eleven friend voices are uncast (audio/voices.json), so the friend at the door is heard through Nina. Friend.wishLineID derives these ids off the enum case, so the day the eleven are cast this is what gets re-pointed rather than rewritten.",
+    "hallo_has_three_variants_because_the_room_has_three_doors_into_it": "The bakery is the only room entered three ways in one sitting: cold with the shop shut, again with the blind already up (the ritual runs once per sitting, §6.1), and after the twelfth frame when there is nobody left to choose. One greeting for all three would be wrong twice.",
+    "klaar_is_about_the_bakery_not_about_her": "GAMEPLAY.md §6.6 calls this the most complete moment in the game and CONCEPT.md §5 asks for a clear ending — the thing that makes 'one more, then we stop' work at bedtime. So the closing line says the day is finished and says goodnight to the shop, rather than praising her, which would invite one more.",
+    "nina_stil_is_reused_not_redeclared": "The alternating idle line is the kitchen's nina.stil, exactly as Het Feest and De Tuin reuse it. A room that declares its own 'I am still here' is a room that will drift out of tune with the other four."
+  },
+  "characters": {
+    "nina": {
+      "name": "Nina",
+      "voice_type": "preset",
+      "voice_id": "09878754-f20b-5330-9790-58a8027ab5b2",
+      "preset_name": "Gracie"
+    }
+  },
+  "_line_ids": {
+    "_comment": "What the game calls, and when. Every id here is referenced from Swift (BakkerijLine, or Friend.wishLineID); every id BakkerijLine names exists here or in another bundled script. nina.stil is the kitchen's and is reused for the alternating idle nudge.",
+    "nina.bakkerij.hallo": "On arriving with the shop still shut — the first entry of a sitting.",
+    "nina.bakkerij.halloOpen": "On arriving with the blind already up — the second and later rounds of a sitting.",
+    "nina.bakkerij.halloVrij": "On arriving once all eleven frames are filled: free play, nobody left to choose.",
+    "nina.bakkerij.opendoen": "The opendoen step: the cord knob is lit.",
+    "nina.bakkerij.openGedaan": "The blind has gone up and the wall of frames is revealed.",
+    "nina.bakkerij.kiezen": "The kiezen step: eleven ghosts breathing, no halo anywhere.",
+    "nina.bakkerij.gekozen": "She picked a ghost; that friend is on their way.",
+    "nina.bakkerij.bel": "The shop bell has rung by itself. The front door is the thing to drag.",
+    "nina.bakkerij.binnen": "The friend has walked in and reached the counter.",
+    "nina.bakkerij.bestellen": "The friend holds out the wish card; the order hook is lit.",
+    "nina.bakkerij.naarTuin": "The card is hung, the back door is lit, the round leaves for the garden.",
+    "nina.bakkerij.ophangen": "The return leg: the photograph is on the counter and its frame is glowing.",
+    "nina.bakkerij.klaar": "The photo is hung. The end of a session.",
+    "nina.bakkerij.wacht": "Idle nudge, alternating with nina.stil.",
+    "nina.bakkerij.opnieuw": "The restart button, which puts this round back to its beginning.",
+    "nina.bakkerij.alleLijstjes": "The eleventh frame has just been filled — the finale, stubbed.",
+    "nina.bakkerij.wens.*": "One per friend: Nina repeating today's wish in her own words. Also what the persistent wish card replays when tapped.",
+    "nina.dit.*": "The naming layer — tap a prop to hear what it is called. One variant each, on purpose."
+  },
+  "lines": [
+    {
+      "id": "nina.bakkerij.hallo",
+      "character": "nina",
+      "variants": [
+        { "index": 900, "file": "nina-bakkerij-hallo-1.mp3", "text": "Goeiemorgen! Onze bakkerij gaat zo open." },
+        { "index": 901, "file": "nina-bakkerij-hallo-2.mp3", "text": "Daar zijn we weer! Zullen we de winkel openmaken?" },
+        { "index": 902, "file": "nina-bakkerij-hallo-3.mp3", "text": "Hoi! Het is nog een beetje donker hier. Doe je mee?" }
+      ]
+    },
+    {
+      "id": "nina.bakkerij.halloOpen",
+      "character": "nina",
+      "variants": [
+        { "index": 903, "file": "nina-bakkerij-halloopen-1.mp3", "text": "De winkel is al open. Wie zullen we nu verwennen?" },
+        { "index": 904, "file": "nina-bakkerij-halloopen-2.mp3", "text": "Daar zijn we weer! Kijk maar wie er nog wacht." }
+      ]
+    },
+    {
+      "id": "nina.bakkerij.halloVrij",
+      "character": "nina",
+      "variants": [
+        { "index": 905, "file": "nina-bakkerij-hallovrij-1.mp3", "text": "Alle lijstjes zijn vol. En we bakken gewoon lekker door!" },
+        { "index": 906, "file": "nina-bakkerij-hallovrij-2.mp3", "text": "Onze toverbakkerij is af. Wie er ook komt, we bakken!" }
+      ]
+    },
+    {
+      "id": "nina.bakkerij.opendoen",
+      "character": "nina",
+      "variants": [
+        { "index": 907, "file": "nina-bakkerij-opendoen-1.mp3", "text": "Trek jij aan het koordje? Dan gaat het rolluik omhoog." },
+        { "index": 908, "file": "nina-bakkerij-opendoen-2.mp3", "text": "Trek maar aan het koordje, dan zijn we open." }
+      ]
+    },
+    {
+      "id": "nina.bakkerij.openGedaan",
+      "character": "nina",
+      "variants": [
+        { "index": 909, "file": "nina-bakkerij-opengedaan-1.mp3", "text": "Kijk! Al onze lijstjes. Wat een mooie muur." },
+        { "index": 910, "file": "nina-bakkerij-opengedaan-2.mp3", "text": "Daar is het licht. En daar is onze muur!" }
+      ]
+    },
+    {
+      "id": "nina.bakkerij.kiezen",
+      "character": "nina",
+      "variants": [
+        { "index": 911, "file": "nina-bakkerij-kiezen-1.mp3", "text": "Wie komt er vandaag? Tik maar op een lijstje." },
+        { "index": 912, "file": "nina-bakkerij-kiezen-2.mp3", "text": "Kijk wie er allemaal wachten. Voor wie bakken we?" },
+        { "index": 913, "file": "nina-bakkerij-kiezen-3.mp3", "text": "Tik maar op een vriendje. Dan wordt het hun dag." }
+      ]
+    },
+    {
+      "id": "nina.bakkerij.gekozen",
+      "character": "nina",
+      "variants": [
+        { "index": 914, "file": "nina-bakkerij-gekozen-1.mp3", "text": "Wat leuk! Die komt er zo aan." },
+        { "index": 915, "file": "nina-bakkerij-gekozen-2.mp3", "text": "Oh fijn! Die staat zo voor de deur." }
+      ]
+    },
+    {
+      "id": "nina.bakkerij.bel",
+      "character": "nina",
+      "variants": [
+        { "index": 916, "file": "nina-bakkerij-bel-1.mp3", "text": "Hoor je dat? Er staat iemand voor de deur!" },
+        { "index": 917, "file": "nina-bakkerij-bel-2.mp3", "text": "De bel! Doe jij de deur open?" }
+      ]
+    },
+    {
+      "id": "nina.bakkerij.binnen",
+      "character": "nina",
+      "variants": [
+        { "index": 918, "file": "nina-bakkerij-binnen-1.mp3", "text": "Kom binnen! Wat fijn dat je er bent." },
+        { "index": 919, "file": "nina-bakkerij-binnen-2.mp3", "text": "Daar ben je! Kom maar gauw bij de toonbank." }
+      ]
+    },
+    {
+      "id": "nina.bakkerij.bestellen",
+      "character": "nina",
+      "variants": [
+        { "index": 920, "file": "nina-bakkerij-bestellen-1.mp3", "text": "Een kaartje met een wens! Hang jij het aan de haak?" },
+        { "index": 921, "file": "nina-bakkerij-bestellen-2.mp3", "text": "Kijk eens wat een mooie wens. Hang hem maar op." }
+      ]
+    },
+    {
+      "id": "nina.bakkerij.naarTuin",
+      "character": "nina",
+      "variants": [
+        { "index": 922, "file": "nina-bakkerij-naartuin-1.mp3", "text": "Nu weten we het! Kom, we gaan naar de tuin." },
+        { "index": 923, "file": "nina-bakkerij-naartuin-2.mp3", "text": "Op naar de tuin. Daar groeit alles wat we nodig hebben!" }
+      ]
+    },
+    {
+      "id": "nina.bakkerij.ophangen",
+      "character": "nina",
+      "variants": [
+        { "index": 924, "file": "nina-bakkerij-ophangen-1.mp3", "text": "Kijk, onze foto! Hang hem maar in het lijstje." },
+        { "index": 925, "file": "nina-bakkerij-ophangen-2.mp3", "text": "Wat een mooie dag was dat. Hang de foto maar op." }
+      ]
+    },
+    {
+      "id": "nina.bakkerij.klaar",
+      "character": "nina",
+      "variants": [
+        { "index": 926, "file": "nina-bakkerij-klaar-1.mp3", "text": "Weer een lijstje vol. Slaap lekker, bakkerij!" },
+        { "index": 927, "file": "nina-bakkerij-klaar-2.mp3", "text": "Wat hebben we lekker gebakken. Tot de volgende keer!" }
+      ]
+    },
+    {
+      "id": "nina.bakkerij.wacht",
+      "character": "nina",
+      "variants": [
+        { "index": 928, "file": "nina-bakkerij-wacht-1.mp3", "text": "Ik ben benieuwd wie jij kiest." },
+        { "index": 929, "file": "nina-bakkerij-wacht-2.mp3", "text": "Neem maar rustig de tijd, hoor." }
+      ]
+    },
+    {
+      "id": "nina.bakkerij.opnieuw",
+      "character": "nina",
+      "variants": [
+        { "index": 930, "file": "nina-bakkerij-opnieuw-1.mp3", "text": "We beginnen gewoon opnieuw!" }
+      ]
+    },
+    {
+      "id": "nina.bakkerij.alleLijstjes",
+      "character": "nina",
+      "variants": [
+        { "index": 931, "file": "nina-bakkerij-allelijstjes-1.mp3", "text": "Alle lijstjes zijn vol. Het is nu een echte toverbakkerij!" }
+      ]
+    },
+    {
+      "id": "nina.bakkerij.wens.pip",
+      "character": "nina",
+      "variants": [
+        { "index": 932, "file": "nina-bakkerij-wens-pip-1.mp3", "text": "Pip wil heel veel sprinkels op de taart!" }
+      ]
+    },
+    {
+      "id": "nina.bakkerij.wens.bella",
+      "character": "nina",
+      "variants": [
+        { "index": 933, "file": "nina-bakkerij-wens-bella-1.mp3", "text": "Bella droomt van een roze taart." }
+      ]
+    },
+    {
+      "id": "nina.bakkerij.wens.bas",
+      "character": "nina",
+      "variants": [
+        { "index": 934, "file": "nina-bakkerij-wens-bas-1.mp3", "text": "Bas wil een gele taart, net als honing." }
+      ]
+    },
+    {
+      "id": "nina.bakkerij.wens.kiki",
+      "character": "nina",
+      "variants": [
+        { "index": 935, "file": "nina-bakkerij-wens-kiki-1.mp3", "text": "Kiki wil glitter. Lekker fonkelen!" }
+      ]
+    },
+    {
+      "id": "nina.bakkerij.wens.bram",
+      "character": "nina",
+      "variants": [
+        { "index": 936, "file": "nina-bakkerij-wens-bram-1.mp3", "text": "Bram wil het liefst een groene taart." }
+      ]
+    },
+    {
+      "id": "nina.bakkerij.wens.bo",
+      "character": "nina",
+      "variants": [
+        { "index": 937, "file": "nina-bakkerij-wens-bo-1.mp3", "text": "Bo wil een blauwe taart, zo blauw als de lucht." }
+      ]
+    },
+    {
+      "id": "nina.bakkerij.wens.wolkje",
+      "character": "nina",
+      "variants": [
+        { "index": 938, "file": "nina-bakkerij-wens-wolkje-1.mp3", "text": "Wolkje wil een hoge taart, zacht als een wolk." }
+      ]
+    },
+    {
+      "id": "nina.bakkerij.wens.mo",
+      "character": "nina",
+      "variants": [
+        { "index": 939, "file": "nina-bakkerij-wens-mo-1.mp3", "text": "Mo wil kaarsjes, want onder de grond is het donker." }
+      ]
+    },
+    {
+      "id": "nina.bakkerij.wens.roos",
+      "character": "nina",
+      "variants": [
+        { "index": 940, "file": "nina-bakkerij-wens-roos-1.mp3", "text": "Roos wil hartjes op haar taart." }
+      ]
+    },
+    {
+      "id": "nina.bakkerij.wens.tobi",
+      "character": "nina",
+      "variants": [
+        { "index": 941, "file": "nina-bakkerij-wens-tobi-1.mp3", "text": "Tobi wil sterretjes. Heel veel sterretjes!" }
+      ]
+    },
+    {
+      "id": "nina.bakkerij.wens.nel",
+      "character": "nina",
+      "variants": [
+        { "index": 942, "file": "nina-bakkerij-wens-nel-1.mp3", "text": "Nel wil twee kleuren door elkaar, net als haar huisje." }
+      ]
+    },
+    {
+      "id": "nina.dit.rolluik",
+      "character": "nina",
+      "variants": [
+        { "index": 943, "file": "nina-dit-rolluik-1.mp3", "text": "Dat is het rolluik. Daarmee gaat de winkel open." }
+      ]
+    },
+    {
+      "id": "nina.dit.lijstje",
+      "character": "nina",
+      "variants": [
+        { "index": 944, "file": "nina-dit-lijstje-1.mp3", "text": "Dat is een lijstje. Daar hangt straks onze foto in." }
+      ]
+    },
+    {
+      "id": "nina.dit.bel",
+      "character": "nina",
+      "variants": [
+        { "index": 945, "file": "nina-dit-bel-1.mp3", "text": "Dat is de winkelbel. Ding, ding!" }
+      ]
+    },
+    {
+      "id": "nina.dit.poes",
+      "character": "nina",
+      "variants": [
+        { "index": 946, "file": "nina-dit-poes-1.mp3", "text": "Dat is de poes. Ze slaapt op de toonbank." }
+      ]
+    },
+    {
+      "id": "nina.dit.radio",
+      "character": "nina",
+      "variants": [
+        { "index": 947, "file": "nina-dit-radio-1.mp3", "text": "Dat is de radio. Daar komt muziek uit!" }
+      ]
+    },
+    {
+      "id": "nina.dit.raam",
+      "character": "nina",
+      "variants": [
+        { "index": 948, "file": "nina-dit-raam-1.mp3", "text": "Dat is het raam. Kijk maar naar buiten." }
+      ]
+    },
+    {
+      "id": "nina.dit.tekening",
+      "character": "nina",
+      "variants": [
+        { "index": 949, "file": "nina-dit-tekening-1.mp3", "text": "Dat is mijn tekening. Die heb ik zelf gemaakt." }
+      ]
+    },
+    {
+      "id": "nina.dit.haak",
+      "character": "nina",
+      "variants": [
+        { "index": 950, "file": "nina-dit-haak-1.mp3", "text": "Dat is de haak. Daar hangt de wens aan." }
+      ]
+    },
+    {
+      "id": "nina.dit.winkeldeur",
+      "character": "nina",
+      "variants": [
+        { "index": 951, "file": "nina-dit-winkeldeur-1.mp3", "text": "Dat is de winkeldeur. Daar komen onze vriendjes binnen." }
+      ]
+    },
+    {
+      "id": "nina.dit.uithangbord",
+      "character": "nina",
+      "variants": [
+        { "index": 952, "file": "nina-dit-uithangbord-1.mp3", "text": "Dat is ons uithangbord. Het wordt steeds mooier." }
+      ]
+    }
+  ]
+}

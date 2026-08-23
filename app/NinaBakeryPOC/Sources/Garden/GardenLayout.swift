@@ -93,8 +93,14 @@ enum GardenLayout {
     /// passes over: a row is one left-to-right sweep, which is the most legible
     /// gesture a 4-year-old can make, and a block would need her to trace a
     /// shape.
-    static let bedCentre = SIMD2<Float>(0.030, -0.075)
-    static let bedSize = SIMD2<Float>(0.250, 0.080)
+    ///
+    /// **300 mm, up from 250.** The chiming flowers used to stand 30 mm off the
+    /// right-hand end, which is what capped the length; they live on the
+    /// near-left lawn now, and the open right edge is the natural place to grow
+    /// into. The left end stays put against the bench's gap, so nothing about
+    /// where a seed starts its journey has moved.
+    static let bedCentre = SIMD2<Float>(0.055, -0.075)
+    static let bedSize = SIMD2<Float>(0.300, 0.080)
     /// The top of the rim, which is what a carried seed rides over.
     static let bedRimY: Float = 0.050
     /// The soil, a step below the rim so the bed reads as having an inside.
@@ -126,15 +132,15 @@ enum GardenLayout {
     }
 
     /// The visible ring sunk into the soil. Sized so five of them sit along the
-    /// bed with a clear gap: at 0.250 of bed the spacing is 42 mm, so a 15 mm
-    /// radius leaves 12 mm of soil between neighbours.
+    /// bed with a clear gap: at 0.300 of bed the spacing is 52 mm, so a 15 mm
+    /// radius leaves 22 mm of soil between neighbours.
     static let plotRadius: Float = 0.015
 
     /// How near a seed has to land to count as going in a hole.
     ///
     /// **The same 0.067 the kitchen snaps at**, and deliberately not a number of
     /// its own: it is a tolerance she aims by eye, so what matters is how big it
-    /// is on screen, and the screen has not changed. It is larger than the 42 mm
+    /// is on screen, and the screen has not changed. It is larger than the 52 mm
     /// spacing between holes, which is fine and is the point — the *nearest*
     /// hole wins, so an imprecise drop always lands somewhere rather than
     /// nowhere. `CONCEPT.md` §5: drop it *near* and it counts.
@@ -144,8 +150,8 @@ enum GardenLayout {
     ///
     /// Tighter than the snap radius on purpose: this one is not a drop she aims,
     /// it is a path she sweeps, and a radius wider than the hole spacing would
-    /// water the whole bed from one place without moving. 30 mm reaches from a
-    /// hole to just past its neighbour's rim, so a sweep has to actually travel.
+    /// water the whole bed from one place without moving. 30 mm stays inside
+    /// one plant's reach, so a sweep has to actually travel.
     static let waterRadius: Float = 0.030
     /// And the distance it has to leave by before that hole can be watered
     /// again. Hysteresis, so a hand that jitters over one plant does not pump it
@@ -242,35 +248,32 @@ enum GardenLayout {
 
     // MARK: - Toys
 
-    /// Five flowers in a strip of soil, running along Z down the left-hand
-    /// floor. **Low to high, left to right**, because they chime in a scale and
-    /// a scale that runs the wrong way is a scale nobody hears as one.
+    /// Five flowers along the near mint rim, running along X from the left
+    /// fence toward the pond.
     ///
-    /// **They moved to the right-hand floor when the bench arrived**, because the
-    /// bench's lower shelf now reaches x = −0.134 and they were at −0.150. The
-    /// strip the deleted right-hand fence run left empty is the natural home:
-    /// 35 mm clear of the bed's right end, 96 mm from the basket, and **nothing
-    /// to their right at all**, so five stems on the floor cannot get in front
-    /// of anything.
-    /// **46 mm apart, up from 32.**
+    /// **They sit on the room's own edge**, 12 mm inside the mint, because a
+    /// row out on the lawn reads as a clump in the middle of the shot and the
+    /// owner asked for the rim. Index 0 is the left-hand stem, near the last
+    /// fence post; index 4 is at the water's edge — 4 mm of grass from the
+    /// inland bank, a flower beside the pond rather than a flower in it.
     ///
-    /// A target's real size is its **perpendicular distance to the camera ray**,
-    /// not its distance on the ground — `TouchRouter.hitTest` measures the
-    /// former. A row running along X or Z is tilted about 37° away from the
-    /// screen, so it keeps only **0.798** of its spacing as separation on
-    /// screen: the old 32 mm row gave each flower a 55 pt band, less than half
-    /// `CONCEPT.md` §5's ~120 pt. 46 mm gives 77 pt, which is what fits beside
-    /// everything else in this corner.
+    /// Heights are mixed, not a ramp: a border, not a scale you can see.
+    /// They still *chime* left to right as a pentatonic, so the row is a
+    /// musical toy; it just does not announce the notes by getting taller.
     ///
-    /// (A row along the **X−Z diagonal** would keep 1.000 of its spacing, since
-    /// that direction is exactly screen-horizontal. Worth knowing for the next
-    /// room that needs a long row — `ROOMS.md` §5.)
-    static let flowerX: Float = 0.185
-    static let flowerFirstZ: Float = -0.150
+    /// The gate's leaf is 58 mm inland of this line and the watering can sits
+    /// 68 mm behind it, so five stems on the rim cannot take a tap meant for
+    /// either. 46 mm apart, the same pitch as before; a row along X keeps
+    /// 0.798 of that as screen separation (`ROOMS.md` §5), 77 pt.
+    static let flowerZ: Float = 0.218
+    static let flowerFirstX: Float = -0.152
     static let flowerSpacing: Float = 0.046
     static let flowerCount = 5
+    /// Stem heights, left to right. Same five lengths as the old ramp,
+    /// shuffled so the row does not read as small-to-big.
+    static let flowerHeights: [Float] = [0.035, 0.024, 0.046, 0.0295, 0.0405]
     static func flowerSpot(_ index: Int) -> SIMD3<Float> {
-        SIMD3<Float>(flowerX, floorY, flowerFirstZ + flowerSpacing * Float(index))
+        SIMD3<Float>(flowerFirstX + flowerSpacing * Float(index), floorY, flowerZ)
     }
 
     /// **The pond fills the near corner of the lawn and runs off both of its
@@ -305,9 +308,9 @@ enum GardenLayout {
     ///
     /// **Nothing else is in the water**, which is now four moves deep: the
     /// basket, the molehill and the butterfly all live where they do because of
-    /// this shape, and the flower row's near end is the only thing still close —
-    /// 34 mm of grass, which is a flower at the water's edge rather than a
-    /// flower in it. The rule stands: *the pond is water, and water is empty.*
+    /// this shape. The flower row now runs along the near mint rim and stops
+    /// 4 mm short of the inland bank — a flower beside the pond, not a flower
+    /// in it. The rule stands: *the pond is water, and water is empty.*
     /// Anything this room gains later gets tested against the outline first.
     static let pondCentre = SIMD2<Float>(0.180, 0.180)
     /// Semi-axis along the screen, before the wobble. Most of it is clipped
@@ -331,12 +334,20 @@ enum GardenLayout {
     /// It stood at `(0.150, 0.120)`, which the pond now covers to a depth of
     /// 60 mm. This is the ground the molehill had: in front of the bed's
     /// right-hand end, 43 mm clear of its front boards, which is where a basket
-    /// wants to be anyway — a picked plant hops into it from the bed, and it is
-    /// now the shortest hop in the room. 85 mm of grass to the pond's rim, and
-    /// on screen it clears the pond by 101 mm against the 83 the two radii need.
+    /// wants to be anyway — a picked plant is dragged into it from the bed, and
+    /// it is now the shortest carry in the room. 85 mm of grass to the pond's
+    /// rim, and on screen it clears the pond by 101 mm against the 83 the two
+    /// radii need.
     static let basketHome = SIMD3<Float>(0.090, floorY, 0.008)
     /// Where a picked ingredient lands inside it, and how far apart they stack.
     static let basketRimY: Float = 0.026
+    /// How near a carried ripe plant has to land to count as going in.
+    ///
+    /// **The same 0.067 every other snap in the game uses.** The basket is
+    /// smaller than that on purpose: she aims by eye, and `CONCEPT.md` §5
+    /// asks for a drop that counts when it lands *near*. The nearest plot
+    /// sits 85 mm away, so a tap on a plant cannot harvest by accident.
+    static let basketSnapRadius: Float = 0.067
 
     // MARK: - Toys
 
@@ -359,10 +370,10 @@ enum GardenLayout {
     /// A thing 85 mm in the air and 130 mm nearer the camera lands on almost the
     /// same *screen* point as a thing on the ground behind it — which is how the
     /// butterfly's old home came to sit on top of two of the bed's five holes.
-    /// Tapping a ripe plant and getting a butterfly is the required action
+    /// Grabbing a ripe plant and getting a butterfly is the required action
     /// losing to a toy, so they are placed by perpendicular separation like
     /// everything else: the butterfly out in the near foreground, the bee over
-    /// the far end of the flower row it visits.
+    /// the middle of the flower row it visits.
     ///
     /// **The butterfly moved twice for the pond.** At `(0.060, 0.075)` its
     /// ground point was 10 mm outside the first pond's rim, which is close
@@ -373,7 +384,9 @@ enum GardenLayout {
     /// the 75 the two radii need, and still 66 mm from the nearest hole against
     /// 60 — which is the constraint that put it out here in the first place.
     static let butterflyHome = SIMD3<Float>(0.045, floorY + 0.055, 0.045)
-    static let beeHome = SIMD3<Float>(0.215, floorY + 0.045, -0.185)
+    /// Just inland of the middle flower, so its 42 mm Z drift stays on the
+    /// plateau instead of buzzing off the near edge.
+    static let beeHome = SIMD3<Float>(-0.060, floorY + 0.045, 0.190)
 
     /// **Along the back fence**, which is where the bench pushed them.
     ///
@@ -433,7 +446,7 @@ enum GardenLayout {
     static let surfaces = Surfaces(
         floorY: floorY,
         // Nearest-camera first, which along the +X+Z diagonal means the larger
-        // x + z: the bed at −0.045, then the bench at −0.208. Their footprints
+        // x + z: the bed at −0.020, then the bench at −0.208. Their footprints
         // do not overlap, so this is documentation rather than arbitration.
         rects: [
             Surfaces.Rect(centre: bedCentre, size: bedSize, y: bedRimY),
@@ -454,9 +467,9 @@ enum GardenLayout {
         solids: [],
         hider: Surfaces.Rect(centre: bedCentre, size: bedSize, y: bedRimY),
         // The room's own furniture: `minX` reaches the bench, `maxX` the
-        // flowers, `minZ` the bushes against the back fence, `maxZ` the open
-        // ground where the can and the basket stand.
-        minX: -0.205, maxX: 0.200, minZ: -0.200, maxZ: 0.200,
+        // bed's new right end, `minZ` the bushes against the back fence, `maxZ`
+        // the open ground where the can and the basket stand.
+        minX: -0.205, maxX: 0.215, minZ: -0.200, maxZ: 0.200,
         lift: RoomBox.carryLift
     )
 

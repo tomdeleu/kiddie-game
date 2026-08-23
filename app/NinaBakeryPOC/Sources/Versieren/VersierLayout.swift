@@ -196,8 +196,7 @@ enum VersierLayout {
     static let pipingThinsBelow: Float = 0.15
 
     /// **The one silent cap in the room**, and it is honest: 120 grains already
-    /// cover the cake, so removing the oldest is invisible — and it can never
-    /// put Pip's wish of eight sprinkles out of reach.
+    /// cover the cake, so removing the oldest is invisible.
     static let maxSprinkles = 120
     static let maxStrokes = 40
 

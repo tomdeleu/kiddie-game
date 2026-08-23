@@ -154,10 +154,19 @@ fetch "hf_20260815_122030_671ebe88-9f64-4662-b7d2-e490d3434a3d.mp3" "otto-klaar-
 fetch "hf_20260815_122041_22c8e1e8-b926-46b4-a6d2-4dedd781e7cb.mp3" "otto-wacht-1.mp3"
 fetch "hf_20260815_122041_9294bce9-6ec8-4038-9ec5-49ca0ac00737.mp3" "otto-wacht-2.mp3"
 
+# Start screen. text2speech_v2 / elevenlabs, generated 2026-08-23.
+fetch "hf_20260823_083026_face77fa-7a39-47b7-992a-01ddd6055bbe.mp3" "nina-hub-eerste-1.mp3"
+fetch "hf_20260823_083006_45d418f3-5282-48eb-a931-ebf31cd45692.mp3" "nina-hub-eerste-2.mp3"
+fetch "hf_20260823_083006_e8027c5c-a270-45f3-b7f9-a3a25091c261.mp3" "nina-hub-terug-1.mp3"
+fetch "hf_20260823_083006_9e1829d9-6cc2-4a54-a70c-ed0d57c6ec94.mp3" "nina-hub-terug-2.mp3"
+fetch "hf_20260823_083006_8332bd3e-6622-49fa-8172-07dd3481c407.mp3" "nina-hub-terug-3.mp3"
+fetch "hf_20260823_083006_32559eee-43bd-47a7-a3f7-88dd6ff71553.mp3" "nina-hub-terug-4.mp3"
+
 # The scripts themselves are bundled: VoiceBank reads every script-*.json at
 # launch to map line id -> variant files. The copies in `audio/` are canonical;
 # copying them here is what keeps the two from drifting.
 cp script-keuken.json "$OUT/script-keuken.json"
 cp script-intro.json "$OUT/script-intro.json"
+cp script-hub.json "$OUT/script-hub.json"
 
 echo "Done. 104 lines in $OUT"

@@ -1,15 +1,17 @@
-# Nina's Toverbakkerij — De Keuken, Versieren, De Tuin en Het Feest
+# Nina's Toverbakkerij — De Bakkerij, De Tuin, De Keuken, Versieren en Het Feest
 
-Four rooms now, and between them a whole round: grow it, bake it, decorate it,
-eat it at a disco. Gameplay, graphics and Dutch voice, in one RealityKit app that
-runs on the iPad.
+Five rooms now, and between them a whole game: choose a friend, grow it, bake it,
+decorate it, eat it at a disco, hang the photograph. Gameplay, graphics and Dutch
+voice, in one RealityKit app that runs on the iPad.
 
-> **Het Feest is the newest**, landed 2026-08-17. Its section is
-> [below](#het-feest--the-party); the short version is that it is a discotheque
-> on the owner's call, that the whole room runs on a beat taken from her taps, and
-> that its way out is a VIP rope on two gold posts, not a wood door and not
-> the cake. It came from a container, so
-> the handover names the risky edits rather than the whole room — see
+> **De Bakkerij is the newest room**, landed on this merge. Its section is
+> [below](#de-bakkerij--the-hub). The short version is that it is the wall of
+> twelve frames: a round starts from the start screen, and the cake she taps
+> at the party comes home as a photograph she hangs herself. Opening the shop
+> is once a sitting. The shop door and the hook are toys.
+>
+> **Het Feest's way out** is a VIP rope on two gold posts, not a wood door and
+> not the cake. It plays *Disco Bits* under her pads. See
 > [what it owes](#what-it-owes-1).
 
 Most of this file is about **the kitchen**, which is the reference
@@ -56,7 +58,8 @@ below is still the record of that.
 
 | | | |
 |---|---|---|
-| **De Tuin** | `GAMEPLAY.md` §6.2 | Plant, water, pick — five ingredients into the basket |
+| **De Bakkerij** | `GAMEPLAY.md` §6.1 | Open the shop once a sitting, pick a grey frame, go to the garden. Hang the photograph when she comes home |
+| **De Tuin** | `GAMEPLAY.md` §6.2 | Plant, water, pick. Five ingredients into the basket |
 | **De Keuken** | `GAMEPLAY.md` §6.3 | Roll, fill, stir, pour, bake, and carry the cake onto the plank |
 | **Versieren** | `GAMEPLAY.md` §6.4 | Turn, pipe, shake, press stickers on, light the candle |
 | **Het Feest** | `GAMEPLAY.md` §6.5 | A disco: tap the pads, everyone dances to your beat, tap the VIP rope when you are ready to leave |
@@ -77,30 +80,29 @@ now the last thing in the stack and the way in is 28 pt of grey glyph you can
 see. Small and dull against 72 pt of saturated `FacetButton` for the two controls
 that are hers, in the one corner neither of them uses.
 
-**The garden feeds the kitchen, and the kitchen feeds the decorating room.**
+**The garden feeds the kitchen, the kitchen feeds the decorating room, the
+decorating room feeds the party, and the party comes home to the bakery.**
 Filling the basket and walking out through the gate hands it over as
 `RoomExit.keuken`, and the round the kitchen starts next bakes *what she actually
-grew* rather than five dealt off a shuffled deck; carrying that cake onto the
+grew* rather than five dealt off a shuffled deck. Carrying that cake onto the
 plank and walking out through the door hands it on as `RoomExit.versieren`. She
-never sees a handover; she sees five familiar things waiting in the kitchen's
-five places, and then her own cake on the turntable.
+never sees a handover. She sees five familiar things waiting in the kitchen's
+five places, then her own cake on the turntable, then that cake on the party
+table, then a photograph on the counter.
 
 **A room never learns what comes after it.** It says what just happened and hands
 back control, which is what keeps `ROOMS.md` §9's door to two functions per room
 instead of a routing table.
 
-**One thing was traded away when this replaced `harvest.json`**, and it is worth
-knowing: an exit is live and in memory, so a basket picked just before the app is
-closed no longer survives to the next launch. Nothing she *grew* is lost —
-`tuin.json` still holds the bed and the basket — only the fact that she was on her
-way to the kitchen with it. That is the right call only because there is no
-bakery hub yet to be interrupted in; reopen it when the hub lands.
+**The round itself is saved in `muur.json`.** Closing the app in the garden no
+longer loses who she is baking for. The basket in the doorway is still
+live-in-memory. `tuin.json` still holds the bed.
 
 ## The opening
 
-Three layers, each uncovering the next: **title plate → film → kitchen.** The
-room is built and lit underneath all of them, so whichever way she arrives, it
-is simply there.
+Three layers, each uncovering the next: **title plate → film on first launch
+only → the bakery.** The room is built and lit underneath all of them, so
+whichever way she arrives, the wall is simply there.
 
 ### The title plate
 
@@ -109,13 +111,13 @@ the game's face and the only place its name is written down — and it is the
 only text anywhere in the game. `CONCEPT.md` §5 rules out text she has to read;
 a name on a cover is not that.
 
-It holds for **1.4 seconds minimum**, or until the kitchen is ready, whichever
+It holds for **1.4 seconds minimum**, or until the bakery is ready, whichever
 is later — and **6 seconds maximum**, ready or not. The floor is there because
 building the room on an iPad is quick enough that without one the title would
 flash past in three frames and read as a glitch. The cap is there because
 "she cannot lose" has to cover a first screen too: the readiness flag is set at
 the end of an `async` closure, and if that closure never returned she would be
-left holding a picture with no way out. An unlit kitchen she can poke is the
+left holding a picture with no way out. An unlit bakery she can poke is the
 better failure.
 
 A tap ends it early — and a tap anywhere, at any time, puts a sparkle under her
@@ -233,9 +235,9 @@ plate — the provenance, the cost and why a generated asset ships here at all
 are in `references/REFERENCES.md` §3.
 
 `intro-1.mp4` and `intro-2.mp4` are optional. Delete them and the title plate
-hands straight to the kitchen, with no code change — `IntroMovie.isAvailable` is
-still the only thing that checks, and it now also decides which of the two
-greeting paths runs.
+hands straight to the bakery, with no code change — `IntroMovie.isAvailable` is
+still the only thing that checks, and `IntroMovie.hasPlayed` skips the film
+after the first launch.
 
 ## The round
 
@@ -1265,7 +1267,7 @@ up. Left alone.
 |---|---|---|
 | `zaaien` | Drags a seed from one of **eight jars** into one of **five holes** | A plop, sparkles in the seed's colour, a mound of turned earth, and Nina saying it is in the ground |
 | `gieten` | Sweeps the watering can across the bed | The can tips, water runs from its rose, and **every plant it passes over grows one stage** |
-| `plukken` | Taps a ripe plant | The fruit flies into the basket while the plant folds back into the earth, and Nina names the colour it will give the cake |
+| `plukken` | Drags a ripe plant into the basket | The plant shrinks into the basket, the fruit lands among the others, and Nina names the colour it will give the cake |
 | `klaar` | — | The basket is full, the door is ajar and lit, and the harvest is written for the kitchen |
 
 **The step is derived from the bed, not stored independently of it.** Any hole
@@ -1318,22 +1320,27 @@ instead of a travel count.
 is more than the 42 mm between one hole and the next — watering from where the
 handle is would water the wrong plant.
 
-### Picking is a tap, and that is the one exception
+### Picking is a drag, like everything else
 
-Everywhere else in the game, **drag to play, tap to learn the word**. Here a
-tap on a *ripe* plant picks it, which is `GAMEPLAY.md` §6.2's own instruction:
-"tap the ripe plant and it hops into the basket."
+Everywhere in the game, **drag to play, tap to learn the word**. It used to
+make an exception here: a tap on a *ripe* plant picked it, which was
+`GAMEPLAY.md` §6.2's own instruction as first written. The owner reversed it
+on 2026-08-23 — dragging a flower into a basket is more fun than tapping it
+and watching it hop, and it means a tap on a ripe plant can finally name the
+ingredient the way a tap on a seed jar already does.
 
-The split is stated rather than hidden: **a ripe plant's tap picks it; an unripe
-one, or an empty hole, says what it is.** It survives because five taps is a
-cheap middle of a round and the room already has eight drags in it — and because
-what she hears on picking is `nina.ingredient.*`, the kitchen's own line naming
-the colour that ingredient will give the cake. That is exactly what she wants to
-know at the moment she picks it, and it means the word she learns in the garden
-is the word she hears in the kitchen.
+A miss floats home to its hole. A planted plant is not a free prop: leaving it
+on the grass would leave an empty-looking hole she cannot sow in. The kitchen's
+berry that did not reach the bowl is the same answer.
 
-The fruit flies and the plant does not. She picked a strawberry, not a
-strawberry plant.
+What she hears on picking is still `nina.ingredient.*`, the kitchen's own line
+naming the colour that ingredient will give the cake. That is exactly what she
+wants to know at the moment she picks it, and it means the word she learns in
+the garden is the word she hears in the kitchen.
+
+**The three `nina.tuin.rijp` mp3s still tell her to tap.** The script text is
+updated; the recordings are not. Until they are regenerated, Nina's nudge is a
+lie — a tap names the plant instead of picking it.
 
 ### The toys
 
@@ -1392,7 +1399,7 @@ Six, none of which gate anything:
 
   **Nothing is in the water, and that is now four moves deep.** The basket was
   in the middle of it and took the molehill's ground in front of the bed — where
-  a basket wants to be anyway, since a picked plant hops into it from the bed;
+  a basket wants to be anyway, since a picked plant is dragged into it from the bed;
   the molehill went out to the lawn in front of the bench; the butterfly hovers
   over the middle of the open floor. The flower row's near end is the only thing
   still close, at 34 mm — a flower at the water's edge rather than a flower in
@@ -2106,7 +2113,7 @@ long-standing limitation, not a setup problem.
 
 ### First build
 
-> **It has now happened three times**, and all three are worth reading, because
+> **It has now happened four times**, and all four are worth reading, because
 > together they are the only evidence this project has about what
 > correct-by-construction actually misses.
 >
@@ -2146,12 +2153,21 @@ long-standing limitation, not a setup problem.
 > the hill, and rails buried 3.5 mm inside every picket they passed. A compiler
 > would have passed all five. `models/README.md` has them.
 >
-> **The pattern across all eight compiler errors: none of them was a number, and
+> **Build four** — De Bakkerij, Xcode 26.6, iPad Air 13-inch (M4) Simulator,
+> Debug, 2026-08-21. **One error**, and it is build two's third item again:
+> `BakkerijProps.wishMark` called `VersierProps.sticker` from a nonisolated
+> helper. `VersierProps` is `@MainActor`; the bakery's prop builders were not.
+> Isolation was pulled up through `wishCard`, `photograph`, `FrameWall.picture`,
+> `frame` and `goldFrame`. Their only caller is `BakkerijRoom`, already on the
+> main actor. The `[weak rebuilt]` capture and the wish-switch `_` patterns
+> were fixed before this compile, so they did not fire.
+>
+> **The pattern across all nine compiler errors: none of them was a number, and
 > none of them was a prediction.** The five below did not fire on any build.
-> Every one of the eight was *scope, isolation, or a type's kind* — which is
+> Every one of the nine was *scope, isolation, or a type's kind* — which is
 > precisely the category a careful reader cannot check and a compiler settles in
 > a second. The lesson for the next room written without a toolchain is not
-> "check the constants harder"; the constants have been fine three times. It is
+> "check the constants harder"; the constants have been fine four times. It is
 > that **a file move and a new call into main-actor code are the two edits that
 > most need a build behind them** — and, from build three, that **geometry needs
 > an eye rather than a compiler**: ten props built correct-by-construction were
@@ -2885,8 +2901,9 @@ rides on a tap that lands on the empty floor.
 
 - **No door**, and the cake instead. Above, and `ROOMS.md` §9.
 - **Six guests, not twelve.** Above.
-- **The friend of the day is dealt, not handed over**, because there is no hub to
-  hand one over — the same answer the decorating room gives to a visit with no
+- **The friend of the day is handed over from the bakery** as
+  `RoomExit.tuin(Friend)`. A visit to the disco with no friend still deals one
+  (`Friend.dealt`), the same answer the decorating room gives to a visit with no
   cake (`CakeSpec.dealt`).
 - **The friends' thanks are relayed by Nina** — *"Pip zegt: dankjewel, Nina!"* —
   because eleven friend voices do not exist. `Friend.thanksLineID` is derived off
@@ -2914,9 +2931,6 @@ rides on a tap that lands on the empty floor.
 - ~~**Music.** One loop.~~ **Picked, 2026-08-23.** *Disco Bits* under the pads;
   a toy-keyboard kick and a vinyl scratch for the DJ. See `Resources/SFX/`.
 - **Eleven friend voices**, which is most of the game's remaining dialogue.
-- **§6.6, the photograph and the wall**, which is what `nina.feest.muurKomt`
-  promises *straks* rather than *now* — and which is now the last thing between
-  four rooms and a game.
 - **An evening plate for the VIP rope.** The first keeper filled the hole with
   cream light; the mesh overrules it with `eveningSky`. Higgsfield had expired
   again when this was decided.
@@ -2924,29 +2938,90 @@ rides on a tap that lands on the empty floor.
   `nina.feest.zullenWeEten` tells her to tap the cake, so the idle currently
   reuses Versieren's *zullen we gaan?*.
 
-## What these four rooms may not conclude
+## De Bakkerij — the hub
 
-Whether the *game* is fun. There is no bakery, no friend at the door and no wall
-— and with four rooms and no hub, the chain between them is a door tapped at the
-end of each one rather than something she chooses. What they can answer is
-whether she can drive it: whether the snap radius and the target sizes are right,
-whether stirring works with her hand, whether she can sweep a watering can across
-five plants, whether a sticker lands where she meant it to, whether she can find
-a beat, and whether she taps Otto again.
+The wall of twelve frames, and the only room she passes through twice in a
+round. `GAMEPLAY.md` §6.1. Outbound is a hub, not a spine: `opendoen` once a
+sitting, `kiezen`, `naarTuin`. The shop door and the order hook are toys. Home:
+`ophangen`, then `klaar` and the curtain.
 
-**Three rooms inherited every one of the kitchen's touch numbers on the argument
+**The start screen is how she gets in.** Title plate, film on first launch
+only, then four tiles. The bakery wall is the trophy she comes home to, not
+the menu. Twelve grey ghosts and a shop blind wait behind the garden tile. Pulling the cord is what
+makes an empty bakery worth standing in, once a sitting. `kiezen` has no halo.
+Eleven ghosts are eleven equally right answers, so they breathe on a slow
+rolling wave instead. Pick one and they are in the shop, the wish is in the
+corner, and the back door lights. The shop door and the hook are toys.
+
+A round is for the friend she picked. The garden's idle shimmer sits on that
+friend's seed jar. The decorating room's idle shimmer sits on that friend's
+sticker tray. Matching is still judged only at the party. Hanging the photograph
+is something she does. One drag onto the glowing frame.
+
+**Shop-open is process lifetime, not a save.** A cold launch is a new sitting
+and the blind goes up again. The wall itself is `muur.json`. Frames are a
+dictionary keyed by `Friend.rawValue`. The gold frame is derived. Filling eleven
+friends earns it. Nothing stores a twelfth slot that could disagree.
+
+### Lighting
+
+No Blender scene this session, so no kitchen-style shell maps. The bakery takes
+the route De Tuin and Het Feest measured after the shared 1200 lx dome washed
+pastels on device.
+
+- Ambient scaled to 800/1200 in `BakkerijRoom.lighting(from:)`.
+- Chroma punch 1.6 on colourful props through `BakkerijAO.paint`. Cream plaster,
+  wood frames, the counter and the ghosts stay pale.
+- Contact-shadow opacity restored with `sqrt`, because `ContactShadows` writes
+  the value twice.
+- Wall-hugging furniture calls `excludeFromShadowCasting()`. The cat, the radio,
+  Nina and the guest still cast.
+
+`-no-bakkerij-ao` leaves the approved rig, the same flag shape as the garden and
+the disco.
+
+The approved key is still 1000 lx, elevation 85°, azimuth 108°, ambient 1200,
+contact opacity 0.22. See [Approved lighting](#approved-lighting).
+
+### Extra plates
+
+No new Higgsfield spend on this pass. The toys and two-state plates were already
+on disk from the 2026-08-17 bakery branch. Job IDs live in
+[`references/bakkerij/README.md`](../references/bakkerij/README.md).
+
+### What it owes
+
+- **Nina in the bakery**, with the protocol in `POC.md`. Touch radii were
+  inherited from the kitchen's box.
+- **Gold-frame replay of the opening film.** §2 still wants the film somewhere
+  after the first launch. The flag only skips it.
+
+## What these five rooms may not conclude
+
+Whether the *game* is fun. The loop is in. She can choose a friend, grow a
+cake, hang a photograph, and see the wall fill. What they still cannot answer
+is whether she *wants* to. What they can answer is whether she can drive it.
+Whether the snap radius and the target sizes are right. Whether stirring works
+with her hand. Whether she can sweep a watering can across five plants. Whether
+a sticker lands where she meant it to. Whether she can find a beat. Whether she
+taps Otto again. Whether she can pull a shop blind up.
+
+**Four rooms inherited every one of the kitchen's touch numbers on the argument
 that the box and the chair have not moved.** That is a calculation, not an
-observation, and it is now riding on four rooms instead of one — so the afternoon
+observation, and it is now riding on five rooms instead of one. The afternoon
 with Nina is worth more than it was, not less.
 
-**The party's three risky edits, named rather than hedged about.** It was written
-in a container, and the record says the two kinds of change worth a second look
-are a file move and a new call into main-actor code. This room made one of each
-and one more: `VersierRoom.endRoom` gained a call into `onExit`,
-`BakerCharacter` gained an argument now used from a fourth room, and
-`Synth.render` gained seven cases to an exhaustive switch. Everything else is new
-files nothing outside the room calls. [First build](#first-build) has what the
-earlier ones caught and why those two categories are the ones on the list.
+**The bakery's risky edits, named rather than hedged about.** It was written in
+a container, and the record says the two kinds of change worth a second look
+are a file move and a new call into main-actor code. This room made several of
+the second kind. `ContentView.handle` now routes five `RoomExit` cases.
+`GardenRoom` and `VersierRoom` gained a `friend:` argument. `FeestRoom.tapCake`
+calls `onExit` with a `FeestResult` instead of laying out a fresh party.
+`KitchenRoom.roomComplete` now reads `mode`. `BakerCharacter`'s `home:`
+argument is used from a fifth room. Everything under `Sources/Bakkerij/` is new
+files that the synchronized Sources group picks up. [First build](#first-build)
+has what the earlier ones caught and why those two categories are the ones on
+the list.
 
 `POC.md` has the testing protocol, and it still applies: her iPad, Guided Access
 on, you not helping and not narrating.

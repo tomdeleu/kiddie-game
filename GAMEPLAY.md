@@ -4,7 +4,7 @@ The detailed design. [`CONCEPT.md`](CONCEPT.md) says what the game *is*; this
 file says what actually happens, minute by minute, and what has to be built to
 make it happen.
 
-It exists because `CONCEPT.md` described a **loop**, not a game: four rooms, one
+It exists because `CONCEPT.md` described a **loop**, not a game: rooms, one
 verb each, five minutes, then the identical thing again tomorrow. There was no
 reason to stay in a room once its verb was done, and no reason to come back once
 the novelty wore off. This file fixes both.
@@ -65,8 +65,8 @@ of the way.
 >
 > It is the better ending as well as the cheaper one. Eleven times a friend
 > thanks her by name; the twelfth time there is nobody to thank her, because the
-> bakery is the thing being finished and it is hers. The twelfth wish is
-> therefore not a wish at all — see §4.
+> bakery is the thing being finished and it is hers. Nobody comes to the door
+> on that round, because there is nobody left to come. See §4.
 >
 > Luna's name survives nowhere. Any text still describing a fairy who lives in
 > the bakery is older than this file.
@@ -74,24 +74,55 @@ of the way.
 ## 2. The wall is the game
 
 The bakery's back wall holds **twelve frames in a 3×4 grid**, above the counter.
-It is the first thing on screen when the game opens and the last thing before it
-closes.
+Fill them and the bakery becomes a real toverbakkerij. That is still the
+progression the story is about. The start screen lighting rooms is how she
+gets in, not a second score.
+
+It is **not** how she picks a room any more.
+
+> **The start screen is the menu — owner's call, 2026-08-23.** This section used
+> to make the wall the level select: tap a grey ghost, that friend's day begins.
+> Then it tried a bakery spine so the wall would not read as a menu with a room
+> drawn round it. Both were too much for the start of a sitting. She picks a
+> *room* from a 2D screen that is not in the world; the wall is the trophy she
+> hangs a photograph on when a party comes home. See below, and §6.1.
 
 Each frame is in one of two states:
 
 | State | Looks like | Tapping it |
 |---|---|---|
-| **Empty** | A pale grey silhouette of the friend who is waiting | Starts that friend's round |
+| **Empty** | A pale grey silhouette of the friend who is waiting | A wobble. The round is not started from here |
 | **Filled** | A little photo of that friend's party, in colour | Replays that party, ~20 seconds |
-
-**The wall is therefore also the level select** — with no text, no menu, and no
-new interface to learn. She points at a grey ghost and that friend's day begins.
-She can do them in any order she likes.
 
 The bottom-right frame is **larger and gold, and it is Nina's**. It stays grey
 until the other eleven are in colour. It is the only thing in the game that
 waits, and it is worth the exception: it gives the wall a shape and gives the
 last cake a weight the other eleven cannot have.
+
+**It hangs lower than the rest of the bottom row**, into the air above the
+counter. The eleven stay on a 45 mm row pitch so the camera and the finger still
+agree (`BakkerijLayout`); a 52 mm gold frame cannot share that pitch with a
+40 mm neighbour. Dropping it is what keeps it larger without overlapping the
+frame above.
+
+### The start screen — DECIDED, 2026-08-23
+
+**Four tiles, garden first, not in 3D.** Garden, kitchen, decorating, party, in
+a 2×2 over the loading-screen cottage. Locked tiles are grey and still squash
+when tapped — a dead tap reads as a broken iPad. No words on them. The bakery is
+not a tile: it is where a photograph hangs, and she is taken there when the
+party sends her home.
+
+On a fresh save only the garden is lit. Finishing a room lights the next tile
+(`RoomID.hubUnlocks`). Inside a room, **nothing** is locked — every seed, tray
+and toy is there from the first time she walks in. The hub is the one place
+rooms wait.
+
+**Every 3D room has a house button** (bottom-right, same 72 pt plate as
+everything else). It puts the start screen back up. The round in flight is
+dropped: she asked to pick again, not to pause mid-stir.
+
+Plates: [`references/start-screen/`](references/start-screen/).
 
 ### The sign above the door
 
@@ -117,25 +148,21 @@ about the bakery rather than about a guest: *this is a real toverbakkerij now.*
 - The **second wall of the room box** becomes the overflow gallery, holding her
   most recent twelve free-play cakes. The oldest quietly retires when a
   thirteenth arrives.
-- In free play, a friend still turns up at the door with a wish, drawn at random
+- In free play, a friend still turns up at the door, drawn at random
   from the eleven.
 - Tapping the gold centre frame replays the finale.
 
 The finale must not read as a door closing. She will want to bake again the next
 morning, and finding the bakery shut would read as broken, not as finished.
 
-### What opens the app — OPEN
+### What opens the app — DECIDED, 2026-08-23
 
-The built app opens **title plate → film → the kitchen** (`app/README.md`, "The
-opening"), and this section says the wall is the first thing on screen. Both
-cannot be true once the bakery room exists, and the collision is a real one: the
-film is fourteen seconds, and fourteen seconds between her and the wall *every
-single launch* is fourteen seconds she will learn to skip.
-
-The recommendation, not yet a decision: **title plate → film on first launch
-only → the wall**, with the film moved behind the gold frame afterwards so it is
-still somewhere rather than gone. `IntroMovie.isAvailable` is already the only
-thing that decides whether the film plays, so this is one flag.
+**Title plate → film on first launch only → the start screen.** A round already
+in progress still resumes into the room she left, so closing the iPad mid-stir
+does not dump her at the menu. Fourteen seconds of film every launch is fourteen
+seconds she will learn to skip. `IntroMovie.hasPlayed` is the flag. Clearing the
+app's data replays the film. The gold-frame replay of the film is still open.
+See `app/README.md`, "The opening".
 
 ## 3. Anatomy of a round
 
@@ -145,14 +172,13 @@ long she chooses to linger.
 
 | Step | Where | Required time | Can stretch to |
 |---|---|---|---|
-| Open the shop, pick a grey frame | Bakery | 0:30 | 2:00 |
-| Let the friend in, hang the wish card | Bakery door | 0:30 | 1:00 |
+| Pick a room | Start screen | 0:10 | 1:00 |
 | Grow five ingredients | Garden | 3:00 | 8:00 |
 | Roll, fill, stir, pour, bake | Kitchen | 3:00 | 7:00 |
 | Decorate | Decorating | 3:00 | 12:00 |
 | Party | Party | 2:30 | 10:00 |
 | Photograph and hang | Bakery | 0:45 | 1:00 |
-| **Total** | | **~13 min** | ~40 min |
+| **Total** | | **~12 min** | ~40 min |
 
 The required column is what a child who taps straight through experiences. The
 stretch column is what happens when she gets absorbed, which is the good
@@ -169,10 +195,10 @@ describes, and the owner's call is that **both are real**.
 
 | | **A round** | **A visit** |
 |---|---|---|
-| Entered from | The previous room, mid-round | The wall, or the bakery floor |
-| The room is about | One cake, for the friend of the day | The room's own verb, for its own sake |
+| Entered from | The previous room, mid-round | A lit tile on the start screen |
+| The room is about | One cake, walking the four rooms | The room's own verb, for its own sake |
 | It ends when | The room's required action is done | Its own completion rule is met — three cakes, in the kitchen |
-| The door leads to | The next room in the round | Back to the bakery |
+| The door leads to | The next room in the round | The next unlocked room, or home to the start screen |
 | What is saved | The round in progress | The room's own state, and anything it produced |
 
 Every room from here on therefore carries **a mode**, and it is one flag, not
@@ -182,7 +208,7 @@ door does — which in the kitchen is already exactly two functions,
 `refreshDoorInvitation()` and `endRoom()`. [`ROOMS.md`](ROOMS.md) §9 has the
 contract.
 
-The reason to keep the visit rather than delete it once rounds work: a 13-minute
+The reason to keep the visit rather than delete it once rounds work: a 12-minute
 round is a *sitting*, and there will be plenty of afternoons where she wants to
 bake and nothing else. The kitchen is already the best room in the game to be
 loose in. Taking that away to make the structure tidy would be trading something
@@ -211,62 +237,62 @@ variant each**, deliberately, where everything else in the game has three or
 four. A character who repeats herself does not sound like a person, but a *name*
 is a thing you learn by hearing it the same way twice.
 
-## 4. The friends and their wishes
+## 4. The friends
 
-Before the garden, the friend of the day appears at the bakery door holding a
-**wish card**: a single picture — a pink cloud, a glitter star, three candles.
-They say what they love. Nina repeats it once in her own words.
+A friend is at the party. **They do not bring a brief.** There is no card, no
+picture to remember, no line to replay. She makes whatever cake she likes. The
+start screen is how a sitting begins, not a pick from eleven ghosts.
 
-The wish card then pins itself to the top corner of the screen and stays there
-for the whole round. **Tapping it replays the line.** It is the only persistent
-interface element in the game, and it carries no text.
+> **No wish — owner's call, 2026-08-23.** This section used to give each friend
+> a picture to hold — sprinkles, a colour, three candles — pin it in the corner
+> for the whole round, and evaluate a match at the party. It was written as an
+> answer to *"what shall I make today?"*. It was too much to remember for four,
+> and a card in the corner that meant something different every sitting was a
+> test wearing a kind face. The friends stay. The brief does not.
 
-**She cannot get the wish wrong.** If the cake matches, the friend goes
-completely over the top at the party — a special move only they do — and says so
-by name. If it does not match, they are exactly as delighted, in a different
-line. There is no comparison, no "almost", no retry, and no sad face anywhere in
-the game.
+At the party the friend of the day thanks her **by name**. Every cake is
+celebrated the same. There is no comparison, no "almost", no retry, and no sad
+face anywhere in the game.
 
-The wish is not a test. It is an answer to *"what shall I make today?"*, which
-is a hard question for a 4-year-old to answer from nothing.
+| # | Friend |
+|---|---|
+| 1 | **Pip de muis** |
+| 2 | **Bella de vlinder** |
+| 3 | **Bas de beer** |
+| 4 | **Kiki de kat** |
+| 5 | **Bram de kikker** |
+| 6 | **Bo de vogel** |
+| 7 | **Wolkje het schaap** |
+| 8 | **Mo de mol** |
+| 9 | **Roos de egel** |
+| 10 | **Tobi de hond** |
+| 11 | **Nel de slak** |
+| 12 | **Nina zelf** — the gold frame |
 
-| # | Friend | Wish | Matches when |
-|---|---|---|---|
-| 1 | **Pip de muis** | heel veel sprinkles | ≥ 8 sprinkles on the cake |
-| 2 | **Bella de vlinder** | roze | Cake colour includes pink |
-| 3 | **Bas de beer** | geel, als honing | Cake colour includes yellow |
-| 4 | **Kiki de kat** | glitter | Star sugar in the cake |
-| 5 | **Bram de kikker** | groen | Cake colour includes green |
-| 6 | **Bo de vogel** | blauw | Cake colour includes blue |
-| 7 | **Wolkje het schaap** | hoog en wolkig | Cloud cream in the cake |
-| 8 | **Mo de mol** | kaarsjes, want het is donker | ≥ 3 candles placed |
-| 9 | **Roos de egel** | hartjes | ≥ 3 hearts placed |
-| 10 | **Tobi de hond** | sterretjes | ≥ 3 stars placed |
-| 11 | **Nel de slak** | twee kleuren door elkaar | ≥ 2 different colours |
-| 12 | **Nina zelf** | — the gold frame — | Always |
-
-Nel's wish is the shell on her back, and it is the one that teaches the mixing
-system by accident.
-
-**The twelfth is not a wish.** Nobody comes to the door on the last round;
+**The twelfth has no visitor.** Nobody comes to the door on the last round;
 there is nobody left to come. The bakery is finished and the cake is for the
-bakery, so the wish card is empty and every cake matches, because there is no
-brief to miss. Where the other eleven end with somebody thanking her by name,
-this one ends with the wall.
+bakery. Where the other eleven end with somebody thanking her by name, this one
+ends with the wall.
 
 All eleven friends are animals. Animals are cheaper than people in this style —
 one base faceted body plus a swapped head and colour — and a 4-year-old reads
 them instantly.
 
-**Matching is a pure function of the finished `CakeSpec` plus its stickers**, and
-it is evaluated once, at the party. Nothing anywhere else in the game looks at
-it: not the garden's hint, not the kitchen, not the decorating room. See
-[`ROOMS.md`](ROOMS.md) §2 for where the spec lives.
+See [`ROOMS.md`](ROOMS.md) §2 for where the cake spec lives. Nothing in the
+round looks at who she picked except to stand them in the shop, at the party,
+and in the frame.
 
 ## 5. What makes a cake
 
-Six seeds in the garden, **all available from the first round**. Nothing in this
-game unlocks, and nothing is ever missing.
+Six seeds in the garden, **all available from the first time she walks in**.
+Inside a room nothing unlocks and nothing is ever missing.
+
+> **Rooms on the start screen do wait — owner's call, 2026-08-23.** This
+> paragraph used to say the whole game unlocks nothing. Seeds, stickers and
+> friends still do not. The four tiles on the hub do: garden first, then
+> kitchen, decorating, party, each lighting when she has finished the one
+> before. A 4-year-old opening onto four rooms at once has been given a menu,
+> not a game. See §2.
 
 | Seed | Dutch | Gives the cake | Effect |
 |---|---|---|---|
@@ -331,15 +357,11 @@ Two consequences, both real:
   > `GardenStore.load` already migrates a save whose bed is the wrong length.
   > **Still worth deciding before the friends are built.**
 
-- **Four of the eleven wishes go automatic in the meantime.** Bella's *roze*,
-  Bas's *geel*, Bram's *groen* and Bo's *blauw* all match when the cake's colour
-  includes theirs, and a rainbow includes nearly everything; Nel's *twee kleuren
-  door elkaar* matches too. Nothing breaks — §4 is explicit that a wish cannot
-  be got wrong and that the celebration does not differ — but the wish stops
-  being an answer to *"what shall I make today?"* if today's cake was going to
-  match anyway. That is the strongest argument for putting the count back to
-  three when the garden fills the basket, and it is worth deciding **before** the
-  friends are built rather than after.
+- **Cake variety is still the reason to consider putting the count back to
+  three.** Five picks out of the coloured seeds make a rainbow the usual cake,
+  and `.effen` and `.gemengd` stay rare. That is a colour question, not a brief
+  one, and it is worth deciding **before** the friends are built rather than
+  after.
 
 Colour resolves by how many *different* colours went in, whatever the count:
 
@@ -362,8 +384,7 @@ was not before.
 
 `CakeSpec` (`app/.../Game/CakeSpec.swift`) is the shipped contract, and
 everything downstream reads it: decorating adds stickers to it, the party reads
-it to know what the guests are eating, the frame stores it forever, and the wish
-match is computed from it.
+it to know what the guests are eating, and the frame stores it forever.
 
 Three details in it that are easy to get wrong later:
 
@@ -393,65 +414,24 @@ trivial — most are one tap, one animation, one sound — so the depth is cheap
 **How a room is built is [`ROOMS.md`](ROOMS.md).** What each room is *for* is
 below.
 
-### 6.1 De Bakkerij — the hub
+### 6.1 De Bakkerij — the wall
 
-**Required: open the shop, choose who is coming, let them in, take the order.**
+**Required: hang the photograph when the party sends her home.**
 
-> **Designed 2026-08-17, not built.** This section used to say *"required: tap a
-> grey frame"*, which is not a required action — it is a menu with a room drawn
-> round it. What follows is a step machine in the kitchen's sense:
-> `ROOMS.md` §1's named steps, one lit thing at a time, nothing failable.
+> **Start screen, not a bakery menu — owner's call, 2026-08-23.** This section
+> used to run a kitchen-shaped spine every round, then a thinner hub (`opendoen`,
+> `kiezen`, `naarTuin`) so the wall would not read as a menu with a room drawn
+> round it. Neither was the start of a sitting a four-year-old can use. She
+> picks a room from the 2D screen in §2. The bakery is not on that screen. It is
+> home: the wall, the toys, and the one drag that ends a round. The shop door,
+> the order hook and the blind are toys.
 
-Four steps, and the whole leg is **~40 seconds**. It has to be the leanest step
-machine in the game and not the second-fattest, because it is the only room she
-passes through **twice in every round**.
+She is taken here when the party hands back a `FeestResult`. The photograph is
+already in her hand.
 
-| Step | She does | It answers with |
-|---|---|---|
-| `opendoen` | Drags the shutter cord — the blind goes up | Daylight floods the room and **the wall of frames lights up**. The shop is open |
-| `kiezen` | Taps a grey ghost on the wall | That friend's outline colours in a little and steps forward. Today is theirs |
-| `binnenlaten` | The bell dings by itself and a shape shows at the glass. She drags the front door open | The friend walks in, crosses to the counter, and says hello |
-| `bestellen` | The friend holds out the wish card. She drags it onto the order hook by the back door | It hangs, then flies to the screen corner and **becomes the wish card §4 keeps there all round**. The back door lights |
+#### The return leg — two steps
 
-Four things about that table are load-bearing:
-
-- **`opendoen` is what makes an empty bakery playable.** The hardest thing about
-  this room is that on first launch it contains twelve grey ghosts and nothing
-  else, and a room with nothing in it still has to be worth standing in. Pulling
-  the blind up gives her something to *do* in the second before she has anything
-  to choose, and it buys the wall a reveal rather than a fade-in.
-- **`kiezen` is the first step in the game with no halo at all**, and that is the
-  rule rather than an exception to it. `ROOMS.md` §3 says to light the end that
-  is a fact and let the shimmer cover the end that is a choice; here **both ends
-  are her choice** — eleven ghosts, all equally right. So nothing is lit, and the
-  remaining ghosts breathe on a slow rolling wave, one after another, which says
-  *any of these* truthfully where one halo would lie and eleven would not be an
-  instruction.
-- **The wish card is something she hangs**, not something that appears. §4 makes
-  it the only persistent interface element in the game; earning it with a drag is
-  what stops it reading as chrome.
-- **None of the five toys is consumed.** The bell is rung by the *friend*, not by
-  her, so it stays a toy on her side — the trap `ROOMS.md` §8 records as the
-  rolling pin's ("rolling is a required step, not a toy") is avoided here rather
-  than paid again.
-
-**The ritual runs only when the shop is shut**, which is once per sitting. Come
-back from a finished round and the blind is already up, so the second round of an
-afternoon starts at `kiezen`. One boolean in the save.
-
-**The exit carries the friend and their wish**, which closes a hole that exists
-today: §6.2's garden hint — *the matching seed jar shimmers* — has nothing to
-read, because nothing upstream has ever chosen a friend. `RoomExit` grows a
-`.tuin(Friend)` and the wish travels with it.
-
-**Visit mode is free play.** The bakery is the hub, so "back to the bakery" is
-not a thing it can do. What it has instead is §2's after-the-twelfth state: a
-friend turns up at random, `kiezen` is skipped because there is no ghost left to
-pick, and the other three steps run unchanged.
-
-#### The return leg — two more steps
-
-She comes back from the party holding the photograph, and this is §6.6:
+This is §6.6:
 
 | Step | She does | It answers with |
 |---|---|---|
@@ -465,11 +445,11 @@ there, and the frame is the plank's ceremony. The argument against is still real
 — the round has just ended and she has done enough — and one drag is the smallest
 version of doing it that exists.
 
-**Toys:** the shop bell above the door (ding, and Nina looks up); the cat asleep
-on the counter (stretches, then resettles); the little radio (plays a loop,
-tap again to stop); the window, which shows the actual time of day; **her own
-drawings** pinned beside the wall of frames, which wobble and rustle when
-tapped.
+**Toys:** the shop door (it swings); the order hook; the shop bell above the
+door (ding, and Nina looks up); the cat asleep on the counter (stretches, then
+resettles); the little radio (plays a loop, tap again to stop); the window, which
+shows the actual time of day; **her own drawings** pinned beside the wall of
+frames, which wobble and rustle when tapped.
 
 Two things make this room harder than it looks, and both are the wall:
 
@@ -478,10 +458,9 @@ Two things make this room harder than it looks, and both are the wall:
   longer exists anywhere else. The photograph is a render of a stored
   `CakeSpec` + stickers, not a screenshot — a screenshot ties the wall to the
   resolution it was taken at and to whatever the camera was doing that day.
-- **It is the room that has to survive being empty.** On first launch there is
-  nothing in it, and a room with nothing in it has to still be worth standing
-  in for the thirty seconds before she picks a frame. That is what the toys are
-  for here, more than anywhere else.
+- **It is the room that has to survive being empty.** The first time a party
+  sends her home the wall is twelve grey ghosts. The toys are what make that a
+  place rather than a corridor she has to drag one photo through.
 
 ### 6.2 De Tuin — the garden — **BUILT**
 
@@ -499,14 +478,14 @@ Two things make this room harder than it looks, and both are the wall:
 > the hole, never a seed jar.** Sowing looks like a journey, and a journey may
 > light both ends — but its two ends are not the same kind of thing. The
 > destination is a fact; the source is her choice between eight equally right
-> answers, and lighting one of them would be a lie. The jars get the shimmer,
-> which is where this section already put the wish hint. `ROOMS.md` §3.
+> answers, and lighting one of them would be a lie. The jars get the shimmer.
+> `ROOMS.md` §3.
 
 Six seed jars on a shelf. Drag a seed to any of **five** holes in the bed. Drag
 the watering can across the bed: **each pass grows everything it crosses by one
 stage, three passes and a plant is ripe.** Growth is driven by her hand, never
-by a clock — there is no waiting in this game. Tap the ripe plant and it hops
-into the basket.
+by a clock — there is no waiting in this game. Drag the ripe plant into the
+basket.
 
 She may leave with one ingredient or with five. Fewer is not worse; it is a
 plainer cake, and the kitchen adapts — `Layout.ingredientsPerRound` is what
@@ -519,10 +498,11 @@ follows her finger; a wide pond lying across the front of the lawn that splashes
 when tapped — two puddles until the owner's call of 2026-08-16, and **nothing
 else stands in it**; a bee that hums when chased.
 
-**The hint:** when the wish is a colour, the matching seed jar shimmers very
-slightly. It never blocks anything and there is no penalty for ignoring it.
-Note that this is `Ticker.shimmer`, the *idle* cue — not the halo. The halo
-belongs to the required action and the garden's required action is the bed.
+**The hint:** if she stands still, a seed jar shimmers very slightly. It never
+blocks anything. Note that this is `Ticker.shimmer`, the *idle* cue — not the
+halo. The halo belongs to the required action and the garden's required action
+is the bed. Any jar is right; the shimmer says *there is something over here*,
+not *this one*.
 
 ### 6.3 De Keuken — the kitchen — **BUILT**
 
@@ -573,7 +553,7 @@ function the decorating room replaces.
 
 **Deviations from this file, all deliberate and all recorded in
 `app/README.md`:** the room box is 0.46 m rather than 0.40 m with the camera 8%
-further back, the doorway leads nowhere yet, and the palette gained a blue, an
+further back, the round's doorway hands the cake to Versieren, and the palette gained a blue, an
 amber and a lilac the locked thirteen do not contain.
 
 ### 6.4 Versieren — decorating — **BUILT**
@@ -640,11 +620,10 @@ Why these three and not three others:
   Coverage, quarters and the lit candle are all pure functions of the `CakeSpec`
   that already exists, so `VersierState` gains nothing and the step can never
   disagree with what is on screen.
-- **Mo's wish does not change.** `CakeSpec.litCandles` carries a comment saying
-  that lighting a candle is a toy and that making a *wish* depend on it would
-  smuggle a required action into this room. That comment is still right and is
-  not overruled: Mo's wish stays **three candles placed, lit or not**. What the
-  step reads is the room's own arc, not the brief.
+- **Lighting a candle is a toy.** `CakeSpec.litCandles` carries that, and it is
+  still right: making a required step depend on lighting one would smuggle a
+  required action into the one room that must never ask her for anything. What
+  the step reads is the room's own arc.
 
 The cake sits on a turntable with a big handle; dragging the handle turns it.
 Trays around the edge hold sprinkles, candles, hearts, stars, crowns, fruit and
@@ -659,7 +638,7 @@ Two tools that are not stickers:
 Tapping a placed candle lights it. Tapping a placed sticker makes it wiggle.
 Dragging one off the edge of the cake removes it.
 
-**The hint:** when the wish is a decoration, that tray shimmers.
+**The hint:** if she stands still, a tray shimmers. Any tray is right.
 
 #### What this room needs that does not exist yet
 
@@ -687,7 +666,8 @@ Four things are genuinely new, and they are the whole cost of it:
 - **A room whose halo has nothing to point at.** The kitchen's grammar is *one
   lit prop, which is the next thing to do*, and a room with no required action
   breaks it. The answer is not to invent a required action. It is: **the door is
-  lit from the moment she arrives**, and the wish tray shimmers. Lighting the
+  lit from the moment she arrives**, and a tray shimmers if she stands still.
+  Lighting the
   exit in a room with no task is the honest use of the cue — it says *you may go
   when you like*, which is exactly true here and nowhere else.
 
@@ -749,7 +729,7 @@ guests, the ball, the floor and the lights are all on, not a recording.
 **She ends the party by tapping the VIP rope.** Nothing else ends it. There is no
 timer, no song that finishes, no fairy telling her it is time. When she taps it,
 everyone eats with enormous crunching noises, applauds, and the friend of the
-day thanks her **by name** — with their special move if the wish matched.
+day thanks her **by name**.
 
 Putting the ending on a tap matters for two reasons. It is the only real
 authority she has in the game, and it gives a parent a visible, honest "when you
@@ -839,16 +819,12 @@ can be scenery rather than targets. Nothing on screen has to be tappable.
   [`app/NinaBakeryPOC/Resources/SFX/README.md`](app/NinaBakeryPOC/Resources/SFX/README.md).
   The loop runs at its own tempo, quiet under her pads — the beat is still hers.
   The remaining pads stay synthesised.
-- **The friend of the day is dealt, not handed over.** There is no bakery hub to
-  hand one over, so the room deals a friend the way the decorating room deals a
-  cake on a visit. `RoomExit` grows a case the day the hub lands.
+- **The friend of the day is whoever the round brought**, or one the party
+  deals on a visit, the way the decorating room deals a cake.
 
-**Completion in round mode** is tapping the VIP rope, which hands over to §6.6. In
-visit mode — replaying a filled frame — it is the same tap, and it hands back to
-the wall. Neither exists yet, so both call `RoomExit.bakkerij` and the room
-**lays out a fresh party behind the celebration** — a new friend, and in visit
-mode a new cake — the way the kitchen starts a fresh round behind its third cake.
-A room that ends with nowhere to go must not end with nothing to do.
+**Completion in round mode** is tapping the VIP rope, which hands a `FeestResult`
+to §6.6. In visit mode — replaying a filled frame — it is the same tap, and it
+hands back to the start screen (`RoomExit.bakkerij` with nothing in it).
 
 ### 6.6 Hanging the frame
 
@@ -862,11 +838,10 @@ moment in the game. `CONCEPT.md` §5 asks for a clear ending; this is it.
 The kitchen's plank is the rehearsal for this and it went in already: she
 carries the finished cake up onto the shelf herself.
 
-**Whether the photograph is also something she *does* is answered in §6.1's
-return leg, pending the owner** — `ophangen`, one drag of the photo into its
-frame. The argument for doing it is the plank's own argument. The argument
-against is that the round has just ended and she has done enough, and one drag
-is the smallest version of doing it there is.
+**She does it — DECIDED, 2026-08-17, by the owner.** §6.1's return leg.
+`ophangen`, one drag of the photo into its frame. The argument for doing it is
+the plank's own. The argument against is that the round has just ended and she
+has done enough, and one drag is the smallest version of doing it there is.
 
 ## 7. Rules that hold in every room
 
@@ -899,7 +874,6 @@ The gameplay above is mostly reuse. What it genuinely adds over `CONCEPT.md`:
 | Thing | Amount | Notes |
 |---|---|---|
 | Friend characters | 11 | One base faceted body, swapped head and colour. Three-part rig from §9.7 — they only need to dance and jump. |
-| Wish cards | 11 | Flat icons. Trivial. |
 | Room toys | ~28 | One tap, one animation, one sound each. Individually near-free; collectively this is what makes the game. **Twenty-four are built** — seven in the kitchen, five in the decorating room, six in the garden, six at the party. |
 | Seeds and their grown forms | 6 × 3 stages | The garden's only real asset load. The six ingredients themselves are built. |
 | Sticker types | 7 trays | Kenney's Food Kit covers most of it. |
@@ -950,9 +924,10 @@ game-wide and gets its own:
   worked example: the basket, what has gone in the bowl, which slots are used,
   the stir and roll fractions, the step, and the cakes on the plank.
 - **Game-wide:** the twelve frames — for each, whether it is filled, and if so
-  the `CakeSpec` (ingredients, colour, effects, sticker positions), whether the
-  wish matched, and when; the round in progress (which friend, which room);
-  whether the finale has played; and the free-play overflow gallery.
+  the `CakeSpec` (ingredients, colour, effects, sticker positions) and when;
+  the round in progress (which friend, which room);
+  whether the finale has played; which rooms the start screen has lit; and the
+  free-play overflow gallery.
 
 **Every saved struct carries a `version` and every field added later is
 optional.** `RoundState.used` is the pattern: a save written by the previous
@@ -988,9 +963,9 @@ about it. After that:
    **the party loop alone**. That loop, and the DJ's beat and scratch, landed
    2026-08-23 as three CC0 files. See
    [`app/NinaBakeryPOC/Resources/SFX/README.md`](app/NinaBakeryPOC/Resources/SFX/README.md).
-5. **The wall** — twelve frames, the grey ghosts, the level select, and
-   persistence. This moves *up*: it is not a reward system bolted on later, it
-   is the thing that makes the game a game, and everything else hangs off it.
+5. ~~**The wall**~~ — **built**, 2026-08-21, as De Bakkerij. Twelve frames, the
+   grey ghosts, and persistence in `muur.json`. It is the trophy, not the menu.
+   The start screen is how she picks a room (2026-08-23).
 6. ~~**The garden**~~ — **built**, 2026-08-16, out of order. See
    [`app/README.md`](app/README.md), "De Tuin". It came before decorating and the
    party because two of its three costs were not the garden at all: **carrying,
@@ -1000,14 +975,14 @@ about it. After that:
    Both get cheaper the earlier they happen and neither is any use with one room.
    It also closes the loop it was always going to: the basket it fills is the
    basket the kitchen bakes.
-7. **The friends and the wishes** — eleven of them, added one at a time. This is
+7. **The friends** — eleven of them, added one at a time. This is
    content, not engineering, and it can grow after she is already playing.
 8. **The toys**, continuously. Add one or two every time you touch a room. This
    is the cheapest quality in the whole project.
 9. **Final voice-over**, once the dialogue has settled.
 
-Step 5 moving up is the substantive change. Build it as soon as a round can be
-completed, because until the wall exists there is no reason for a second round.
+Step 5 was the last thing between four rooms and a game, and it is in.
+A round now starts on the start screen and hangs a photograph when it comes home.
 
 ## 10. Still open
 
@@ -1021,11 +996,12 @@ completed, because until the wall exists there is no reason for a second round.
 - ~~**What the guests are dancing to, before there is a tune.**~~ **Decided by
   having a file**: the loop runs at its own tempo. Her taps are still the beat
   the guests step to; the tune is a bed, not a click track.
-- **What opens the app**, now that the film and the wall both claim the first
-  screen — §2.
+- ~~**What opens the app**~~ — **decided 2026-08-23: film on first launch only,
+  then the start screen.** §2. The gold-frame replay of the film is still open.
+  A first-visit line on the hub, and a shorter one when she comes home to it,
+  are still to record.
 - **Whether the basket goes back to three when the garden fills it** — §5. Five
-  dealt from six makes every cake a rainbow and four of the eleven wishes
-  automatic. Decide before the friends are built.
+  dealt from six makes every cake a rainbow. Decide before the friends are built.
 - ~~**Whether hanging the frame is something she does or something that
   happens**~~ — **decided 2026-08-17: she does it**, `ophangen`, one drag, §6.1's
   return leg.

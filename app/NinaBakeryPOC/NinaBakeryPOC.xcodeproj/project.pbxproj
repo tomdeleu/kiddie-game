@@ -10,6 +10,17 @@
 		AA0000000000000000000005 /* NinaBakeryPOC.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = NinaBakeryPOC.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		AA0000000000000000000011 /* Exceptions for "Resources" folder in "NinaBakeryPOC" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				README.md,
+				SFX/README.md,
+			);
+			target = AA0000000000000000000004 /* NinaBakeryPOC */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		AA000000000000000000000F /* Sources */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
@@ -18,6 +29,9 @@
 		};
 		AA0000000000000000000010 /* Resources */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				AA0000000000000000000011 /* Exceptions for "Resources" folder in "NinaBakeryPOC" target */,
+			);
 			path = Resources;
 			sourceTree = "<group>";
 		};

@@ -1,0 +1,44 @@
+{
+  "_comment": "The 2D start screen's voice-over. Belongs to no room — VoiceBank loads every bundled script-*.json, so a new scene is a new file. Same format as script-intro.json.",
+  "_provider": "higgsfield",
+  "_model": "text2speech_v2",
+  "_variant": "elevenlabs",
+  "_cost_per_line_credits": 0.3,
+  "_generated": "2026-08-23 — first visit plus return",
+  "_files": "app/NinaBakeryPOC/Resources/Voice/",
+  "language": "nl",
+
+  "characters": {
+    "nina": {
+      "name": "Nina",
+      "voice_type": "preset",
+      "voice_id": "09878754-f20b-5330-9790-58a8027ab5b2",
+      "preset_name": "Gracie"
+    }
+  },
+
+  "_line_ids": {
+    "_comment": "eerste is the short explanation the first time the hub is uncovered. terug is every later visit, including the house button. Three-to-four variants on terug because she will hear it often; two on eerste because she hears it once.",
+    "nina.hub.eerste": "The first time the start screen is shown, after the title plate and the film.",
+    "nina.hub.terug": "Every later time she lands on the start screen."
+  },
+
+  "lines": [
+    { "id": "nina.hub.eerste", "character": "nina", "variants": [
+      { "index": 120, "file": "nina-hub-eerste-1.mp3", "seconds": 3.08,
+        "text": "Dit zijn mijn kamers. We beginnen in de tuin. Tik maar!" },
+      { "index": 121, "file": "nina-hub-eerste-2.mp3", "seconds": 2.51,
+        "text": "Kijk! Eerst de tuin. Tik maar!" }
+    ]},
+    { "id": "nina.hub.terug", "character": "nina", "variants": [
+      { "index": 122, "file": "nina-hub-terug-1.mp3", "seconds": 2.43,
+        "text": "Daar zijn we weer! Waar gaan we nu heen?" },
+      { "index": 123, "file": "nina-hub-terug-2.mp3", "seconds": 2.19,
+        "text": "Hoi hoi! Wat zullen we nu doen?" },
+      { "index": 124, "file": "nina-hub-terug-3.mp3", "seconds": 2.04,
+        "text": "Terug thuis. Waar gaan we heen?" },
+      { "index": 125, "file": "nina-hub-terug-4.mp3", "seconds": 1.41,
+        "text": "Kies maar een kamer!" }
+    ]}
+  ]
+}

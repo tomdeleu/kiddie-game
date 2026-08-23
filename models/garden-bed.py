@@ -55,7 +55,7 @@ import lowpoly
 NAME = "SeedBed"
 
 # ------------------------------------------------------- `GardenLayout` says
-SIZE_X = 0.250
+SIZE_X = 0.300
 SIZE_Z = 0.080
 FLOOR_Y = 0.004
 RIM_Y = 0.050

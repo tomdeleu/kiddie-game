@@ -62,7 +62,9 @@ protocol Room: AnyObject {
 enum RoomID: String, CaseIterable, Identifiable {
     /// **In the order a round runs**, which is what the picker shows and the one
     /// thing about this enum that is a decision rather than a list.
-    case tuin, keuken, versieren, feest
+    ///
+    /// **The bakery is first**, because it is where a round starts and ends.
+    case bakkerij, tuin, keuken, versieren, feest
 
     var id: String { rawValue }
 
@@ -70,6 +72,7 @@ enum RoomID: String, CaseIterable, Identifiable {
     /// `CONCEPT.md` §5 rules out text she has to read.
     var title: String {
         switch self {
+        case .bakkerij: return "BAKKERIJ"
         case .tuin: return "TUIN"
         case .keuken: return "KEUKEN"
         case .versieren: return "VERSIEREN"
@@ -97,14 +100,16 @@ enum RoomExit {
     /// list rather than a set and must never be sorted.
     ///
     /// This replaced a `harvest.json` file written by the garden and read by the
-    /// kitchen, and **one thing was genuinely traded away**: an exit is live and
-    /// in memory, so a basket picked just before the app is closed no longer
-    /// survives to the next launch. That is the right call only because there is
-    /// no bakery hub yet to be interrupted *in* — the garden's own `tuin.json`
-    /// still holds the bed and the basket, so nothing she grew is lost, only the
-    /// fact that she was on her way to the kitchen with it. Worth reopening when
-    /// the hub lands.
+    /// kitchen. `GameStore.round` now records which friend the round is for and
+    /// which room she reached, so a relaunch resumes the round rather than only
+    /// the room. The basket itself is still live-in-memory and still lost by a
+    /// kill in the doorway.
     case keuken([Ingredient])
+    /// **The friend of the day has been chosen and the round is starting.**
+    ///
+    /// The one exit that carries something which is not a cake. The bakery
+    /// hands who she picked; the garden does not need to know why.
+    case tuin(Friend)
     /// The kitchen's cake is baked and on the plank; it wants decorating.
     case versieren(CakeSpec)
     /// **The cake is decorated and there is a party waiting for it.**
@@ -115,6 +120,7 @@ enum RoomExit {
     /// re-renders every one of them from the polar anchors `Sticker` stores.
     /// Nothing was added to the spec to get a cake across this doorway.
     case feest(CakeSpec)
-    /// A visit is over, or a round has run out of rooms that exist yet.
-    case bakkerij
+    /// **Back to the bakery.** A round carries the party result so the wall can
+    /// hang a photograph. Nil means a visit ended, with nothing to hang.
+    case bakkerij(FeestResult?)
 }

@@ -37,7 +37,7 @@ Four rooms, played in order, roughly 11–12 minutes end to end — longer if sh
 lingers, which she will.
 
 > **The detailed design lives in [`GAMEPLAY.md`](GAMEPLAY.md):** the twelve
-> friends and their wishes, the ingredient-to-cake rules, what is required in
+> friends, the ingredient-to-cake rules, what is required in
 > each room versus what is optional, and the timing budget. This section is the
 > summary. Where the two disagree, `GAMEPLAY.md` is newer and wins.
 
@@ -374,7 +374,7 @@ Ship something playable early and grow it. Suggested order:
 3. **The wall of twelve frames** — persistence, level select, and the reason a
    second round exists at all. Build it as soon as one round can be completed.
 4. **The garden**, which turns three screens into a real cycle.
-5. **The twelve friends and their wishes** — content rather than engineering,
+5. **The twelve friends** — content rather than engineering,
    and it can grow while she is already playing.
 6. **The room toys**, continuously. A couple more every time a room is touched.
 7. **Final voice-over**, once the dialogue has settled.

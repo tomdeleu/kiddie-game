@@ -118,7 +118,8 @@ final class FeestRoom: Room {
 
     init(ticker: Ticker, touch: TouchRouter, voice: VoiceBank,
          sound: SoundKit, settings: LightingSettings,
-         mode: RoomMode = .bezoek, handedCake: CakeSpec? = nil) {
+         mode: RoomMode = .bezoek, handedCake: CakeSpec? = nil,
+         friend handedFriend: Friend? = nil) {
         self.ticker = ticker
         self.touch = touch
         self.voice = voice
@@ -126,14 +127,14 @@ final class FeestRoom: Room {
         self.settings = settings
         self.mode = mode
 
-        // **A cake arriving means a new party**, and the friend is dealt with it.
-        // On a visit the saved one is resumed, and if there is none a cake and a
-        // friend are dealt together — the decorating room's rule (`CakeSpec.dealt`,
-        // owner's call 2026-08-16) applied to a second missing thing: supply it
-        // rather than refuse her the room.
+        // **A cake arriving means a new party.** The friend comes with it when
+        // the bakery started the round. On a visit the saved one is resumed, and
+        // if there is none a cake and a friend are dealt together. The decorating
+        // room's rule (`CakeSpec.dealt`, owner's call 2026-08-16) applied to a
+        // second missing thing. Supply it rather than refuse her the room.
         var loaded = FeestStore.load(fallback: CakeSpec.dealt())
         if let handedCake {
-            loaded = .fresh(cake: handedCake, friend: Friend.dealt())
+            loaded = .fresh(cake: handedCake, friend: handedFriend ?? Friend.dealt())
         }
         self.state = loaded
         root.name = "Feest"
@@ -837,12 +838,10 @@ final class FeestRoom: Room {
     }
 
     /// **The end of the party.** Eating, thanks, the rope swinging open, and
-    /// then — because there is no bakery to go to — a fresh party laid out
-    /// behind the celebration.
+    /// then the photograph goes home to the bakery wall.
     private func endRoom(_ doorway: Props.Doorway) {
         guard state.step == .dansen else { return }
         state.step = .opeten
-
         let matched = state.friend.matches(state.cake)
         state.wishMatched = matched
         save()
@@ -890,9 +889,13 @@ final class FeestRoom: Room {
             jobs.append(job)
         }
 
-        jobs.append(ticker.after(0.9) { [weak self] in self?.onExit?(.bakkerij) })
+        // A round carries the cake home so the bakery can hang it. A visit
+        // walks home with nothing to hang. Wait until Nina has finished
+        // thanking her, so `GameScene.enter` cannot cut the thanks off.
+        let result = FeestResult(friend: state.friend, cake: state.cake)
+        let visiting = mode == .bezoek
         jobs.append(voice.whenQuiet(after: 0.5, timeout: 30) { [weak self] in
-            self?.startFreshParty()
+            self?.onExit?(visiting ? .bakkerij(nil) : .bakkerij(result))
         })
     }
 
@@ -1275,24 +1278,14 @@ final class FeestRoom: Room {
     var debugRows: [String] {
         [
             "Mode: \(mode == .ronde ? "ronde" : "bezoek")  ·  Stap: \(state.step.rawValue)",
-            "Vriend: \(state.friend.dutchName)  ·  wens: \(Self.describe(state.friend.wish))",
-            "Match: \(state.wishMatched.map { $0 ? "ja" : "nee" } ?? "nog niet")",
+            "Vriend: \(state.friend.dutchName)",
             "Gasten: \(state.everyone.map(\.rawValue).joined(separator: ", "))",
             "Dansjes: \(guests.map { "\($0.style)" }.joined(separator: ", "))",
             "Beat: \(beat.bpm) bpm  ·  \(beat.count) tellen"
                 + (beat.hasPlayed ? "" : "  (nog niet gespeeld)"),
             "Taart: \(state.cake.kind.rawValue) · \(state.cake.placed.count) stickers",
+            "Match: \(state.wishMatched.map { $0 ? "ja" : "nee" } ?? "nog niet")",
         ]
-    }
-
-    private static func describe(_ wish: Wish) -> String {
-        switch wish {
-        case .kleur(let colour): return "kleur \(colour.rawValue)"
-        case .effect(let effect): return "effect \(effect.rawValue)"
-        case .sprinkels(let count): return "\(count) sprinkels"
-        case .stickers(let kind, let count): return "\(count)× \(kind.rawValue)"
-        case .tweeKleuren: return "twee kleuren"
-        }
     }
 
     var debugActions: [(String, @MainActor () -> Void)] {
@@ -1439,8 +1432,7 @@ enum FeestLine {
     static let opeten = "nina.feest.opeten"
     /// The wish matched. Said after the friend's thanks, never instead of them.
     static let wensGelukt = "nina.feest.wensGelukt"
-    /// The wall is coming. **Soon, not now** — `ROOMS.md` §9, and it is the one
-    /// line in this room that has to be careful, because §6.6 does not exist.
+    /// The wall is coming — and now it does: the photograph goes home to hang.
     static let muurKomt = "nina.feest.muurKomt"
     static let nogeen = "nina.feest.nogeen"
     static let opnieuw = "nina.feest.opnieuw"

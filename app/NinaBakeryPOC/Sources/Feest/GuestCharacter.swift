@@ -122,10 +122,10 @@ final class GuestCharacter {
     private var clock: Float = 0
     private var jumpTime: Float = 0
     private var eatTime: Float = 0
-    /// **The wish matched, so this one is going over the top** —
-    /// `GAMEPLAY.md` §4's *"a special move only they do"*. It is their own move
-    /// twice as big plus a spin, rather than a seventh style: a special move that
-    /// needed its own rig would be eleven special moves.
+    /// **This one is going over the top** — their own move twice as big plus a
+    /// spin, rather than a seventh style. Unused now that there is no brief to
+    /// match; kept because the move itself is still the right one if a guest
+    /// ever needs to show off.
     private var showingOff = false
     private var job: Int?
 
@@ -787,8 +787,8 @@ final class GuestCharacter {
                 * simd_quatf(angle: hipTurn * big, axis: [0, 1, 0])
         }
 
-        // The special move: the friend whose wish matched turns slowly all the
-        // way round while doing their own dance twice as big.
+        // The special move: this guest turns slowly all the way round while
+        // doing their own dance twice as big.
         root.orientation = simd_quatf(angle: showingOff ? facing + clock * 2.2 : facing,
                                       axis: [0, 1, 0])
     }
@@ -831,7 +831,7 @@ final class GuestCharacter {
         jumpTime = 0.55
     }
 
-    /// The wish matched, so this one goes over the top for the rest of the party.
+    /// This guest goes over the top for the rest of the party.
     func celebrate() {
         showingOff = true
         jumpTime = 0.55

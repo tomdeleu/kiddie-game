@@ -133,8 +133,7 @@ whole instruction.** `Engine/Halo.swift`.
   destination is a fact, and the source is **her choice between eight equally
   right answers**. Lighting one jar says that jar is the one, which is false;
   lighting all eight is not an instruction. The rule generalises: **light the end
-  that is a fact, and let the idle shimmer cover the end that is a choice** —
-  which is also, exactly, where `GAMEPLAY.md` §6.2 puts the wish hint.
+  that is a fact, and let the idle shimmer cover the end that is a choice.**
 - **When *both* ends are a choice, nothing is lit at all.** The rule above has a
   floor, and `GAMEPLAY.md` §6.1's `kiezen` step is the first thing to reach it:
   she picks one of eleven grey ghosts off the wall, and there is no factual end
@@ -617,11 +616,9 @@ None of them a word or an arrow, because she cannot read one.
 applying once one of them does. The kitchen now says *"nu gaan we hem
 versieren!"* — but only when there is a cake to take through; reach a finished
 kitchen with an empty plank and it still says the careful thing. Versieren's own
-door promises a party that is coming *straks*, because the party is not built.
-
-With nowhere to go, the kitchen's ending was a ceremony — the leaf swings wide, light spills over the threshold, and
-Nina says the next room is coming *soon* rather than *now*. A 4-year-old told she
-is going somewhere and then not taken there has been lied to.
+door hands a decorated cake to the party in a round, and walks home to the
+bakery on a visit. A 4-year-old told she is going somewhere and then not taken
+there has been lied to.
 
 **Nothing is consumed by leaving.** The plank keeps her cakes and the leaf falls
 back to ajar rather than shut, so the room stays finished and stays finishable.
@@ -656,7 +653,8 @@ A checklist, in the order it is worth doing:
    (`onEmptyTap`, `onAnyTouch`, `onMoved` — the garden's butterfly follows the
    last of those, and a stale one would follow her finger around the kitchen).
    **Ending is `onExit`**, not a jump: the room says what just happened —
-   `RoomExit.keuken(basket)`, `.versieren(cake)`, `.bakkerij` — and hands back
+   `RoomExit.keuken(basket)`, `.versieren(cake)`, `.feest(cake)`,
+   `.bakkerij(FeestResult?)` — and hands back
    control. A room that knows what comes next is a routing table waiting to
    happen.
 1. **A `Layout` block** — every position in one table, plus the room's own
