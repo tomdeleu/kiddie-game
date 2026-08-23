@@ -626,7 +626,9 @@ not a room: the reward *is* the sound.
 
 They are honest placeholders. **`SoundKit` prefers a bundled file over the
 synth**, so when a CC0 pack arrives the swap is per-sound, one file at a time,
-with no other edit. A new room should reuse the existing `Sound` cases wherever
+with no other edit. Het Feest has taken that swap for `trom` and `kras`, and
+added a looping tune that is not a `Sound` case — one player, started and
+stopped by the room. A new room should reuse the existing `Sound` cases wherever
 it can and add cases only for genuinely new events.
 
 ## 11. What a new room owes

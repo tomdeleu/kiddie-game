@@ -17,6 +17,10 @@ import AVFoundation
 /// **Replace them when a CC0 pack arrives.** Drop the files in `Resources/SFX`
 /// and give `Sound.fileName` a non-nil case; `SoundKit` prefers a bundled file
 /// over the synthesised one, so the swap is per-sound and needs no other edit.
+///
+/// Het Feest has taken that swap for two of them — `trom` and `kras` — and
+/// added the one thing a synth could not stand in for: a looping tune, started
+/// and stopped by the room. Provenance is in `Resources/SFX/README.md`.
 enum Sound: String, CaseIterable {
     case plop        // something lands in the bowl
     case ding        // the scale
@@ -53,9 +57,10 @@ enum Sound: String, CaseIterable {
     // **This is the half of `CONCEPT.md` §7.4 that turned out not to be a gap.**
     // That section lists "the dance party soundtrack and the six instrument pads"
     // as blocked on an asset nobody has made. Five oscillators later, the pads
-    // are not: what is still blocked is the *tune*, which is one asset rather
-    // than seven, and which a synth cannot honestly stand in for.
-    case trom        // pad 1 — a low drum
+    // are not. The tune landed later as a bundled loop — see `playLoop` — and
+    // `trom` / `kras` now prefer the CC0 files in `Resources/SFX` over these
+    // synth voices. The generated cases stay as the failure fallback.
+    case trom        // pad 1 — a low drum, and the DJ's beat
     case toeter      // pad 3 — a two-note horn
     case klap        // pad 4 — a handclap
     case fluit       // pad 5 — a whistle
@@ -63,9 +68,15 @@ enum Sound: String, CaseIterable {
     case knabbel     // everybody eating the cake
     case applaus     // and then applauding
 
-    /// Filename in `Resources/SFX` to use instead of the synth, once one
-    /// exists. Nothing has one yet — see the type doc.
-    var fileName: String? { nil }
+    /// Filename in `Resources/SFX` to use instead of the synth. Nil keeps the
+    /// generated voice — every other case still does.
+    var fileName: String? {
+        switch self {
+        case .trom: return "trom-pss170.wav"
+        case .kras: return "kras-vinyl12.wav"
+        default: return nil
+        }
+    }
 }
 
 @MainActor
@@ -74,10 +85,33 @@ final class SoundKit {
     private var pools: [Sound: [AVAudioPlayer]] = [:]
     private var cursors: [Sound: Int] = [:]
     private let voicesPerSound = 3
+    private var loopPlayer: AVAudioPlayer?
+    private var loopLevel: Float = 0.28
 
     /// Muted only by the debug panel. There is no in-game mute: a silent game
-    /// reads as a broken game to her.
-    var enabled = true
+    /// reads as a broken game to her. The party loop follows this flag too —
+    /// pausing it rather than tearing it down, so un-muting picks up the tune.
+    var enabled = true {
+        didSet {
+            guard oldValue != enabled else { return }
+            if enabled {
+                loopPlayer?.volume = loopLevel
+                loopPlayer?.play()
+            } else {
+                loopPlayer?.pause()
+            }
+        }
+    }
+
+    /// The volume the party loop is aiming at, whether or not it is audible
+    /// right now. The debug mute parks the player at zero without forgetting it.
+    var loopVolume: Float {
+        get { loopLevel }
+        set {
+            loopLevel = max(0, min(1, newValue))
+            if enabled { loopPlayer?.volume = loopLevel }
+        }
+    }
 
     func prepare() {
         configureSession()
@@ -115,6 +149,28 @@ final class SoundKit {
         play(sound, volume: volume, rate: Float.random(in: 0.92...1.09))
     }
 
+    /// **The party's tune.** One player, looping, quiet enough that her pads
+    /// stay the beat. `FeestRoom` starts it in `build` and stops it in
+    /// `cancelEverything`, so a leftover loop cannot follow her into the kitchen.
+    /// Missing file is silence, same as a missing voice line — the room still
+    /// works, because the guests dance to her taps.
+    func playLoop(named name: String, volume: Float = 0.28) {
+        stopLoop()
+        loopLevel = max(0, min(1, volume))
+        guard let url = bundledAudio(named: name),
+              let player = try? AVAudioPlayer(contentsOf: url) else { return }
+        player.numberOfLoops = -1
+        player.volume = enabled ? loopLevel : 0
+        player.prepareToPlay()
+        if enabled { player.play() }
+        loopPlayer = player
+    }
+
+    func stopLoop() {
+        loopPlayer?.stop()
+        loopPlayer = nil
+    }
+
     private func configureSession() {
         #if os(iOS)
         // `.playback` so the game still speaks with the ring switch flicked.
@@ -126,13 +182,23 @@ final class SoundKit {
 
     private func audioData(for sound: Sound) -> Data? {
         if let name = sound.fileName,
-           let url = Bundle.main.url(forResource: name, withExtension: nil,
-                                     subdirectory: "SFX")
-            ?? Bundle.main.url(forResource: name, withExtension: nil),
+           let url = bundledAudio(named: name),
            let data = try? Data(contentsOf: url) {
             return data
         }
         return Synth.render(sound)
+    }
+
+    /// `Sound.fileName` is the whole name including the extension, matching
+    /// `VoiceBank`'s lookup: stem and extension split so a missing folder still
+    /// finds a file that landed in the bundle root.
+    private func bundledAudio(named name: String) -> URL? {
+        let url = URL(fileURLWithPath: name)
+        let stem = url.deletingPathExtension().lastPathComponent
+        let ext = url.pathExtension.isEmpty ? nil : url.pathExtension
+        return Bundle.main.url(forResource: stem, withExtension: ext,
+                               subdirectory: "SFX")
+            ?? Bundle.main.url(forResource: stem, withExtension: ext)
     }
 }
 
