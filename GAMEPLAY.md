@@ -832,13 +832,13 @@ can be scenery rather than targets. Nothing on screen has to be tappable.
   friend, in her own voice. It is the honest version of §6.5's *thanks her by
   name* until the friends can say it themselves, and it is what the eleven
   `nina.feest.dank.*` lines are.
-- **Music that does not exist.** The party is the payoff and it is still silent
-  as *music*: `CONCEPT.md` §7.4 records that the connector cannot supply music,
-  so the party loop comes from GarageBand or a CC0 pack. **This is the one thing
-  in the whole design blocked on an asset nobody has made yet.** The six pads
-  themselves are no longer blocked — they are six synthesised voices in
-  `SoundKit`, on the same terms as every other effect in the game, and they are
-  honest placeholders a bought pack replaces one file at a time.
+- ~~**Music that does not exist.**~~ **Picked, 2026-08-23.** The party loop is
+  medicinestorm's *Disco Bits* (CC0); the DJ's beat is the first kick of
+  mikemunkie's Yamaha PSS-170 disco pattern (CC0); the scratch is Joseph
+  Sardin's Vinyl Scratch #12 (CC0). Provenance is in
+  [`app/NinaBakeryPOC/Resources/SFX/README.md`](app/NinaBakeryPOC/Resources/SFX/README.md).
+  The loop runs at its own tempo, quiet under her pads — the beat is still hers.
+  The remaining pads stay synthesised.
 - **The friend of the day is dealt, not handed over.** There is no bakery hub to
   hand one over, so the room deals a friend the way the decorating room deals a
   cake on a visit. `RoomExit` grows a case the day the hub lands.
@@ -984,8 +984,10 @@ about it. After that:
    round has an ending. The music search was *not* done first, and that was the
    right call in the end rather than a corner cut: the six pads turned out not
    to be blocked at all — they are six synthesised `SoundKit` voices, on the
-   same terms as every other effect in the game — so what is still blocked is
-   **the party loop alone**, which is one asset rather than seven.
+   same terms as every other effect in the game — so what was still blocked was
+   **the party loop alone**. That loop, and the DJ's beat and scratch, landed
+   2026-08-23 as three CC0 files. See
+   [`app/NinaBakeryPOC/Resources/SFX/README.md`](app/NinaBakeryPOC/Resources/SFX/README.md).
 5. **The wall** — twelve frames, the grey ghosts, the level select, and
    persistence. This moves *up*: it is not a reward system bolted on later, it
    is the thing that makes the game a game, and everything else hangs off it.
@@ -1014,17 +1016,11 @@ completed, because until the wall exists there is no reason for a second round.
   on it. Five auditions are in [`audio/auditions/`](audio/auditions/); playing
   them takes a minute and re-cutting him costs four credits.
 - **The four friend voices.**
-- **Music.** The party loop, from GarageBand or a CC0 library — `CONCEPT.md`
-  §7.4. **Narrowed by the built party**: the six instrument pads are no longer
-  part of this, because they turned out to be six more synthesised voices rather
-  than six recordings. Every effect in the game is **synthesised at launch** as a
-  stopgap; a bought or CC0 pack replaces them one file at a time, and `SoundKit`
-  already prefers a bundled file over the synth. A *tune* is the one thing the
-  synth cannot honestly stand in for.
-- **What the guests are dancing to, before there is a tune.** The party's beat is
-  hers — it comes from her taps — so the room works in silence in a way a room
-  waiting for a backing track would not. Whether a loop should follow her tempo
-  or run at its own is a decision that cannot be made until there is a loop.
+- ~~**Music.**~~ **Picked, 2026-08-23** — *Disco Bits*, a toy-keyboard kick, and
+  a vinyl scratch, all CC0. The other pads stay synthesised. See §6.5.
+- ~~**What the guests are dancing to, before there is a tune.**~~ **Decided by
+  having a file**: the loop runs at its own tempo. Her taps are still the beat
+  the guests step to; the tune is a bed, not a click track.
 - **What opens the app**, now that the film and the wall both claim the first
   screen — §2.
 - **Whether the basket goes back to three when the garden fills it** — §5. Five

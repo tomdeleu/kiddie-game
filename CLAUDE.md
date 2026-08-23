@@ -144,9 +144,9 @@ other side of it. Read `VersierRoom.endRoom` before adding steps in front of it.
 
 **Next**, per [`GAMEPLAY.md`](GAMEPLAY.md) §9: **the wall of twelve frames**,
 which is the last thing between four rooms and a game — and De Bakkerij's §6.1,
-which is where the wall lives. The music search is still open but it is **one
-asset rather than seven**: the party's six pads turned out to be six more
-synthesised `SoundKit` voices, so only the party *loop* is blocked. And **test all
+which is where the wall lives. The party loop is no longer blocked: Het Feest
+plays *Disco Bits* under her pads, and the DJ's beat and scratch are two CC0
+files, all in `app/NinaBakeryPOC/Resources/SFX/`. And **test all
 four rooms with Nina first** — `POC.md` has the protocol, and what it says about
 the snap radius and target sizes is the thing worth knowing before another room is
 built on the same numbers. Every room after the kitchen inherited its touch radii

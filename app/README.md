@@ -1854,7 +1854,7 @@ x = 0 because past that it starts crossing Otto's chimney.
 | `Engine/CarryController.swift` | **Carrying, solved once.** Height easing, the ray that keeps a prop under her fingertip, container rims, and the settle rules. Was `KitchenRoom`'s; the kitchen and the garden both use it, and the decorating room does not — it places stickers on a cake rather than carrying props across surfaces. |
 | `Intro/LoadingScreen.swift` | The title plate, and the floor it is held for. |
 | `Intro/IntroMovie.swift` | The opening film: a queue of shots, and two ways out of it. |
-| `Audio/SoundKit.swift` | All fifteen sound effects, synthesised at launch. |
+| `Audio/SoundKit.swift` | All fifteen sound effects, synthesised at launch, plus the party's CC0 loop and the two files `trom` and `kras` prefer. |
 | `Audio/VoiceBank.swift` | Nina and Otto, driven by every bundled `script-*.json`. Also `sayWhenQuiet`, `sayInstead` and `whenQuiet`, which are why nobody gets talked over — or talked at about a step they have left. |
 | `Game/Room.swift` | What a room is, seen from outside: the protocol, the `RoomID` the developer panel switches between, the `RoomMode` flag, and the `RoomExit` a room ends with. |
 | `Game/CakeSpec.swift` | Eight ingredients → colour, effects, and what Nina says about them. |
@@ -2329,7 +2329,9 @@ scale for nothing. `CONCEPT.md` §7.4 records that the connector cannot supply
 SFX; a CC0 pack is still the plan, and swapping one in is a filename in
 `Sound.fileName`.
 
-**Music is absent**, as agreed. `GAMEPLAY.md` §10 still has it open.
+**Music is no longer absent in Het Feest.** The party loop and the DJ's beat
+and scratch are three CC0 files in `Resources/SFX/`. The other pads stay
+synthesised. `GAMEPLAY.md` §10.
 
 ## Versieren — the decorating room
 
@@ -2729,8 +2731,10 @@ Two of the three cannot come from Higgsfield, and it is worth writing down
 because it was checked rather than assumed. `models_explore` lists `sonilo_music`
 and `mirelo_text_to_audio` as **"Game pipeline only"** — they refuse standalone
 use, exactly as `CONCEPT.md` §7.4 has said since the start. So a beat and a
-scratch are `SoundKit`'s synthesised `trom` and `kras`, and **the vocal is the
-part Higgsfield genuinely renders**, because a vocal is speech.
+scratch started as `SoundKit`'s synthesised `trom` and `kras`, and **the vocal is
+the part Higgsfield genuinely renders**, because a vocal is speech. The beat and
+scratch are now two CC0 files (`Resources/SFX/`) — the synth stays as the
+fallback if a file is missing.
 
 Five Dutch shouts — *"Handjes in de lucht!"*, *"Iedereen dansen!"* — in **Benji**,
 the third voice in the game and the first that is neither Nina nor Otto. Young and
@@ -2857,9 +2861,10 @@ from the kitchen's `ding`, and `knabbel` and `applaus` for the ending. They are
 honest placeholders and `SoundKit` still prefers a bundled file, so a CC0 pack
 replaces them one at a time.
 
-**What is still blocked is the party loop, and it is one asset rather than
-seven.** The room also works in silence in a way a room waiting for a backing
-track would not, because the beat is hers.
+**The party loop landed on 2026-08-23**, one asset rather than seven:
+`feest-discobits.m4a`, quiet under her pads, at its own tempo. The beat is
+still hers. `trom` and `kras` took the same swap for the DJ tap and for pads
+one and six. Provenance is in `Resources/SFX/README.md`.
 
 ### The toys
 
@@ -2906,7 +2911,8 @@ rides on a tap that lands on the empty floor.
 
 ### What it owes
 
-- **Music.** One loop. See above.
+- ~~**Music.** One loop.~~ **Picked, 2026-08-23.** *Disco Bits* under the pads;
+  a toy-keyboard kick and a vinyl scratch for the DJ. See `Resources/SFX/`.
 - **Eleven friend voices**, which is most of the game's remaining dialogue.
 - **§6.6, the photograph and the wall**, which is what `nina.feest.muurKomt`
   promises *straks* rather than *now* — and which is now the last thing between

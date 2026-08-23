@@ -80,10 +80,11 @@ keeping the escape hatch open costs nothing.
 
 See [`../../LIGHTMAPS.md`](../../LIGHTMAPS.md) for how to produce the lightmaps.
 
-## Sound effects — synthesised, not bundled
+## Sound effects — synthesised, plus three CC0 files for Het Feest
 
-There are no SFX files. `SoundKit` generates all thirteen at launch, because
-`CONCEPT.md` §7.4 records that the connector cannot supply sound effects and no
-CC0 pack has been chosen yet. To swap in real ones: drop them in `SFX/` and
-return the filename from `Sound.fileName` — the loader prefers a bundled file
-over the synth, one sound at a time.
+`SoundKit` still generates every effect at launch. Het Feest now prefers three
+bundled files in `SFX/` when they are present: the party loop, the DJ/pad drum,
+and the DJ/pad scratch. Provenance and the crops are in [`SFX/README.md`](SFX/README.md).
+To swap any of them: drop a new file in `SFX/` and point `Sound.fileName` (or
+`FeestRoom`'s `playLoop` name) at it. Missing files fall back to the synth, or
+to silence for the loop.

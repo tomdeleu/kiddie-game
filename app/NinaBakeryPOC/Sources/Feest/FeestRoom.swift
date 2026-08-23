@@ -173,6 +173,11 @@ final class FeestRoom: Room {
         repaintFloor(force: true)
         startBeat()
         startIdleWatch()
+        // Quiet on purpose: her pads are the beat, and a bed that talks over
+        // them would take the one thing this room is about. It runs at its own
+        // tempo — `GAMEPLAY.md` §10's open question, decided by having a file
+        // rather than by arguing it first.
+        sound.playLoop(named: "feest-discobits.m4a", volume: 0.28)
     }
 
     private func buildDanceFloor() {
@@ -843,6 +848,7 @@ final class FeestRoom: Room {
         save()
 
         swingDoor(doorway, hold: 2.6)
+        fadePartyLoop(to: 0.08, duration: 0.7)
         Halo.remove(doorHalo, ticker: ticker)
         doorHalo = nil
         touch.target(named: "taart")?.enabled = false
@@ -1361,11 +1367,25 @@ final class FeestRoom: Room {
 
     // MARK: - Housekeeping
 
+    /// The tune sits under her pads. Eating and applause have to win, so the
+    /// ending ducks it rather than cutting it — a disco that stops dead on the
+    /// rope would read as broken, not finished.
+    private func fadePartyLoop(to volume: Float, duration: Float) {
+        let from = sound.loopVolume
+        let job = ticker.tween(duration) { [weak self] t in
+            self?.sound.loopVolume = from + (volume - from) * t
+        }
+        jobs.append(job)
+    }
+
     /// **Every job id and every halo.** `ROOMS.md` §11: a `Ticker` job a torn-down
     /// room still holds keeps animating a detached entity forever, and nothing on
     /// screen says so. The guests own jobs of their own, which is why each of them
-    /// is stopped rather than merely dropped.
+    /// is stopped rather than merely dropped. The party loop is the same kind of
+    /// leftover: a player a torn-down room still holds keeps playing in the
+    /// kitchen.
     private func cancelEverything() {
+        sound.stopLoop()
         for job in jobs { ticker.cancel(job) }
         jobs.removeAll()
         ticker.cancel(beatJob)

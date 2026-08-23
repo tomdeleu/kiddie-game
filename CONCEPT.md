@@ -285,8 +285,9 @@ explicitly refuse standalone use. So it cannot supply:
 > file over the synth, so a CC0 pack still replaces them one file at a time with
 > no other edit.
 >
-> What the synth cannot honestly stand in for is a **tune**. So the gap is now
-> exactly one asset — the party loop — rather than a list, and the pads were
+> What the synth cannot honestly stand in for is a **tune**. That gap closed on
+> 2026-08-23 with three CC0 files in `app/NinaBakeryPOC/Resources/SFX/` — a
+> looping disco bed, a toy-keyboard kick, and a vinyl scratch. The pads were
 > never the blocker they were written down as. `GAMEPLAY.md` §9.
 >
 > **Re-checked on 2026-08-17 rather than inherited**, when the DJ was asked
@@ -668,8 +669,9 @@ everything from it.
 ## 11. Open questions
 
 - Casting Otto the oven, and the four voices covering the eleven friends.
-- Music and SFX source — CC0 library, paid pack, or GarageBand? The party is the
-  payoff and it is currently silent.
+- ~~Music and SFX source — CC0 library, paid pack, or GarageBand?~~ **Picked,
+  2026-08-23**, for the party: *Disco Bits*, a PSS-170 kick, and a vinyl
+  scratch, all CC0. The rest of the SFX stay synthesised.
 - The character proportion rule. (The palette is settled — see
   [`POC.md`](POC.md).)
 
