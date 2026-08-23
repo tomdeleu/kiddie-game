@@ -411,10 +411,11 @@ enum BakkerijProps {
         return Sign(root: root, board: board, cake: cake, star: star)
     }
 
-    // MARK: - The order hook and the wish card
+    // MARK: - The order hook
 
     /// The hook by the back door — `references/bakkerij/bestelhaak.png`: a square
-    /// backplate with a two-segment hook.
+    /// backplate with a two-segment hook. A toy. It used to be the drop for a
+    /// wish card; the card is gone and the hook stays.
     static func orderHook(flat: Bool) -> Entity {
         let root = Entity()
         root.name = "Bestelhaak"
@@ -438,105 +439,6 @@ enum BakkerijProps {
 
         root.excludeFromShadowCasting()
         return root
-    }
-
-    /// **The wish card**, which she hangs. §6.1: *"the wish card is something she
-    /// hangs, not something that appears… earning it with a drag is what stops it
-    /// reading as chrome."*
-    ///
-    /// A flat cream card with **one shape on it and nothing else** — the plate's
-    /// finding, reproduced from the retired clay one: a single golden droplet is
-    /// legible at thumbnail size and needs no text. The shape is the friend's own
-    /// wish, so the card she hangs is the card she will see in the corner all
-    /// round.
-    ///
-    /// **Square corners.** The plate rounded them, which `../REFERENCES.md` §1
-    /// rules out; it is the only bevel in the set and it is on the one prop made
-    /// of paper.
-    static func wishCard(for friend: Friend, flat: Bool) -> Entity {
-        let root = Entity()
-        root.name = "Wenskaart"
-
-        let card = model(.box([0.026, 0.032, 0.002]),
-                                     Palette.creamLight, flat: flat, name: "KaartPapier")
-        root.addChild(card)
-
-        let mark = wishMark(for: friend, flat: flat)
-        mark.position = [0, 0, 0.0022]
-        root.addChild(mark)
-
-        return root
-    }
-
-    /// The one shape a wish card carries. Each is the friend's wish said as an
-    /// object rather than as a word, which is the whole design of the card.
-    static func wishMark(for friend: Friend, flat: Bool) -> Entity {
-        let node = Entity()
-        node.name = "KaartTeken"
-
-        switch friend.wish {
-        case .kleur(let colour):
-            // A colour wish is a blob of that colour, and nothing else.
-            // `CakeColour.base` is the same value the cake itself is baked in, so
-            // the card cannot drift from the thing it is asking for.
-            let blob = model(.prism(radius: 0.009, height: 0.003, sides: 10),
-                                         colour.base, flat: flat, name: "KaartKleur")
-            blob.orientation = simd_quatf(angle: .pi / 2, axis: [1, 0, 0])
-            node.addChild(blob)
-        case .effect(let effect):
-            switch effect {
-            case .fonkelt, .glimt:
-                // Kiki's glitter. `glimt` is here to keep the switch total —
-                // no friend wishes for it, and if one ever does, a star is the
-                // honest drawing of "it shines" too.
-                let star = model(.star(points: 5, outerRadius: 0.010,
-                                                   innerRadius: 0.004, thickness: 0.003),
-                                             Palette.butterYellow, flat: flat,
-                                             name: "KaartGlitter")
-                node.addChild(star)
-            case .hoog:
-                // A tall cloud: two lumps and a taller one, which is Wolkje's wish.
-                for (dx, r) in [(Float(-0.007), Float(0.005)), (0.000, 0.007),
-                                (0.007, 0.005)] {
-                    let puff = model(.icosphere(radius: r, subdivisions: 0),
-                                                 Palette.creamLight, flat: flat,
-                                                 name: "KaartWolk")
-                    puff.position = [dx, 0, 0]
-                    node.addChild(puff)
-                }
-            }
-        case .sprinkels(_):
-            // Many little ones, because Pip's wish is a quantity.
-            let colours = [Palette.rose, Palette.mint, Palette.butterYellow,
-                           Palette.lilac, Palette.sage]
-            for i in 0..<9 {
-                let a = Float(i) * 0.9
-                let bit = model(.box([0.004, 0.0018, 0.0018]),
-                                            colours[i % colours.count], flat: flat,
-                                            name: "KaartSprinkel")
-                bit.orientation = simd_quatf(angle: a, axis: [0, 0, 1])
-                bit.position = [cos(a) * 0.008, sin(a * 1.7) * 0.008, 0]
-                node.addChild(bit)
-            }
-        case .stickers(let kind, let count):
-            // Three of the thing, laid in a row — the count is the wish.
-            for i in 0..<min(count, 3) {
-                let one = VersierProps.sticker(kind, flat: flat)
-                one.position = [Float(i - 1) * 0.009, 0, 0]
-                one.scale = .init(repeating: 0.75)
-                node.addChild(one)
-            }
-        case .tweeKleuren:
-            // Nel's shell: two colours through each other.
-            for (i, colour) in [Palette.rose, Palette.mint].enumerated() {
-                let half = model(.prism(radius: 0.008, height: 0.003, sides: 10),
-                                             colour, flat: flat, name: "KaartTweeKleur")
-                half.orientation = simd_quatf(angle: .pi / 2, axis: [1, 0, 0])
-                half.position = [Float(i) * 0.007 - 0.0035, Float(i) * 0.004 - 0.002, 0]
-                node.addChild(half)
-            }
-        }
-        return node
     }
 
     // MARK: - The toys
@@ -733,6 +635,8 @@ enum BakkerijProps {
     /// standing on it, which is the same thing the frame will hold — so hanging it
     /// is the photograph *arriving where it belongs* rather than one object being
     /// swapped for another.
+    /// `@MainActor` because `FrameWall.picture` calls `VersierProps.sticker`.
+    @MainActor
     static func photograph(of fill: FrameFill, friend: Friend?, flat: Bool) -> Entity {
         let root = Entity()
         root.name = "Foto"

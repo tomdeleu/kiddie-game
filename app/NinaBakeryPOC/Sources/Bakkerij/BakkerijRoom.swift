@@ -6,9 +6,9 @@ import simd
 /// and §6.6.
 ///
 /// The only room she passes through twice in a round: out through it on the way
-/// to the garden, and back into it holding a photograph. Four steps outbound in
-/// about forty seconds — `opendoen`, `kiezen`, `binnenlaten`, `bestellen` — and
-/// two on the way home, `ophangen` and `klaar`.
+/// to the garden, and back into it holding a photograph. Outbound is a sitting
+/// open and a pick — `opendoen`, `kiezen`, `naarTuin` — not four fetches. Home
+/// is still `ophangen` and `klaar`.
 ///
 /// Four things about it are unlike every other room in the game:
 ///
@@ -21,12 +21,12 @@ import simd
 ///   breathe on a slow rolling wave instead, which says *any of these* truthfully
 ///   where one halo would lie and eleven would not be an instruction.
 /// - **It has two door-shaped things and only one of them is the way out.** The
-///   shop door is a step; the back door is the exit. §9 forbids a room with two
-///   objects meaning "this is finished", so the shop door's cue is withdrawn the
-///   moment the friend is inside, and only then does the back door light.
-/// - **The ritual runs once per sitting.** Come back from a finished round and
-///   the blind is already up, so the second round of an afternoon starts at
-///   `kiezen`.
+///   shop door is a toy; the back door is the exit. §9 forbids a room with two
+///   objects meaning "this is finished", so the shop door never carries the
+///   three-cue grammar and only the back door lights.
+/// - **Opening the shop runs once per sitting.** Come back from a finished
+///   round and the blind is already up, so the second round of an afternoon
+///   starts at `kiezen`.
 @MainActor
 final class BakkerijRoom: Room {
 
@@ -39,10 +39,6 @@ final class BakkerijRoom: Room {
     /// which greeting she gets.
     let mode: RoomMode
 
-    /// **Set when the wish card should appear in the screen corner**, and cleared
-    /// when it should go. `ContentView` owns the card itself: it has to survive
-    /// four room swaps, and a room is torn down wholesale.
-    var onWishCard: (@MainActor (Friend?) -> Void)?
     /// The curtain at the end of §6.6. Also `ContentView`'s, for the same reason.
     var onCurtain: (@MainActor () -> Void)?
 
@@ -83,7 +79,6 @@ final class BakkerijRoom: Room {
     /// eleven animals already exist and this room does not get to invent a
     /// twelfth way of drawing one.
     private var guest: GuestCharacter?
-    private var card: Entity?
     private var photo: Entity?
 
     private var halo: Halo.Handle?
@@ -128,7 +123,7 @@ final class BakkerijRoom: Room {
             // a round resumed mid-flight: she has already chosen.
             if let friend, fresh.step == .kiezen {
                 fresh.friend = friend
-                fresh.step = .binnenlaten
+                fresh.step = .naarTuin
             }
             self.state = fresh
         }
@@ -276,19 +271,13 @@ final class BakkerijRoom: Room {
             // instead, one after another on a slow rolling wave.
             startGhostWave()
 
-        case .binnenlaten:
-            // The bell rings by itself, and *then* the door is the thing to drag.
-            // `references/bakkerij/README.md`: there is no glass in this game, so
-            // the cue is the bell and the leaf, never a silhouette behind it.
-            if animated { ringBell(thenInvite: true) } else { inviteShopDoor() }
-
-        case .bestellen:
-            // A journey, and only the destination end is a fact: the card is
-            // already in the friend's hands and obvious, the hook is where it has
-            // to go. `ROOMS.md` §3 — light the end that is a fact.
-            if let hook {
-                halo = Halo.attach(to: hook, radius: 0.016, ticker: ticker) { _ in
-                    BakkerijLayout.cardHangCentre.y - 0.026
+        case .naarTuin:
+            // The pick is done. The friend is in the shop, and the only lit
+            // thing is the way out.
+            presentFriendIfNeeded(arriving: animated)
+            if let door = backDoor?.root {
+                halo = Halo.attach(to: door, radius: 0.026, ticker: ticker) { _ in
+                    RoomBox.floorY
                 }
             }
 
@@ -316,11 +305,10 @@ final class BakkerijRoom: Room {
     /// Which targets answer, per step. **Nothing is ever disabled that does not
     /// have to be** (`ROOMS.md` §1) — the toys, the frames' naming taps and the
     /// door all stay live throughout; what changes is only what the step's own
-    /// prop does.
+    /// prop does. The cord and the shop door stay toys after they have been
+    /// used; only the photograph is a step prop, and it only exists on the
+    /// return leg.
     private func refreshInteractivity() {
-        touch.target(named: "koord")?.enabled = state.step == .opendoen
-        touch.target(named: "winkeldeur")?.enabled = state.step == .binnenlaten
-        touch.target(named: "kaart")?.enabled = state.step == .bestellen
         touch.target(named: "foto")?.enabled = state.step == .ophangen
     }
 
@@ -352,7 +340,7 @@ final class BakkerijRoom: Room {
     }
 
     private func dragBlind(to world: SIMD3<Float>) {
-        guard let from = dragFrom else { return }
+        guard state.step == .opendoen, let from = dragFrom else { return }
         // **A vertical drag, reported on a horizontal plane.** `TouchRouter`
         // projects every drag onto a horizontal plane, which is the right
         // primitive for the four rooms that put things down on tables and the
@@ -367,6 +355,10 @@ final class BakkerijRoom: Room {
     }
 
     private func endBlindDrag() {
+        guard state.step == .opendoen else {
+            dragFrom = nil
+            return
+        }
         dragFrom = nil
         // Past two thirds it finishes by itself, which is `CONCEPT.md` §5's
         // generosity applied to a drag rather than to a drop.
@@ -417,7 +409,7 @@ final class BakkerijRoom: Room {
         jobs.append(ticker.after(0.75) { [weak self] in
             guard let self else { return }
             self.voice.sayInstead(BakkerijLine.openGedaan)
-            self.advance(to: self.state.wall.goldIsEarned ? .binnenlaten : .kiezen)
+            self.advance(to: self.state.friend != nil ? .naarTuin : .kiezen)
         })
     }
 
@@ -482,40 +474,38 @@ final class BakkerijRoom: Room {
             }
         }
 
-        voice.sayInstead([BakkerijLine.gekozen])
-        advance(to: .binnenlaten, after: 1.1)
+        voice.sayInstead(BakkerijLine.gekozen)
+        advance(to: .naarTuin)
     }
 
-    // MARK: - binnenlaten
+    // MARK: - naarTuin
 
-    /// The bell, rung by the friend outside. §6.1 keeps this out of her hands on
-    /// purpose — it is what lets the bell stay a toy rather than become a step.
-    private func ringBell(thenInvite: Bool) {
-        jobs.append(ticker.after(0.9) { [weak self] in
-            guard let self else { return }
-            self.sound.play(.ding)
-            if let swing = self.bell?.swing {
-                self.jobs.append(self.ticker.wiggle(swing, angle: 0.5, duration: 0.9))
-            }
-            self.baker?.set(.cheering)
-            self.voice.sayInstead(BakkerijLine.bel)
-            if thenInvite {
-                self.jobs.append(self.ticker.after(0.5) { [weak self] in
-                    self?.inviteShopDoor()
-                })
-            }
-        })
-    }
+    /// The friend of the day, already in the shop. Not a fetch: she picked them
+    /// on the wall, and they are here. The shop door swings ajar as a beat, not
+    /// as a step, and the bell is a ding rather than an instruction to open it.
+    private func presentFriendIfNeeded(arriving: Bool) {
+        guard guest == nil, let friend = state.friend else { return }
 
-    /// The shop door, ajar and lit — but **only while `binnenlaten` is running**.
-    /// The moment the friend is inside this is withdrawn, because from then on
-    /// the only thing in the room allowed to mean "this is finished" is the back
-    /// door (`ROOMS.md` §9).
-    private func inviteShopDoor() {
-        guard state.step == .binnenlaten else { return }
+        let visitor = GuestCharacter(friend: friend, role: .gast, style: .zwaaien,
+                                     at: BakkerijLayout.friendSpot, phase: 0,
+                                     ticker: ticker, flat: flat)
+        root.addChild(visitor.root)
+        visitor.settle()
+        guest = visitor
         applyShopDoor(ajar: true)
-        shopDoor?.glow.model?.materials = [Palette.glowMaterial(Palette.butterYellow,
-                                                                intensity: 1.6)]
+
+        if arriving {
+            baker?.set(.cheering)
+            ticker.squash(visitor.root, amount: 0.10, duration: 0.4)
+            jobs.append(ticker.after(0.4) { [weak self] in
+                guard let self else { return }
+                self.sound.play(.ding)
+                if let swing = self.bell?.swing {
+                    self.jobs.append(self.ticker.wiggle(swing, angle: 0.5, duration: 0.9))
+                }
+            })
+        }
+        refreshContactShadows(settings: settings)
     }
 
     private func applyShopDoor(ajar: Bool = false) {
@@ -535,160 +525,21 @@ final class BakkerijRoom: Room {
 
     private func endShopDoorDrag() {
         dragFrom = nil
-        if doorProgress > 0.5 {
-            letTheFriendIn()
-        } else {
-            noteMiss()
-            jobs.append(ticker.tween(0.3, step: { [weak self] t in
-                guard let self else { return }
-                self.doorProgress *= (1 - t)
-                self.applyShopDoor(ajar: true)
-            }))
-        }
-    }
-
-    private func letTheFriendIn() {
-        guard let friend = state.friend else { return }
-        noteHit()
-        sound.play(.whoosh)
-
-        jobs.append(ticker.tween(0.4, step: { [weak self] t in
+        // A toy: past halfway it finishes open, otherwise it settles shut.
+        // Nothing about the round changes.
+        let target: Float = doorProgress > 0.5 ? 1 : 0
+        jobs.append(ticker.tween(0.3, step: { [weak self] t in
             guard let self else { return }
-            self.doorProgress = self.doorProgress + (1 - self.doorProgress) * t
+            self.doorProgress = self.doorProgress + (target - self.doorProgress) * t
             self.applyShopDoor()
         }))
-
-        // **The friend is a `GuestCharacter`.** The eleven animals already exist,
-        // built from one body and a swapped head, and this room does not get to
-        // invent a twelfth way of drawing one.
-        let visitor = GuestCharacter(friend: friend, role: .gast, style: .zwaaien,
-                                     at: BakkerijLayout.friendEntry, phase: 0,
-                                     ticker: ticker, flat: flat)
-        root.addChild(visitor.root)
-        visitor.settle()
-        guest = visitor
-
-        // They walk to the counter, and Nina says hello when they get there.
-        jobs.append(ticker.move(visitor.root, to: BakkerijLayout.friendSpot,
-                                duration: 1.5, arc: 0.004, done: { [weak self] in
-            guard let self else { return }
-            self.ticker.squash(visitor.root, amount: 0.10, duration: 0.4)
-            self.voice.sayInstead(BakkerijLine.binnen)
-            self.giveCard(to: friend)
-            self.advance(to: .bestellen, after: 0.5)
-        }))
-
-        // And the shop door stops being a cue the moment it has been used.
-        jobs.append(ticker.after(1.2) { [weak self] in
-            self?.shopDoor?.glow.model?.materials = [Palette.material(Palette.butterYellow)]
-        })
-    }
-
-    // MARK: - bestellen
-
-    /// The wish card, held out over the counter.
-    private func giveCard(to friend: Friend) {
-        let node = BakkerijProps.wishCard(for: friend, flat: flat)
-        node.position = [BakkerijLayout.friendSpot.x + 0.020, 0.096,
-                         BakkerijLayout.friendSpot.z - 0.012]
-        node.orientation = simd_quatf(angle: .pi / 2, axis: [0, 1, 0])
-        root.addChild(node)
-        card = node
-
-        // **Registered here rather than in `registerTargets`**, because a target
-        // with no entity is skipped by the hit test outright — `TouchRouter`
-        // guards on `let entity = target.entity`. `remove(prefixed:)` first
-        // because `register` appends (`ROOMS.md` §11's trap).
-        touch.remove(prefixed: "kaart")
-        touch.register("kaart", entity: node, radius: 0.030,
-                       planeY: BakkerijLayout.cardHangCentre.y) { [weak self] target in
-            target.onDragBegan = { [weak self] world in self?.dragFrom = world }
-            target.onDragMoved = { [weak self] world in self?.dragCard(to: world) }
-            target.onDragEnded = { [weak self] _ in self?.endCardDrag() }
-            target.onTap = { [weak self] in
-                guard let self, let friend = self.state.friend else { return }
-                self.voice.say(BakkerijLine.wish(for: friend))
-            }
-        }
-
-        // Nina relays the wish in her own words — `GAMEPLAY.md` §4, and the same
-        // line the card replays all round when it is tapped.
-        voice.sayWhenQuiet([BakkerijLine.wish(for: friend), BakkerijLine.bestellen])
-    }
-
-    private func dragCard(to world: SIMD3<Float>) {
-        guard let card else { return }
-        card.position = [world.x, BakkerijLayout.cardHangCentre.y, world.z]
-    }
-
-    private func endCardDrag() {
-        dragFrom = nil
-        guard let card else { return }
-        let landed = RoomBox.distanceXZ(card.position, BakkerijLayout.cardHangCentre)
-        guard landed < BakkerijLayout.cardSnapRadius else {
-            // **Nothing is put back.** `ROOMS.md` §6: a wrong drag is not wrong
-            // and it is not undone — the card stays where she let go of it and
-            // stays draggable.
-            noteMiss()
-            return
-        }
-        hangCard(card)
-    }
-
-    private func hangCard(_ card: Entity) {
-        noteHit()
-        sound.play(.plop)
-        guard let friend = state.friend else { return }
-
-        jobs.append(ticker.move(card, to: BakkerijLayout.cardHangCentre,
-                                duration: 0.25, arc: 0.004, done: { [weak self] in
-            guard let self else { return }
-            self.ticker.wiggle(card, angle: 0.18, duration: 0.6)
-            Sparkles.burst(at: BakkerijLayout.cardHangCentre, in: self.root,
-                           ticker: self.ticker, colour: Palette.butterYellow,
-                           count: 6, size: 0.0024, speed: 0.06, life: 0.6, glow: 1.2)
-
-            // **Then it flies to the corner and becomes the wish card.** §4 makes
-            // it the only persistent interface element in the game; §6.1 makes
-            // her hang it first, so it is earned rather than chrome.
-            self.jobs.append(self.ticker.after(0.7) { [weak self] in
-                guard let self else { return }
-                self.jobs.append(self.ticker.tween(0.45, step: { t in
-                    card.scale = .init(repeating: max(0.01, 1 - t))
-                    card.position = BakkerijLayout.cardHangCentre
-                        + SIMD3<Float>(0, 0.05 * t, 0.06 * t)
-                }, done: { [weak self] in
-                    card.removeFromParent()
-                    self?.card = nil
-                    self?.onWishCard?(friend)
-                }))
-                self.voice.sayInstead(BakkerijLine.naarTuin)
-                self.openTheWayOut()
-            })
-        }))
-    }
-
-    /// The back door lights, and from here the room is finished with her.
-    ///
-    /// The halo moves from the hook to the door rather than a second one being
-    /// added — `ROOMS.md` §3: exactly one thing is lit.
-    private func openTheWayOut() {
-        Halo.remove(halo, ticker: ticker)
-        halo = nil
-        refreshDoorInvitation()
-        if let door = backDoor?.root {
-            halo = Halo.attach(to: door, radius: 0.026, ticker: ticker) { _ in
-                RoomBox.floorY
-            }
-        }
     }
 
     // MARK: - ophangen — the return leg
 
     private func buildPhotograph() {
         guard let result = state.result else { return }
-        let fill = FrameFill(version: 1, cake: result.cake,
-                             wishMatched: result.matched, when: Date())
+        let fill = FrameFill(version: 1, cake: result.cake, when: Date())
         let node = BakkerijProps.photograph(of: fill, friend: result.friend, flat: flat)
         node.position = BakkerijLayout.photoRest
         node.position.y += 0.022
@@ -755,8 +606,7 @@ final class BakkerijRoom: Room {
 
             // **The wall is written here and nowhere else**, and the round is
             // cleared with it: the photograph is hung, so today is over.
-            self.state.wall.fill(friend, with: result.cake, matched: result.matched,
-                                 when: Date())
+            self.state.wall.fill(friend, with: result.cake, when: Date())
             self.persistWall(clearingRound: true)
 
             // The ghost is gone: the frame is rebuilt holding the photograph.
@@ -785,7 +635,6 @@ final class BakkerijRoom: Room {
                            colour: Palette.butterYellow, count: 14, size: 0.0030,
                            speed: 0.09, life: 0.9, glow: 1.6)
             self.baker?.set(.cheering)
-            self.onWishCard?(nil)
             self.paintSign()
             self.finishTheDay()
         }))
@@ -840,7 +689,7 @@ final class BakkerijRoom: Room {
     /// light behind it, and the ring on the floor at the threshold.
     private func refreshDoorInvitation() {
         guard let door = backDoor else { return }
-        let open = state.step == .bestellen && card == nil
+        let open = state.step == .naarTuin
         let ajarAngle: Float = 11 * .pi / 180
         door.hinge.orientation = simd_quatf(angle: open ? ajarAngle : 0, axis: [0, 1, 0])
         door.glow?.model?.materials = open
@@ -849,7 +698,7 @@ final class BakkerijRoom: Room {
     }
 
     private func leaveForTheGarden() {
-        guard state.step == .bestellen, card == nil, let friend = state.friend else { return }
+        guard state.step == .naarTuin, let friend = state.friend else { return }
         sound.play(.whoosh)
 
         if let door = backDoor {
@@ -944,7 +793,11 @@ final class BakkerijRoom: Room {
                 target.onDragMoved = { [weak self] world in self?.dragShopDoor(to: world) }
                 target.onDragEnded = { [weak self] _ in self?.endShopDoorDrag() }
                 target.onTap = { [weak self] in
-                    self?.voice.say(BakkerijLine.ditWinkeldeur, priority: .low)
+                    guard let self else { return }
+                    if let leaf = self.shopDoor?.hinge {
+                        self.ticker.squash(leaf, amount: 0.12, duration: 0.35)
+                    }
+                    self.voice.say(BakkerijLine.ditWinkeldeur, priority: .low)
                 }
             }
         }
@@ -963,7 +816,7 @@ final class BakkerijRoom: Room {
                            planeY: RoomBox.floorY) { [weak self] target in
                 target.onTap = { [weak self] in
                     guard let self else { return }
-                    if self.state.step == .bestellen, self.card == nil {
+                    if self.state.step == .naarTuin {
                         self.leaveForTheGarden()
                     } else {
                         self.voice.say(Line.ditDeur, priority: .low)
@@ -973,9 +826,9 @@ final class BakkerijRoom: Room {
         }
     }
 
-    /// **Five toys, none of them consumed by anything** (`ROOMS.md` §8, and
-    /// §6.1's own list). The bell is rung by the friend rather than by her, which
-    /// is what keeps it on this side of the line.
+    /// **Toys, none of them consumed by anything** (`ROOMS.md` §8, and §6.1's
+    /// own list). The shop door and the order hook used to be steps; they are
+    /// toys now, which is what keeps them on this side of the line.
     private func registerToyTargets() {
         if let cat {
             touch.register("poes", entity: cat, radius: BakkerijLayout.catRadius,
@@ -1136,6 +989,7 @@ final class BakkerijRoom: Room {
             switch self.state.step {
             case .opendoen: self.voice.say(BakkerijLine.opendoen)
             case .kiezen: self.voice.say(BakkerijLine.kiezen)
+            case .naarTuin: self.voice.say(BakkerijLine.naarTuin)
             default: break
             }
         })
@@ -1172,7 +1026,6 @@ final class BakkerijRoom: Room {
     /// of baking is not one a 4-year-old should be able to find, and the wall is
     /// not the round's to throw away.
     func restartRound() {
-        onWishCard?(nil)
         persistWall(clearingRound: true)
         guest?.stop()
         guest = nil
@@ -1268,8 +1121,15 @@ final class BakkerijRoom: Room {
             self.idleTime += dt
             if self.nudgeStage == 0, self.idleTime > 45, self.state.step != .klaar {
                 self.nudgeStage = 1
-                self.voice.say(self.alternateNudge ? Line.stil : BakkerijLine.wacht,
-                               priority: .low)
+                let nudge: String
+                if self.alternateNudge {
+                    nudge = Line.stil
+                } else if self.state.step == .naarTuin {
+                    nudge = BakkerijLine.naarTuin
+                } else {
+                    nudge = BakkerijLine.wacht
+                }
+                self.voice.say(nudge, priority: .low)
                 self.alternateNudge.toggle()
             }
             if self.idleTime > 105 { self.idleTime = 0; self.nudgeStage = 0 }
@@ -1297,8 +1157,7 @@ final class BakkerijRoom: Room {
     private var litProp: Entity? {
         switch state.step {
         case .opendoen: return blind?.knob
-        case .binnenlaten: return shopDoor?.hinge
-        case .bestellen: return card ?? hook
+        case .naarTuin: return backDoor?.root
         case .ophangen: return photo
         default: return nil
         }
@@ -1310,8 +1169,7 @@ final class BakkerijRoom: Room {
         switch state.step {
         case .opendoen: return BakkerijLine.opendoen
         case .kiezen: return BakkerijLine.kiezen
-        case .binnenlaten: return BakkerijLine.bel
-        case .bestellen: return BakkerijLine.bestellen
+        case .naarTuin: return BakkerijLine.naarTuin
         case .ophangen: return BakkerijLine.ophangen
         case .klaar: return BakkerijLine.klaar
         }
@@ -1377,7 +1235,6 @@ final class BakkerijRoom: Room {
         guest = nil
         baker?.stop()
         baker = nil
-        card = nil
         photo = nil
         dragFrom = nil
         touch.onEmptyTap = nil
@@ -1411,14 +1268,14 @@ final class BakkerijRoom: Room {
     /// curtain can be looked at without playing four rooms first.
     private func debugReturnWithCake() {
         let friend = state.wall.waiting.randomElement() ?? .pip
-        let result = FeestResult(friend: friend, cake: CakeSpec.dealt(), matched: true)
+        let result = FeestResult(friend: friend, cake: CakeSpec.dealt())
         state = .returning(wall: state.wall, result: result)
         build(flat: flat)
     }
 
     private func debugFillWall() {
         for friend in Friend.allCases where !state.wall.isFilled(friend) {
-            state.wall.fill(friend, with: CakeSpec.dealt(), matched: true, when: Date())
+            state.wall.fill(friend, with: CakeSpec.dealt(), when: Date())
         }
         persistWall()
         state = .outbound(wall: state.wall, shopOpen: BakkerijRoom.shopOpenedThisSitting)
@@ -1450,9 +1307,6 @@ enum BakkerijLine {
     static let openGedaan = "nina.bakkerij.openGedaan"
     static let kiezen = "nina.bakkerij.kiezen"
     static let gekozen = "nina.bakkerij.gekozen"
-    static let bel = "nina.bakkerij.bel"
-    static let binnen = "nina.bakkerij.binnen"
-    static let bestellen = "nina.bakkerij.bestellen"
     static let naarTuin = "nina.bakkerij.naarTuin"
 
     static let ophangen = "nina.bakkerij.ophangen"
@@ -1461,13 +1315,6 @@ enum BakkerijLine {
 
     static let wacht = "nina.bakkerij.wacht"
     static let opnieuw = "nina.bakkerij.opnieuw"
-
-    /// **Nina repeating today's wish in her own words** — `GAMEPLAY.md` §4, and
-    /// also what the persistent wish card replays when it is tapped. Derived off
-    /// the enum case, the `Friend.thanksLineID` rule.
-    static func wish(for friend: Friend) -> String {
-        "nina.bakkerij.wens.\(friend.rawValue)"
-    }
 
     // The naming layer. §3: *"drag to play, tap to find out what a thing is
     // called."*

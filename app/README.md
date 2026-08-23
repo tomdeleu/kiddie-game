@@ -6,10 +6,11 @@ voice, in one RealityKit app that runs on the iPad.
 
 > **De Bakkerij is the newest**, landed on this branch. Its section is
 > [below](#de-bakkerij--the-hub). The short version is that it is the wall of
-> twelve frames, that a round starts by pulling the shop blind up, and that the
-> cake she taps at the party comes home as a photograph she hangs herself. It
-> came from a container, so the handover names the risky edits rather than the
-> whole room. See [what it owes](#what-it-owes-2).
+> twelve frames: a round starts by picking a grey ghost, and the cake she taps
+> at the party comes home as a photograph she hangs herself. Opening the shop
+> is once a sitting. The shop door and the hook are toys. It came from a
+> container, so the handover names the risky edits rather than the whole room.
+> See [what it owes](#what-it-owes-2).
 
 Most of this file is about **the kitchen**, which is the reference
 implementation and the reason everything else is cheap. The decorating room is
@@ -55,7 +56,7 @@ below is still the record of that.
 
 | | | |
 |---|---|---|
-| **De Bakkerij** | `GAMEPLAY.md` §6.1 | Open the shop, pick a grey frame, let the friend in, hang their wish. Hang the photograph when she comes home |
+| **De Bakkerij** | `GAMEPLAY.md` §6.1 | Open the shop once a sitting, pick a grey frame, go to the garden. Hang the photograph when she comes home |
 | **De Tuin** | `GAMEPLAY.md` §6.2 | Plant, water, pick. Five ingredients into the basket |
 | **De Keuken** | `GAMEPLAY.md` §6.3 | Roll, fill, stir, pour, bake, and carry the cake onto the plank |
 | **Versieren** | `GAMEPLAY.md` §6.4 | Turn, pipe, shake, press stickers on, light the candle |
@@ -1264,7 +1265,7 @@ up. Left alone.
 |---|---|---|
 | `zaaien` | Drags a seed from one of **eight jars** into one of **five holes** | A plop, sparkles in the seed's colour, a mound of turned earth, and Nina saying it is in the ground |
 | `gieten` | Sweeps the watering can across the bed | The can tips, water runs from its rose, and **every plant it passes over grows one stage** |
-| `plukken` | Taps a ripe plant | The fruit flies into the basket while the plant folds back into the earth, and Nina names the colour it will give the cake |
+| `plukken` | Drags a ripe plant into the basket | The plant shrinks into the basket, the fruit lands among the others, and Nina names the colour it will give the cake |
 | `klaar` | — | The basket is full, the door is ajar and lit, and the harvest is written for the kitchen |
 
 **The step is derived from the bed, not stored independently of it.** Any hole
@@ -1317,22 +1318,27 @@ instead of a travel count.
 is more than the 42 mm between one hole and the next — watering from where the
 handle is would water the wrong plant.
 
-### Picking is a tap, and that is the one exception
+### Picking is a drag, like everything else
 
-Everywhere else in the game, **drag to play, tap to learn the word**. Here a
-tap on a *ripe* plant picks it, which is `GAMEPLAY.md` §6.2's own instruction:
-"tap the ripe plant and it hops into the basket."
+Everywhere in the game, **drag to play, tap to learn the word**. It used to
+make an exception here: a tap on a *ripe* plant picked it, which was
+`GAMEPLAY.md` §6.2's own instruction as first written. The owner reversed it
+on 2026-08-23 — dragging a flower into a basket is more fun than tapping it
+and watching it hop, and it means a tap on a ripe plant can finally name the
+ingredient the way a tap on a seed jar already does.
 
-The split is stated rather than hidden: **a ripe plant's tap picks it; an unripe
-one, or an empty hole, says what it is.** It survives because five taps is a
-cheap middle of a round and the room already has eight drags in it — and because
-what she hears on picking is `nina.ingredient.*`, the kitchen's own line naming
-the colour that ingredient will give the cake. That is exactly what she wants to
-know at the moment she picks it, and it means the word she learns in the garden
-is the word she hears in the kitchen.
+A miss floats home to its hole. A planted plant is not a free prop: leaving it
+on the grass would leave an empty-looking hole she cannot sow in. The kitchen's
+berry that did not reach the bowl is the same answer.
 
-The fruit flies and the plant does not. She picked a strawberry, not a
-strawberry plant.
+What she hears on picking is still `nina.ingredient.*`, the kitchen's own line
+naming the colour that ingredient will give the cake. That is exactly what she
+wants to know at the moment she picks it, and it means the word she learns in
+the garden is the word she hears in the kitchen.
+
+**The three `nina.tuin.rijp` mp3s still tell her to tap.** The script text is
+updated; the recordings are not. Until they are regenerated, Nina's nudge is a
+lie — a tap names the plant instead of picking it.
 
 ### The toys
 
@@ -1391,7 +1397,7 @@ Six, none of which gate anything:
 
   **Nothing is in the water, and that is now four moves deep.** The basket was
   in the middle of it and took the molehill's ground in front of the bed — where
-  a basket wants to be anyway, since a picked plant hops into it from the bed;
+  a basket wants to be anyway, since a picked plant is dragged into it from the bed;
   the molehill went out to the lawn in front of the bench; the butterfly hovers
   over the middle of the open floor. The flower row's near end is the only thing
   still close, at 34 mm — a flower at the water's edge rather than a flower in
@@ -2105,7 +2111,7 @@ long-standing limitation, not a setup problem.
 
 ### First build
 
-> **It has now happened three times**, and all three are worth reading, because
+> **It has now happened four times**, and all four are worth reading, because
 > together they are the only evidence this project has about what
 > correct-by-construction actually misses.
 >
@@ -2145,12 +2151,21 @@ long-standing limitation, not a setup problem.
 > the hill, and rails buried 3.5 mm inside every picket they passed. A compiler
 > would have passed all five. `models/README.md` has them.
 >
-> **The pattern across all eight compiler errors: none of them was a number, and
+> **Build four** — De Bakkerij, Xcode 26.6, iPad Air 13-inch (M4) Simulator,
+> Debug, 2026-08-21. **One error**, and it is build two's third item again:
+> `BakkerijProps.wishMark` called `VersierProps.sticker` from a nonisolated
+> helper. `VersierProps` is `@MainActor`; the bakery's prop builders were not.
+> Isolation was pulled up through `wishCard`, `photograph`, `FrameWall.picture`,
+> `frame` and `goldFrame`. Their only caller is `BakkerijRoom`, already on the
+> main actor. The `[weak rebuilt]` capture and the wish-switch `_` patterns
+> were fixed before this compile, so they did not fire.
+>
+> **The pattern across all nine compiler errors: none of them was a number, and
 > none of them was a prediction.** The five below did not fire on any build.
-> Every one of the eight was *scope, isolation, or a type's kind* — which is
+> Every one of the nine was *scope, isolation, or a type's kind* — which is
 > precisely the category a careful reader cannot check and a compiler settles in
 > a second. The lesson for the next room written without a toolchain is not
-> "check the constants harder"; the constants have been fine three times. It is
+> "check the constants harder"; the constants have been fine four times. It is
 > that **a file move and a new call into main-actor code are the two edits that
 > most need a build behind them** — and, from build three, that **geometry needs
 > an eye rather than a compiler**: ten props built correct-by-construction were
@@ -2900,13 +2915,16 @@ rides on a tap that lands on the empty floor.
 ## De Bakkerij — the hub
 
 The wall of twelve frames, and the only room she passes through twice in a
-round. `GAMEPLAY.md` §6.1. Outbound: `opendoen`, `kiezen`, `binnenlaten`,
-`bestellen`. Home: `ophangen`, then `klaar` and the curtain.
+round. `GAMEPLAY.md` §6.1. Outbound is a hub, not a spine: `opendoen` once a
+sitting, `kiezen`, `naarTuin`. The shop door and the order hook are toys. Home:
+`ophangen`, then `klaar` and the curtain.
 
 **Nina is four, so this is the first room she sees.** Title plate, film on first
 launch only, then twelve grey ghosts and a shop blind. Pulling the cord is what
-makes an empty bakery worth standing in. `kiezen` has no halo. Eleven ghosts are
-eleven equally right answers, so they breathe on a slow rolling wave instead.
+makes an empty bakery worth standing in, once a sitting. `kiezen` has no halo.
+Eleven ghosts are eleven equally right answers, so they breathe on a slow
+rolling wave instead. Pick one and they are in the shop, the wish is in the
+corner, and the back door lights. The shop door and the hook are toys.
 
 A round is for the friend she picked. The garden's idle shimmer sits on that
 friend's seed jar. The decorating room's idle shimmer sits on that friend's
@@ -2946,15 +2964,6 @@ on disk from the 2026-08-17 bakery branch. Job IDs live in
 
 ### What it owes
 
-- **A compiler pass in Xcode.** This room was written in a container. The error
-  the first 2026-08-16 build actually caught was already in `hangPhoto`:
-  `[weak rebuilt]` on `FrameWall.Frame`, which is a struct — the garden's
-  `[weak can]` on `WateringCan`. The closure wants the moulding, so that is
-  what is captured. `ticker.move` now labels `done:`, the warning that first
-  build cleaned up while it had the compiler open. Wish switches that ignored
-  an associated value now write `_` rather than omitting the payload, which is
-  the pattern the language guide requires. There is still no Swift toolchain
-  here.
 - **Nina in the bakery**, with the protocol in `POC.md`. Touch radii were
   inherited from the kitchen's box.
 - **Gold-frame replay of the opening film.** §2 still wants the film somewhere

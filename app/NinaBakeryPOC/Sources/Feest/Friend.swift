@@ -1,14 +1,12 @@
 import Foundation
 
-/// **The eleven friends, and the one function that decides whether a cake
-/// matched.**
+/// **The eleven friends.**
 ///
-/// Straight out of `GAMEPLAY.md` §4, and it lives here rather than beside
-/// `CakeSpec` for the reason §4 gives: *"matching is a pure function of the
-/// finished `CakeSpec` plus its stickers, and it is evaluated once, at the
-/// party. Nothing anywhere else in the game looks at it — not the garden's hint,
-/// not the kitchen, not the decorating room."* Putting it in `Game/` would make
-/// it look like something four rooms share. One room reads it.
+/// Straight out of `GAMEPLAY.md` §4. They live here rather than in `Game/`
+/// because the party is the room that stands them up; the bakery only needs
+/// to know *who* is coming, and the wall only needs a name to hang a photo
+/// under. Putting them beside `CakeSpec` would make them look like something
+/// a cake is scored against, which it is not.
 ///
 /// **All eleven are animals**, because animals are cheap in this style — one
 /// body plus a swapped head and colour — and a 4-year-old reads them instantly.
@@ -99,23 +97,6 @@ enum Friend: String, Codable, CaseIterable, Identifiable {
         }
     }
 
-    /// What they love. `GAMEPLAY.md` §4's table, one case per row.
-    var wish: Wish {
-        switch self {
-        case .pip: return .sprinkels(8)
-        case .bella: return .kleur(.roze)
-        case .bas: return .kleur(.geel)
-        case .kiki: return .effect(.fonkelt)
-        case .bram: return .kleur(.groen)
-        case .bo: return .kleur(.blauw)
-        case .wolkje: return .effect(.hoog)
-        case .mo: return .stickers(.kaarsje, 3)
-        case .roos: return .stickers(.hartje, 3)
-        case .tobi: return .stickers(.sterretje, 3)
-        case .nel: return .tweeKleuren
-        }
-    }
-
     /// **Nina relaying the thanks, by name.**
     ///
     /// `GAMEPLAY.md` §6.5 asks for the friend of the day to thank her *by name*,
@@ -128,56 +109,6 @@ enum Friend: String, Codable, CaseIterable, Identifiable {
     /// are cast this id is what gets re-pointed. Derived off the case name for
     /// the `Ingredient.nameLineID` reason — a typo in a line id is silence.
     var thanksLineID: String { "nina.feest.dank.\(rawValue)" }
-
-    /// **The wish, evaluated.** Pure, total, and read exactly once per party.
-    ///
-    /// Note what it does *not* do: there is no "almost", no score and no second
-    /// outcome. `GAMEPLAY.md` §4 is explicit that a friend who did not get their
-    /// wish is exactly as delighted, in a different line — so all this decides is
-    /// **which happy thing happens**, never whether one does.
-    func matches(_ cake: CakeSpec) -> Bool {
-        switch wish {
-        case .kleur(let colour):
-            return cake.colours.contains(colour)
-        case .effect(let effect):
-            return cake.effects.contains(effect)
-        case .sprinkels(let count):
-            return cake.count(of: .sprinkel) >= count
-        case .stickers(let kind, let count):
-            return cake.count(of: kind) >= count
-        case .tweeKleuren:
-            return cake.colours.count >= 2
-        }
-    }
-
-    /// **Which tray or jar shimmers.** `GAMEPLAY.md` §6.2 and §6.4 both put a
-    /// hint on the wish, and both ask the wish what it is about without knowing
-    /// the eleven. The garden and the decorating room read this off the friend
-    /// rather than re-deriving the table.
-    var hintedSticker: StickerKind? {
-        if case .stickers(let kind, _) = wish { return kind }
-        if case .sprinkels = wish { return .sprinkel }
-        return nil
-    }
-
-    var hintedColour: CakeColour? {
-        if case .kleur(let colour) = wish { return colour }
-        return nil
-    }
-
-    /// **Which seed jar shimmers**, for a colour or effect wish. Decoration
-    /// wishes have no jar. Derived here so the garden does not re-walk §4.
-    var hintedIngredient: Ingredient? {
-        if let colour = hintedColour {
-            return Ingredient.allCases.first { $0.colour == colour }
-        }
-        switch wish {
-        case .effect(.fonkelt): return .sterrensuiker
-        case .effect(.hoog): return .wolkenroom
-        case .effect(.glimt): return .honing
-        default: return nil
-        }
-    }
 
     /// **A friend nobody chose**, for a party entered without one.
     ///
@@ -208,24 +139,4 @@ enum Friend: String, Codable, CaseIterable, Identifiable {
     enum Soort: String {
         case muis, vlinder, beer, kat, kikker, vogel, schaap, mol, egel, hond, slak
     }
-}
-
-/// What a friend loves, in the terms the cake is actually made of.
-///
-/// It is an enum rather than a closure so that a wish can be *asked what it is
-/// about* — which is what the garden's shimmering seed jar and the decorating
-/// room's shimmering tray both need, and neither of them can call a predicate.
-enum Wish: Equatable {
-    /// The cake's colours include this one.
-    case kleur(CakeColour)
-    /// The cake carries this effect — Kiki's glitter, Wolkje's height.
-    case effect(CakeEffect)
-    /// At least this many sprinkles. Pip's, and the reason the decorating room
-    /// places sprinkles as countable objects rather than as a density.
-    case sprinkels(Int)
-    /// At least this many of one sticker. **Placed, not lit** — `CakeSpec`
-    /// documents why Mo's three candles must not depend on lighting them.
-    case stickers(StickerKind, Int)
-    /// Nel's shell: two colours through each other.
-    case tweeKleuren
 }

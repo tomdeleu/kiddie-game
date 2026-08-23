@@ -32,8 +32,7 @@ enum Palette {
 
     /// **Two colours the locked thirteen do not contain.**
     ///
-    /// `GAMEPLAY.md` §5 needs a blue: the toverbosbes gives one, and Bo de
-    /// vogel's whole wish is a blue cake. The palette sampled from the plates
+    /// `GAMEPLAY.md` §5 needs a blue: the toverbosbes gives one. The palette sampled from the plates
     /// has pink, mint, sage, cream, butter and wood, and no blue at all — the
     /// cottage and kitchen plates simply had none in frame.
     ///

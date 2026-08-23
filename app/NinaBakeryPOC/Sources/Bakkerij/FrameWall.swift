@@ -46,6 +46,9 @@ enum FrameWall {
     }
 
     /// Build one frame in whichever state the wall says it is in.
+    /// `@MainActor` because a filled frame calls `picture`, which calls
+    /// `VersierProps.sticker`. The only caller is `BakkerijRoom`.
+    @MainActor
     static func frame(for friend: Friend, fill: FrameFill?, flat: Bool) -> Frame {
         let size = BakkerijLayout.frameSize
         let root = Entity()
@@ -79,6 +82,7 @@ enum FrameWall {
     /// Larger and gold, and it stays grey until the other eleven are in colour —
     /// §2: *"the only thing in the game that waits, and it is worth the
     /// exception."*
+    @MainActor
     static func goldFrame(earned: Bool, fill: FrameFill?, flat: Bool) -> Frame {
         let size = BakkerijLayout.goldSize
         let root = Entity()
@@ -123,7 +127,7 @@ enum FrameWall {
     /// the plaster so it has a lit edge at this camera.
     private static func buildMoulding(size: Float, colour: UIColorLike,
                                       flat: Bool) -> ModelEntity {
-        let bar: Float = 0.006
+        let bar = BakkerijLayout.frameMoulding
         let depth = BakkerijLayout.frameDepth
 
         // The back panel *is* the model entity the frame is identified by, so the
@@ -255,7 +259,7 @@ enum FrameWall {
                 node.addChild(spine)
             }
         case .slak:
-            // The shell, which is Nel's whole silhouette and her whole wish.
+            // The shell, which is Nel's whole silhouette.
             let shell = model(.prism(radius: 0.009, height: 0.002, sides: 10),
                                           grey, flat: flat, name: "SpookHuisje")
             shell.orientation = simd_quatf(angle: .pi / 2, axis: [1, 0, 0])
@@ -307,6 +311,8 @@ enum FrameWall {
     /// keep working untouched — `CakeSurface` is asked for positions at the cake's
     /// real size and the result is shrunk, which is the only order that keeps a
     /// candle on the rim it was placed on.
+    /// `@MainActor` because `VersierProps` is isolated.
+    @MainActor
     static func picture(of fill: FrameFill, friend: Friend?, scale: Float,
                         flat: Bool) -> Entity {
         let root = Entity()

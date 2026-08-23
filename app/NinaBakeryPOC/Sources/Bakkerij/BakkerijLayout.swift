@@ -65,6 +65,9 @@ enum BakkerijLayout {
 
     static let frameSize: Float = 0.040
     static let frameDepth: Float = 0.011
+    /// The moulding standing outside the panel. `FrameWall` draws it, and the
+    /// geometry assert below measures it, so a change here moves both.
+    static let frameMoulding: Float = 0.006
     /// The gold frame is bigger, because §2 asks it to be: *"larger and gold…
     /// it gives the wall a shape and gives the last cake a weight the other
     /// eleven cannot have."*
@@ -100,9 +103,18 @@ enum BakkerijLayout {
         return framePosition(column: s.column, row: s.row)
     }
 
+    /// **Hung lower than the bottom row**, because a 52 mm frame cannot sit on
+    /// a 45 mm pitch without eating the ghost above it. The eleven keep the
+    /// pitch the camera needed; the gold one hangs into the air above the
+    /// counter, which is also how a larger corner frame reads.
+    static let goldY: Float = 0.104
+
     static var goldPosition: SIMD3<Float> {
-        framePosition(column: goldSlot.column, row: goldSlot.row)
+        SIMD3<Float>(frameX, goldY, columnZ[goldSlot.column])
     }
+
+    /// Half-extent including the moulding, for the geometry assert.
+    static func frameOuter(_ size: Float) -> Float { size / 2 + frameMoulding }
 
     /// How much of a frame's inside the photograph fills, and how big the cake
     /// standing in it is. The cake is `CakeGeometry`'s own 52 mm-wide stack, so
@@ -142,13 +154,12 @@ enum BakkerijLayout {
 
     /// The shop door — `references/bakkerij/winkeldeur.png`. **Not
     /// `Props.doorway`**: that prop carries `ROOMS.md` §9's three-cue grammar for
-    /// *the way out*, and this door is a step rather than an exit. The room has
-    /// two door-shaped things in it and only one of them may ever mean "this is
-    /// finished".
+    /// *the way out*, and this door is a toy. The room has two door-shaped
+    /// things in it and only one of them may ever mean "this is finished".
     static let shopDoorCentre = SIMD3<Float>(0.108, RoomBox.floorY, backPropZ)
     static let shopDoorOpening = SIMD2<Float>(0.076, 0.132)
     static let shopDoorRadius: Float = 0.040
-    /// Where the friend stands once she has let them in — in front of the
+    /// Where the friend stands once they have arrived — in front of the
     /// counter, facing the open corner.
     static let friendSpot = SIMD3<Float>(-0.104, RoomBox.floorY, -0.086)
     /// And where they come in from, just inside the shop door.
@@ -165,8 +176,8 @@ enum BakkerijLayout {
 
     // MARK: - The order hook, the drawings, and the way out
 
-    /// `GAMEPLAY.md` §6.1 puts the hook *"by the back door"*, and it is the
-    /// destination end of `bestellen`'s journey.
+    /// `GAMEPLAY.md` §6.1 puts the hook *"by the back door"*. It used to be
+    /// the drop for the wish card; it is a toy now.
     static let hookCentre = SIMD3<Float>(frameX, 0.122, 0.120)
     static let hookRadius: Float = 0.026
     /// Where the card hangs once she has landed it, a little below the hook.
@@ -206,10 +217,10 @@ enum BakkerijLayout {
     // MARK: - Surfaces
 
     /// The counter, and the floor. Short, because **nothing in this room is
-    /// carried** — the card and the photograph are dragged in a vertical plane
-    /// against a wall, which `CarryController` is the wrong tool for. What this
-    /// is for is the halo: `Halo.attach` asks what a prop is standing on, and the
-    /// cord knob and the photograph both stand over the counter.
+    /// carried** — the photograph is dragged in a vertical plane against a wall,
+    /// which `CarryController` is the wrong tool for. What this is for is the
+    /// halo: `Halo.attach` asks what a prop is standing on, and the cord knob
+    /// and the photograph both stand over the counter.
     static let surfaces = Surfaces(
         floorY: RoomBox.floorY,
         rects: [Surfaces.Rect(centre: counterCentre, size: counterSize,
@@ -282,15 +293,22 @@ enum BakkerijLayout {
             }
         }
 
-        // And the frames must not overlap each other *as geometry*, which is a
-        // different question from whether they can be told apart by a finger.
-        let columnGap = columnZ[1] - columnZ[0]
-        let rowGap = rowY[1] - rowY[0]
-        assert(columnGap > goldSize, "BakkerijLayout: the gold frame is wider than "
-               + "the column pitch and would overlap its neighbour.")
-        assert(rowGap > goldSize, "BakkerijLayout: the gold frame is taller than the "
-               + "row pitch.")
-        assert(rowY[rowY.count - 1] + goldSize / 2 < RoomBox.wallHeight,
+        // And the gold frame must not overlap its two neighbours *as geometry*,
+        // which is a different question from whether they can be told apart by
+        // a finger. The test is outer edge against outer edge, not `pitch >
+        // goldSize` — that one fired on a 52 mm frame in a 45 mm row even
+        // though the neighbour is a 40 mm ghost, not a second gold one.
+        let gold = goldPosition
+        let above = framePosition(column: goldSlot.column, row: goldSlot.row + 1)
+        let beside = framePosition(column: goldSlot.column + 1, row: goldSlot.row)
+        let goldOuter = frameOuter(goldSize)
+        let friendOuter = frameOuter(frameSize)
+        assert(gold.y + goldOuter <= above.y - friendOuter + 1e-4,
+               "BakkerijLayout: the gold frame is taller than the row pitch.")
+        assert(gold.z + goldOuter <= beside.z - friendOuter + 1e-4,
+               "BakkerijLayout: the gold frame is wider than the column pitch "
+               + "and would overlap its neighbour.")
+        assert(rowY[rowY.count - 1] + frameSize / 2 < RoomBox.wallHeight,
                "BakkerijLayout: the top row reaches above the wall.")
         #endif
     }

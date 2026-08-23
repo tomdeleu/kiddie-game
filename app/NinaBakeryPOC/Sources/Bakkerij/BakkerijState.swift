@@ -1,8 +1,12 @@
 import Foundation
 
-/// **The hub's step machine.** `GAMEPLAY.md` §6.1, and the leanest one in the
-/// game on purpose: it is the only room she passes through *twice in every
-/// round*, so it has ~40 seconds outbound and ~45 on the way back.
+/// **The hub's working memory.** `GAMEPLAY.md` §6.1.
+///
+/// Outbound is a sitting-open and a pick, not a kitchen-shaped spine. The shop
+/// door and the order hook are toys; the wall is how a round starts; hanging
+/// the photograph is how it ends. She still passes through twice — out through
+/// `kiezen` / `naarTuin`, home through `ophangen` — but the outbound leg is
+/// no longer four fetches.
 ///
 /// One enum rather than a phase-and-step pair. The room is never on an outbound
 /// step and a return step at once — which leg she is on is decided before the
@@ -10,16 +14,15 @@ import Foundation
 /// would be two things to keep in agreement where one will do, and `applyStep`
 /// stays a single switch.
 enum BakkerijStep: String, Codable {
-    /// Drag the shutter cord. The blind goes up, daylight comes in, the wall of
-    /// frames is revealed.
+    /// Drag the shutter cord. Once per sitting: the blind goes up, daylight
+    /// comes in, the wall of frames is revealed. Not a gate on every round.
     case opendoen
     /// Tap a grey ghost. **The first step in the game with no halo at all** —
     /// see `BakkerijRoom.applyStep`.
     case kiezen
-    /// The bell rings by itself; drag the shop door open and the friend walks in.
-    case binnenlaten
-    /// Drag the wish card onto the order hook. The back door lights.
-    case bestellen
+    /// The friend is here, the back door is lit. She taps it when she is
+    /// ready to go to the garden.
+    case naarTuin
 
     /// The return leg (`GAMEPLAY.md` §6.6): drag the photograph into that
     /// friend's frame.
@@ -56,9 +59,9 @@ struct BakkerijState {
     static func outbound(wall: GameState, shopOpen: Bool) -> BakkerijState {
         // **Free play skips `kiezen` entirely.** `GAMEPLAY.md` §6.1: once the
         // eleven are filled there is no ghost left to pick, so a friend turns up
-        // at random and the other three steps run unchanged.
+        // at random and the back door lights.
         if wall.goldIsEarned {
-            return BakkerijState(step: shopOpen ? .binnenlaten : .opendoen,
+            return BakkerijState(step: shopOpen ? .naarTuin : .opendoen,
                                  friend: Friend.dealt(), result: nil, wall: wall)
         }
         return BakkerijState(step: shopOpen ? .kiezen : .opendoen,

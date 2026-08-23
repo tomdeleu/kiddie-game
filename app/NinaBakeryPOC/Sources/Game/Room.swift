@@ -107,8 +107,8 @@ enum RoomExit {
     case keuken([Ingredient])
     /// **The friend of the day has been chosen and the round is starting.**
     ///
-    /// The one exit that carries something which is not a cake. §6.2's
-    /// shimmering seed jar reads `Friend.hintedIngredient` off this.
+    /// The one exit that carries something which is not a cake. The bakery
+    /// hands who she picked; the garden does not need to know why.
     case tuin(Friend)
     /// The kitchen's cake is baked and on the plank; it wants decorating.
     case versieren(CakeSpec)

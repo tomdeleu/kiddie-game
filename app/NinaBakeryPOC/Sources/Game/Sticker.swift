@@ -2,8 +2,8 @@ import Foundation
 
 /// **What she puts on the cake.** `GAMEPLAY.md` §6.4's seven trays.
 ///
-/// Seven cases and no more: `GAMEPLAY.md` §8 budgets seven sticker types, four
-/// of the eleven wishes name one of them, and each is one tray on the floor.
+/// Seven cases and no more: `GAMEPLAY.md` §8 budgets seven sticker types, and
+/// each is one tray on the floor.
 enum StickerKind: String, Codable, CaseIterable, Identifiable {
     case sprinkel      // hundreds-and-thousands, from the shaker and the tray
     case kaarsje       // a candle, which lights when tapped

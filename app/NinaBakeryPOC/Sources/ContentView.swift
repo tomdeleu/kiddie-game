@@ -54,8 +54,17 @@ struct ContentView: View {
             ZStack(alignment: .topTrailing) {
                 backdrop
                 roomView
-                restartButton
-                wishCardLayer
+                    .allowsHitTesting(opening == .playing && !scene.showingHub)
+                if opening == .playing, !scene.showingHub, scene.room != nil {
+                    restartButton
+                    homeButton
+                }
+                if opening == .playing, scene.showingHub, !plateUp {
+                    StartScreen(unlocked: GameStore.load().hubUnlocked) { room in
+                        scene.pickHubRoom(room)
+                    }
+                    .transition(.opacity)
+                }
                 // **Order and transitions are both load-bearing here.** The
                 // plate is last, so it is on top of the film; and each cover
                 // appears with no animation and leaves with a fade, so there is
@@ -95,30 +104,6 @@ struct ContentView: View {
         .onChange(of: scenePhase) { _, phase in
             // The round survives the iPad being taken away mid-stir.
             if phase != .active { scene.room?.save() }
-        }
-    }
-
-    /// **The wish card, and it is the only persistent interface element in the
-    /// game** (`GAMEPLAY.md` §4).
-    ///
-    /// It lives here rather than in the bakery because it has to survive four
-    /// room swaps and a room is torn down wholesale. Top-left, because the other
-    /// three corners are taken: the wrench top-right, restart bottom-left, skip
-    /// bottom-right.
-    @ViewBuilder
-    private var wishCardLayer: some View {
-        if let friend = scene.wishCard {
-            VStack {
-                HStack {
-                    WishCardView(friend: friend) { scene.replayWish() }
-                        .padding(.leading, 22)
-                        .padding(.top, 22)
-                        .transition(.scale.combined(with: .opacity))
-                    Spacer()
-                }
-                Spacer()
-            }
-            .allowsHitTesting(true)
         }
     }
 
@@ -194,9 +179,11 @@ struct ContentView: View {
         guard IntroMovie.isAvailable, !IntroMovie.hasPlayed else {
             opening = .playing
             withAnimation(.easeInOut(duration: 0.5)) { plateUp = false }
-            // The beat that `GameScene.start` used to schedule, now that the
-            // room appears here rather than at launch.
-            scene.greetWhenQuiet(after: 0.9)
+            if scene.showingHub {
+                scene.greetHub()
+            } else {
+                scene.greetWhenQuiet(after: 0.9)
+            }
             return
         }
         opening = .film
@@ -240,7 +227,11 @@ struct ContentView: View {
         IntroMovie.hasPlayed = true
         if skipped { scene.voice?.stop() }
         withAnimation(.easeInOut(duration: 0.45)) { opening = .playing }
-        scene.greetWhenQuiet()
+        if scene.showingHub {
+            scene.greetHub()
+        } else {
+            scene.greetWhenQuiet()
+        }
     }
 
     /// One finger, one gesture. A press that barely moves is a tap; anything
@@ -290,6 +281,27 @@ struct ContentView: View {
                 }
                 .padding(32)
                 Spacer()
+            }
+        }
+    }
+
+    /// Back to the hub. Bottom-right, opposite restart, same 72 pt plate.
+    /// She can press it any time she is in a room — that is the point of the
+    /// hub. The round in the room is saved as that room always saves; the
+    /// in-flight round across rooms is dropped, because she asked to pick
+    /// again, not to pause.
+    private var homeButton: some View {
+        VStack {
+            Spacer()
+            HStack {
+                Spacer()
+                FacetButton(symbol: "house.fill",
+                            accessibilityLabel: "Naar het begin",
+                            tone: .sage,
+                            diameter: FacetSize.chrome) {
+                    scene.goHome()
+                }
+                .padding(32)
             }
         }
     }
@@ -404,9 +416,10 @@ final class GameScene: ObservableObject {
     /// **Who today's round is for**, held for as long as the round lasts.
     private var roundFriend: Friend?
 
-    /// The wish card in the screen corner. `@Published` so `ContentView`
-    /// re-renders when a round starts or ends.
-    @Published private(set) var wishCard: Friend?
+    /// **The 2D hub is up.** Not a room. When this is true there is no 3D
+    /// room on screen (or it is sitting unused under the overlay) and
+    /// `StartScreen` is what she taps.
+    @Published var showingHub = false
 
     /// Set by `ContentView`: close the curtain on the end of a session.
     var onCurtain: (@MainActor () -> Void)?
@@ -445,6 +458,7 @@ final class GameScene: ObservableObject {
         if let i = ProcessInfo.processInfo.arguments.firstIndex(of: "-room"),
            i + 1 < ProcessInfo.processInfo.arguments.count,
            let wanted = RoomID(rawValue: ProcessInfo.processInfo.arguments[i + 1]) {
+            showingHub = false
             enter(wanted, greeting: greeting)
             return
         }
@@ -452,27 +466,68 @@ final class GameScene: ObservableObject {
         resume(greeting: greeting)
     }
 
-    /// **What opens the game.** `GAMEPLAY.md` §2: the wall of frames is the first
-    /// thing on screen and the last thing before it closes.
-    ///
-    /// And if a round was in progress when the app was last closed, she is put
-    /// back where she was rather than at the beginning.
+    /// **What opens the game.** After the title plate and the film, the hub —
+    /// not the bakery. A round already in progress still resumes into the room
+    /// she left, so closing the iPad mid-stir does not dump her at the menu.
     private func resume(greeting: Bool) {
         let saved = GameStore.load()
         guard let round = saved.round else {
-            enter(.bakkerij, greeting: greeting)
+            showingHub = true
             return
         }
         roundFriend = round.friend
 
         if let result = round.result {
+            showingHub = false
             enter(.bakkerij, result: result, greeting: greeting)
             return
         }
 
-        wishCard = round.friend
         let room = round.room.flatMap { RoomID(rawValue: $0) } ?? .bakkerij
+        if room == .bakkerij {
+            showingHub = true
+            return
+        }
+
+        showingHub = false
         enter(room, friend: round.friend, greeting: greeting)
+    }
+
+    /// Leave the 3D room and put the hub back up. The round in flight is
+    /// dropped: she asked for the menu, not to pause mid-stir.
+    func goHome() {
+        room?.leave()
+        room?.root.removeFromParent()
+        room = nil
+        touch.removeAll()
+        voice.stop()
+        roundFriend = nil
+        var saved = GameStore.load()
+        saved.round = nil
+        GameStore.save(saved)
+        showingHub = true
+        greetHub()
+    }
+
+    /// Nina talks when the hub comes up. First visit is a short explanation;
+    /// every later visit is a hello. Waits if the film is still speaking.
+    func greetHub() {
+        var saved = GameStore.load()
+        let first = saved.hubHeardIntro != true
+        if first {
+            saved.hubHeardIntro = true
+            GameStore.save(saved)
+        }
+        let line = first ? HubLine.eerste : HubLine.terug
+        voice.sayWhenQuiet(line, breath: 0.4)
+    }
+
+    /// A tile on the hub. Visit mode — she can replay any unlocked room
+    /// without walking the round to get there.
+    func pickHubRoom(_ id: RoomID) {
+        guard GameStore.load().isHubUnlocked(id) else { return }
+        showingHub = false
+        enter(id, greeting: true)
     }
 
     /// **Put a room up, and take the old one down.**
@@ -535,16 +590,11 @@ final class GameScene: ObservableObject {
             let hub = BakkerijRoom(ticker: ticker, touch: touch, voice: voice,
                                    sound: sound, settings: settings, mode: mode,
                                    friend: friend, result: result)
-            hub.onWishCard = { [weak self] friend in
-                self?.wishCard = friend
-                if friend == nil { self?.roundFriend = nil }
-            }
             hub.onCurtain = { [weak self] in self?.onCurtain?() }
             return hub
         case .tuin:
             return GardenRoom(ticker: ticker, touch: touch, voice: voice,
-                              sound: sound, settings: settings, mode: mode,
-                              friend: friend)
+                              sound: sound, settings: settings, mode: mode)
         case .keuken:
             return KitchenRoom(ticker: ticker, touch: touch, voice: voice,
                                sound: sound, settings: settings, mode: mode,
@@ -552,7 +602,7 @@ final class GameScene: ObservableObject {
         case .versieren:
             return VersierRoom(ticker: ticker, touch: touch, voice: voice,
                                sound: sound, settings: settings, mode: mode,
-                               handedCake: cake, friend: friend)
+                               handedCake: cake)
         case .feest:
             return FeestRoom(ticker: ticker, touch: touch, voice: voice,
                              sound: sound, settings: settings, mode: mode,
@@ -564,6 +614,7 @@ final class GameScene: ObservableObject {
     /// time: the door is still swinging open when this fires, and the room being
     /// left gets to finish saying so.
     private func handle(_ exit: RoomExit) {
+        unlockNextHubRoom()
         switch exit {
         case .tuin(let friend):
             roundFriend = friend
@@ -590,12 +641,20 @@ final class GameScene: ObservableObject {
                 }
             } else {
                 roundFriend = nil
-                wishCard = nil
                 ticker.after(1.4) { [weak self] in
-                    self?.enter(.bakkerij)
+                    self?.goHome()
                 }
             }
         }
+    }
+
+    /// Finishing a room lights the next tile. Visit or round, same unlock —
+    /// she played it, so it is hers.
+    private func unlockNextHubRoom() {
+        guard let next = currentRoom.hubUnlocks else { return }
+        var saved = GameStore.load()
+        saved.unlockHubRoom(next)
+        GameStore.save(saved)
     }
 
     /// Mirror the round into the game-wide save at each doorway, so a relaunch
@@ -606,12 +665,6 @@ final class GameScene: ObservableObject {
         saved.round = RoundInProgress(friend: who, room: room.rawValue,
                                       result: saved.round?.result)
         GameStore.save(saved)
-    }
-
-    /// The wish card was tapped. §4: tapping it replays the line.
-    func replayWish() {
-        guard let friend = wishCard else { return }
-        voice.say(BakkerijLine.wish(for: friend))
     }
 
     /// Nina's narration over the opening film's first shot. The second shot's

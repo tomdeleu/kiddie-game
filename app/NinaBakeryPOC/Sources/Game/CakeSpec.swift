@@ -198,19 +198,15 @@ struct CakeSpec: Codable, Equatable {
 
     var isDecorated: Bool { !placed.isEmpty || !piped.isEmpty }
 
-    /// **The counts the wishes are made of** (`GAMEPLAY.md` §4).
-    ///
-    /// They live here rather than in the decorating room because §4 is explicit
-    /// that matching is evaluated **once, at the party**, and that nothing else
-    /// in the game looks at it — not the garden's hint, not the kitchen, and not
-    /// the decorating room. The room fills the array; only the party reads it.
+    /// **How many of one sticker she put on.** The decorating room fills the
+    /// array; anything that later redraws the cake — the party, the wall —
+    /// can count without walking it again.
     func count(of kind: StickerKind) -> Int {
         placed.filter { $0.kind == kind }.count
     }
 
-    /// Mo's wish is *three candles*, and it is **placed, not lit**. Lighting one
-    /// is a toy; making the wish depend on it would smuggle a required action
-    /// into the one room that must never ask her for anything.
+    /// Lighting a candle is a toy; it is never required. A cake with three
+    /// unlit candles is still a cake with three candles.
     var litCandles: Int {
         placed.filter { $0.kind == .kaarsje && $0.lit == true }.count
     }

@@ -133,8 +133,7 @@ whole instruction.** `Engine/Halo.swift`.
   destination is a fact, and the source is **her choice between eight equally
   right answers**. Lighting one jar says that jar is the one, which is false;
   lighting all eight is not an instruction. The rule generalises: **light the end
-  that is a fact, and let the idle shimmer cover the end that is a choice** —
-  which is also, exactly, where `GAMEPLAY.md` §6.2 puts the wish hint.
+  that is a fact, and let the idle shimmer cover the end that is a choice.**
 - **When *both* ends are a choice, nothing is lit at all.** The rule above has a
   floor, and `GAMEPLAY.md` §6.1's `kiezen` step is the first thing to reach it:
   she picks one of eleven grey ghosts off the wall, and there is no factual end

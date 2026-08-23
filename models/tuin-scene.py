@@ -50,8 +50,8 @@ FOV_V = 26.0
 EXPOSURE = 0.15
 
 # ------------------------------------------------------- GardenLayout
-BED_CENTRE = (0.030, -0.075)
-BED_SIZE = (0.250, 0.080)
+BED_CENTRE = (0.055, -0.075)
+BED_SIZE = (0.300, 0.080)
 BED_RIM_Y = 0.050
 BED_SOIL_Y = 0.040
 BED_RIM = 0.012
@@ -78,9 +78,10 @@ BUSH_SPOTS = [(-0.020, FLOOR_Y, -0.192), (0.170, FLOOR_Y, -0.185)]
 POND_CENTRE = (0.180, 0.180)
 GATE_CENTRE = (-0.212, FLOOR_Y, 0.160)
 GATE_OPENING = 0.080
-FLOWER_X = 0.185
-FLOWER_FIRST_Z = -0.150
+FLOWER_Z = 0.218
+FLOWER_FIRST_X = -0.152
 FLOWER_SPACING = 0.046
+FLOWER_HEIGHTS = [0.035, 0.024, 0.046, 0.0295, 0.0405]
 
 JAR_COLOURS = [
     garden.ROSE, 0x9BB2D2, garden.BUTTER_YELLOW, garden.SAGE_DEEP,
@@ -299,8 +300,8 @@ def build_flowers():
     centre = garden.material("FlowerCentre", garden.BUTTER_YELLOW)
     made = []
     for i in range(5):
-        z = FLOWER_FIRST_Z + FLOWER_SPACING * i
-        height = 0.018 + i * 0.004
+        x = FLOWER_FIRST_X + FLOWER_SPACING * i
+        height = FLOWER_HEIGHTS[i]
         parts = [
             garden.prism("FlowerStem%d" % i, stem, 0.0022, height, 6,
                          at=g(0.0, height / 2, 0.0)),
@@ -309,7 +310,7 @@ def build_flowers():
             feest.blob("FlowerEye%d" % i, centre, 0.003, 0,
                        at=g(0.0, height + 0.006, 0.0)),
         ]
-        made += parent_local(parts, "Flower%d" % i, (FLOWER_X, FLOOR_Y, z))
+        made += parent_local(parts, "Flower%d" % i, (x, FLOOR_Y, FLOWER_Z))
     return made
 
 

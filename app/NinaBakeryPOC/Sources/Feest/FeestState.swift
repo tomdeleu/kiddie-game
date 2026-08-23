@@ -47,17 +47,6 @@ struct FeestState: Codable {
 
     var step: FeestStep = .dansen
 
-    /// **Whether the wish matched, worked out once.** `GAMEPLAY.md` §4: matching
-    /// is a pure function of the finished cake, evaluated once, at the party, and
-    /// nothing else in the game looks at it. This is that once — computed when
-    /// the cake is tapped and then kept, so a friend who got her wish is still
-    /// celebrating it after the app was closed mid-mouthful.
-    ///
-    /// `Optional` because *not yet asked* and *asked, and no* are different
-    /// things, and because a field added later has to be optional anyway
-    /// (`ROOMS.md` §2).
-    var wishMatched: Bool?
-
     static func fresh(cake: CakeSpec, friend: Friend) -> FeestState {
         FeestState(cake: cake,
                    friend: friend,

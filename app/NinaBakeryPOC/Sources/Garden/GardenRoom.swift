@@ -6,7 +6,7 @@ import simd
 ///
 /// **Required: plant, water, pick — five ingredients into the basket.** Eight
 /// seed jars on a potting bench, five holes in a raised bed, a watering can that
-/// grows whatever it sweeps over, and ripe plants that hop into the basket. Six
+/// grows whatever it sweeps over, and ripe plants she drags into the basket. Six
 /// toys that gate nothing.
 ///
 /// **It has a fence, not walls.** `references/REFERENCES.md` §1 gives every room
@@ -29,9 +29,10 @@ import simd
 /// - **A pass of the can grows what it crosses, once.** Waving it over one
 ///   plant does nothing; sweeping across five advances five. It is the rolling
 ///   pin's rule with two radii instead of a travel count.
-/// - **A ripe plant answers a tap by being picked; an unripe one answers by
-///   saying what it is.** That is the only place in the game where a tap is not
-///   a naming line, and it is `GAMEPLAY.md` §6.2's explicit instruction.
+/// - **A ripe plant is a carry, like a seed or a berry.** Drag it to the
+///   basket and it is picked; drop it anywhere else and it floats home to its
+///   hole. A tap names it. That used to be the one tap-to-play exception in
+///   the game (`GAMEPLAY.md` §6.2 as first written); the owner reversed it.
 @MainActor
 final class GardenRoom: Room {
 
@@ -47,10 +48,6 @@ final class GardenRoom: Room {
     /// is what differs. A round hands the basket to the kitchen. A visit walks
     /// home to the bakery.
     let mode: RoomMode
-
-    /// Who today's round is for, when the bakery sent her. A visit has none.
-    /// `hintTarget(.zaaien)` reads `Friend.hintedIngredient` off this.
-    private let friend: Friend?
 
     private let ticker: Ticker
     private let touch: TouchRouter
@@ -94,6 +91,11 @@ final class GardenRoom: Room {
     /// wanted — `GAMEPLAY.md` §5: five rainbow strawberries make a very pink
     /// cake indeed.
     private var carriedSeed: (ingredient: Ingredient, entity: Entity)?
+    /// **The ripe plant she is carrying**, by hole. Nil unless a drag on a ripe
+    /// plant has begun. The plant itself stays `plants[index]` until it lands
+    /// in the basket — a miss floats it home, so the hole is never empty while
+    /// still occupied.
+    private var carriedPlant: Int?
     /// Seeds she dropped somewhere that was not a hole. They stay where she put
     /// them (`ROOMS.md` §6) and they are cleared on a rebuild.
     private var strays: [Entity] = []
@@ -136,15 +138,13 @@ final class GardenRoom: Room {
     private var lastTouchPoint: SIMD3<Float>?
 
     init(ticker: Ticker, touch: TouchRouter, voice: VoiceBank,
-         sound: SoundKit, settings: LightingSettings, mode: RoomMode = .bezoek,
-         friend: Friend? = nil) {
+         sound: SoundKit, settings: LightingSettings, mode: RoomMode = .bezoek) {
         self.ticker = ticker
         self.touch = touch
         self.voice = voice
         self.sound = sound
         self.settings = settings
         self.mode = mode
-        self.friend = friend
         self.state = GardenStore.load()
         root.name = "Garden"
 
@@ -200,6 +200,7 @@ final class GardenRoom: Room {
         strays.removeAll()
         strayTargets = 0
         carriedSeed = nil
+        carriedPlant = nil
 
         root.addChild(GardenRoomBuilder.build(flat: flat))
 
@@ -274,13 +275,12 @@ final class GardenRoom: Room {
     }
 
     private func buildToys() {
-        // **Five flowers, low to high, left to right.** The heights are the
-        // scale made visible: she can see that the row goes somewhere before she
-        // has heard it.
+        // Five flowers, mixed heights. They still chime left to right as a
+        // scale; they just do not look like one.
         let petals: [UIColorLike] = [Palette.blushPink, Palette.creamLight, Palette.rose,
                                      Palette.mintLight, Palette.blushPinkDeep]
         for index in 0..<GardenLayout.flowerCount {
-            let height = 0.024 + Float(index) * 0.0055
+            let height = GardenLayout.flowerHeights[index]
             let flower = GardenProps.flower(petal: petals[index % petals.count],
                                             centre: Palette.butterYellow,
                                             height: height, flat: flat)
@@ -403,13 +403,21 @@ final class GardenRoom: Room {
         }
 
         // **One target per hole**, live whether or not something is growing in
-        // it, because it always answers: a ripe plant is picked, an unripe one
-        // says what it is, and an empty hole says it is a hole.
+        // it, because it always answers: a ripe plant can be dragged to the
+        // basket, an unripe one says what it is, and an empty hole says it is
+        // a hole. The target hangs on the plant when there is one, so a ripe
+        // flower is what her finger actually grabs.
         for index in 0..<GardenLayout.plotCount {
             touch.register("plot\(index)", entity: plotMarkers[index], radius: 0.030,
                            planeY: GardenLayout.bedSoilY) { target in
+                target.onDragBegan = { [weak self] world in
+                    self?.takePlant(from: index, at: world)
+                }
+                target.onDragMoved = { [weak self] world in self?.carrier.move(to: world) }
+                target.onDragEnded = { [weak self] _ in self?.dropPlant() }
                 target.onTap = { [weak self] in self?.tapPlot(index) }
             }
+            bindPlotTarget(index)
         }
 
         touch.register("can", entity: can?.root, radius: 0.040,
@@ -467,10 +475,10 @@ final class GardenRoom: Room {
         }
         // **45 mm, which is far smaller than the prop and deliberately so.** The
         // pond is 258 mm across, and a target that matched it would swallow the
-        // basket and the flower row's near end; a target only has to be big
-        // enough to hit (`CONCEPT.md` §5's ~120 pt), and the *visible* pond is
-        // what she aims at. It clears the basket by 108 mm on screen against the
-        // 83 the two radii need, and the nearest flower by 114 against 69.
+        // basket; a target only has to be big enough to hit (`CONCEPT.md` §5's
+        // ~120 pt), and the *visible* pond is what she aims at. It clears the
+        // basket by 108 mm on screen against the 83 the two radii need, and the
+        // nearest flower by well more than that.
         touch.register("pond", entity: pondTouchSpot, radius: 0.045,
                        planeY: GardenLayout.floorY) { target in
             target.onTap = { [weak self] in self?.tapPond() }
@@ -589,8 +597,7 @@ final class GardenRoom: Room {
     /// is *her choice between eight equally right answers*. Lighting one jar
     /// would say that jar is the one, which is false; lighting all eight is not
     /// an instruction. So the bed carries it, Nina says where the seeds are, and
-    /// the idle shimmer picks a jar if she stands still — which is exactly the
-    /// split `GAMEPLAY.md` §6.2 describes for the wish hint.
+    /// the idle shimmer picks a jar if she stands still.
     private func haloTarget() -> Entity? {
         switch state.step {
         case .zaaien:
@@ -674,7 +681,7 @@ final class GardenRoom: Room {
     /// pink cake indeed — so a jar that could be emptied would be a rule she
     /// could break by accident.
     private func takeSeed(_ ingredient: Ingredient, from jar: Entity, at world: SIMD3<Float>) {
-        guard carriedSeed == nil else { return }
+        guard carriedSeed == nil, carriedPlant == nil else { return }
         let seed = GardenProps.seedToken(ingredient, flat: flat)
         seed.position = jar.position + [0, 0.024, 0]
         root.addChild(seed)
@@ -736,7 +743,7 @@ final class GardenRoom: Room {
             // closure holds it is a retain cycle, and `TouchRouter.removeAll`
             // dropping the array would not break it.
             target.onDragBegan = { [weak self, weak seed] world in
-                guard let self, let seed, self.carriedSeed == nil else { return }
+                guard let self, let seed, self.carriedSeed == nil, self.carriedPlant == nil else { return }
                 self.carriedSeed = (ingredient, seed)
                 self.strays.removeAll { $0 === seed }
                 self.touch.target(named: name)?.enabled = false
@@ -763,6 +770,7 @@ final class GardenRoom: Room {
         sprout.position = spot
         root.addChild(sprout)
         plants[index] = sprout
+        bindPlotTarget(index)
         ticker.squash(sprout, amount: 0.30, duration: 0.5)
 
         sound.playVaried(.plop)
@@ -864,6 +872,7 @@ final class GardenRoom: Room {
         plant.position = spot
         root.addChild(plant)
         plants[index] = plant
+        bindPlotTarget(index)
 
         // It springs up rather than appearing: the growth is the reward, so it
         // has to be something she watches.
@@ -977,31 +986,103 @@ final class GardenRoom: Room {
 
     // MARK: - Plukken
 
-    /// **A tap on a hole.**
+    /// **Hang the hole's target on the plant when there is one.**
     ///
-    /// Ripe: it hops into the basket, which is `GAMEPLAY.md` §6.2's own
-    /// instruction and the one place in the game where a tap is not a naming
-    /// line. Anything else: it says what it is, which is what a tap means
-    /// everywhere else.
+    /// The marker stays for the halo during `zaaien` — a hole is not a prop.
+    /// Once something is growing, the plant *is* the thing she grabs, so the
+    /// target has to ride it (`tracksEntity`) the way a stray seed's does.
+    private func bindPlotTarget(_ index: Int) {
+        guard let target = touch.target(named: "plot\(index)") else { return }
+        if let plant = plants.indices.contains(index) ? plants[index] : nil {
+            target.entity = plant
+            target.tracksEntity = true
+        } else if plotMarkers.indices.contains(index) {
+            target.entity = plotMarkers[index]
+            target.tracksEntity = false
+            target.planeY = GardenLayout.bedSoilY
+        }
+    }
+
+    /// **A tap on a hole names what is there.**
+    ///
+    /// Ripe, unripe or empty: it says what it is. Picking is a drag now, so
+    /// this is the same answer a tap gives everywhere else in the game. A ripe
+    /// plant names the ingredient — the fruit is sitting on it, and that is
+    /// the word she will hear in the kitchen.
     private func tapPlot(_ index: Int) {
         guard state.plots.indices.contains(index) else { return }
         let plot = state.plots[index]
-        guard plot.isRipe, let seed = plot.seed else {
-            // An empty hole is also the one part of the bed with nothing
-            // standing in it, so it is where the bed gets named — mostly "a
-            // hole in the earth", one time in three "the seed tray". Both are
-            // true of what her finger is on, and the tray has no target of its
-            // own for the reason `registerToyTargets` gives.
-            let line = plot.isEmpty
-                ? (Int.random(in: 0..<3) == 0 ? Line.Dit.zaaibak : Line.Dit.gat)
-                : Line.Dit.plantje
-            sayName(line, wobbling: plants[index])
+        if plot.isRipe, let seed = plot.seed {
+            sayName(seed.nameLineID, wobbling: plants[index])
             return
         }
-        pick(seed, from: index)
+        // An empty hole is also the one part of the bed with nothing
+        // standing in it, so it is where the bed gets named — mostly "a
+        // hole in the earth", one time in three "the seed tray". Both are
+        // true of what her finger is on, and the tray has no target of its
+        // own for the reason `registerToyTargets` gives.
+        let line = plot.isEmpty
+            ? (Int.random(in: 0..<3) == 0 ? Line.Dit.zaaibak : Line.Dit.gat)
+            : Line.Dit.plantje
+        sayName(line, wobbling: plants[index])
     }
 
-    private func pick(_ ingredient: Ingredient, from index: Int) {
+    /// **A grab on a ripe plant lifts it.** Unripe and empty holes do nothing
+    /// here; their tap already named them.
+    private func takePlant(from index: Int, at world: SIMD3<Float>) {
+        guard carriedPlant == nil, carriedSeed == nil else { return }
+        guard state.plots.indices.contains(index),
+              state.plots[index].isRipe,
+              let plant = plants[index] else { return }
+        carriedPlant = index
+        ContactShadows.attach(to: plant, radius: 0.016,
+                              settings: Self.contactShadowSettings(from: settings))
+        carrier.pickUp(plant, at: world)
+    }
+
+    /// Into the basket, or back to its hole.
+    ///
+    /// A planted plant is not a free prop: the hole is still occupied until
+    /// the basket takes it, so a miss cannot stay on the grass. That would
+    /// leave an empty-looking hole she cannot sow in. `ROOMS.md` §6's "nothing
+    /// gets put back" is about the rolling pin; this is the kitchen's berry
+    /// that did not reach the bowl, floating home.
+    private func dropPlant() {
+        guard let index = carriedPlant, let plant = plants[index] else { return }
+        carriedPlant = nil
+
+        if let basket,
+           let ingredient = state.plots[index].seed,
+           !state.isFull,
+           GardenLayout.distanceXZ(plant.position, basket.root.position)
+            <= GardenLayout.basketSnapRadius {
+            carrier.end()
+            harvest(ingredient, from: index)
+            return
+        }
+
+        let home = GardenLayout.plotSpot(index)
+        let travelled = GardenLayout.distanceXZ(plant.position, home)
+        returnPlant(plant, to: home, missed: travelled > 0.010 && state.step == .plukken)
+    }
+
+    private func returnPlant(_ plant: Entity, to home: SIMD3<Float>, missed: Bool) {
+        carrier.end()
+        let duration: Float = missed ? 0.4 : 0.16
+        let arc: Float = missed ? 0.014 : 0
+        if missed { sound.play(.whoosh, volume: 0.35) }
+        ticker.move(plant, to: home, duration: duration, arc: arc, ease: Ease.out) {
+            [weak self, weak plant] in
+            guard let self, let plant else { return }
+            ContactShadows.removeFrom(plant)
+            plant.position = home
+        }
+        if missed { noteMiss() }
+    }
+
+    /// **The plant has landed in the basket.** It shrinks in; what stays is
+    /// the fruit token, which is what the kitchen will bake.
+    private func harvest(_ ingredient: Ingredient, from index: Int) {
         guard let basket, let plant = plants[index] else { return }
         state.plots[index] = Plot()
         state.basket.append(ingredient)
@@ -1009,23 +1090,16 @@ final class GardenRoom: Room {
         save()
         noteHit()
         plants[index] = nil
-
-        // **The fruit flies, the plant does not.** She picked a strawberry, not
-        // a strawberry plant, so what travels is the head and what stays behind
-        // is the rosette collapsing back into the earth.
-        let spot = GardenLayout.plotSpot(index)
-        let flying = KitchenProps.token(ingredient, flat: flat)
-        flying.position = plant.position + [0, 0.030, 0]
-        root.addChild(flying)
-
-        ticker.tween(0.42, ease: Ease.out, step: { [weak plant] t in
-            plant?.scale = SIMD3<Float>(repeating: max(0.001, 1 - t))
-        }, done: { [weak plant] in plant?.removeFromParent() })
+        bindPlotTarget(index)
+        ContactShadows.removeFrom(plant)
 
         let target = basket.root.position + [0, GardenLayout.basketRimY + 0.010, 0]
-        ticker.move(flying, to: target, duration: 0.55, arc: 0.055, ease: Ease.inOut) {
-            [weak self, weak flying] in
-            flying?.removeFromParent()
+        ticker.tween(0.28, ease: Ease.inCurve, step: { [weak plant] t in
+            plant?.scale = SIMD3<Float>(repeating: max(0.001, 1 - t))
+        })
+        ticker.move(plant, to: target, duration: 0.28, arc: 0.02, ease: Ease.inCurve) {
+            [weak self, weak plant] in
+            plant?.removeFromParent()
             guard let self else { return }
             self.sound.playVaried(.plop)
             self.refreshBasketContents(animated: true)
@@ -1035,9 +1109,6 @@ final class GardenRoom: Room {
         }
 
         sound.play(.sparkle, volume: 0.5)
-        Sparkles.burst(at: spot + [0, 0.026, 0], in: root, ticker: ticker,
-                       colour: ingredient.tokenColour, count: 6, size: 0.0020,
-                       speed: 0.05, life: 0.6)
 
         applyStep(animated: true)
         // What it will do to the cake — the kitchen's own line, which is exactly
@@ -1381,17 +1452,10 @@ final class GardenRoom: Room {
     ///
     /// The halo cannot point at one of eight equally right answers, but a shimmer
     /// can. It is the idle cue. It says "there is something over here" rather
-    /// than "this one", and `GAMEPLAY.md` §6.2 asks for exactly this. The wish
-    /// hint is `Ticker.shimmer` on a jar, not a halo on one. Which jar shimmers
-    /// is the friend's `hintedIngredient`, or the first jar on a visit.
+    /// than "this one".
     private func hintTarget(for step: GardenStep) -> Entity? {
         switch step {
         case .zaaien:
-            if let hint = friend?.hintedIngredient,
-               let index = Ingredient.allCases.firstIndex(of: hint),
-               jars.indices.contains(index) {
-                return jars[index]
-            }
             return jars.first
         case .gieten: return can?.root
         case .plukken:
@@ -1618,6 +1682,7 @@ final class GardenRoom: Room {
         butterfly = nil
         bee = nil
         carriedSeed = nil
+        carriedPlant = nil
         wateredThisPass.removeAll()
         wateredThisDrag = false
         canTravel = 0

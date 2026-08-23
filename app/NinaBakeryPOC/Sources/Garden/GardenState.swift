@@ -10,7 +10,7 @@ import Foundation
 enum GardenStep: String, Codable {
     case zaaien   // a seed from a jar into a hole in the bed
     case gieten   // sweep the can across the bed; a pass grows what it crosses
-    case plukken  // tap a ripe plant and it hops into the basket
+    case plukken  // drag a ripe plant into the basket
     case klaar    // the basket is full
 }
 

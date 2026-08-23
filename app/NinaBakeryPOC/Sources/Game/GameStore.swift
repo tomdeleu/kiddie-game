@@ -50,9 +50,8 @@ struct FrameFill: Codable {
     var version = 1
     /// The finished cake, stickers and piping included.
     var cake: CakeSpec
-    /// Whether the friend's wish was met, as the party judged it. Optional
-    /// because the day a frame is filled by something that never went to a party
-    /// — the finale, a debug action — there is no verdict to record.
+    /// Kept so a wall saved before wishes left the game still loads. Never
+    /// written now, never read.
     var wishMatched: Bool?
     var when: Date
 }
@@ -63,21 +62,20 @@ struct FrameFill: Codable {
 /// `RoomExit.bakkerij`.
 ///
 /// This is the one payload in the game that crosses a doorway carrying more than
-/// a cake, and it exists because the wall needs three things the party is the
-/// last holder of: which friend it was for, the cake as it ended up after
-/// decorating, and whether the wish was met. Before the hub, `FeestRoom.tapCake`
-/// evaluated the wish, said so out loud, and let all three die with the room —
-/// `feest.json` keeps them only until the next party overwrites it.
+/// a cake, and it exists because the wall needs two things the party is the last
+/// holder of: which friend it was for, and the cake as it ended up after
+/// decorating.
 struct FeestResult: Codable {
     var version = 1
     var friend: Friend
     var cake: CakeSpec
-    var matched: Bool
+    /// Kept so a save written before wishes left the game still loads. Never
+    /// written now, never read.
+    var matched: Bool?
 
-    init(friend: Friend, cake: CakeSpec, matched: Bool) {
+    init(friend: Friend, cake: CakeSpec) {
         self.friend = friend
         self.cake = cake
-        self.matched = matched
     }
 }
 
@@ -118,9 +116,36 @@ struct GameState: Codable {
     var frames: [String: FrameFill]?
     var round: RoundInProgress?
     var finalePlayed: Bool?
+    /// **Which rooms the hub will light.** Absent or empty means only the
+    /// garden — a save from before the hub existed must not unlock the kitchen
+    /// as a side-effect of being decoded.
+    var unlockedRooms: [String]?
+    /// **Whether she has already heard the hub's first-visit line.** Absent
+    /// means no — a save from before the hub spoke must still get the
+    /// explanation.
+    var hubHeardIntro: Bool?
 
     static func fresh() -> GameState {
-        GameState(frames: [:], round: nil, finalePlayed: false)
+        GameState(frames: [:], round: nil, finalePlayed: false,
+                  unlockedRooms: [RoomID.tuin.rawValue], hubHeardIntro: false)
+    }
+
+    /// The garden is always on. Everything else is earned by finishing the
+    /// room before it.
+    var hubUnlocked: Set<RoomID> {
+        let names = unlockedRooms ?? [RoomID.tuin.rawValue]
+        var rooms = Set(names.compactMap(RoomID.init(rawValue:)))
+        rooms.insert(.tuin)
+        return rooms
+    }
+
+    func isHubUnlocked(_ room: RoomID) -> Bool { hubUnlocked.contains(room) }
+
+    mutating func unlockHubRoom(_ room: RoomID) {
+        var names = Set(unlockedRooms ?? [RoomID.tuin.rawValue])
+        names.insert(RoomID.tuin.rawValue)
+        names.insert(room.rawValue)
+        unlockedRooms = Array(names)
     }
 
     // MARK: Reading the wall
@@ -140,10 +165,9 @@ struct GameState: Codable {
 
     // MARK: Writing it
 
-    mutating func fill(_ friend: Friend, with cake: CakeSpec, matched: Bool?, when: Date) {
+    mutating func fill(_ friend: Friend, with cake: CakeSpec, when: Date) {
         var all = frames ?? [:]
-        all[friend.rawValue] = FrameFill(version: 1, cake: cake,
-                                         wishMatched: matched, when: when)
+        all[friend.rawValue] = FrameFill(version: 1, cake: cake, when: when)
         frames = all
     }
 }

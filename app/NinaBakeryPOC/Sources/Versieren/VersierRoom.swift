@@ -33,10 +33,6 @@ final class VersierRoom: Room {
     /// rule and what the door does differ.
     let mode: RoomMode
 
-    /// Who today's round is for, when the bakery sent her. A visit has none.
-    /// The idle shimmer on a tray reads `Friend.hintedSticker` off this.
-    private let friend: Friend?
-
     private let ticker: Ticker
     private let touch: TouchRouter
     private let voice: VoiceBank
@@ -116,15 +112,13 @@ final class VersierRoom: Room {
 
     init(ticker: Ticker, touch: TouchRouter, voice: VoiceBank,
          sound: SoundKit, settings: LightingSettings,
-         mode: RoomMode = .bezoek, handedCake: CakeSpec? = nil,
-         friend: Friend? = nil) {
+         mode: RoomMode = .bezoek, handedCake: CakeSpec? = nil) {
         self.ticker = ticker
         self.touch = touch
         self.voice = voice
         self.sound = sound
         self.settings = settings
         self.mode = mode
-        self.friend = friend
 
         // **On a round the kitchen's cake arrives and replaces whatever was
         // here.** On a visit there is nothing to hand over, so the saved state
@@ -582,8 +576,7 @@ final class VersierRoom: Room {
         stickers.append(sticker)
 
         // **The one silent cap in the room, and it is honest.** 120 grains
-        // already cover the cake, so dropping the oldest is invisible — and it
-        // can never put Pip's wish of eight sprinkles out of reach.
+        // already cover the cake, so dropping the oldest is invisible.
         if kind == .sprinkel {
             let sprinkles = stickers.filter { $0.kind == .sprinkel }
             if sprinkles.count > VersierLayout.maxSprinkles,
@@ -871,8 +864,7 @@ final class VersierRoom: Room {
     // MARK: - The shaker
 
     /// Rains **individual sprinkles**, not a texture and not a particle effect.
-    /// Pip's wish is *eight sprinkles*, so they have to be countable — a patch
-    /// with a density would make that number a fiction.
+    /// Countable grains, so a cake she shook a lot looks like one she shook a lot.
     private func shakeMoved(to world: SIMD3<Float>) {
         guard let anchor = surface.anchor(pointingAt: world, slop: stickerSlop) else { return }
         let here = surface.position(of: anchor)
@@ -1154,7 +1146,7 @@ final class VersierRoom: Room {
 
     /// Copied from the kitchen and **tuned nothing** — 25 s, 45 s, 105 s.
     /// The voice is this room's own, and it is never an instruction. The 25 s
-    /// shimmer is the wish hint. `GAMEPLAY.md` §6.4 puts it on the matching tray.
+    /// shimmer is the idle cue: any tray will do, because every tray is right.
     private func startIdleWatch() {
         ticker.cancel(idleJob)
         idleTime = 0
@@ -1186,7 +1178,7 @@ final class VersierRoom: Room {
 
     private func showHint() {
         guard hintJob == nil else { return }
-        guard let kind = friend?.hintedSticker, let tray = trays[kind] else { return }
+        guard let tray = trays[.hartje] ?? trays.values.first else { return }
         hintEntity = tray
         hintScale = tray.scale
         hintJob = ticker.shimmer(tray)

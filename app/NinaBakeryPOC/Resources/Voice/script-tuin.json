@@ -4,7 +4,7 @@
   "_model": "text2speech_v2",
   "_variant": "elevenlabs",
   "_cost_per_line_credits": 0.3,
-  "_generated": "2026-08-16 — the garden",
+  "_generated": "2026-08-16 — the garden. rijp variants rewritten 2026-08-23 (drag, not tap); mp3s not yet regenerated.",
   "_files": "app/NinaBakeryPOC/Resources/Voice/",
   "language": "nl",
 
@@ -25,7 +25,7 @@
     "nina.tuin.gezaaid": "Reaction: a seed went in the ground.",
     "nina.tuin.gieten": "Nudge: sweep the watering can across the bed.",
     "nina.tuin.groeit": "Halfway. Encouragement, never correction — the kitchen's roerenGoedZo.",
-    "nina.tuin.rijp": "Nudge: something is ripe, tap it.",
+    "nina.tuin.rijp": "Nudge: something is ripe, drag it to the basket.",
     "nina.tuin.mandjeVol": "The basket is full.",
     "nina.tuin.opnieuw": "The restart button.",
     "nina.kamer.tuinKlaar": "The garden is finished — the gate is open.",
@@ -79,9 +79,9 @@
     ]},
 
     { "id": "nina.tuin.rijp", "character": "nina", "variants": [
-      { "file": "nina-tuin-rijp-1.mp3", "text": "Die is rijp! Tik er maar op, dan springt hij in het mandje." },
-      { "file": "nina-tuin-rijp-2.mp3", "text": "Oh kijk, die is helemaal klaar. Even aantikken!" },
-      { "file": "nina-tuin-rijp-3.mp3", "text": "Klaar om te plukken! Geef er maar een tikje op." }
+      { "file": "nina-tuin-rijp-1.mp3", "text": "Die is rijp! Sleep hem maar naar het mandje." },
+      { "file": "nina-tuin-rijp-2.mp3", "text": "Oh kijk, die is helemaal klaar. Doe hem in het mandje!" },
+      { "file": "nina-tuin-rijp-3.mp3", "text": "Klaar om te plukken! Sleep hem naar mijn mandje." }
     ]},
 
     { "id": "nina.tuin.mandjeVol", "character": "nina", "variants": [

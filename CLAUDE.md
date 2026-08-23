@@ -9,17 +9,18 @@ Entry point for this repo. Read this first, then
 on **iPad**. Native **SwiftUI + RealityKit**, in a **faceted pastel low-poly**
 3D look.
 
-The loop: a friend turns up with a wish → grow magic ingredients in the garden →
-bake a cake whose colour comes from what she chose → decorate it freely → throw
-a dance party where everyone eats it and thanks her by name → hang the photo in
-a frame on the bakery wall.
+The loop: pick a room from the start screen → grow magic ingredients in the
+garden → bake a cake whose colour comes from what she chose → decorate it
+freely → throw a dance party where everyone eats it and thanks her by name →
+hang the photo in a frame on the bakery wall.
 
 **The wall of twelve frames is the game.** Fill them all and the bakery becomes
-a real toverbakkerij. That is the only progression — no scores, no stars, no
-timers, nothing counted anywhere. A round is ~11–12 minutes.
+a real toverbakkerij. No scores, no stars, no timers. A round is ~11–12 minutes.
+The start screen lights rooms one at a time; that is how she gets in, not what
+the game is about.
 
 **Status: five rooms built.** The proof of concept is answered and
-[`app/`](app/) holds **De Bakkerij** — the hub and the wall of twelve frames —
+[`app/`](app/) holds **De Bakkerij** — the wall of twelve frames —
 **De Tuin**, the garden: eight seed jars on a potting bench, five holes, a
 watering can that grows whatever it sweeps over, six more toys, and a picket
 fence with a gate in it where its walls used to be — **De Keuken** — the full
@@ -29,28 +30,32 @@ sprinkle shaker and five more toys — and **Het Feest**, the party, which is
 **a disco**: a mirror ball, a light rig, a light-up dance floor, a DJ at a booth
 with two decks, six teddy-bear friends each dancing a different little move, and
 six pads whose beat is the one she is tapping. Dutch line variants now include
-the bakery's 53 as well as the earlier rooms'. The round is the five of them.
+the bakery's 53 as well as the earlier rooms'. The round is garden, kitchen,
+decorating, party, then the bakery to hang the photograph.
 
 ## → Start here: [`app/README.md`](app/README.md)
 
-All five rooms are playable end to end. De Bakkerij: pull the blind up, pick a
-grey frame, let the friend in, hang their wish. The garden: sow five seeds, sweep
-the can across the bed three times, tap the ripe plants into the basket. The
+All five rooms are playable end to end. The sitting starts on a 2D screen of
+four tiles (garden first; the others light when she has finished the one
+before). The garden: sow five seeds, sweep
+the can across the bed three times, drag the ripe plants into the basket. The
 kitchen: roll the base, fetch five ingredients from five places, stir, pour,
 into Otto, tap, cake, carry it up onto the plank. Versieren: turn the cake,
 pipe, shake, press stickers on, light the candle. Het Feest: tap the pads,
 everyone dances to you, and tap the cake when you are ready to eat it. Then hang
-the photograph on the wall.
+the photograph on the bakery wall. A house button in every room puts the start
+screen back up.
 
-**The five of them are one round.** The bakery's friend is who the round is for.
-The garden's basket is what the kitchen bakes, the kitchen's cake is what
-Versieren decorates, Versieren's decorated cake is what stands on the party
-table and gets eaten, and the party's result is the photograph the bakery hangs.
-Every handover goes through `RoomExit`, which is a room saying *what just
-happened* and handing back control. No room knows what comes after it.
+**The four play rooms are one round.** The garden's basket is what the kitchen
+bakes, the kitchen's cake is what Versieren decorates, Versieren's decorated cake
+is what stands on the party table and gets eaten, and the party's result is the
+photograph the bakery hangs. Every handover goes through `RoomExit`, which is a
+room saying *what just happened* and handing back control. No room knows what
+comes after it.
 
-**The app opens on the wall.** Title plate, then the film on first launch only,
-then De Bakkerij. A round already in progress resumes into the room she left.
+**The app opens on the start screen.** Title plate, then the film on first
+launch only, then four tiles. A round already in progress resumes into the room
+she left.
 
 **Switch rooms by tapping the small grey wrench in the top-right corner** and
 using the picker at the top of the developer strip — any room, in either mode,
@@ -84,8 +89,7 @@ record actually indicts. `app/README.md` keeps that list.
 
 **De Bakkerij was handed over to that same rule.** The room came from a
 container, so: `ContentView.handle` now routes five `RoomExit` cases;
-`GardenRoom` and `VersierRoom` gained a `friend:` argument now used from
-`GameScene.makeRoom`; `FeestRoom.tapCake` calls `onExit` with a `FeestResult`
+`FeestRoom.tapCake` calls `onExit` with a `FeestResult`
 instead of starting a fresh party; `KitchenRoom.roomComplete` now reads `mode`.
 `BakerCharacter`'s `home:` argument is used from a fifth room. Everything under
 `Sources/Bakkerij/` is new files that the synchronized Sources group picks up.
@@ -124,8 +128,7 @@ room is a contradiction; **six guests plus a DJ rather than the twelve
 arithmetic in `ROOMS.md` §5 rather than the rig; a visit still **deals** a
 friend when none is handed over; and
 the guests' thanks are **relayed by Nina** until the eleven friends have voices.
-The bakery hands the friend of the day through `RoomExit.tuin(Friend)` rather
-than dealing one at the party.
+A visit still **deals** a friend when none is handed over.
 
 **One room is designed but not built, decided by the owner on 2026-08-17.**
 [`GAMEPLAY.md`](GAMEPLAY.md) §6.4 gives **Versieren** a required spine —
@@ -137,7 +140,7 @@ nothing is ever disabled. Prop plates are in
 [`references/versieren/`](references/versieren/). De Bakkerij's §6.1 is built.
 
 **Het Feest is built, so §6.5 is no longer open** — the party landed on
-2026-08-17 and `app/` has five rooms including the hub. Note what that does to
+2026-08-17 and `app/` has five rooms. Note what that does to
 §6.4's new spine: the decorating room's door now *hands its cake to the party*,
 so the room that is about to grow a required action is also the room with a live
 handover on the other side of it. Read `VersierRoom.endRoom` before adding steps
@@ -168,7 +171,7 @@ palette and pass criteria are still the standard every new room is held to.
 |---|---|
 | [`app/`](app/) | **The app.** De Bakkerij, De Tuin, De Keuken, Versieren and Het Feest: the rounds, the wall, the toys, Nina, Otto, the friends, the cake and everything she puts on it, the room switcher, the lighting panel. The first three rooms compiled at the 2026-08-16 builds — see its README for what those caught, and for which later edits are the risky kind. |
 | [`models/`](models/) | **Props modelled in Blender**, as Python that rebuilds them. Twenty-two so far — De Keuken's ten (the flour sack, the toverbosbes, the crate, the toverklaver, the toverveertje, the maanstof pouch, the sink, the spoon, the cake and the scale) and De Tuin's twelve (the molehill, the seed bed, the fence, seven of the eight ripe plants, the tree and the harvest basket). Its README has the rules, the export settings, and the test a prop has to pass to belong there. |
-| [`GAMEPLAY.md`](GAMEPLAY.md) | **Storyline and gameplay in detail.** The wall, the eleven friends and their wishes, the cake rules, what each room requires versus what is optional, the timing budget. Reconciled with the built kitchen on 2026-08-16. |
+| [`GAMEPLAY.md`](GAMEPLAY.md) | **Storyline and gameplay in detail.** The wall, the eleven friends, the cake rules, what each room requires versus what is optional, the timing budget. Reconciled with the built kitchen on 2026-08-16. |
 | [`ROOMS.md`](ROOMS.md) | **How to build a room.** The contract De Keuken established: the box, the camera, the step machine, the halo, the voice rules, touch, carrying, idle, misses, the door — and the traps that have already been paid for once. Read before writing a room. |
 | [`POC.md`](POC.md) | Step 0 proof of concept — answered. Kept for the palette, the geometry specs and the pass criteria. |
 | [`audio/`](audio/) | The voice script, the casting, the auditions, and the re-fetch script. |
@@ -272,10 +275,13 @@ These were argued through and settled. Reopen only if the user asks.
 - **Drag to play, tap to learn the word.** Every prop says what it is when
   tapped, in Dutch, one variant each. It is the only part of the game that
   teaches her language, and every new room brings its own naming lines.
-- **Nothing unlocks.** Every seed, sticker and friend is available from the
-  first round. Variety comes from her choices and from who is at the door.
-- **Every wish can be ignored** with no penalty and no difference in the
-  celebration. It answers "what shall I make today?", it is not a test.
+- **Nothing inside a room unlocks.** Every seed, sticker and friend is available
+  from the first time she walks in. Variety comes from her choices. **The start
+  screen is the exception** (owner's call, 2026-08-23): only the garden is lit
+  at first; finishing a room lights the next tile. The bakery is not a tile.
+- **There is no brief.** Owner's call, 2026-08-23: a wish to remember for a
+  whole round is too much for four. A friend comes; she makes whatever cake she
+  likes; they thank her by name. Every cake is celebrated the same.
 - **Use Kenney's CC0 kits.** Not a suggestion — the
   [Food Kit](https://kenney.nl/assets/food-kit) and
   [Furniture Kit](https://kenney.nl/assets/furniture-kit) are the default source

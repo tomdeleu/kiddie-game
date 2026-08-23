@@ -768,11 +768,6 @@ final class FeestRoom: Room {
     private func tapCake() {
         guard state.step == .dansen else { return }
         state.step = .opeten
-
-        // **The wish, evaluated once.** `GAMEPLAY.md` §4 puts this here and only
-        // here, and it decides which happy thing happens — never whether one does.
-        let matched = state.friend.matches(state.cake)
-        state.wishMatched = matched
         save()
 
         Halo.remove(cakeHalo, ticker: ticker)
@@ -797,26 +792,19 @@ final class FeestRoom: Room {
             FeestProps.confetti(at: SIMD3<Float>(FeestLayout.floorCentre.x, 0.150,
                                                  FeestLayout.floorCentre.y),
                                 in: self.root, ticker: self.ticker, count: 30, flat: self.flat)
-            // The friend whose wish came true goes over the top for good — §4's
-            // "a special move only they do".
-            if matched, let star = self.guests.first { star.celebrate() }
         })
 
         // **What she hears, in the order §6.5 asks for**: everybody eats, the
-        // friend of the day thanks her by name, and — if the wish matched — that
-        // it was exactly what they wanted. Nina relays the thanks until the eleven
-        // friends have voices of their own; `Friend.thanksLineID` is what gets
-        // re-pointed the day they do.
-        var lines = [FeestLine.opeten, state.friend.thanksLineID]
-        if matched { lines.append(FeestLine.wensGelukt) }
-        lines.append(FeestLine.muurKomt)
-        voice.sayInstead(lines)
+        // friend of the day thanks her by name. Nina relays the thanks until the
+        // eleven friends have voices of their own; `Friend.thanksLineID` is what
+        // gets re-pointed the day they do.
+        voice.sayInstead([FeestLine.opeten, state.friend.thanksLineID, FeestLine.muurKomt])
 
         // **The room says what just happened and hands back control.** A round
         // carries the cake home so the bakery can hang it. A visit walks home
         // with nothing to hang. Wait until Nina has finished thanking her, so
         // `GameScene.enter` cannot cut the thanks off with `voice.stop()`.
-        let result = FeestResult(friend: state.friend, cake: state.cake, matched: matched)
+        let result = FeestResult(friend: state.friend, cake: state.cake)
         let visiting = mode == .bezoek
         jobs.append(voice.whenQuiet(after: 0.5, timeout: 30) { [weak self] in
             self?.onExit?(visiting ? .bakkerij(nil) : .bakkerij(result))
@@ -1075,7 +1063,6 @@ final class FeestRoom: Room {
     /// whether the cake had been eaten.
     func restartRound() {
         state.step = .dansen
-        state.wishMatched = nil
         beat.forget()
         saidFirstBeat = false
         saidFaster = false
@@ -1181,8 +1168,7 @@ final class FeestRoom: Room {
     var debugRows: [String] {
         [
             "Mode: \(mode == .ronde ? "ronde" : "bezoek")  ·  Stap: \(state.step.rawValue)",
-            "Vriend: \(state.friend.dutchName)  ·  wens: \(Self.describe(state.friend.wish))",
-            "Match: \(state.wishMatched.map { $0 ? "ja" : "nee" } ?? "nog niet")",
+            "Vriend: \(state.friend.dutchName)",
             "Gasten: \(state.everyone.map(\.rawValue).joined(separator: ", "))",
             "Dansjes: \(guests.map { "\($0.style)" }.joined(separator: ", "))",
             "Beat: \(beat.bpm) bpm  ·  \(beat.count) tellen"
@@ -1191,55 +1177,9 @@ final class FeestRoom: Room {
         ]
     }
 
-    private static func describe(_ wish: Wish) -> String {
-        switch wish {
-        case .kleur(let colour): return "kleur \(colour.rawValue)"
-        case .effect(let effect): return "effect \(effect.rawValue)"
-        case .sprinkels(let count): return "\(count) sprinkels"
-        case .stickers(let kind, let count): return "\(count)× \(kind.rawValue)"
-        case .tweeKleuren: return "twee kleuren"
-        }
-    }
-
     var debugActions: [(String, @MainActor () -> Void)] {
         [("Nieuw feest", { [weak self] in self?.startFreshParty() }),
-         ("Eet de taart", { [weak self] in self?.tapCake() }),
-         ("Wens laten kloppen", { [weak self] in self?.forceWishForTesting() })]
-    }
-
-    /// Debug only: make today's cake match today's wish, so the special move and
-    /// the extra line can be looked at without baking for one.
-    private func forceWishForTesting() {
-        switch state.friend.wish {
-        case .kleur(let colour):
-            let ingredient = Ingredient.allCases.first { $0.colour == colour }
-            if let ingredient { state.cake.ingredients.append(ingredient) }
-        case .effect(let effect):
-            let ingredient = Ingredient.allCases.first { $0.effect == effect }
-            if let ingredient { state.cake.ingredients.append(ingredient) }
-        case .sprinkels(let count):
-            addStickersForTesting(.sprinkel, count)
-        case .stickers(let kind, let count):
-            addStickersForTesting(kind, count)
-        case .tweeKleuren:
-            state.cake.ingredients.append(contentsOf: [.aardbei, .bosbes])
-        }
-        save()
-        build(flat: flat)
-    }
-
-    private func addStickersForTesting(_ kind: StickerKind, _ count: Int) {
-        var placed = state.cake.placed
-        for i in 0..<count {
-            placed.append(Sticker(kind: kind,
-                                  at: StickerAnchor(tier: i % CakeGeometry.tierCount,
-                                                    face: .zijkant,
-                                                    theta: Float(i) * 0.9,
-                                                    u: 0.5),
-                                  spin: Float(i) * 0.4))
-        }
-        state.cake.stickers = placed
-        state.cake.version = 2
+         ("Eet de taart", { [weak self] in self?.tapCake() })]
     }
 
     // MARK: - Idle
@@ -1324,8 +1264,6 @@ enum FeestLine {
     static let sneller = "nina.feest.sneller"
     static let dansen = "nina.feest.dansen"
     static let opeten = "nina.feest.opeten"
-    /// The wish matched. Said after the friend's thanks, never instead of them.
-    static let wensGelukt = "nina.feest.wensGelukt"
     /// The wall is coming. **Soon, not now** — `ROOMS.md` §9, and it is the one
     /// line in this room that has to be careful, because §6.6 does not exist.
     static let muurKomt = "nina.feest.muurKomt"
