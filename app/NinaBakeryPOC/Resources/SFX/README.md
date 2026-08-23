@@ -16,7 +16,9 @@ What was done to them, so a re-fetch can match:
   in and 60 ms fade out so the join is a dip rather than a click. It runs at
   its own tempo, quiet under her pads (`volume` 0.28).
 - **trom** — cropped to the first kick (0.21 s) of the two-second pattern, so
-  four hits at her tempo do not smear. 44.1 kHz 16-bit mono.
+  four hits at her tempo do not smear. Taken from Freesound's public HQ
+  preview of the CC0 original (the WAV download wants a login). 44.1 kHz
+  16-bit mono.
 - **kras** — the 0.67 s original, faded at both ends, peak-matched to the
   drum. 44.1 kHz 16-bit mono.
 
