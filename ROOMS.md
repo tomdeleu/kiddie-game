@@ -560,8 +560,17 @@ should say so in the function that would have gated it, not by deleting it.
 > over; the object that means *finished* is now a door, and it is a different
 > door from the kitchen's wood leaf and the garden's gate — two gold posts and
 > a velvet rope, in the same place on the left wall. The cake is a toy. The
-> rope is lit from the first frame, exactly as the decorating room's door is,
-> because *you may finish when you like* is a true statement.
+> rope is inviting from the first frame, exactly as the decorating room's door
+> is, because *you may finish when you like* is a true statement.
+>
+> **And the hole behind it is evening, not a light** — owner's call, 2026-08-23.
+> The kitchen's middle cue is an emissive plate of the next room. Here the
+> party is at night, so that plate is matte `eveningSky`: a dark dusty dusk
+> rectangle in a cream wall. The disco around it stays as bright as every other
+> room; dark is the subject of the hole, the same way it is the subject of
+> Otto's mouth. Unlit cream would vanish into the plaster. The ring at the
+> threshold still lands, because that is the invitation, not a physically
+> accurate spill from outside.
 >
 > The general form: **the way out is whatever object means "this is finished",
 > and the cue belongs on that object.** What must not happen is a room with two

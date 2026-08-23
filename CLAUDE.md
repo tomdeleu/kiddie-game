@@ -114,7 +114,10 @@ than a wood leaf or a picket gate, standing in the same place on the left wall
 — owner's call, 2026-08-21, reversing the earlier "the cake is the way out",
 because tapping the cake to leave a disco is the wrong object. The cake is a
 toy; the rope is the door; §6.5 still says nothing else ends the party, so there
-is still one ending, not two; **six guests plus a DJ rather than the twelve
+is still one ending, not two; **the hole behind the rope is evening**, a dusty
+dusk rectangle, because the party is at night — owner's call, 2026-08-23 — while
+the disco around it stays as bright as every other room; **six guests plus a DJ
+rather than the twelve
 `GAMEPLAY.md` §6.5 used to ask for**, and the reason is the screen-separation
 arithmetic in `ROOMS.md` §5 rather than the rig; the friend of the day is
 **dealt** rather than handed over, since there is no hub to hand one over; and
